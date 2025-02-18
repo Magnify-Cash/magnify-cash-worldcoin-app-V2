@@ -19,7 +19,7 @@ const useRepayLoan = (V1OrV2:string) => {
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
   const CONTRACT_ADDRESS = V1OrV2 === "V1" ? MAGNIFY_WORLD_ADDRESS_V1 : MAGNIFY_WORLD_ADDRESS;
-
+  console.log(V1OrV2, "interacting with:", CONTRACT_ADDRESS)
   const client = createPublicClient({
     chain: worldchain,
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),

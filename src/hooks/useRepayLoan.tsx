@@ -3,7 +3,7 @@ import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
-import { MAGNIFY_WORLD_ADDRESS, MAGNIFY_WORLD_ADDRESS_V1, WORLDCOIN_CLIENT_ID, WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
+import { MAGNIFY_WORLD_ADDRESS as MAGNIFY_WORLD_ADDRESS_V2, MAGNIFY_WORLD_ADDRESS_V1, WORLDCOIN_CLIENT_ID, WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 
 type LoanDetails = {
   amount: number;
@@ -12,14 +12,27 @@ type LoanDetails = {
   transactionId: string;
 };
 
+const getContractAddress = (contract_version: string) => {
+  if (contract_version === "V1"){
+    return MAGNIFY_WORLD_ADDRESS_V1
+  }
+  else if (contract_version === "V2"){
+    return MAGNIFY_WORLD_ADDRESS_V2
+  }
+  else {
+    return ""
+  }
+}
+
+
 const useRepayLoan = (V1OrV2:string) => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
-  const CONTRACT_ADDRESS = V1OrV2 === "V1" ? MAGNIFY_WORLD_ADDRESS_V1 : MAGNIFY_WORLD_ADDRESS;
-  console.log(V1OrV2, "interacting with:", CONTRACT_ADDRESS)
+  const CONTRACT_ADDRESS = getContractAddress(V1OrV2);
+  console.log(`Interacting with ${V1OrV2} via ${CONTRACT_ADDRESS}`)
   const client = createPublicClient({
     chain: worldchain,
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),

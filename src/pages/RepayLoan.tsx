@@ -25,19 +25,19 @@ const RepayLoan = () => {
     }
     return 0n; // Default value if loanData is not available
   }, [loanData]);
-   const loanVersion = useMemo(() => {
+  const loanVersion = useMemo(() => {
     if (loan) {
       return loan[0];
     }
     return ""; // Default value if loanData is not available
   }, [loan]);
 
-  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan(loanVersion);
+  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
   const handleApplyLoan = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
       if (data?.nftInfo?.tokenId) {
-        await repayLoanWithPermit2(loanAmountDue.toString());
+        await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
       } else {
         toast.error("Unable to pay back loan.");
       }

@@ -26,7 +26,7 @@ const RepayLoan = () => {
     return 0n; // Default value if loanData is not available
   }, [loanData]);
    const loanVersion = useMemo(() => {
-    if (loanData) {
+    if (loan) {
       return loan[0];
     }
     return ""; // Default value if loanData is not available

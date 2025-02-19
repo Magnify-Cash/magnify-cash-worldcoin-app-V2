@@ -30,7 +30,7 @@ export const VERIFICATION_TIERS = {
     message:
       "Get World ID verified to unlock higher loan amounts! Verify with Passport for $5 loans or get ORB verified for $10 loans.",
     claimAction: "mint-device-verified-nft",
-    upgradeAction: "upgrade-orb-verified-nft",
+    upgradeAction: "upgrade-device-verified-nft",
     verification_level: "device",
   },
 };

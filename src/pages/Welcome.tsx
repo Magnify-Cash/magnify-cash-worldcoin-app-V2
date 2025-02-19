@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit } from "@worldcoin/minikit-js";
@@ -20,15 +19,14 @@ const Welcome = () => {
       setLoading(true);
       console.log("Initiating wallet authentication...");
       const nonce = crypto.randomUUID().replace(/-/g, "");
-      const result = await MiniKit.commandsAsync.walletAuth({
+      const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
         nonce,
         statement: "Sign in to Magnify Cash to manage your loans.",
         expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
-        notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000)
+        notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
-      
-      if (result.finalPayload && 'walletAddress' in result.finalPayload) {
-        const user = await MiniKit.getUserByWalletAddress(result.finalPayload.walletAddress);
+      if (finalPayload && finalPayload.walletAddress) {
+        const user = await MiniKit.getUserByAddress(finalPayload.walletAddress);
         localStorage.setItem("ls_wallet_address", user.walletAddress);
         localStorage.setItem("ls_username", user.username);
         toast.success("Successfully signed in!");

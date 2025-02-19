@@ -25,12 +25,19 @@ const RepayLoan = () => {
     }
     return 0n; // Default value if loanData is not available
   }, [loanData]);
+  const loanVersion = useMemo(() => {
+    if (loan) {
+      return loan[0];
+    }
+    return ""; // Default value if loanData is not available
+  }, [loan]);
+
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
   const handleApplyLoan = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
       if (data?.nftInfo?.tokenId) {
-        await repayLoanWithPermit2(loanAmountDue.toString());
+        await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
       } else {
         toast.error("Unable to pay back loan.");
       }
@@ -53,7 +60,7 @@ const RepayLoan = () => {
   if (isLoading || !loan) {
     return (
       <div className="min-h-screen">
-        <Header title="Repay Loan" />
+        <Header title="Loan Status" />
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
@@ -63,17 +70,17 @@ const RepayLoan = () => {
   if (isError) {
     return (
       <div className="min-h-screen">
-        <Header title="Repay Loan" />
+        <Header title="Loan Status" />
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">Error fetching data.</div>
       </div>
     );
   }
 
   // No loan found
-  if (!isLoading && loan[0] === false) {
+  if (!isLoading && loan[0] === "") {
     return (
       <div className="min-h-screen bg-background">
-        <Header title="Repay Loan" />
+        <Header title="Loan Status" />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
             <h3 className="text-lg font-semibold text-center">No Active Loans</h3>
@@ -90,7 +97,7 @@ const RepayLoan = () => {
   }
 
   // active loan
-  if (!isLoading && loan[0] === true) {
+  if (!isLoading && loan[0] !== "") {
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
       loanData.startTime,
       loanData.loanPeriod,

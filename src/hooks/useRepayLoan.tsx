@@ -3,7 +3,12 @@ import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
-import { MAGNIFY_WORLD_ADDRESS, WORLDCOIN_CLIENT_ID, WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
+import {
+  MAGNIFY_WORLD_ADDRESS as MAGNIFY_WORLD_ADDRESS_V2,
+  MAGNIFY_WORLD_ADDRESS_V1,
+  WORLDCOIN_CLIENT_ID,
+  WORLDCOIN_TOKEN_COLLATERAL,
+} from "@/utils/constants";
 
 type LoanDetails = {
   amount: number;
@@ -12,13 +17,22 @@ type LoanDetails = {
   transactionId: string;
 };
 
+const getContractAddress = (contract_version: string) => {
+  if (contract_version === "V1") {
+    return MAGNIFY_WORLD_ADDRESS_V1;
+  } else if (contract_version === "V2") {
+    return MAGNIFY_WORLD_ADDRESS_V2;
+  } else {
+    return "";
+  }
+};
+
 const useRepayLoan = () => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
-
   const client = createPublicClient({
     chain: worldchain,
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
@@ -38,12 +52,13 @@ const useRepayLoan = () => {
     setIsConfirmed(isTransactionConfirmed);
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
-  const repayLoanWithPermit2 = useCallback(async (loanAmount: string) => {
+  const repayLoanWithPermit2 = useCallback(async (loanAmount: string, V1OrV2: string) => {
     setError(null);
     setTransactionId(null);
     setIsConfirming(false);
     setIsConfirmed(false);
     setLoanDetails(null);
+    const CONTRACT_ADDRESS = getContractAddress(V1OrV2);
 
     try {
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
@@ -60,7 +75,7 @@ const useRepayLoan = () => {
 
       // Format transfer details
       const transferDetails = {
-        to: MAGNIFY_WORLD_ADDRESS,
+        to: CONTRACT_ADDRESS,
         requestedAmount: loanAmount,
       };
 
@@ -72,11 +87,12 @@ const useRepayLoan = () => {
       ];
 
       const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
-
+      console.log(CONTRACT_ADDRESS);
+      console.log(`Interacting with ${V1OrV2} via ${CONTRACT_ADDRESS}`);
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: MAGNIFY_WORLD_ADDRESS,
+            address: CONTRACT_ADDRESS,
             abi: [
               {
                 inputs: [
@@ -150,7 +166,7 @@ const useRepayLoan = () => {
         permit2: [
           {
             ...permitTransfer,
-            spender: MAGNIFY_WORLD_ADDRESS,
+            spender: CONTRACT_ADDRESS,
           },
         ],
       });

@@ -17,7 +17,7 @@ const Loan = () => {
   const { requestNewLoan, error, transactionId, isConfirming, isConfirmed } = useRequestLoan();
 
   // state
-  const hasActiveLoan = data?.loan[0] === true;
+  const hasActiveLoan = data?.loan[0] !== "";
 
   // Handle loan application
   const handleApplyLoan = useCallback(

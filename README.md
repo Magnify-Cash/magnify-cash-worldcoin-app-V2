@@ -1,506 +1,71 @@
 # Magnify World App V2 🌟
 
-## Table of Contents
-1. [Overview](#overview)
-2. [Installation](#installation)
-3. [Usage](#usage)
-4. [Technical Components](#technical-components)
-5. [Verification Process](#verification-process)
-6. [Key Integration Points](#key-integration-points)
-7. [Security Considerations](#security-considerations)
-8. [Future Improvements](#future-improvements)
-9. [Related Files](#related-files)
-10. [Contributing](#contributing)
-11. [License](#license)
-
 ## Overview
-A modern DeFi dashboard application built with React, TypeScript, and Supabase. This application provides users with a comprehensive interface for managing digital assets, tracking loans, and monitoring market analytics.
 
-## NFT Verification System
-The NFT Verification System is a tiered verification framework that utilizes World ID credentials as collateral for minting NFTs. This system allows users to access undercollateralized loans based on their verification tier, which can be Device, Passport, or ORB.
+Magnify World App V2 is a modern DeFi dashboard and lending platform that integrates cutting-edge NFT verification alongside dynamic loan management. Built with React, TypeScript, and Vite—and powered by Supabase for backend services—the platform leverages World ID credentials and NFT collateral to offer undercollateralized loans based on three verification tiers: Device, Passport, and ORB.
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Technical Stack](#technical-stack)
+4. [Architecture](#architecture)
+5. [NFT Verification System](#nft-verification-system)
+6. [Loan Management](#loan-management)
+7. [Smart Contract Integration](#smart-contract-integration)
+8. [Frontend & State Management](#frontend--state-management)
+9. [Security Considerations](#security-considerations)
+10. [Deployment & Environment Variables](#deployment--environment-variables)
+11. [Development & Contribution Guidelines](#development--contribution-guidelines)
+12. [Future Improvements](#future-improvements)
+13. [License](#license)
+
+## Features
+
+- **NFT Verification System**  
+  - Three-tier verification using World ID credentials.
+  - Minting of tier-specific NFTs that serve as collateral for loans.
+- **Dynamic Loan Management**  
+  - Under-collateralized loans based on user verification tier.
+  - Extended functionality in the V2 contract, including Permit2 integration for secure token transfers during repayments.
+- **User Management**  
+  - Profile dashboard with NFT collateral and loan activity displays.
+  - Secure authentication powered by Supabase.
+- **Responsive & Modern UI**  
+  - Built with React, Tailwind CSS, and shadcn/ui components.
+  - Adaptable design for mobile, tablet, and desktop experiences.
+- **Monitoring & Analytics**  
+  - Sentry integration for production error tracking.
+  - Eruda debugging for selected developer wallet addresses.
+
+## Technical Stack
+
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion.
+- **Backend:** Supabase (Authentication, PostgreSQL, Real-time Subscriptions, Edge Functions).
+- **Blockchain:** Ethereum integration via Wagmi, World ID SDK, Worldcoin Minikit.
+- **Smart Contracts:** Solidity contracts built on OpenZeppelin libraries (see V1 and V2 versions).
+
+## Architecture
+
+The application is divided into several core subsystems:
+
+- **NFT Verification System:**  
+  Handles World ID authentication flows, tier-based verification, and NFT minting.
+
+- **Loan Management:**  
+  Processes loan requests, calculates loan eligibility based on NFT collateral, handles repayments via Permit2, and manages collateral release.
+
+- **Smart Contract Integration:**  
+  Communicates with legacy (V1) and updated (V2) contracts for loan and NFT state, ensuring smooth transitions between versions.
+
+- **Frontend & State Management:**  
+  Uses TanStack Query and custom React hooks (e.g., `useMagnifyWorld`, `useRepayLoan`) for efficient data fetching, caching, and state synchronization.
+
+Below is an illustrative architecture diagram:
 
-### Core Concept
-Three-tier verification system using World ID credentials as NFT collateral:
-- **Tier 1 (Device)**: Base verification → $1 loans
-- **Tier 2 (Passport)**: Mid-tier → $5 loans
-- **Tier 3 (ORB)**: Premium → $10 loans
-
-### Verification Process
-1. User initiates World ID authentication.
-2. System validates credential with Worldcoin backend.
-3. Smart contract mints tier-specific NFT.
-4. NFT metadata determines loan eligibility.
-5. Loan terms locked until repayment/NFT burn.
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant App
-    participant Contract
-    participant WorldID
-    
-    User->>App: Start Verification
-    App->>WorldID: Request Credential
-    WorldID->>User: Authenticate
-    User->>App: Submit Proof
-    App->>Contract: mintVerifiedNFT(proof)
-    Contract->>WorldID: Verify Proof
-    WorldID->>Contract: Validation Result
-    Contract->>App: Mint NFT
-    App->>User: Display New Tier
-```
-
-### System Architecture
-![System Architecture](https://www.mermaidchart.com/raw/506cbf7b-e046-44fa-8d29-57b59aa51e37?theme=light&version=v0.1&format=svg)
-
-## 🚀 Features
-
-### User Management
-- Profile management with verification tiers
-- Secure authentication via Supabase
-- Customizable user settings
-
-### Asset Management
-- Real-time wallet balance tracking
-- NFT collateral management
-- Transaction history
-
-### DeFi Integration
-- Loan management system
-- Liquidity pool interactions
-- MAG token rewards system
-
-## 🛠 Technical Stack
-
-### Frontend
-- **React 18** - Modern UI library
-- **TypeScript** - Type-safe development
-- **Vite** - Next-generation frontend tooling
-- **Tailwind CSS** - Utility-first CSS framework
-- **shadcn/ui** - High-quality UI components
-- **Framer Motion** - Animation library
-
-### Backend & Data
-- **Supabase** - Backend-as-a-Service
-  - Authentication
-  - PostgreSQL Database
-  - Real-time subscriptions
-  - Edge Functions
-
-### State Management & Data Fetching
-- **TanStack Query** - Server state management
-- **React Context** - Local state management
-
-## Technical Components
-
-### Smart Contract Integration
-```solidity
-// Core verification functions
-function mintVerifiedNFT(string calldata proof) external {
-    (uint256 tierId, bool valid) = _verifyCredential(proof);
-    require(valid, "Invalid proof");
-    _mintWithTier(msg.sender, tierId);
-}
-
-mapping(address => uint256) public userNFT;
-mapping(uint256 => uint256) public nftToTier;
-```
-
-### Frontend State Management
-```typescript
-// useMagnifyWorld hook
-const { data, refetch } = useMagnifyWorld(walletAddress);
-const currentTier = data?.nftInfo.tier?.verificationStatus;
-
-// Cache management
-let globalCache: Record<string, ContractData> = {};
-export function invalidateCache(walletAddress: `0x${string}`) {
-  delete globalCache[walletAddress];
-}
-```
-
-### Verification UI
-```typescript
-// UpgradeVerification.tsx
-{Object.entries(data?.allTiers).map(([index, tier]) => (
-  <Button 
-    onClick={() => handleUpgrade(tier)}
-    disabled={tier.verificationStatus === currentTier}
-  >
-    {`Upgrade to ${tier.verificationStatus.level}`}
-  </Button>
-))}
-```
-
-## Key Integration Points
-
-| Component          | Responsibility                         | Key Functions                          |
-|--------------------|----------------------------------------|----------------------------------------|
-| `useMagnifyWorld`  | Tier state management                  | `fetchData`, `getVerificationStatus`   |
-| `UpgradeVerification` | User interaction                  | Tier comparison, upgrade initiation    |
-| Smart Contract      | NFT lifecycle management              | `mintVerifiedNFT`, `nftToTier`         |
-| World ID SDK        | Credential verification                | `verifyCredentialProof`                |
-
-## Security Considerations
-1. **Proof Validation**
-```typescript
-// Backend verification service
-async function validateProof(proof: string) {
-  return WorldID.verify(proof, {
-    nonce: generateCryptographicNonce(),
-    expiration: Date.now() + 300_000 // 5 minutes
-  });
-}
-```
-
-2. **Rate Limiting**
-```solidity
-uint256 public constant VERIFICATION_COOLDOWN = 1 hours;
-mapping(address => uint256) public lastVerificationAttempt;
-
-modifier checkCooldown() {
-  require(block.timestamp > lastVerificationAttempt[msg.sender] + VERIFICATION_COOLDOWN);
-  _;
-}
-```
-
-3. **Data Privacy**
-- Zero-knowledge proof validation
-- Credential data minimization
-- Encrypted proof storage
-
-## Future Improvements
-1. **Dynamic Tier System**
-```solidity
-function updateTierRequirements(
-  uint256 tierId, 
-  uint256 newLoanAmount, 
-  uint256 newInterestRate
-) external onlyOwner {
-  tiers[tierId] = Tier(newLoanAmount, newInterestRate);
-}
-```
-
-2. **Cross-Chain Support**
-```solidity
-function bridgeNFT(uint256 tokenId, uint256 chainId) external {
-  burn(tokenId);
-  crossChainBridge.mintOnOtherChain(chainId, msg.sender);
-}
-```
-
-3. **Credit History**
-```typescript
-// Proposed credit interface
-interface CreditHistory {
-  trackRepayment(tokenId: number): Promise<void>;
-  getCreditScore(wallet: string): Promise<number>;
-}
-```
-
-## 📦 Project Structure
-
-```
-src/
-├── components/         # Reusable UI components
-│   ├── Dashboard/     # Dashboard-specific components
-│   ├── Header/        # Navigation components
-│   └── ui/            # shadcn/ui components
-├── hooks/             # Custom React hooks
-├── lib/               # Utility functions
-├── pages/             # Route components
-├── services/          # API service layers
-└── types/             # TypeScript definitions
-```
-
-## 🔧 Component Documentation
-
-### Profile Component
-The Profile component (`src/pages/Profile.tsx`) displays user information and NFT collaterals.
-
-#### Features:
-- User information display
-- NFT collateral management
-- Verification status
-- Interactive card layout
-
-#### Props:
-```typescript
-interface ProfileProps {
-  // Component currently doesn't accept props
-}
-```
-
-#### Usage:
-```typescript
-import Profile from '@/pages/Profile';
-
-// In your router
-<Route path="/profile" element={<Profile />} />
-```
-
-### Header Component
-The Header component (`src/components/Header/`) provides navigation and menu functionality.
-
-#### Features:
-- Back navigation
-- Title display
-- Dropdown menu
-- Mobile responsiveness
-
-#### Props:
-```typescript
-interface HeaderProps {
-  title: string;
-  showBack?: boolean;
-}
-```
-
-## 🚀 Getting Started
-
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-```
-
-2. **Install dependencies**
-```bash
-npm install
-```
-
-3. **Start development server**
-```bash
-npm run dev
-```
-
-4. **Build for production**
-```bash
-npm run build
-```
-
-## 🔒 Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-## 🔧 Component Documentation
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
-
-## 📝 Code Style Guide
-
-- Use TypeScript for all new components
-- Follow the existing component structure
-- Use shadcn/ui components when possible
-- Implement responsive design
-- Add proper TypeScript types
-- Use meaningful component and variable names
-
-## 🔍 Testing
-
-```bash
-# Run tests
-npm run test
-
-# Run tests in watch mode
-npm run test:watch
-```
-
-## 📱 Responsive Design
-
-The application is fully responsive with breakpoints:
-- Mobile: < 640px
-- Tablet: 640px - 1024px
-- Desktop: > 1024px
-
-## 🔐 Security
-
-- Authentication handled by Supabase
-- Row Level Security (RLS) policies in place
-- Environment variables for sensitive data
-- Input validation on all forms
-
-## 🌐 Deployment
-
-The application can be deployed using:
-1. Lovable's built-in deployment
-2. Manual deployment to services like Netlify
-3. Custom deployment pipeline
-
-## 📚 Additional Resources
-
-- [Lovable Documentation](https://docs.lovable.dev/)
-- [shadcn/ui Documentation](https://ui.shadcn.com/)
-- [Supabase Documentation](https://supabase.com/docs)
-- Verification status
-- Interactive card layout
-
-#### Props:
-```typescript
-interface ProfileProps {
-  // Component currently doesn't accept props
-}
-```
-
-#### Usage:
-```typescript
-import Profile from '@/pages/Profile';
-
-// In your router
-<Route path="/profile" element={<Profile />} />
-```
-
-### Header Component
-The Header component (`src/components/Header/`) provides navigation and menu functionality.
-
-#### Features:
-- Back navigation
-- Title display
-- Dropdown menu
-- Mobile responsiveness
-
-#### Props:
-```typescript
-interface HeaderProps {
-  title: string;
-  showBack?: boolean;
-}
-```
-
-## 🚀 Getting Started
-
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-```
-
-2. **Install dependencies**
-```bash
-npm install
-```
-
-3. **Start development server**
-```bash
-npm run dev
-```
-
-4. **Build for production**
-```bash
-npm run build
-```
-
-## 🔒 Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-## 🔧 Component Documentation
-
-### Profile Component
-The Profile component (`src/pages/Profile.tsx`) displays user information and NFT collaterals.
-
-#### Features:
-- User information display
-- NFT collateral management
-- Verification status
-- Interactive card layout
-
-#### Props:
-```typescript
-interface ProfileProps {
-  // Component currently doesn't accept props
-}
-```
-
-#### Usage:
-```typescript
-import Profile from '@/pages/Profile';
-
-// In your router
-<Route path="/profile" element={<Profile />} />
-```
-
-### Header Component
-The Header component (`src/components/Header/`) provides navigation and menu functionality.
-
-#### Features:
-- Back navigation
-- Title display
-- Dropdown menu
-- Mobile responsiveness
-
-#### Props:
-```typescript
-interface HeaderProps {
-  title: string;
-  showBack?: boolean;
-}
-```
-
-## 🚀 Getting Started
-
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-```
-
-2. **Install dependencies**
-```bash
-npm install
-```
-
-3. **Start development server**
-```bash
-npm run dev
-```
-
-4. **Build for production**
-```bash
-npm run build
-```
-
-## 🔒 Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-## 🤝 Contributing
-
-To contribute to this project, please follow these steps:
-1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Push to the branch.
-5. Open a Pull Request.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-> This document serves as the single source of truth for the NFT verification system. Last updated: {current_date}
-
-## Architecture Overview
 ```mermaid
 graph TD
-    A[User] --> B[World ID Auth]
+    A[User] --> B[World ID Authentication]
     B --> C{Verification Tier}
     C -->|Tier 1| D[Device NFT]
     C -->|Tier 2| E[Passport NFT]
@@ -509,167 +74,171 @@ graph TD
     E --> G
     F --> G
     G --> H[Loan Terms]
-    H --> I[Repayment Tracking]
-    I --> J[Credit History]
-    
-    subgraph Blockchain
-        G
-        K[Alchemy Node]
-    end
-    
-    subgraph Backend
-        L[Supabase DB]
-        M[Verification Service]
-    end
 ```
 
-## Core Verification Flow
-```typescript:src/pages/UpgradeVerification.tsx
-startLine: 15
-endLine: 28
+## NFT Verification System
+
+The NFT Verification System utilizes World ID credentials to mint tier-specific NFTs that serve as collateral:
+
+- **Process Flow:**  
+  1. The user initiates authentication via the World ID interface.
+  2. The system validates the credential via the Worldcoin backend.
+  3. A smart contract mints an NFT corresponding to the user's verification tier.
+  4. NFT metadata determines the user's loan eligibility.
+
+- **Key Components:**  
+  - **UpgradeVerification UI:** Provides an interactive interface for the user to upgrade their verification status.
+  - **useMagnifyWorld Hook:** Manages the mapping of tier IDs to verification levels, caching NFT data, and handling tier state.
+
+Example snippet:
+```typescript
+// useMagnifyWorld hook snippet
+const { data, refetch } = useMagnifyWorld(walletAddress);
+const currentTier = data?.nftInfo.tier?.verificationStatus;
+
+// Cache invalidation for wallet data
+export function invalidateCache(walletAddress: `0x${string}`) {
+  delete globalCache[walletAddress];
+}
 ```
 
-## Key Subsystems
+## Loan Management
 
-### 1. Tier Management
-```typescript:src/hooks/useMagnifyWorld.tsx
-startLine: 211
-endLine: 229
-```
+Loan management leverages NFT collateral to provide undercollateralized loans:
 
-Three verification levels:
-1. **Device Verification** (Tier 1)
-   - $1 loan capacity
-   - Basic identity confirmation
-2. **Passport Verification** (Tier 2)
-   - $5 loan capacity
-   - Government ID validation
-3. **ORB Verification** (Tier 3)
-   - $10 loan capacity
-   - Biometric authentication
+- **Loan Request Process:**  
+  1. The user requests a loan by using their NFT as collateral.
+  2. The system validates NFT ownership and eligibility (based on tier parameters).
+  3. The loan is issued from the smart contract if sufficient funds are available.
 
-### 2. Loan Management
-```typescript:src/hooks/useRepayLoan.tsx
-startLine: 41
-endLine: 112
-```
+- **Loan Repayment:**  
+  - Uses Permit2 functionality for secure, permissioned token transfers to repay loans.
 
-Features:
-- Permit2-compatible repayments
-- Interest rate calculation
-- Collateral release mechanisms
+- **Contract Integration:**  
+  - The V2 contract extends functionalities from V1, incorporating new events (`LoanRequested`, `LoanRepaid`, `LoanTokensWithdrawn`) and backward compatibility queries.
 
-### 3. State Management
-```typescript:src/hooks/useMagnifyWorld.tsx
-startLine: 71
-endLine: 76
-```
-
-Caching strategy:
-- Global wallet data cache
-- Automatic invalidation
-- Tier status derivation
-
-## Technical Specifications
-
-### Smart Contract Interfaces
+Representative V2 contract snippet:
 ```solidity
-interface IMagnifyWorldV1 {
-    function mintVerifiedNFT(string calldata proof) external;
-    function userNFT(address user) external view returns (uint256);
-    function nftToTier(uint256 tokenId) external view returns (uint256);
-    function tiers(uint256 tierId) external view returns (
-        uint256 loanAmount,
-        uint256 interestRate,
-        uint256 loanPeriod
+function requestLoan() external nonReentrant {
+    uint256 tokenId = v1.userNFT(msg.sender);
+    require(tokenId != 0, "No NFT owned");
+    require(IERC721(address(v1)).ownerOf(tokenId) == msg.sender, "Not NFT owner");
+    uint256 tierId = v1.nftToTier(tokenId);
+    require(tierId != 0 && tierId <= v1.tierCount(), "Invalid tier parameters");
+
+    // Check for active loans on V1 and V2
+    ( , , bool activeOnV1, , ) = v1.loans(tokenId);
+    require(!activeOnV1, "Active loan on V1");
+    require(!v2Loans[tokenId].isActive, "Active loan on V2");
+
+    // Issue loan based on tier parameters
+    (uint256 loanAmount, uint256 interestRate, uint256 loanPeriod) = v1.tiers(tierId);
+    require(loanToken.balanceOf(address(this)) >= loanAmount, "Insufficient contract balance");
+
+    v2Loans[tokenId] = Loan(
+        loanAmount,
+        block.timestamp,
+        true,
+        interestRate,
+        loanPeriod
     );
+    require(loanToken.transfer(msg.sender, loanAmount), "Transfer failed");
+    emit LoanRequested(tokenId, loanAmount, msg.sender);
 }
 ```
 
-### Verification State Machine
-```typescript
-type VerificationState = {
-  currentTier: VerificationLevel;
-  requiredProofs: WorldIDProof[];
-  loanEligibility: {
-    amount: number;
-    rate: number;
-    term: number;
-  };
-  upgradePath: VerificationStep[];
-};
+## Smart Contract Integration
 
-enum VerificationLevel {
-  NONE,
-  DEVICE,
-  PASSPORT,
-  ORB
-}
+The project's smart contract layer consists of two versions:
+
+- **MagnifyWorld V1:**  
+  Provides the core NFT minting, verification, and loan issuance functionalities with mappings for user NFTs and tier associations.
+
+- **MagnifyWorld V2:**  
+  Extends V1 functionality by offering dynamic loan management, incorporating Permit2 usage for repayments, and providing comprehensive read-only queries for NFT tiers, user loans, and tier counts.
+
+Developers can review complete function definitions and events in the `/contracts` directory.
+
+## Frontend & State Management
+
+- **Routing & Protected Pages:**  
+  The app uses React Router. Protected routes ensure that only authenticated users access pages like Profile, Wallet, and Loan.
+
+Example route:
+```jsx
+<Route path="/upgrade-verification" element={
+  <ProtectedRoute>
+    <UpgradeVerification />
+  </ProtectedRoute>
+} />
 ```
 
-## Security Implementation
+- **State & Data Caching:**  
+  Custom hooks such as `useMagnifyWorld` and `useRepayLoan` manage data from the blockchain and backend via TanStack Query.
 
-### Proof Validation
-```typescript:src/services/verification.ts
-startLine: 180
-endLine: 186
-```
+- **Component Structure:**  
+  Components are organized under `src/components/`, including the Dashboard, Header, and reusable UI elements.
 
-Validation checks:
-1. ZK-SNARK validity
-2. Credential freshness (<5min)
-3. Nonce uniqueness
-4. Action ID matching
+## Security Considerations
 
-### Contract Safeguards
+Security is integrated throughout the system:
+
+- **Proof Validation:**  
+  Implements zero-knowledge standards with short expiration windows to validate World ID proofs.
+
+- **Rate Limiting:**  
+  Enforces cooldown periods between verification attempts using smart contract modifiers:
 ```solidity
-modifier verificationChecks(address user) {
-    require(balanceOf(user) == 0, "Existing NFT");
-    require(block.timestamp > lastVerification[user] + VERIFICATION_COOLDOWN);
-    _;
+modifier checkCooldown() {
+  require(block.timestamp > lastVerificationAttempt[msg.sender] + VERIFICATION_COOLDOWN, "Cooldown active");
+  _;
 }
 ```
 
-## Development Roadmap
+- **Data Privacy:**  
+  Employs encryption for sensitive proof storage and minimizes exposure of credential data.
 
-### Q3 2024 Priorities
-1. Cross-chain NFT bridging
-2. Dynamic tier parameters
-3. Credit scoring system
+- **Contract Safeguards:**  
+  Both V1 and V2 contracts include robust ownership and NFT state validations to prevent unauthorized loan requests.
 
-### Pending Features
-```typescript:src/pages/Wallet.tsx
-startLine: 148
-endLine: 156
+## Deployment & Environment Variables
+
+Before deployment, create a `.env` file in the project root with the following variables:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SENTRY_DSN=your_sentry_dsn
 ```
 
-## Implementation Guidelines
+Deployment methods include:
+- Lovable's built-in deployment solution.
+- Manual deployment with platforms such as Netlify.
 
-### Code Standards
-- TypeScript strict mode
-- ESLint/Prettier enforced
-- 80%+ test coverage
-- Conventional commits
+## Development & Contribution Guidelines
 
-### Contribution Process
-1. Fork repository
-2. Create feature branch
-3. Submit PR with:
-   - Issue references
-   - Test evidence
-   - Documentation updates
+Contributions are welcome! Please follow these steps:
 
-## Monitoring & Analytics
+1. **Fork the repository** and create your feature branch.
+2. **Follow the coding standards** – use TypeScript, adhere to ESLint/Prettier, ensure 80%+ test coverage.
+3. **Submit detailed pull requests** with appropriate documentation and tests.
 
-Key Metrics Tracked:
-```typescript
-type SystemMetrics = {
-  verificationSuccessRate: number;
-  averageLoanSize: number;
-  defaultRatePerTier: Record<VerificationLevel, number>;
-  proofValidationTime: number;
-};
-```
+Further resources:
+- [Lovable Documentation](https://docs.lovable.dev/)
+- [shadcn/ui Documentation](https://ui.shadcn.com/)
+- [Supabase Documentation](https://supabase.com/docs)
+
+## Future Improvements
+
+- **Credit History System:**  
+  Tracking repayment data to establish a user credit score.
+- **Enhanced Liquidity Pools:**  
+  New DeFi features for automated market making.
 
 ## License
-MIT License - See [LICENSE](https://github.com/Magnify-Cash/magnify-world/blob/main/LICENSE) for full terms.
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
+---
+
+_Last Updated: February 19 2025_

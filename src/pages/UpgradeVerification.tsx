@@ -47,7 +47,7 @@ const UpgradeVerification = () => {
           proof,
           signal: ls_wallet,
           action: action,
-          tokenId: nftInfo.tokenId.toString(),
+          tokenId: nftInfo.tokenId === null ? "" : nftInfo.tokenId.toString(),
         }),
       });
       if (!res.ok) {
@@ -139,7 +139,6 @@ const UpgradeVerification = () => {
             {({ open }) => (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {Object.entries(data?.allTiers || {}).map(([index, tier]) => {
-                  console.log(tier.verificationStatus.level);
                   // Check if the tier's verification level is not PASSPORT
                   if (tier.verificationStatus.level !== "Passport") {
                     return (

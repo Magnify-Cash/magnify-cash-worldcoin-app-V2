@@ -28,12 +28,25 @@ const Loan = () => {
       event.preventDefault();
       if (isClicked) return;
       setIsClicked(true);
-      if (data?.nftInfo?.tokenId) {
-        await requestNewLoan(requestedTierId);
+
+      try{
+        if (data?.nftInfo?.tokenId) {
+          await requestNewLoan(requestedTierId);
       } else {
         toast.error("Unable to apply for loan. Ensure you have a verified NFT.");
+      }
+      } catch (error: any) {
+        console.error("Loan application error:", error);
+
+        if (error?.message?.includes("user rejected transaction")) {
+          toast.error("Transaction rejected by user.");
+        } else {
+          toast.error(error?.message || "Unable to pay back loan.");
+        }
+      } finally {
         setIsClicked(false);
       }
+
     },
     [data, requestNewLoan, isClicked, toast],
   );

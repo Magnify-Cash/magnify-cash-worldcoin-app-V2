@@ -40,17 +40,31 @@ const RepayLoan = () => {
     async (event: React.FormEvent) => {
       event.preventDefault();
       if (isClicked) return;
+  
       setIsClicked(true);
-
-      if (data?.nftInfo?.tokenId) {
-        await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
-      } else {
-        toast.error("Unable to pay back loan.");
-        setIsClicked(false);
+  
+      try {
+        if (data?.nftInfo?.tokenId) {
+          await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
+        } else {
+          toast.error("Unable to pay back loan.");
+        }
+      } catch (error: any) {
+        console.error("Loan repayment error:", error);
+      
+        if (error?.message?.includes("user rejected transaction")) {
+          toast.error("Transaction rejected by user.");
+        } else {
+          toast.error(error?.message || "Unable to pay back loan.");
+        }
+      } finally {
+        setIsClicked(false); 
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, isClicked],
+    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, isClicked]
   );
+  
+  
 
   // Call refetch after loan repayment is confirmed
   useEffect(() => {

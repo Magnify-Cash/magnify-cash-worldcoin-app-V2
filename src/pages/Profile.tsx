@@ -15,7 +15,7 @@ const Dashboard = () => {
 
   // state
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
-  const hasActiveLoan = data?.loan[0] === true;
+  const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
   if (isLoading) {

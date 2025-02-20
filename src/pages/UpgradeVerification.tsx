@@ -38,6 +38,13 @@ const UpgradeVerification = () => {
     nftInfo: ContractData["nftInfo"],
   ) => {
     try {
+
+      console.log("Sending verification request:");
+      console.log("Proof:", proof);
+      console.log("Signal:", ls_wallet);
+      console.log("Action:", action);
+      console.log("Token ID:", nftInfo.tokenId.toString());
+
       const res = await fetch("https://worldid-backend-v2.kevin8396.workers.dev", {
         method: "POST",
         headers: {
@@ -52,6 +59,7 @@ const UpgradeVerification = () => {
       });
       if (!res.ok) {
         const error = await res.json();
+        console.log("1.")
         throw new Error(error.message || "Verification failed");
       }
       const data = await res.json();
@@ -59,6 +67,7 @@ const UpgradeVerification = () => {
       return data;
     } catch (error) {
       console.error("Verification error:", error);
+      console.log("2.")
       throw error;
     }
   };

@@ -165,7 +165,7 @@ const Guide = () => {
               </AccordionItem>
 
               <AccordionItem value="item-6" className="border-b border-gray-200">
-                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors text-center w-full flex justify-center">
                   What is $MAG?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
@@ -186,6 +186,18 @@ const Guide = () => {
                   <a className="text-[#5A1A8F] hover:text-[#1A1E8F] transition-colors underline" href="https://discord.gg/magnifycash">
                     Discord
                   </a>.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-7" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  I&apos;ve encountered an issue. How can I get support?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                Join us on{" "} 
+                <a className="text-[#5A1A8F] hover:text-[#1A1E8F] transition-colors underline" href="https://discord.gg/magnifycash">
+                    Discord
+                  </a>, where you&apos;ll be able to ask questions and raise a Support Ticket so that our team can help you out.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

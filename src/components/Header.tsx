@@ -39,7 +39,7 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
+              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-white h-10 w-10">
                 <svg
                   strokeWidth="1.5"
                   viewBox="0 0 24 24"
@@ -77,7 +77,7 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
             >
               <DropdownMenuLabel>Quick Access</DropdownMenuLabel>
               <DropdownMenuItem
-                className="min-h-[40px]"
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
                 onClick={() => navigate("/welcome")}
               >
                 <Home className="mr-2 h-4 w-4" />
@@ -86,34 +86,34 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
 
               <DropdownMenuLabel>Finance</DropdownMenuLabel>
               <DropdownMenuItem
-                className="min-h-[40px]"
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
                 onClick={() => navigate("/wallet")}
               >
                 Wallet
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="min-h-[40px]"
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
                 onClick={() => navigate("/loan")}
               >
                 Get a Loan
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="min-h-[40px]"
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
                 onClick={() => navigate("/repay-loan")}
               >
-                Repay Loan
+                Loan Status
               </DropdownMenuItem>
               <DropdownMenuSeparator />
 
               <DropdownMenuLabel>Account</DropdownMenuLabel>
               <DropdownMenuItem
-                className="min-h-[40px]"
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
                 onClick={() => navigate("/profile")}
               >
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="min-h-[40px]"
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
                 onClick={() => navigate("/upgrade-verification")}
               >
                 Verification Level
@@ -122,13 +122,13 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
 
               <DropdownMenuLabel>Support</DropdownMenuLabel>
               <DropdownMenuItem
-                className="min-h-[40px]"
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
                 onClick={() => navigate("/announcements")}
               >
                 Announcements
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="min-h-[40px]"
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
                 onClick={() => navigate("/guide")}
               >
                 Help Center

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
 
 const RepayLoan = () => {
+  // States
+  const [isClicked, setIsClicked] = useState(false);
+
   // hooks
   const toast = useToast();
   const navigate = useNavigate();
@@ -36,13 +39,17 @@ const RepayLoan = () => {
   const handleApplyLoan = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
+      if (isClicked) return;
+      setIsClicked(true);
+
       if (data?.nftInfo?.tokenId) {
         await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
       } else {
         toast.error("Unable to pay back loan.");
+        setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue],
+    [data, repayLoanWithPermit2, loanAmountDue, isClicked],
   );
 
   // Call refetch after loan repayment is confirmed
@@ -105,7 +112,7 @@ const RepayLoan = () => {
     const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
     return (
       <div className="min-h-screen bg-background">
-        <Header title="Repay Loan" />
+        <Header title="Loan Status" />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
@@ -116,10 +123,10 @@ const RepayLoan = () => {
               <span
                 className={`px-3 py-1 rounded-full ${minutesRemaining !== 0 ? "bg-green-300" : "bg-red-300"} text-black text-sm`}
               >
-                {daysRemaining === 0 && hoursRemaining === 0 && minutesRemaining === 0
-                  ? "defaulted"
-                  : "active"}{" "}
-                loan
+                  {daysRemaining === 0 && hoursRemaining === 0 && minutesRemaining === 0
+                    ? "Defaulted"
+                    : "Active"}{" "}
+                  Loan
               </span>
             </div>
 
@@ -144,10 +151,12 @@ const RepayLoan = () => {
                   <p className="text-sm text-muted-foreground text-start">Due Date</p>
                   <p className="text-start font-semibold">
                     {new Date(dueDate).toLocaleDateString("en-US", {
-                      timeZone: "UTC",
                       day: "2-digit",
                       month: "short",
                       hour: "2-digit",
+                      minute: "2-digit",
+                      timeZoneName: "short", 
+                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     })}
                   </p>{" "}
                 </div>
@@ -165,7 +174,7 @@ const RepayLoan = () => {
             <Button
               onClick={handleApplyLoan}
               className="w-full primary-button"
-              disabled={isConfirming || isConfirmed}
+              disabled={isClicked || isConfirming || isConfirmed}
             >
               {isConfirming ? <>Confirming...</> : isConfirmed ? <>Confirmed</> : <>Repay Loan</>}
             </Button>

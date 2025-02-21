@@ -60,7 +60,7 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, isClicked]
+    [data, repayLoanWithPermit2, loanAmountDue, loanVersion]
   );
   
   

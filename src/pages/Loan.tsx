@@ -37,7 +37,6 @@ const Loan = () => {
       }
       } catch (error: any) {
         console.error("Loan application error:", error);
-
         if (error?.message?.includes("user rejected transaction")) {
           toast.error("Transaction rejected by user.");
         } else {
@@ -46,9 +45,8 @@ const Loan = () => {
       } finally {
         setIsClicked(false);
       }
-
     },
-    [data, requestNewLoan, isClicked, toast],
+    [data, requestNewLoan, toast],
   );
 
   // Handle navigation after claiming loan

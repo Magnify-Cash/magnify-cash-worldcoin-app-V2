@@ -34,19 +34,19 @@ const Loan = () => {
           await requestNewLoan(requestedTierId);
       } else {
         toast.error("Unable to apply for loan. Ensure you have a verified NFT.");
-        setIsClicked(false);
       }
       } catch (error: any) {
         console.error("Loan application error:", error);
-        setIsClicked(false);
         if (error?.message?.includes("user rejected transaction")) {
           toast.error("Transaction rejected by user.");
         } else {
           toast.error(error?.message || "Unable to pay back loan.");
         }
+      } finally {
+        setIsClicked(false);
       }
     },
-    [data, requestNewLoan, isClicked, toast],
+    [data, requestNewLoan, toast],
   );
 
   // Handle navigation after claiming loan

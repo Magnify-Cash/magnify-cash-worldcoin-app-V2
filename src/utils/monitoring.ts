@@ -13,20 +13,16 @@ export const initializeMonitoring = () => {
   }
 
   const allowedWallets = [
-    "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c", // Kevin
-    // "0x7af5e0de231d82def3bc262b1d5b3359495a4bfb", // Jay
-    "0xf0c7db5acea62029058b0e4e0b79f2bac18686c4" // Daniel
+    "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c",
+    "0x7af5e0de231d82def3bc262b1d5b3359495a4bfb",
+    "0xf0c7db5acea62029058b0e4e0b79f2bac18686c4"
   ];
 
   // Hard-coded to developer's wallet address
-  console.log('Checking for Eruda');
   const ls_wallet = localStorage.getItem("ls_wallet_address");
-  console.log(ls_wallet);
   if (allowedWallets.includes(ls_wallet)) {
-    console.log('Eruda initialise');
     eruda.init();
   }
-  console.log('Finish Eruda');
 };
 
 // Custom logger with different log levels

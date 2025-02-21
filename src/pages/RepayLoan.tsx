@@ -48,17 +48,16 @@ const RepayLoan = () => {
           await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
         } else {
           toast.error("Unable to pay back loan.");
+          setIsClicked(false);
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
-      
+        setIsClicked(false);
         if (error?.message?.includes("user rejected transaction")) {
           toast.error("Transaction rejected by user.");
         } else {
           toast.error(error?.message || "Unable to pay back loan.");
         }
-      } finally {
-        setIsClicked(false); 
       }
     },
     [data, repayLoanWithPermit2, loanAmountDue, loanVersion, isClicked]

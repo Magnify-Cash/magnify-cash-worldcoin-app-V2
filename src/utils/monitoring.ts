@@ -11,18 +11,12 @@ export const initializeMonitoring = () => {
       environment: import.meta.env.MODE,
     });
   }
-
-  const allowedWallets = [
-    "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c", // Kevin
-    "0x7af5e0de231d82def3bc262b1d5b3359495a4bfb", // Jay
-    "0xf0c7db5acea62029058b0e4e0b79f2bac18686c4" // Daniel
-  ];
-
   // Hard-coded to developer's wallet address
   const ls_wallet = localStorage.getItem("ls_wallet_address");
-  if (allowedWallets.includes(ls_wallet)) {
+  if (ls_wallet === "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c") {
     eruda.init();
   }
+  //eruda.init();
 };
 
 // Custom logger with different log levels

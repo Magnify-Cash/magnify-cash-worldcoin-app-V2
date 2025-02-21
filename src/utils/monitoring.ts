@@ -19,10 +19,14 @@ export const initializeMonitoring = () => {
   ];
 
   // Hard-coded to developer's wallet address
+  console.log('Checking for Eruda');
   const ls_wallet = localStorage.getItem("ls_wallet_address");
+  console.log(ls_wallet);
   if (allowedWallets.includes(ls_wallet)) {
+    console.log('Eruda initialise');
     eruda.init();
   }
+  console.log('Finish Eruda');
 };
 
 // Custom logger with different log levels

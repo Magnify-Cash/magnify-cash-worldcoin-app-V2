@@ -55,8 +55,10 @@ const RepayLoan = () => {
         setIsClicked(false);
         if (error?.message?.includes("user rejected transaction")) {
           toast.error("Transaction rejected by user.");
+          setIsClicked(false);
         } else {
           toast.error(error?.message || "Unable to pay back loan.");
+          setIsClicked(false);
         }
       }
     },

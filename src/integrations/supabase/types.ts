@@ -9,791 +9,92 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      ai_agent_metrics: {
+      announcements: {
         Row: {
-          completion_tokens: number | null
-          context_tokens: number | null
-          created_at: string
-          effectiveness_score: number | null
-          feedback: Json | null
-          id: number
-          market_context: Json | null
-          message_id: number | null
-          response_time_ms: number | null
-          tokens_total: number | null
-        }
-        Insert: {
-          completion_tokens?: number | null
-          context_tokens?: number | null
-          created_at?: string
-          effectiveness_score?: number | null
-          feedback?: Json | null
-          id?: number
-          market_context?: Json | null
-          message_id?: number | null
-          response_time_ms?: number | null
-          tokens_total?: number | null
-        }
-        Update: {
-          completion_tokens?: number | null
-          context_tokens?: number | null
-          created_at?: string
-          effectiveness_score?: number | null
-          feedback?: Json | null
-          id?: number
-          market_context?: Json | null
-          message_id?: number | null
-          response_time_ms?: number | null
-          tokens_total?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_agent_metrics_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "chat_messages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_conversations: {
-        Row: {
-          context: Json | null
-          created_at: string
-          id: number
-          metadata: Json | null
-          user_session_id: string
-        }
-        Insert: {
-          context?: Json | null
-          created_at?: string
-          id?: number
-          metadata?: Json | null
-          user_session_id: string
-        }
-        Update: {
-          context?: Json | null
-          created_at?: string
-          id?: number
-          metadata?: Json | null
-          user_session_id?: string
-        }
-        Relationships: []
-      }
-      chat_messages: {
-        Row: {
+          action: string | null
           content: string
-          conversation_id: number | null
           created_at: string
+          created_by: string | null
+          date: string
           id: number
-          metadata: Json | null
-          role: string
-          tokens_used: number | null
+          is_highlighted: boolean
+          is_new: boolean
+          title: string
+          type: Database["public"]["Enums"]["announcement_type"]
         }
         Insert: {
+          action?: string | null
           content: string
-          conversation_id?: number | null
           created_at?: string
+          created_by?: string | null
+          date?: string
           id?: number
-          metadata?: Json | null
-          role: string
-          tokens_used?: number | null
+          is_highlighted?: boolean
+          is_new?: boolean
+          title: string
+          type?: Database["public"]["Enums"]["announcement_type"]
         }
         Update: {
+          action?: string | null
           content?: string
-          conversation_id?: number | null
           created_at?: string
+          created_by?: string | null
+          date?: string
           id?: number
-          metadata?: Json | null
-          role?: string
-          tokens_used?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "chat_conversations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_queries: {
-        Row: {
-          conversation_id: number | null
-          created_at: string
-          effectiveness_score: number | null
-          id: number
-          metadata: Json | null
-          processing_time_ms: number | null
-          query: string
-          response: string | null
-          tokens_used: number | null
-        }
-        Insert: {
-          conversation_id?: number | null
-          created_at?: string
-          effectiveness_score?: number | null
-          id?: number
-          metadata?: Json | null
-          processing_time_ms?: number | null
-          query: string
-          response?: string | null
-          tokens_used?: number | null
-        }
-        Update: {
-          conversation_id?: number | null
-          created_at?: string
-          effectiveness_score?: number | null
-          id?: number
-          metadata?: Json | null
-          processing_time_ms?: number | null
-          query?: string
-          response?: string | null
-          tokens_used?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_queries_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "chat_conversations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      crypto_news: {
-        Row: {
-          categories: string[] | null
-          created_at: string
-          id: number
-          published_at: string
-          raw_data: Json | null
-          sentiment: number | null
-          source: string
-          title: string
-          url: string
-        }
-        Insert: {
-          categories?: string[] | null
-          created_at?: string
-          id?: number
-          published_at: string
-          raw_data?: Json | null
-          sentiment?: number | null
-          source: string
-          title: string
-          url: string
-        }
-        Update: {
-          categories?: string[] | null
-          created_at?: string
-          id?: number
-          published_at?: string
-          raw_data?: Json | null
-          sentiment?: number | null
-          source?: string
+          is_highlighted?: boolean
+          is_new?: boolean
           title?: string
-          url?: string
+          type?: Database["public"]["Enums"]["announcement_type"]
         }
         Relationships: []
       }
-      defi_llama_news: {
+      user_announcement_reads: {
         Row: {
-          category: string | null
-          created_at: string
-          id: number
-          link: string
-          published_at: string
-          raw_data: Json | null
-          sentiment: number | null
-          source: string
-          title: string
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string
-          id?: number
-          link: string
-          published_at: string
-          raw_data?: Json | null
-          sentiment?: number | null
-          source: string
-          title: string
-        }
-        Update: {
-          category?: string | null
-          created_at?: string
-          id?: number
-          link?: string
-          published_at?: string
-          raw_data?: Json | null
-          sentiment?: number | null
-          source?: string
-          title?: string
-        }
-        Relationships: []
-      }
-      defi_llama_protocols: {
-        Row: {
-          category: string | null
-          change_1d: number | null
-          change_1h: number | null
-          change_7d: number | null
-          created_at: string
-          derivatives: number | null
-          id: number
-          name: string
-          protocol_id: string
-          raw_data: Json | null
-          staking: number | null
-          symbol: string | null
-          tvl: number | null
-        }
-        Insert: {
-          category?: string | null
-          change_1d?: number | null
-          change_1h?: number | null
-          change_7d?: number | null
-          created_at?: string
-          derivatives?: number | null
-          id?: number
-          name: string
-          protocol_id: string
-          raw_data?: Json | null
-          staking?: number | null
-          symbol?: string | null
-          tvl?: number | null
-        }
-        Update: {
-          category?: string | null
-          change_1d?: number | null
-          change_1h?: number | null
-          change_7d?: number | null
-          created_at?: string
-          derivatives?: number | null
-          id?: number
-          name?: string
-          protocol_id?: string
-          raw_data?: Json | null
-          staking?: number | null
-          symbol?: string | null
-          tvl?: number | null
-        }
-        Relationships: []
-      }
-      defi_market_data: {
-        Row: {
-          coin_id: string
-          created_at: string
-          current_price: number | null
-          id: number
-          market_cap: number | null
-          name: string
-          price_change_24h: number | null
-          price_change_percentage_24h: number | null
-          raw_data: Json | null
-          symbol: string
-          total_value_locked: number | null
-          total_volume: number | null
-        }
-        Insert: {
-          coin_id: string
-          created_at?: string
-          current_price?: number | null
-          id?: number
-          market_cap?: number | null
-          name: string
-          price_change_24h?: number | null
-          price_change_percentage_24h?: number | null
-          raw_data?: Json | null
-          symbol: string
-          total_value_locked?: number | null
-          total_volume?: number | null
-        }
-        Update: {
-          coin_id?: string
-          created_at?: string
-          current_price?: number | null
-          id?: number
-          market_cap?: number | null
-          name?: string
-          price_change_24h?: number | null
-          price_change_percentage_24h?: number | null
-          raw_data?: Json | null
-          symbol?: string
-          total_value_locked?: number | null
-          total_volume?: number | null
-        }
-        Relationships: []
-      }
-      defi_market_data_partitioned: {
-        Row: {
-          coin_id: string
-          created_at: string
-          current_price: number | null
-          id: number
-          market_cap: number | null
-          name: string
-          price_change_24h: number | null
-          price_change_percentage_24h: number | null
-          raw_data: Json | null
-          symbol: string
-          total_value_locked: number | null
-          total_volume: number | null
-        }
-        Insert: {
-          coin_id: string
-          created_at: string
-          current_price?: number | null
-          id: number
-          market_cap?: number | null
-          name: string
-          price_change_24h?: number | null
-          price_change_percentage_24h?: number | null
-          raw_data?: Json | null
-          symbol: string
-          total_value_locked?: number | null
-          total_volume?: number | null
-        }
-        Update: {
-          coin_id?: string
-          created_at?: string
-          current_price?: number | null
-          id?: number
-          market_cap?: number | null
-          name?: string
-          price_change_24h?: number | null
-          price_change_percentage_24h?: number | null
-          raw_data?: Json | null
-          symbol?: string
-          total_value_locked?: number | null
-          total_volume?: number | null
-        }
-        Relationships: []
-      }
-      defi_market_data_y2024m01: {
-        Row: {
-          coin_id: string
-          created_at: string
-          current_price: number | null
-          id: number
-          market_cap: number | null
-          name: string
-          price_change_24h: number | null
-          price_change_percentage_24h: number | null
-          raw_data: Json | null
-          symbol: string
-          total_value_locked: number | null
-          total_volume: number | null
-        }
-        Insert: {
-          coin_id: string
-          created_at: string
-          current_price?: number | null
-          id: number
-          market_cap?: number | null
-          name: string
-          price_change_24h?: number | null
-          price_change_percentage_24h?: number | null
-          raw_data?: Json | null
-          symbol: string
-          total_value_locked?: number | null
-          total_volume?: number | null
-        }
-        Update: {
-          coin_id?: string
-          created_at?: string
-          current_price?: number | null
-          id?: number
-          market_cap?: number | null
-          name?: string
-          price_change_24h?: number | null
-          price_change_percentage_24h?: number | null
-          raw_data?: Json | null
-          symbol?: string
-          total_value_locked?: number | null
-          total_volume?: number | null
-        }
-        Relationships: []
-      }
-      defi_market_data_y2024m02: {
-        Row: {
-          coin_id: string
-          created_at: string
-          current_price: number | null
-          id: number
-          market_cap: number | null
-          name: string
-          price_change_24h: number | null
-          price_change_percentage_24h: number | null
-          raw_data: Json | null
-          symbol: string
-          total_value_locked: number | null
-          total_volume: number | null
-        }
-        Insert: {
-          coin_id: string
-          created_at: string
-          current_price?: number | null
-          id: number
-          market_cap?: number | null
-          name: string
-          price_change_24h?: number | null
-          price_change_percentage_24h?: number | null
-          raw_data?: Json | null
-          symbol: string
-          total_value_locked?: number | null
-          total_volume?: number | null
-        }
-        Update: {
-          coin_id?: string
-          created_at?: string
-          current_price?: number | null
-          id?: number
-          market_cap?: number | null
-          name?: string
-          price_change_24h?: number | null
-          price_change_percentage_24h?: number | null
-          raw_data?: Json | null
-          symbol?: string
-          total_value_locked?: number | null
-          total_volume?: number | null
-        }
-        Relationships: []
-      }
-      "etherscan scraper": {
-        Row: {
-          address: string | null
-          created_at: string
-          holders: number | null
-          id: number
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string
-          holders?: number | null
-          id?: number
-        }
-        Update: {
-          address?: string | null
-          created_at?: string
-          holders?: number | null
-          id?: number
-        }
-        Relationships: []
-      }
-      etherscan_scraper: {
-        Row: {
-          address: string | null
-          created_at: string
-          holders: number | null
-          id: number
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string
-          holders?: number | null
-          id?: number
-        }
-        Update: {
-          address?: string | null
-          created_at?: string
-          holders?: number | null
-          id?: number
-        }
-        Relationships: []
-      }
-      jays_work: {
-        Row: {
-          created_at: string
-          description: string | null
-          due_date: string | null
-          id: number
-          metadata: Json | null
-          priority: number
-          status: string
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          due_date?: string | null
-          id?: number
-          metadata?: Json | null
-          priority?: number
-          status?: string
-          title: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          due_date?: string | null
-          id?: number
-          metadata?: Json | null
-          priority?: number
-          status?: string
-          title?: string
-        }
-        Relationships: []
-      }
-      liquidity_pools: {
-        Row: {
-          apy: number
-          created_at: string
-          id: number
-          metadata: Json | null
-          name: string
-          token_a: string
-          token_a_amount: number
-          token_b: string
-          token_b_amount: number
-          total_value_locked: number
-          updated_at: string
-        }
-        Insert: {
-          apy?: number
-          created_at?: string
-          id?: number
-          metadata?: Json | null
-          name: string
-          token_a: string
-          token_a_amount?: number
-          token_b: string
-          token_b_amount?: number
-          total_value_locked?: number
-          updated_at?: string
-        }
-        Update: {
-          apy?: number
-          created_at?: string
-          id?: number
-          metadata?: Json | null
-          name?: string
-          token_a?: string
-          token_a_amount?: number
-          token_b?: string
-          token_b_amount?: number
-          total_value_locked?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      mag_rewards: {
-        Row: {
-          amount: number
-          claim_deadline: string | null
-          claimed: boolean
-          created_at: string
-          id: number
-          metadata: Json | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount?: number
-          claim_deadline?: string | null
-          claimed?: boolean
-          created_at?: string
-          id?: number
-          metadata?: Json | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          claim_deadline?: string | null
-          claimed?: boolean
-          created_at?: string
-          id?: number
-          metadata?: Json | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      mag_token_analytics: {
-        Row: {
-          circulating_supply: number | null
-          created_at: string
-          holders_count: number | null
-          id: number
-          market_cap: number | null
-          price: number | null
-          raw_data: Json | null
-          total_supply: number | null
-          transactions_24h: number | null
-          volume_24h: number | null
-        }
-        Insert: {
-          circulating_supply?: number | null
-          created_at?: string
-          holders_count?: number | null
-          id?: number
-          market_cap?: number | null
-          price?: number | null
-          raw_data?: Json | null
-          total_supply?: number | null
-          transactions_24h?: number | null
-          volume_24h?: number | null
-        }
-        Update: {
-          circulating_supply?: number | null
-          created_at?: string
-          holders_count?: number | null
-          id?: number
-          market_cap?: number | null
-          price?: number | null
-          raw_data?: Json | null
-          total_supply?: number | null
-          transactions_24h?: number | null
-          volume_24h?: number | null
-        }
-        Relationships: []
-      }
-      token_metadata: {
-        Row: {
-          categories: string[] | null
-          coingecko_id: string | null
-          created_at: string
-          description: string | null
-          id: number
-          last_updated: string | null
-          market_data: Json | null
-          metadata: Json | null
-          name: string
-          platforms: Json | null
-          symbol: string
-        }
-        Insert: {
-          categories?: string[] | null
-          coingecko_id?: string | null
-          created_at?: string
-          description?: string | null
-          id?: number
-          last_updated?: string | null
-          market_data?: Json | null
-          metadata?: Json | null
-          name: string
-          platforms?: Json | null
-          symbol: string
-        }
-        Update: {
-          categories?: string[] | null
-          coingecko_id?: string | null
-          created_at?: string
-          description?: string | null
-          id?: number
-          last_updated?: string | null
-          market_data?: Json | null
-          metadata?: Json | null
-          name?: string
-          platforms?: Json | null
-          symbol?: string
-        }
-        Relationships: []
-      }
-      transactions: {
-        Row: {
-          amount: number
-          created_at: string
-          currency: string
-          id: number
-          metadata: Json | null
-          status: string
-          type: string
+          announcement_id: number | null
+          id: string
+          read_at: string | null
           user_id: string | null
         }
         Insert: {
-          amount: number
-          created_at?: string
-          currency: string
-          id?: number
-          metadata?: Json | null
-          status?: string
-          type: string
+          announcement_id?: number | null
+          id?: string
+          read_at?: string | null
           user_id?: string | null
         }
         Update: {
-          amount?: number
-          created_at?: string
-          currency?: string
-          id?: number
-          metadata?: Json | null
-          status?: string
-          type?: string
+          announcement_id?: number | null
+          id?: string
+          read_at?: string | null
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      user_pool_positions: {
-        Row: {
-          created_at: string
-          id: number
-          pool_id: number
-          token_a_amount: number
-          token_b_amount: number
-          total_value_locked: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          pool_id: number
-          token_a_amount?: number
-          token_b_amount?: number
-          total_value_locked?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          pool_id?: number
-          token_a_amount?: number
-          token_b_amount?: number
-          total_value_locked?: number
-          updated_at?: string
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_pool_positions_pool_id_fkey"
-            columns: ["pool_id"]
+            foreignKeyName: "user_announcement_reads_announcement_id_fkey"
+            columns: ["announcement_id"]
             isOneToOne: false
-            referencedRelation: "liquidity_pools"
+            referencedRelation: "announcements"
             referencedColumns: ["id"]
           },
         ]
       }
-      wallet_balances: {
+      user_roles: {
         Row: {
-          balance: string
           created_at: string
-          currency: string
-          id: number
-          symbol: string
-          updated_at: string
-          user_id: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Insert: {
-          balance: string
           created_at?: string
-          currency: string
-          id?: number
-          symbol: string
-          updated_at?: string
-          user_id?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Update: {
-          balance?: string
           created_at?: string
-          currency?: string
-          id?: number
-          symbol?: string
-          updated_at?: string
-          user_id?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -802,10 +103,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          role_to_check: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      announcement_type: "new-feature" | "security" | "update" | "announcement"
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never

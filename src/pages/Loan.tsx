@@ -9,6 +9,9 @@ import useRequestLoan from "@/hooks/useRequestLoan";
 import { Button } from "@/components/ui/button";
 
 const Loan = () => {
+  // States
+  const [isClicked, setIsClicked] = useState(false);
+
   // hooks
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -23,13 +26,29 @@ const Loan = () => {
   const handleApplyLoan = useCallback(
     async (requestedTierId: bigint) => {
       event.preventDefault();
-      if (data?.nftInfo?.tokenId) {
-        await requestNewLoan(requestedTierId);
+      if (isClicked) return;
+      setIsClicked(true);
+
+      try{
+        if (data?.nftInfo?.tokenId) {
+          await requestNewLoan(requestedTierId);
       } else {
-        alert("Unable to apply for loan. Ensure you have a verified NFT.");
+        toast.error("Unable to apply for loan. Ensure you have a verified NFT.");
       }
+      } catch (error: any) {
+        console.error("Loan application error:", error);
+
+        if (error?.message?.includes("user rejected transaction")) {
+          toast.error("Transaction rejected by user.");
+        } else {
+          toast.error(error?.message || "Unable to pay back loan.");
+        }
+      } finally {
+        setIsClicked(false);
+      }
+
     },
-    [data, requestNewLoan],
+    [data, requestNewLoan, isClicked, toast],
   );
 
   // Handle navigation after claiming loan
@@ -87,7 +106,6 @@ const Loan = () => {
               Repay Loan
             </Button>
           </div>
-          ;
         </div>
       </div>
     );
@@ -121,7 +139,7 @@ const Loan = () => {
                     </div>
                     <Button
                       onClick={() => handleApplyLoan(tier.tierId)}
-                      disabled={isConfirming || isConfirmed}
+                      disabled={isClicked || isConfirming || isConfirmed}
                       className="w-full"
                     >
                       {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Apply Now"}

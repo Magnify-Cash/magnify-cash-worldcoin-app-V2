@@ -1,9 +1,32 @@
+
 import type { AIAgentMetric, ChatMessage, ChatConversation, ChatQuery } from './chat';
 import type { DefiMarketData, DefiLlamaProtocol, DefiLlamaNews } from './defi';
 import type { TokenMetadata, MagTokenAnalytics } from './token';
 import type { LiquidityPool, UserPoolPosition } from './liquidity';
 import type { MagRewards } from './rewards';
 import type { Transaction, WalletBalance } from '../wallet';
+
+export type AnnouncementType = 'new-feature' | 'security' | 'update' | 'announcement';
+
+export interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  date: string;
+  type: AnnouncementType;
+  action?: string | null;
+  is_highlighted: boolean;
+  is_new: boolean;
+  created_at: string;
+  created_by?: string | null;
+}
+
+export interface UserAnnouncementRead {
+  id: string;
+  user_id: string;
+  announcement_id: number;
+  read_at: string;
+}
 
 export interface Database {
   public: {
@@ -77,6 +100,16 @@ export interface Database {
         Row: WalletBalance;
         Insert: Omit<WalletBalance, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<WalletBalance, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      announcements: {
+        Row: Announcement;
+        Insert: Omit<Announcement, 'id' | 'created_at'>;
+        Update: Partial<Omit<Announcement, 'id' | 'created_at'>>;
+      };
+      user_announcement_reads: {
+        Row: UserAnnouncementRead;
+        Insert: Omit<UserAnnouncementRead, 'id' | 'read_at'>;
+        Update: Partial<Omit<UserAnnouncementRead, 'id' | 'read_at'>>;
       };
     };
     Views: Record<string, never>;

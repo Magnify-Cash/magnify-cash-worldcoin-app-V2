@@ -15,7 +15,7 @@ const Dashboard = () => {
 
   // state
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
-  const hasActiveLoan = data?.loan[0] === true;
+  const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
   if (isLoading) {
@@ -139,10 +139,10 @@ const Dashboard = () => {
                         </div>
                         <div
                           className={`px-3 py-1 rounded-full text-sm my-3 ${
-                            hasActiveLoan ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
+                            hasActiveLoan ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
                           }`}
                         >
-                          {hasActiveLoan ? "Locked as Collateral" : "Available for Collateral"}
+                          {hasActiveLoan ? "Used for Collateral" : "Available for Collateral"}
                         </div>
                       </div>
                     </Card>

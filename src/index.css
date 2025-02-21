@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,10 +12,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     
-    --primary: 0 100% 73%;
+    --primary: 240 82% 33%;
     --primary-foreground: 210 40% 98%;
-    --primary-light: 0 100% 80%;
-    --primary-dark: 0 100% 66%;
+    --primary-light: 271 69% 33%;
+    --primary-dark: 329 71% 37%;
     
     --secondary: 217 91% 60%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -24,10 +25,10 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     
-    --accent: 0 100% 73%;
+    --accent: 240 82% 33%;
     --accent-foreground: 222.2 47.4% 11.2%;
-    --accent-light: 0 100% 80%;
-    --accent-dark: 0 100% 66%;
+    --accent-light: 271 69% 33%;
+    --accent-dark: 329 71% 37%;
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -90,10 +91,10 @@
 }
 
 .glass-button {
-  @apply bg-[#FF7777] hover:bg-[#FF5555] text-white font-medium 
+  @apply bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-white font-medium 
          py-3 px-6 rounded-xl transition-all duration-300 
          shadow-lg hover:shadow-xl disabled:opacity-50 
-         disabled:cursor-not-allowed;
+         disabled:cursor-not-allowed hover:opacity-90;
 }
 
 .tip-card {
@@ -120,7 +121,7 @@ html {
 /* Custom utility classes */
 .text-gradient {
   @apply bg-clip-text text-transparent bg-gradient-to-r 
-         from-[#FF7777] via-[#FF9999] to-[#FF5555] animate-gradient;
+         from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] animate-gradient;
 }
 
 .hover-lift {

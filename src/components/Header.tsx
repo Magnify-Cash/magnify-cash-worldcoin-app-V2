@@ -1,3 +1,4 @@
+
 import { ArrowLeft, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -24,19 +25,21 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
           {showBack ? (
             <button
               onClick={() => navigate(-1)}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
           ) : (
-            <div className="w-9" />
+            <div className="w-10" />
           )}
 
-          <h1 className="text-lg font-semibold">{title}</h1>
+          <h1 className="text-base sm:text-lg font-semibold truncate max-w-[200px] sm:max-w-none">
+            {title}
+          </h1>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9">
+              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-white h-10 w-10">
                 <svg
                   strokeWidth="1.5"
                   viewBox="0 0 24 24"
@@ -68,29 +71,68 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
                 </svg>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent
+              align="end"
+              className="w-56 bg-white/95 backdrop-blur-sm"
+            >
               <DropdownMenuLabel>Quick Access</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate("/welcome")}>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/welcome")}
+              >
                 <Home className="mr-2 h-4 w-4" />
                 Welcome
               </DropdownMenuItem>
 
               <DropdownMenuLabel>Finance</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate("/wallet")}>Wallet</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/loan")}>Get a Loan</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/repay-loan")}>Repay Loan</DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/wallet")}
+              >
+                Wallet
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/loan")}
+              >
+                Get a Loan
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/repay-loan")}
+              >
+                Loan Status
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
 
               <DropdownMenuLabel>Account</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate("/profile")}>Profile</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/upgrade-verification")}>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/profile")}
+              >
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/upgrade-verification")}
+              >
                 Verification Level
               </DropdownMenuItem>
               <DropdownMenuSeparator />
 
               <DropdownMenuLabel>Support</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate("/announcements")}>Announcements</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/guide")}>Help Center</DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/announcements")}
+              >
+                Announcements
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/guide")}
+              >
+                Help Center
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

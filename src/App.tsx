@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Welcome from "@/pages/Welcome";
 import Guide from "@/pages/Guide";
@@ -21,14 +22,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/welcome" replace />} />
           <Route path="/welcome" element={<Welcome />} />
-          <Route
-            path="/announcements"
-            element={
-              <ProtectedRoute>
-                <Announcements />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/announcements" element={<Announcements />} />
           <Route
             path="/guide"
             element={

@@ -183,7 +183,11 @@ const useRepayLoan = () => {
         });
       } else {
         console.error("Error sending transaction", finalPayload, commandPayload);
-        setError(`Transaction failed: ${finalPayload.details.simulationError.split("string: ")[1]}`);
+        if (finalPayload.error_code === "user_rejected") {
+          setError(`User rejected transaction`);
+        } else {
+          setError(`Transaction failed: ${finalPayload.details.simulationError.split("string: ")[1]}`);
+        }
       }
     } catch (err) {
       console.error("Error sending transaction", err);

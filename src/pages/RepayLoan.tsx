@@ -51,17 +51,16 @@ const RepayLoan = () => {
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
-      
         if (error?.message?.includes("user rejected transaction")) {
           toast.error("Transaction rejected by user.");
         } else {
           toast.error(error?.message || "Unable to pay back loan.");
         }
       } finally {
-        setIsClicked(false); 
+        setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, isClicked]
+    [data, repayLoanWithPermit2, loanAmountDue, loanVersion]
   );
   
   

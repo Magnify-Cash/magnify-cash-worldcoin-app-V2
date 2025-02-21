@@ -23,7 +23,6 @@ const useRequestLoan = () => {
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
   });
 
-  // Use the hook at the top level of your custom hook
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
       client: client,
@@ -33,15 +32,21 @@ const useRequestLoan = () => {
       },
     });
 
+  // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
-    setIsConfirming(isConfirmingTransaction);
-    setIsConfirmed(isTransactionConfirmed);
+    if (isConfirmingTransaction) {
+      setIsConfirming(true);
+    }
+    if (isTransactionConfirmed) {
+      setIsConfirming(false);
+      setIsConfirmed(true);
+    }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
   const requestNewLoan = useCallback(async (requestedTierId: bigint) => {
     setError(null);
     setTransactionId(null);
-    setIsConfirming(false);
+    setIsConfirming(true);
     setIsConfirmed(false);
     setLoanDetails(null);
 
@@ -74,7 +79,7 @@ const useRequestLoan = () => {
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
         console.log("Loan initialization transaction sent:", finalPayload.transaction_id);
-        // Optional: Fetch loan details if available from the transaction response
+        
         setLoanDetails({
           amount: 1000, // Replace with actual logic if amount comes from transaction or another source
           duration: 30, // Replace with actual logic for duration
@@ -82,15 +87,13 @@ const useRequestLoan = () => {
         });
       } else {
         console.error("Error sending transaction", finalPayload);
-        if (finalPayload.error_code === "user_rejected") {
-          setError(`User rejected transaction`);
-        } else {
-          setError(`Transaction failed: ${finalPayload.details.simulationError.split("string: ")[1]}`);
-        }
+        setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
+        setIsConfirming(false);
       }
     } catch (err) {
       console.error("Error sending transaction", err);
       setError(`Transaction failed: ${(err as Error).message}`);
+      setIsConfirming(false);
     }
   }, []);
 

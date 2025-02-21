@@ -33,6 +33,7 @@ const useRepayLoan = () => {
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
+
   const client = createPublicClient({
     chain: worldchain,
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
@@ -47,23 +48,29 @@ const useRepayLoan = () => {
       },
     });
 
+  // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
-    setIsConfirming(isConfirmingTransaction);
-    setIsConfirmed(isTransactionConfirmed);
+    if (isConfirmingTransaction) {
+      setIsConfirming(true);
+    }
+    if (isTransactionConfirmed) {
+      setIsConfirming(false);
+      setIsConfirmed(true);
+    }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
   const repayLoanWithPermit2 = useCallback(async (loanAmount: string, V1OrV2: string) => {
     setError(null);
     setTransactionId(null);
-    setIsConfirming(false);
+    setIsConfirming(true); // Ensure the button is disabled immediately
     setIsConfirmed(false);
     setLoanDetails(null);
+
     const CONTRACT_ADDRESS = getContractAddress(V1OrV2);
 
     try {
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
 
-      // Create Permit2 transfer parameters
       const permitTransfer = {
         permitted: {
           token: WORLDCOIN_TOKEN_COLLATERAL,
@@ -73,13 +80,11 @@ const useRepayLoan = () => {
         deadline,
       };
 
-      // Format transfer details
       const transferDetails = {
         to: CONTRACT_ADDRESS,
         requestedAmount: loanAmount,
       };
 
-      // Format arguments for the contract call
       const permitTransferArgsForm = [
         [permitTransfer.permitted.token, permitTransfer.permitted.amount],
         permitTransfer.nonce,
@@ -87,7 +92,7 @@ const useRepayLoan = () => {
       ];
 
       const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
-      console.log(CONTRACT_ADDRESS);
+
       console.log(`Interacting with ${V1OrV2} via ${CONTRACT_ADDRESS}`);
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
@@ -183,15 +188,13 @@ const useRepayLoan = () => {
         });
       } else {
         console.error("Error sending transaction", finalPayload, commandPayload);
-        if (finalPayload.error_code === "user_rejected") {
-          setError(`User rejected transaction`);
-        } else {
-          setError(`Transaction failed: ${finalPayload.details.simulationError.split("string: ")[1]}`);
-        }
+        setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
+        setIsConfirming(false); // Reset `isConfirming` in case of error
       }
     } catch (err) {
       console.error("Error sending transaction", err);
       setError(`Transaction failed: ${(err as Error).message}`);
+      setIsConfirming(false); // Reset `isConfirming` in case of error
     }
   }, []);
 

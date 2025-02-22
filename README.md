@@ -36,7 +36,6 @@ Magnify World App V2 is a modern DeFi dashboard and lending platform that integr
   - Adaptable design for mobile, tablet, and desktop experiences.
 - **Monitoring & Analytics**  
   - Sentry integration for production error tracking.
-  - Eruda debugging for selected developer wallet addresses.
 
 ## Technical Stack
 

@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import useRequestLoan from "@/hooks/useRequestLoan";
 import { Button } from "@/components/ui/button";
+import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
 
 const Loan = () => {
   // States
@@ -19,6 +20,8 @@ const Loan = () => {
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet);
   const { requestNewLoan, error, transactionId, isConfirming, isConfirmed } = useRequestLoan();
 
+  const { usdcBalance, hasMoreThanOne, refreshBalance } = useUSDCBalance();
+
   // state
   const hasActiveLoan = data?.loan[0] !== "";
 
@@ -30,6 +33,13 @@ const Loan = () => {
       setIsClicked(true);
 
       try{
+        await refreshBalance();
+
+        if (!hasMoreThanOne) {
+          toast.error("Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.");
+          return;
+        }
+
         if (data?.nftInfo?.tokenId) {
           await requestNewLoan(requestedTierId);
       } else {
@@ -46,7 +56,7 @@ const Loan = () => {
         setIsClicked(false);
       }
     },
-    [data, requestNewLoan, toast],
+    [data, requestNewLoan, toast, hasMoreThanOne, refreshBalance]
   );
 
   // Handle navigation after claiming loan
@@ -117,6 +127,14 @@ const Loan = () => {
         <div className="p-6 space-y-6">
           <div className="glass-card p-6">
             <h2 className="text-lg font-semibold text-center">Current Loan Eligibility</h2>
+
+            <div className="text-center mt-4">
+              <p>Liquidity: {usdcBalance !== null ? `${usdcBalance} USDC` : "Loading..."}</p>
+              <p className={hasMoreThanOne ? "text-green-600" : "text-red-600"}>
+                {hasMoreThanOne ? "✅ Loan Available" : "❌ Loan Unavailable"}
+              </p>
+            </div>
+
             {Object.entries(data?.allTiers || {}).map(([index, tier]) => {
               if (tier.verificationStatus.level !== "Passport" && data?.nftInfo.tier.tierId >= tier.tierId) {
                 return (

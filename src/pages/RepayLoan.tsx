@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -62,8 +63,6 @@ const RepayLoan = () => {
     },
     [data, repayLoanWithPermit2, loanAmountDue, loanVersion]
   );
-  
-  
 
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
@@ -128,11 +127,15 @@ const RepayLoan = () => {
         <Header title="Loan Status" />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
+            {isConfirming && (
+              <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#9b87f5] border-t-transparent"></div>
+                <p className="text-white mt-4 max-w-xs text-center px-4">
+                  Confirming transaction, please do not leave this page until confirmation is complete
+                </p>
+              </div>
+            )}
             <div className="flex items-center justify-between">
-              {/*
-              TODO: NO LOAN TYPE
-              <h3 className="text-lg font-semibold">{loan.type} Loan</h3>
-              */}
               <span
                 className={`px-3 py-1 rounded-full ${minutesRemaining !== 0 ? "bg-green-300" : "bg-red-300"} text-black text-sm`}
               >
@@ -171,7 +174,7 @@ const RepayLoan = () => {
                       timeZoneName: "short", 
                       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     })}
-                  </p>{" "}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -216,3 +219,4 @@ const RepayLoan = () => {
 };
 
 export default RepayLoan;
+

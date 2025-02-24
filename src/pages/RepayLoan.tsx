@@ -47,14 +47,26 @@ const RepayLoan = () => {
         if (data?.nftInfo?.tokenId) {
           await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
         } else {
-          toast.error("Unable to pay back loan.");
+          toast({
+            title: "Error",
+            description: "Unable to pay back loan.",
+            variant: "destructive",
+          });
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
         if (error?.message?.includes("user rejected transaction")) {
-          toast.error("Transaction rejected by user.");
+          toast({
+            title: "Error",
+            description: "Transaction rejected by user.",
+            variant: "destructive",
+          });
         } else {
-          toast.error(error?.message || "Unable to pay back loan.");
+          toast({
+            title: "Error",
+            description: error?.message || "Unable to pay back loan.",
+            variant: "destructive",
+          });
         }
       } finally {
         setIsClicked(false);
@@ -87,6 +99,7 @@ const RepayLoan = () => {
       </div>
     );
   }
+
   if (isError) {
     return (
       <div className="min-h-screen">

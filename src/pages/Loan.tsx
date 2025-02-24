@@ -12,6 +12,7 @@ import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
 const Loan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
+  const [liquidityError, setLiquidityError] = useState<string | null>(null);
 
   // hooks
   const { toast } = useToast();
@@ -20,7 +21,7 @@ const Loan = () => {
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet);
   const { requestNewLoan, error, transactionId, isConfirming, isConfirmed } = useRequestLoan();
 
-  const { usdcBalance, hasMoreThanOne, refreshBalance } = useUSDCBalance();
+  const { usdcBalance, refreshBalance } = useUSDCBalance();
 
   // state
   const hasActiveLoan = data?.loan[0] !== "";
@@ -31,12 +32,16 @@ const Loan = () => {
       event.preventDefault();
       if (isClicked) return;
       setIsClicked(true);
+      setLiquidityError(null);
 
-      try{
+      try {
         await refreshBalance();
 
-        if (!hasMoreThanOne) {
+        const latestBalance = usdcBalance ?? 0;
+        if (latestBalance < 1) {
+          setLiquidityError("Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.");
           toast.error("Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.");
+          setIsClicked(false);
           return;
         }
 
@@ -56,7 +61,7 @@ const Loan = () => {
         setIsClicked(false);
       }
     },
-    [data, requestNewLoan, toast, hasMoreThanOne, refreshBalance]
+    [data, requestNewLoan, toast, usdcBalance, refreshBalance]
   );
 
   // Handle navigation after claiming loan
@@ -127,14 +132,6 @@ const Loan = () => {
         <div className="p-6 space-y-6">
           <div className="glass-card p-6">
             <h2 className="text-lg font-semibold text-center">Current Loan Eligibility</h2>
-
-            <div className="text-center mt-4">
-              <p>Liquidity: {usdcBalance !== null ? `${usdcBalance} USDC` : "Loading..."}</p>
-              <p className={hasMoreThanOne ? "text-green-600" : "text-red-600"}>
-                {hasMoreThanOne ? "✅ Loan Available" : "❌ Loan Unavailable"}
-              </p>
-            </div>
-
             {Object.entries(data?.allTiers || {}).map(([index, tier]) => {
               if (tier.verificationStatus.level !== "Passport" && data?.nftInfo.tier.tierId >= tier.tierId) {
                 return (
@@ -167,6 +164,7 @@ const Loan = () => {
                 return null;
               }
             })}
+            {liquidityError && <p className="text-red-500">{liquidityError}</p>}
             {error && <p className="text-red-500">{error}</p>}
             {transactionId && (
               <div className="mt-4">

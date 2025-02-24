@@ -13,13 +13,12 @@ import { formatUnits } from "viem";
 const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
-  const [showSpinner, setShowSpinner] = useState(false);
 
   // hooks
   const toast = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet);
   const loan = data?.loan;
   const loanData: Loan = loan && loan[1];
 
@@ -28,14 +27,13 @@ const RepayLoan = () => {
     if (loanData) {
       return loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
     }
-    return 0n;
+    return 0n; // Default value if loanData is not available
   }, [loanData]);
-  
   const loanVersion = useMemo(() => {
     if (loan) {
       return loan[0];
     }
-    return "";
+    return ""; // Default value if loanData is not available
   }, [loan]);
 
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
@@ -45,43 +43,25 @@ const RepayLoan = () => {
       if (isClicked) return;
   
       setIsClicked(true);
+  
       try {
         if (data?.nftInfo?.tokenId) {
-          // Show spinner only after WorldKit returns success
-          const result = await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
-          if (result?.status === "success") {
-            setShowSpinner(true);
-          }
+          await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
         } else {
-          toast.toast({
-            title: "Error",
-            description: "Unable to pay back loan.",
-            variant: "destructive",
-          });
+          toast.error("Unable to pay back loan.");
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
         if (error?.message?.includes("user rejected transaction")) {
-          toast.toast({
-            title: "Error",
-            description: "Transaction rejected by user.",
-            variant: "destructive",
-          });
+          toast.error("Transaction rejected by user.");
         } else {
-          toast.toast({
-            title: "Error",
-            description: error?.message || "Unable to pay back loan.",
-            variant: "destructive",
-          });
+          toast.error(error?.message || "Unable to pay back loan.");
         }
       } finally {
         setIsClicked(false);
-        if (!isConfirming) {
-          setShowSpinner(false);
-        }
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast]
+    [data, repayLoanWithPermit2, loanAmountDue, loanVersion]
   );
 
   // Call refetch after loan repayment is confirmed
@@ -89,7 +69,6 @@ const RepayLoan = () => {
     if (isConfirmed) {
       const timeout = setTimeout(() => {
         refetch();
-        setShowSpinner(false);
       }, 1000);
 
       return () => clearTimeout(timeout);
@@ -148,7 +127,7 @@ const RepayLoan = () => {
         <Header title="Loan Status" />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-            {showSpinner && (
+            {isConfirming && (
               <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#9b87f5] border-t-transparent"></div>
                 <p className="text-white mt-4 max-w-xs text-center px-4">
@@ -158,14 +137,12 @@ const RepayLoan = () => {
             )}
             <div className="flex items-center justify-between">
               <span
-                className={`px-3 py-1 rounded-full ${
-                  minutesRemaining !== 0 ? "bg-green-300" : "bg-red-300"
-                } text-black text-sm`}
+                className={`px-3 py-1 rounded-full ${minutesRemaining !== 0 ? "bg-green-300" : "bg-red-300"} text-black text-sm`}
               >
-                {daysRemaining === 0 && hoursRemaining === 0 && minutesRemaining === 0
-                  ? "Defaulted"
-                  : "Active"}{" "}
-                Loan
+                  {daysRemaining === 0 && hoursRemaining === 0 && minutesRemaining === 0
+                    ? "Defaulted"
+                    : "Active"}{" "}
+                  Loan
               </span>
             </div>
 
@@ -194,7 +171,7 @@ const RepayLoan = () => {
                       month: "short",
                       hour: "2-digit",
                       minute: "2-digit",
-                      timeZoneName: "short",
+                      timeZoneName: "short", 
                       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     })}
                   </p>
@@ -213,9 +190,9 @@ const RepayLoan = () => {
             <Button
               onClick={handleApplyLoan}
               className="w-full primary-button"
-              disabled={isClicked || showSpinner || isConfirmed}
+              disabled={isClicked || isConfirming || isConfirmed}
             >
-              {showSpinner ? <>Confirming...</> : isConfirmed ? <>Confirmed</> : <>Repay Loan</>}
+              {isConfirming ? <>Confirming...</> : isConfirmed ? <>Confirmed</> : <>Repay Loan</>}
             </Button>
             {error && <p className="text-red-500">{error}</p>}
             {transactionId && (
@@ -226,7 +203,7 @@ const RepayLoan = () => {
                     {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
                   </span>
                 </p>
-                {showSpinner && <p>Confirming transaction...</p>}
+                {isConfirming && <p>Confirming transaction...</p>}
                 {isConfirmed && (
                   <>
                     <p>Transaction confirmed!</p>
@@ -242,3 +219,4 @@ const RepayLoan = () => {
 };
 
 export default RepayLoan;
+

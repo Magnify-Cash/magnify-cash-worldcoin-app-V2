@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ import { formatUnits } from "viem";
 const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
-  const [showSpinner, setShowSpinner] = useState(false);
 
   // hooks
   const toast = useToast();
@@ -47,13 +45,9 @@ const RepayLoan = () => {
       setIsClicked(true);
       try {
         if (data?.nftInfo?.tokenId) {
-          // Show spinner only after WorldKit returns success
-          const result = await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
-          if (result?.status === "success") {
-            setShowSpinner(true);
-          }
+          await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
         } else {
-          toast.toast({
+          toast({
             title: "Error",
             description: "Unable to pay back loan.",
             variant: "destructive",
@@ -62,13 +56,13 @@ const RepayLoan = () => {
       } catch (error: any) {
         console.error("Loan repayment error:", error);
         if (error?.message?.includes("user rejected transaction")) {
-          toast.toast({
+          toast({
             title: "Error",
             description: "Transaction rejected by user.",
             variant: "destructive",
           });
         } else {
-          toast.toast({
+          toast({
             title: "Error",
             description: error?.message || "Unable to pay back loan.",
             variant: "destructive",
@@ -76,9 +70,6 @@ const RepayLoan = () => {
         }
       } finally {
         setIsClicked(false);
-        if (!isConfirming) {
-          setShowSpinner(false);
-        }
       }
     },
     [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast]
@@ -89,7 +80,6 @@ const RepayLoan = () => {
     if (isConfirmed) {
       const timeout = setTimeout(() => {
         refetch();
-        setShowSpinner(false);
       }, 1000);
 
       return () => clearTimeout(timeout);
@@ -107,6 +97,7 @@ const RepayLoan = () => {
       </div>
     );
   }
+
   if (isError) {
     return (
       <div className="min-h-screen">
@@ -148,14 +139,17 @@ const RepayLoan = () => {
         <Header title="Loan Status" />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-            {showSpinner && (
-              <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#9b87f5] border-t-transparent"></div>
-                <p className="text-white mt-4 max-w-xs text-center px-4">
-                  Confirming transaction, please do not leave this page until confirmation is complete
-                </p>
+            {isConfirming && (
+              <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+                <div className="bg-white/10 p-8 rounded-lg flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#9b87f5] border-t-transparent mb-4"></div>
+                  <p className="text-white text-center px-4 max-w-xs">
+                    Confirming transaction, please do not leave this page until confirmation is complete
+                  </p>
+                </div>
               </div>
             )}
+
             <div className="flex items-center justify-between">
               <span
                 className={`px-3 py-1 rounded-full ${
@@ -213,9 +207,9 @@ const RepayLoan = () => {
             <Button
               onClick={handleApplyLoan}
               className="w-full primary-button"
-              disabled={isClicked || showSpinner || isConfirmed}
+              disabled={isClicked || isConfirming || isConfirmed}
             >
-              {showSpinner ? <>Confirming...</> : isConfirmed ? <>Confirmed</> : <>Repay Loan</>}
+              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
             </Button>
             {error && <p className="text-red-500">{error}</p>}
             {transactionId && (
@@ -226,7 +220,7 @@ const RepayLoan = () => {
                     {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
                   </span>
                 </p>
-                {showSpinner && <p>Confirming transaction...</p>}
+                {isConfirming && <p>Confirming transaction...</p>}
                 {isConfirmed && (
                   <>
                     <p>Transaction confirmed!</p>

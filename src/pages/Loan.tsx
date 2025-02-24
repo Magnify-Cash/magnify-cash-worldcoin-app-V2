@@ -13,7 +13,6 @@ import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
 const Loan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
-  const [showSpinner, setShowSpinner] = useState(false);
   const [liquidityError, setLiquidityError] = useState<string | null>(null);
 
   // hooks
@@ -42,7 +41,7 @@ const Loan = () => {
         const latestBalance = usdcBalance ?? 0;
         if (latestBalance < 1) {
           setLiquidityError("Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.");
-          toast.toast({
+          toast({
             title: "Error",
             description: "Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.",
             variant: "destructive",
@@ -52,13 +51,9 @@ const Loan = () => {
         }
 
         if (data?.nftInfo?.tokenId) {
-          // Show spinner only after WorldKit returns success
-          const result = await requestNewLoan(requestedTierId);
-          if (result?.status === "success") {
-            setShowSpinner(true);
-          }
+          await requestNewLoan(requestedTierId);
         } else {
-          toast.toast({
+          toast({
             title: "Error",
             description: "Unable to apply for loan. Ensure you have a verified NFT.",
             variant: "destructive",
@@ -67,13 +62,13 @@ const Loan = () => {
       } catch (error: any) {
         console.error("Loan application error:", error);
         if (error?.message?.includes("user rejected transaction")) {
-          toast.toast({
+          toast({
             title: "Error",
             description: "Transaction rejected by user.",
             variant: "destructive",
           });
         } else {
-          toast.toast({
+          toast({
             title: "Error",
             description: error?.message || "Unable to pay back loan.",
             variant: "destructive",
@@ -81,9 +76,6 @@ const Loan = () => {
         }
       } finally {
         setIsClicked(false);
-        if (!isConfirming) {
-          setShowSpinner(false);
-        }
       }
     },
     [data, requestNewLoan, toast, usdcBalance, refreshBalance]
@@ -156,12 +148,14 @@ const Loan = () => {
 
         <div className="p-6 space-y-6">
           <div className="glass-card p-6">
-            {showSpinner && (
-              <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#9b87f5] border-t-transparent"></div>
-                <p className="text-white mt-4 max-w-xs text-center px-4">
-                  Confirming transaction, please do not leave this page until confirmation is complete
-                </p>
+            {isConfirming && (
+              <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+                <div className="bg-white/10 p-8 rounded-lg flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#9b87f5] border-t-transparent mb-4"></div>
+                  <p className="text-white text-center px-4 max-w-xs">
+                    Confirming transaction, please do not leave this page until confirmation is complete
+                  </p>
+                </div>
               </div>
             )}
             
@@ -186,10 +180,10 @@ const Loan = () => {
                     </div>
                     <Button
                       onClick={() => handleApplyLoan(tier.tierId)}
-                      disabled={isClicked || showSpinner || isConfirmed}
+                      disabled={isClicked || isConfirming || isConfirmed}
                       className="w-full"
                     >
-                      {showSpinner ? "Confirming..." : isConfirmed ? "Confirmed" : "Apply Now"}
+                      {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Apply Now"}
                     </Button>
                     <hr className="border-t border-gray-300 mt-4" />
                   </div>
@@ -208,7 +202,7 @@ const Loan = () => {
                     {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
                   </span>
                 </p>
-                {showSpinner && <p>Confirming transaction...</p>}
+                {isConfirming && <p>Confirming transaction...</p>}
                 {isConfirmed && (
                   <>
                     <p>Transaction confirmed!</p>
@@ -227,3 +221,4 @@ const Loan = () => {
 };
 
 export default Loan;
+

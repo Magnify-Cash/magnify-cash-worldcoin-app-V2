@@ -1,9 +1,10 @@
+
 import { useState, useCallback } from "react";
 import { formatUnits } from "viem";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import useRequestLoan from "@/hooks/useRequestLoan";
 import { Button } from "@/components/ui/button";
@@ -131,6 +132,15 @@ const Loan = () => {
 
         <div className="p-6 space-y-6">
           <div className="glass-card p-6">
+            {isConfirming && (
+              <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#9b87f5] border-t-transparent"></div>
+                <p className="text-white mt-4 max-w-xs text-center px-4">
+                  Confirming transaction, please do not leave this page until confirmation is complete
+                </p>
+              </div>
+            )}
+            
             <h2 className="text-lg font-semibold text-center">Current Loan Eligibility</h2>
             {Object.entries(data?.allTiers || {}).map(([index, tier]) => {
               if (tier.verificationStatus.level !== "Passport" && data?.nftInfo.tier.tierId >= tier.tierId) {
@@ -193,3 +203,4 @@ const Loan = () => {
 };
 
 export default Loan;
+

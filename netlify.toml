@@ -1,5 +1,5 @@
 [build]
-  command = "mise install && bun install --frozen-lockfile && bun run build"
+  command = "mise install --verbose && bun install --frozen-lockfile && bun run build"
   publish = "build"
 
 [[redirects]]

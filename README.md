@@ -1,5 +1,5 @@
 # Magnify World App V2 🌟
-
+//test
 ## Overview
 
 Magnify World App V2 is a modern DeFi dashboard and lending platform that integrates cutting-edge NFT verification alongside dynamic loan management. Built with React, TypeScript, and Vite—and powered by Supabase for backend services—the platform leverages World ID credentials and NFT collateral to offer undercollateralized loans based on three verification tiers: Device, Passport, and ORB.

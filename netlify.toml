@@ -1,6 +1,6 @@
 [build]
   command = "mise install --verbose && bun install --frozen-lockfile && bun run build"
-  publish = "build"
+  publish = "dist"
 
 [[redirects]]
   from = "/*"

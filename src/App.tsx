@@ -12,12 +12,14 @@ import ProtectedRoute from "@/pages/ProtectedPage";
 import "./App.css";
 import eruda from "eruda";
 import { MiniKitProvider } from "./providers/MiniKitProvider";
+import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
 
 eruda.init();
 
 function App() {
   return (
     <MiniKitProvider>
+      <USDCBalanceProvider>
       <Router>
         <Routes>
           <Route path="/" element={<Navigate to="/welcome" replace />} />
@@ -73,6 +75,7 @@ function App() {
           />
         </Routes>
       </Router>
+      </USDCBalanceProvider>
     </MiniKitProvider>
   );
 }

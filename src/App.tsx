@@ -10,10 +10,12 @@ import Announcements from "@/pages/Announcements";
 import ProtectedRoute from "@/pages/ProtectedPage";
 import "./App.css";
 import { MiniKitProvider } from "./providers/MiniKitProvider";
+import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
 
 function App() {
   return (
     <MiniKitProvider>
+      <USDCBalanceProvider>
       <Router>
         <Routes>
           <Route path="/" element={<Navigate to="/welcome" replace />} />
@@ -69,6 +71,7 @@ function App() {
           />
         </Routes>
       </Router>
+      </USDCBalanceProvider>
     </MiniKitProvider>
   );
 }

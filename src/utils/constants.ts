@@ -2,3 +2,4 @@ export const WORLDCOIN_TOKEN_COLLATERAL = "0x79A02482A880bCE3F13e09Da970dC34db4C
 export const WORLDCOIN_CLIENT_ID = "app_cfd0a40d70419e3675be53a0aa9b7e10";
 export const MAGNIFY_WORLD_ADDRESS = "0x93dbB2d447F0086aF60B2becc66598fe3D9135A1";
 export const MAGNIFY_WORLD_ADDRESS_V1 = "0x4E52d9e8d2F70aD1805084BA4fa849dC991E7c88";
+export const WORLDCHAIN_RPC_URL = "https://worldchain-mainnet.g.alchemy.com/public"

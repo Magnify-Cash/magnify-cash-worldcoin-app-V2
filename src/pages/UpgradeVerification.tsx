@@ -6,7 +6,7 @@ import { useMagnifyWorld, Tier, ContractData } from "@/hooks/useMagnifyWorld";
 import { Shield, FileCheck, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { IDKitWidget, VerificationLevel, ISuccessResult } from "@worldcoin/idkit";
-import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
+import { WORLDCOIN_CLIENT_ID, BACKEND_URL } from "@/utils/constants";
 
 const UpgradeVerification = () => {
   // hooks
@@ -38,7 +38,7 @@ const UpgradeVerification = () => {
     nftInfo: ContractData["nftInfo"],
   ) => {
     try {
-      const res = await fetch("https://worldid-backend-v2.kevin8396.workers.dev", {
+      const res = await fetch(BACKEND_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

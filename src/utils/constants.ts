@@ -3,4 +3,4 @@ export const WORLDCOIN_CLIENT_ID = "app_17bda0ba13c1f91c838218d2156b673c";
 export const MAGNIFY_WORLD_ADDRESS = "0x93dbB2d447F0086aF60B2becc66598fe3D9135A1";
 export const MAGNIFY_WORLD_ADDRESS_V1 = "0x4E52d9e8d2F70aD1805084BA4fa849dC991E7c88";
 export const WORLDCHAIN_RPC_URL = "https://worldchain-mainnet.g.alchemy.com/public"
-export const BACKEND_URL = "https://worldid-backend-v2.kevin8396.workers.dev"
+export const BACKEND_URL = "https://magnify-cash-worldid-backend.kevin8396.workers.dev"

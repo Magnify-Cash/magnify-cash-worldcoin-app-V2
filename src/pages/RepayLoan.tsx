@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ const RepayLoan = () => {
         if (data?.nftInfo?.tokenId) {
           await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
         } else {
-          toast({
+          toast.toast({
             title: "Error",
             description: "Unable to pay back loan.",
             variant: "destructive",
@@ -56,13 +57,13 @@ const RepayLoan = () => {
       } catch (error: any) {
         console.error("Loan repayment error:", error);
         if (error?.message?.includes("user rejected transaction")) {
-          toast({
+          toast.toast({
             title: "Error",
             description: "Transaction rejected by user.",
             variant: "destructive",
           });
         } else {
-          toast({
+          toast.toast({
             title: "Error",
             description: error?.message || "Unable to pay back loan.",
             variant: "destructive",
@@ -72,7 +73,7 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion]
+    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast]
   );
   
   
@@ -202,7 +203,7 @@ const RepayLoan = () => {
               className="w-full primary-button"
               disabled={isClicked || isConfirming || isConfirmed}
             >
-              {isConfirming ? <>Confirming...</> : isConfirmed ? <>Confirmed</> : <>Repay Loan</>}
+              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
             </Button>
             {error && <p className="text-red-500">{error}</p>}
             {transactionId && (
@@ -213,7 +214,21 @@ const RepayLoan = () => {
                     {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
                   </span>
                 </p>
-                {isConfirming && <p>Confirming transaction...</p>}
+                {isConfirming && (
+                  <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+                    <div className="flex justify-center mb-4">
+                      <div className="ellipsis-spinner">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                      </div>
+                    </div>
+                    <p className="text-white text-center max-w-md px-4 text-lg font-medium">
+                      Confirming transaction, please do not leave this page until confirmation is complete.
+                    </p>
+                  </div>
+                )}
                 {isConfirmed && (
                   <>
                     <p>Transaction confirmed!</p>

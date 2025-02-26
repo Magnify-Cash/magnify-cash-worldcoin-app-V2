@@ -46,7 +46,6 @@ const useRequestLoan = () => {
   const requestNewLoan = useCallback(async (requestedTierId: bigint) => {
     setError(null);
     setTransactionId(null);
-    setIsConfirming(true);
     setIsConfirmed(false);
     setLoanDetails(null);
 
@@ -79,6 +78,7 @@ const useRequestLoan = () => {
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
         console.log("Loan initialization transaction sent:", finalPayload.transaction_id);
+        setIsConfirming(true);
         
         setLoanDetails({
           amount: 1000, // Replace with actual logic if amount comes from transaction or another source

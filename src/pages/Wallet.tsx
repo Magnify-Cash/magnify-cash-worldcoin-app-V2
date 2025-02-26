@@ -1,48 +1,88 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { WalletCard } from "@/components/WalletCard";
 import { useNavigate } from "react-router-dom";
-import { useWallet } from "@/hooks/use-wallet";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MiniKit, RequestPermissionPayload, Permission } from "@worldcoin/minikit-js";
 
 const Wallet = () => {
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
-  const ls_username = localStorage.getItem("ls_username");
   const [tokens, setBalances] = useState([]);
   const [isLoading, setLoading] = useState(false);
-  const [error, setError] = useState(null); // New error state
+  const [error, setError] = useState(null);
+
+  // Function to request notification permissions
+  const requestPermission = useCallback(async () => {
+    if (!MiniKit.isInstalled()) {
+      console.error("MiniKit is not installed");
+      return;
+    }
+
+    const requestPermissionPayload: RequestPermissionPayload = {
+      permission: Permission.Notifications,
+    };
+
+    try {
+      const payload = await MiniKit.commandsAsync.requestPermission(requestPermissionPayload);
+
+      if (payload.status === "success") {
+        console.log("Notifications enabled:", payload);
+      } else {
+        console.error("Permission request failed:", payload);
+      }
+    } catch (error) {
+      console.error("Error requesting notification permission:", error);
+    }
+  }, []);
+
+  // Request permission on mount if not already granted
+  useEffect(() => {
+    const checkPermission = async () => {
+      if (!MiniKit.isInstalled()) return;
+
+      try {
+        const result = await MiniKit.commandsAsync.requestPermission({ permission: Permission.Notifications });
+        
+        if (result.status === "error" && result.error_code !== "already_granted") {
+          console.log("Requesting permission...");
+          requestPermission();
+        }
+      } catch (error) {
+        console.error("Error checking permission:", error);
+      }
+    };
+
+    checkPermission();
+  }, [requestPermission]);
 
   useEffect(() => {
     const url = `https://worldchain-mainnet.g.alchemy.com/v2/j-_GFK85PRHN59YaKb8lmVbV0LHmFGBL`;
+
     const fetchBalances = async () => {
       try {
-        setLoading(true); // Set loading to true before starting the fetch operations
-        setError(null); // Clear any previous error before new fetch
+        setLoading(true);
+        setError(null);
 
         const ethBalanceResponse = await fetch(url, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             jsonrpc: "2.0",
             method: "eth_getBalance",
-            params: [ls_wallet, "latest"], // "latest" for the latest block
+            params: [ls_wallet, "latest"],
             id: 1,
           }),
         });
 
         const ethBalanceResult = await ethBalanceResponse.json();
-        const ethBalance = parseInt(ethBalanceResult.result, 16) / 1e18; // Convert from wei to ether
+        const ethBalance = parseInt(ethBalanceResult.result, 16) / 1e18;
 
         const tokenBalancesResponse = await fetch(url, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             jsonrpc: "2.0",
             method: "alchemy_getTokenBalances",
@@ -54,14 +94,11 @@ const Wallet = () => {
         const tokenBalancesResult = await tokenBalancesResponse.json();
         const tokenBalances = tokenBalancesResult.result.tokenBalances;
 
-        // Fetch metadata for each token and convert balances
         const detailedBalances = await Promise.all(
           tokenBalances.map(async (token) => {
             const metadataResponse = await fetch(url, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 jsonrpc: "2.0",
                 method: "alchemy_getTokenMetadata",
@@ -69,58 +106,50 @@ const Wallet = () => {
                 id: 1,
               }),
             });
-            const metadata = await metadataResponse.json();
-            const decimals = metadata.result.decimals || 18; // Default to 18 if decimals are missing
 
-            // Convert token balance from hex to decimal, considering decimals
+            const metadata = await metadataResponse.json();
+            const decimals = metadata.result.decimals || 18;
             const balanceDecimal = parseInt(token.tokenBalance, 16) / Math.pow(10, decimals);
 
-            // Only return token if balance is greater than 0
             if (balanceDecimal > 0) {
-              const balanceString = balanceDecimal.toFixed(3);
               return {
                 contractAddress: token.contractAddress,
-                balance: balanceString,
+                balance: balanceDecimal.toFixed(3),
                 symbol: metadata.result.symbol,
                 decimals: decimals,
                 name: metadata.result.name,
               };
-            } else {
-              return null;
             }
+            return null;
           }),
         );
 
-        // Combine native token balance with ERC-20 token tokens, only if ETH balance is greater than 0
         const balancesToAdd = [];
 
-        // Add ETH if balance is greater than 0
         if (ethBalance > 0) {
           balancesToAdd.push({
             symbol: "ETH",
             name: "Ether",
             balance: ethBalance,
             decimals: 18,
-            contractAddress: "0x0000000000000000000000000000000000000000", // Native token's pseudo address
+            contractAddress: "0x0000000000000000000000000000000000000000",
           });
         }
 
-        // Add ERC-20 tokens with non-zero balance
         detailedBalances.forEach((token) => {
-          if (token) {
-            balancesToAdd.push(token);
-          }
+          if (token) balancesToAdd.push(token);
         });
 
         setBalances(balancesToAdd);
       } catch (error) {
         console.error("Failed to fetch tokens:", error);
-        setError(error.message); // Set the error state
-        setBalances([]); // Set to empty array on error
+        setError(error.message);
+        setBalances([]);
       } finally {
         setLoading(false);
       }
     };
+
     if (ls_wallet) {
       fetchBalances();
     }
@@ -138,12 +167,9 @@ const Wallet = () => {
           </Alert>
         )}
 
-        {/* Total Balance */}
         <div className="text-center mb-12">
           <h1 className="text text-2xl font-bold mb-8">
-            {ls_wallet.substring(0, 6)}
-            ...
-            {ls_wallet.substring(ls_wallet.length - 6)}
+            {ls_wallet.substring(0, 6)}...{ls_wallet.substring(ls_wallet.length - 6)}
           </h1>
           {/*
           TODO: TOTAL BALANCE
@@ -155,7 +181,6 @@ const Wallet = () => {
           </h1>
           */}
 
-          {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-4 mb-8">
             <Button onClick={() => navigate("/loan")} variant="outline" className="h-20 hover:bg-accent/10">
               <div className="text-center">
@@ -163,11 +188,7 @@ const Wallet = () => {
                 <span className="text-sm text-muted-foreground">Get a loan</span>
               </div>
             </Button>
-            <Button
-              onClick={() => navigate("/repay-loan")}
-              variant="outline"
-              className="h-20 hover:bg-accent/10"
-            >
+            <Button onClick={() => navigate("/repay-loan")} variant="outline" className="h-20 hover:bg-accent/10">
               <div className="text-center">
                 <div className="text-2xl mb-1">🔄</div>
                 <span className="text-sm text-muted-foreground">Repay Loan</span>
@@ -176,7 +197,6 @@ const Wallet = () => {
           </div>
         </div>
 
-        {/* Wallet Cards */}
         <div className="space-y-4 mb-8">
           {isLoading ? (
             <>

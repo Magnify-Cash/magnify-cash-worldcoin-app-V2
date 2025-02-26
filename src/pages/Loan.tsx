@@ -40,22 +40,38 @@ const Loan = () => {
         const latestBalance = usdcBalance ?? 0;
         if (latestBalance < 1) {
           setLiquidityError("Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.");
-          toast.error("Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.");
+          toast({
+            title: "Error",
+            description: "Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.",
+            variant: "destructive",
+          });
           setIsClicked(false);
           return;
         }
 
         if (data?.nftInfo?.tokenId) {
           await requestNewLoan(requestedTierId);
-      } else {
-        toast.error("Unable to apply for loan. Ensure you have a verified NFT.");
-      }
+        } else {
+          toast({
+            title: "Error",
+            description: "Unable to apply for loan. Ensure you have a verified NFT.",
+            variant: "destructive",
+          });
+        }
       } catch (error: any) {
         console.error("Loan application error:", error);
         if (error?.message?.includes("user rejected transaction")) {
-          toast.error("Transaction rejected by user.");
+          toast({
+            title: "Error",
+            description: "Transaction rejected by user.",
+            variant: "destructive",
+          });
         } else {
-          toast.error(error?.message || "Unable to pay back loan.");
+          toast({
+            title: "Error",
+            description: error?.message || "Unable to pay back loan.",
+            variant: "destructive",
+          });
         }
       } finally {
         setIsClicked(false);
@@ -193,3 +209,4 @@ const Loan = () => {
 };
 
 export default Loan;
+

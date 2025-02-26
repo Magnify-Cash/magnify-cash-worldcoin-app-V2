@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Welcome from "@/pages/Welcome";
 import Guide from "@/pages/Guide";
@@ -7,10 +8,14 @@ import Loan from "@/pages/Loan";
 import RepayLoan from "@/pages/RepayLoan";
 import UpgradeVerification from "@/pages/UpgradeVerification";
 import Announcements from "@/pages/Announcements";
+import LoanHistory from "@/pages/LoanHistory";
 import ProtectedRoute from "@/pages/ProtectedPage";
 import "./App.css";
+import eruda from "eruda";
 import { MiniKitProvider } from "./providers/MiniKitProvider";
 import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
+
+eruda.init();
 
 function App() {
   return (
@@ -58,6 +63,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <RepayLoan />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loan-history"
+            element={
+              <ProtectedRoute>
+                <LoanHistory />
               </ProtectedRoute>
             }
           />

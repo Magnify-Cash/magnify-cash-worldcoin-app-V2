@@ -118,6 +118,12 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
               >
                 Verification Level
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/loan-history")}
+              >
+                Loan History
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
 
               <DropdownMenuLabel>Support</DropdownMenuLabel>

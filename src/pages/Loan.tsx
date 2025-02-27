@@ -95,38 +95,32 @@ const Loan = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
       ) : !data || data?.nftInfo.tokenId === null ? (
-        <div className="min-h-screen">
-          <div className="p-6 space-y-6">
-            <Header title="Get a Loan" />
-            <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
-              <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
-              <p className="mb-4">
-                To be eligible for a loan, you need to own a specific NFT. Please upgrade your account to
-                include this NFT.
-              </p>
-              <button
-                onClick={() => navigate("/upgrade-verification")}
-                className="glass-button w-full"
-                disabled={isLoading}
-              >
-                Upgrade Now
-              </button>
-            </div>
+        <div className="p-6 space-y-6">
+          <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
+            <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
+            <p className="mb-4">
+              To be eligible for a loan, you need to own a specific NFT. Please upgrade your account to
+              include this NFT.
+            </p>
+            <button
+              onClick={() => navigate("/upgrade-verification")}
+              className="glass-button w-full"
+              disabled={isLoading}
+            >
+              Upgrade Now
+            </button>
           </div>
         </div>
       ) : hasActiveLoan ? (
-        <div className="min-h-screen">
-          <Header title="Get a Loan" />
-          <div className="p-6 space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold">You already have an active loan</h2>
-              <p className="mt-4 text-gray-600">
-                You currently have an active loan. Please navigate to your dashboard for more details.
-              </p>
-              <Button type="button" onClick={() => navigate("/repay-loan")} className="mt-4 w-full sm:w-auto">
-                Repay Loan
-              </Button>
-            </div>
+        <div className="p-6 space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold">You already have an active loan</h2>
+            <p className="mt-4 text-gray-600">
+              You currently have an active loan. Please navigate to your dashboard for more details.
+            </p>
+            <Button type="button" onClick={() => navigate("/repay-loan")} className="mt-4 w-full sm:w-auto">
+              Repay Loan
+            </Button>
           </div>
         </div>
       ) : (

@@ -1,7 +1,3 @@
-[build]
-  command = "mise install --verbose && bun install --frozen-lockfile && bun run build"
-  publish = "dist"
-
 [[redirects]]
   from = "/*"
   to = "/index.html"

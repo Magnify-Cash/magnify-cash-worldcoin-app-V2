@@ -39,13 +39,16 @@ const LoanHistory = () => {
         const response = await fetch(
           `${BACKEND_URL}/getTransactionHistory?wallet=${ls_wallet}`
         );
-
         if (!response.ok) {
           throw new Error(`API error: ${response.statusText}`);
         }
-
         const data: LoanTransaction[] = await response.json();
-        setTransactions(data);
+  
+        const sortedTransactions = data.sort(
+          (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+  
+        setTransactions(sortedTransactions);
       } catch (err) {
         setError("Failed to fetch transactions.");
         console.error("Error fetching transactions:", err);
@@ -53,7 +56,7 @@ const LoanHistory = () => {
         setLoading(false);
       }
     };
-
+  
     fetchTransactionHistory();
   }, []);
 

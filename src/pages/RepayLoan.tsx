@@ -238,9 +238,8 @@ const RepayLoan = () => {
             )}
           </div>
         </div>
-      </div>
-    );
-  }
+    </div>
+  );
 };
-
+};
 export default RepayLoan;

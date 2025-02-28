@@ -114,11 +114,11 @@ importers:
         specifier: 1.3.0
         version: 1.3.0(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(bufferutil@4.0.9)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.17)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2)
       '@worldcoin/minikit-js':
-        specifier: ^1.6.0
-        version: 1.6.0(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
+        specifier: ^1.6.1
+        version: 1.6.1(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
       '@worldcoin/minikit-react':
-        specifier: ^1.6.0
-        version: 1.6.0(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
+        specifier: ^1.6.1
+        version: 1.6.1(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1997,18 +1997,18 @@ packages:
       react: '>18.0.0'
       react-dom: '>18.0.0'
 
-  '@worldcoin/minikit-js@1.6.0':
-    resolution: {integrity: sha512-D03EYePLyc+TRsKFNwNF5r/Z4FFeZ5Vd/EkyE+tOijLBMfvEW/4olEK5fQ1VZ+r8bwGrHrB+bj7PZnYAZ0AGmA==}
+  '@worldcoin/minikit-js@1.6.1':
+    resolution: {integrity: sha512-JdigcLWwHwEG3TdX90IK0LAFIE2WbhRg8V5YGE6FLX9EYsgLv7111R/Wjg6+NYXV/1CYph3limokHjKUe2L9BA==}
     engines: {node: '>= 16'}
     peerDependencies:
-      viem: ^2.21.10
+      viem: 2.23.5
 
-  '@worldcoin/minikit-react@1.6.0':
-    resolution: {integrity: sha512-RNGQl6y570faR43mEAqoDFckyJcZQVmATfMnVAjcfJASkBPQi4Bna41u2hEPH3zD67lVyn5LqKJyr1Nc+6ww3Q==}
+  '@worldcoin/minikit-react@1.6.1':
+    resolution: {integrity: sha512-tDUXDF9Vn6a0aBg1HdaoPFP4/QI2LVGqDC0u7He2GkcvueNMiEqyfidaup6zdWLTYJrTEvDCwYzQMipidQVlZA==}
     engines: {node: '>= 16'}
     peerDependencies:
       react: '>=18'
-      viem: ^2.21.10
+      viem: 2.23.5
 
   '@xobotyi/scrollbar-width@1.9.5':
     resolution: {integrity: sha512-N8tkAACJx2ww8vFMneJmaAgmjAG1tnVBZJRLRcx061tmsLRZHSEZSLuGWnwPtunsSLvSqXQ2wfp7Mgqg1I+2dQ==}
@@ -6198,7 +6198,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@worldcoin/minikit-js@1.6.0(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)':
+  '@worldcoin/minikit-js@1.6.1(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)':
     dependencies:
       '@worldcoin/idkit-core': 1.4.1(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(zod@3.24.2)
       abitype: 1.0.8(typescript@5.7.3)(zod@3.24.2)
@@ -6210,9 +6210,9 @@ snapshots:
       - typescript
       - zod
 
-  '@worldcoin/minikit-react@1.6.0(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)':
+  '@worldcoin/minikit-react@1.6.1(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)':
     dependencies:
-      '@worldcoin/minikit-js': 1.6.0(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
+      '@worldcoin/minikit-js': 1.6.1(@types/react@18.3.18)(react@18.3.1)(typescript@5.7.3)(viem@2.23.3(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))(zod@3.24.2)
       abitype: 1.0.8(typescript@5.7.3)(zod@3.24.2)
       react: 18.3.1
       turbo: 2.4.2

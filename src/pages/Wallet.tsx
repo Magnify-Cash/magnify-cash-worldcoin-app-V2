@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { Header } from "@/components/Header";
-import { WalletCard } from "@/components/WalletCard";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -15,57 +14,85 @@ const Wallet = () => {
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Function to check if the wallet already exists in the database
+  const checkWalletExists = useCallback(async (wallet: string) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/checkWallet`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Origin": window.location.origin,
+        },
+        body: JSON.stringify({ wallet }),
+      });
+
+      const data = await response.json();
+      return data.exists; // Returns true if wallet exists, false otherwise
+    } catch (error) {
+      console.error("Error checking wallet existence:", error);
+      return false;
+    }
+  }, []);
+
   // Function to request notification permissions
   const requestPermission = useCallback(async () => {
     if (!MiniKit.isInstalled()) {
       console.error("MiniKit is not installed");
       return;
     }
-  
+
     const ls_wallet = localStorage.getItem("ls_wallet_address");
-  
+
     if (!ls_wallet) {
       console.error("No wallet found in localStorage");
       return;
     }
-  
+
+    // Check if wallet already exists before saving
+    const walletExists = await checkWalletExists(ls_wallet);
+    if (walletExists) {
+      console.log("Wallet already exists. Skipping saveWallet request."); 
+      return;
+    }
+
     const requestPermissionPayload: RequestPermissionPayload = {
       permission: Permission.Notifications,
     };
-  
+
     console.log("Requesting permission...");
     console.log(requestPermissionPayload);
-  
+
     try {
       const payload = await MiniKit.commandsAsync.requestPermission(requestPermissionPayload);
       
       let notificationEnabled = false;
-  
+
       if (payload.finalPayload.status === "success") {
         console.log("Notifications enabled:", payload.finalPayload);
         notificationEnabled = true;
       } else {
         console.error("Permission request failed:", payload);
       }
-  
+
       // Send backend request to save wallet and notification status
       await fetch(`${BACKEND_URL}/saveWallet`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Origin": window.location.origin,
         },
         body: JSON.stringify({
           wallet: ls_wallet,
           notification: notificationEnabled,
         }),
       });
-  
+
       console.log("User permission saved successfully.");
-  
+
     } catch (error) {
       console.error("Error requesting notification permission:", error);
     }
-  }, []);
+  }, [checkWalletExists]);
 
   // Request permission on mount if not already granted
   useEffect(() => {
@@ -77,7 +104,6 @@ const Wallet = () => {
 
         console.log("Permission status:", result);
 
-        
         if (result.finalPayload.status === "error" && result.finalPayload.error_code !== "already_granted") {
           console.log("Requesting permission...");
           requestPermission();
@@ -203,15 +229,6 @@ const Wallet = () => {
           <h1 className="text text-2xl font-bold mb-8">
             {ls_wallet.substring(0, 6)}...{ls_wallet.substring(ls_wallet.length - 6)}
           </h1>
-          {/*
-          TODO: TOTAL BALANCE
-          ALCHEMY API DOES NOT PROVIDE USD PRICES
-          <h1 className="text-5xl font-bold mb-8">
-            <span className="text-2xl align-top">$</span>
-            {totalBalance.split('.')[0]}
-            <span className="text-muted-foreground">.{totalBalance.split('.')[1]}</span>
-          </h1>
-          */}
 
           <div className="grid grid-cols-2 gap-4 mb-8">
             <Button onClick={() => navigate("/loan")} variant="outline" className="h-20 hover:bg-accent/10">
@@ -227,26 +244,6 @@ const Wallet = () => {
               </div>
             </Button>
           </div>
-        </div>
-
-        <div className="space-y-4 mb-8">
-          {isLoading ? (
-            <>
-              <WalletCard currency="" symbol="" balance="" isLoading={true} />
-              <WalletCard currency="" symbol="" balance="" isLoading={true} />
-            </>
-          ) : tokens.length > 0 ? (
-            tokens.map((token) => (
-              <WalletCard
-                key={token.contractAddress}
-                currency={token.name}
-                symbol={token.symbol}
-                balance={token.balance}
-              />
-            ))
-          ) : (
-            <div className="text-center py-4">No tokens found. Add some to see your balance!</div>
-          )}
         </div>
       </div>
     </div>

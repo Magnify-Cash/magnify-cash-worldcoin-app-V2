@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MiniKit, RequestPermissionPayload, Permission } from "@worldcoin/minikit-js";
+import { BACKEND_URL } from "@/utils/constants";
 
 const Wallet = () => {
   const navigate = useNavigate();
@@ -20,19 +21,47 @@ const Wallet = () => {
       console.error("MiniKit is not installed");
       return;
     }
-
+  
+    const ls_wallet = localStorage.getItem("ls_wallet_address");
+  
+    if (!ls_wallet) {
+      console.error("No wallet found in localStorage");
+      return;
+    }
+  
     const requestPermissionPayload: RequestPermissionPayload = {
       permission: Permission.Notifications,
     };
-
+  
+    console.log("Requesting permission...");
+    console.log(requestPermissionPayload);
+  
     try {
       const payload = await MiniKit.commandsAsync.requestPermission(requestPermissionPayload);
-
-      if (payload.status === "success") {
-        console.log("Notifications enabled:", payload);
+      
+      let notificationEnabled = false;
+  
+      if (payload.finalPayload.status === "success") {
+        console.log("Notifications enabled:", payload.finalPayload);
+        notificationEnabled = true;
       } else {
         console.error("Permission request failed:", payload);
       }
+  
+      // Send backend request to save wallet and notification status
+      await fetch(`${BACKEND_URL}/saveWallet`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          wallet: ls_wallet,
+          notification: notificationEnabled,
+        }),
+      });
+  
+      console.log("User permission saved successfully.");
+  
     } catch (error) {
       console.error("Error requesting notification permission:", error);
     }
@@ -45,8 +74,11 @@ const Wallet = () => {
 
       try {
         const result = await MiniKit.commandsAsync.requestPermission({ permission: Permission.Notifications });
+
+        console.log("Permission status:", result);
+
         
-        if (result.status === "error" && result.error_code !== "already_granted") {
+        if (result.finalPayload.status === "error" && result.finalPayload.error_code !== "already_granted") {
           console.log("Requesting permission...");
           requestPermission();
         }

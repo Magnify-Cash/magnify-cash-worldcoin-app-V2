@@ -23,4 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 TODO.TXT
-src/utils/constants.ts
+
+#ENV files
+.env.local
+.env.development
+.env.staging
+.env.production
+.env

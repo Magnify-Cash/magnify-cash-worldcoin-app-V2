@@ -91,8 +91,13 @@ const Loan = () => {
     <div className="min-h-screen">
       <Header title="Get a Loan" />
       {isLoading ? (
-        <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
+            <div className="dot-spinner">
+              <div className="dot bg-[#1A1E8E]"></div>
+              <div className="dot bg-[#4A3A9A]"></div>
+              <div className="dot bg-[#7A2F8A]"></div>
+              <div className="dot bg-[#A11F75]"></div>
+            </div>
         </div>
       ) : !data || data?.nftInfo.tokenId === null ? (
         <div className="p-6 space-y-6">
@@ -171,12 +176,11 @@ const Loan = () => {
                 </p>
                 {isConfirming && (
                   <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-                    <div className="flex justify-center mb-4">
-                      <div className="ellipsis-spinner">
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
+                    <div className="flex justify-center">
+                      <div className="orbit-spinner">
+                        <div className="orbit"></div>
+                        <div className="orbit"></div>
+                        <div className="center"></div>
                       </div>
                     </div>
                     <p className="text-white text-center max-w-md px-4 text-lg font-medium">

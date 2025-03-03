@@ -74,8 +74,13 @@ const UpgradeVerification = () => {
     return (
       <div className="min-h-screen">
         <Header title="Verification Level" />
-        <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
+            <div className="dot-spinner">
+              <div className="dot bg-[#1A1E8E]"></div>
+              <div className="dot bg-[#4A3A9A]"></div>
+              <div className="dot bg-[#7A2F8A]"></div>
+              <div className="dot bg-[#A11F75]"></div>
+            </div>
         </div>
       </div>
     );

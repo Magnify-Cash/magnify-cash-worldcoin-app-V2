@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -128,67 +127,99 @@ html {
   @apply transition-transform duration-300 hover:-translate-y-1;
 }
 
-/* Ellipsis Spinner */
-.ellipsis-spinner {
-  display: inline-block;
+/* Dot Spinner Animation */
+.dot-spinner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot-spinner .dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  animation: dot-pulse 1.5s ease-in-out infinite;
+}
+
+.dot-spinner .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dot-spinner .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot-spinner .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.dot-spinner .dot:nth-child(4) {
+  animation-delay: 0.6s;
+}
+
+@keyframes dot-pulse {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.orbit-spinner {
   position: relative;
   width: 80px;
-  height: 30px;
+  height: 80px;
 }
 
-.ellipsis-spinner div {
+.orbit-spinner .orbit {
   position: absolute;
-  top: 10px;
-  width: 13px;
-  height: 13px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.orbit-spinner .orbit:nth-child(1) {
+  border-top-color: #1A1E8E;
+  animation: orbit-spin 1.5s linear infinite;
+}
+
+.orbit-spinner .orbit:nth-child(2) {
+  border-bottom-color: #A11F75;
+  animation: orbit-spin 1s linear infinite;
+}
+
+.orbit-spinner .center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+  margin-left: -10px;
   border-radius: 50%;
   background: linear-gradient(to right, #1A1E8E, #A11F75);
-  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+  animation: pulse 1s ease-in-out infinite alternate;
 }
 
-.ellipsis-spinner div:nth-child(1) {
-  left: 8px;
-  animation: ellipsis1 0.6s infinite;
-}
-
-.ellipsis-spinner div:nth-child(2) {
-  left: 8px;
-  animation: ellipsis2 0.6s infinite;
-}
-
-.ellipsis-spinner div:nth-child(3) {
-  left: 32px;
-  animation: ellipsis2 0.6s infinite;
-}
-
-.ellipsis-spinner div:nth-child(4) {
-  left: 56px;
-  animation: ellipsis3 0.6s infinite;
-}
-
-@keyframes ellipsis1 {
+@keyframes orbit-spin {
   0% {
-    transform: scale(0);
+    transform: rotate(0deg);
   }
   100% {
-    transform: scale(1);
+    transform: rotate(360deg);
   }
 }
 
-@keyframes ellipsis2 {
-  0% {
-    transform: translate(0, 0);
+@keyframes pulse {
+  from {
+    transform: scale(0.8);
   }
-  100% {
-    transform: translate(24px, 0);
-  }
-}
-
-@keyframes ellipsis3 {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(0);
+  to {
+    transform: scale(1.2);
   }
 }

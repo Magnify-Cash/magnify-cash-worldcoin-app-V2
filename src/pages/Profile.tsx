@@ -61,11 +61,13 @@ const Dashboard = () => {
       <div className="min-h-screen">
         <Header title="Profile" />
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="ellipsis-spinner">
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
+          <div className="flex items-center justify-center gap-2">
+            <div className="dot-spinner">
+              <div className="dot bg-[#1A1E8E]"></div>
+              <div className="dot bg-[#4A3A9A]"></div>
+              <div className="dot bg-[#7A2F8A]"></div>
+              <div className="dot bg-[#A11F75]"></div>
+            </div>
           </div>
         </div>
       </div>

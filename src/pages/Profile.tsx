@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { BACKEND_URL } from "@/utils/constants";
+import { toast } from "@/components/ui/use-toast";
 
 const Dashboard = () => {
   // hooks
@@ -30,19 +31,23 @@ const Dashboard = () => {
       if (!ls_wallet) return;
       
       try {
-        const response = await fetch(`${BACKEND_URL}/checkWallet`, {
-          method: "POST",
+        const response = await fetch(`${BACKEND_URL}/checkWallet?wallet=${ls_wallet}`, {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             "Origin": window.location.origin,
           },
-          body: JSON.stringify({ wallet: ls_wallet }),
         });
         
         const data = await response.json();
         setNotificationStatus(data);
       } catch (error) {
         console.error("Error fetching notification status:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch notification status",
+          variant: "destructive",
+        });
       } finally {
         setIsNotificationLoading(false);
       }
@@ -181,9 +186,17 @@ const Dashboard = () => {
                 </ol>
               </div>
               
-              <div className="aspect-video w-full mt-6 rounded-md overflow-hidden bg-gradient-to-r from-[#1A1E8F] to-[#A11F75]/20 flex justify-center items-center">
-                <Bell className="w-16 h-16 text-white animate-pulse opacity-50" />
-                <p className="absolute text-xs text-white/70">Notification tutorial video</p>
+              <div className="aspect-video w-full mt-6 rounded-md overflow-hidden flex justify-center items-center relative">
+                <video 
+                  src="/magnify_notification_tutorial.MP4" 
+                  className="w-full h-full object-cover"
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  controls={false}
+                  style={{ pointerEvents: "none" }}
+                />
               </div>
             </motion.div>
           )}

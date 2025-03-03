@@ -17,15 +17,18 @@ const Wallet = () => {
   // Function to check if the wallet already exists in the database
   const checkWalletExists = useCallback(async (wallet: string) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/checkWallet`, {
-        method: "POST",
+      const response = await fetch(`${BACKEND_URL}/checkWallet?wallet=${encodeURIComponent(wallet)}`, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           "Origin": window.location.origin,
         },
-        body: JSON.stringify({ wallet }),
       });
-
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
       const data = await response.json();
       return data.exists; // Returns true if wallet exists, false otherwise
     } catch (error) {
@@ -33,6 +36,7 @@ const Wallet = () => {
       return false;
     }
   }, []);
+  
 
   // Function to request notification permissions
   const requestPermission = useCallback(async () => {

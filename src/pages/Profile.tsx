@@ -1,29 +1,67 @@
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { DollarSign, Shield, User, FileText, Pi } from "lucide-react";
+import { DollarSign, Shield, User, FileText, Pi, AlertTriangle, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
-import { useMagnifyWorld, Loan } from "@/hooks/useMagnifyWorld";
+import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import { Card } from "@/components/ui/card";
-import { formatUnits } from "viem";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { BACKEND_URL } from "@/utils/constants";
 
 const Dashboard = () => {
   // hooks
   const navigate = useNavigate();
   const ls_username = localStorage.getItem("ls_username");
   const ls_wallet = localStorage.getItem("ls_wallet_address");
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet);
+  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const [notificationStatus, setNotificationStatus] = useState<{ exists: boolean, notificationAllowed: boolean } | null>(null);
+  const [isNotificationLoading, setIsNotificationLoading] = useState(true);
 
   // state
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
   const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
-  if (isLoading) {
+  // Fetch notification status
+  useEffect(() => {
+    const fetchNotificationStatus = async () => {
+      if (!ls_wallet) return;
+      
+      try {
+        const response = await fetch(`${BACKEND_URL}/checkWallet`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Origin": window.location.origin,
+          },
+          body: JSON.stringify({ wallet: ls_wallet }),
+        });
+        
+        const data = await response.json();
+        setNotificationStatus(data);
+      } catch (error) {
+        console.error("Error fetching notification status:", error);
+      } finally {
+        setIsNotificationLoading(false);
+      }
+    };
+    
+    fetchNotificationStatus();
+  }, [ls_wallet]);
+
+  if (isLoading || isNotificationLoading) {
     return (
       <div className="min-h-screen">
         <Header title="Profile" />
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <div className="ellipsis-spinner">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
         </div>
       </div>
     );
@@ -34,7 +72,8 @@ const Dashboard = () => {
       <div className="min-h-screen bg-background">
         <Header title="Profile" />
         {/* Header */}
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-8 px-4 py-6">
+          {/* User Profile */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -52,53 +91,6 @@ const Dashboard = () => {
               </p>
             )}
           </motion.div>
-
-          {/* Loan Status */}
-          {/* Loan Status */}
-          {/*
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-primary" />
-              Loan Status
-            </h2>
-
-
-            {hasActiveLoan ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-6 bg-secondary/5 hover:bg-secondary/10 dark:bg-secondary/10 dark:hover:bg-secondary/20 rounded-xl transition-colors duration-300">
-                  <div className="space-y-1">
-                    <p className="text-xl font-semibold">Active Loan</p>
-                    <p className="text-muted-foreground">Collateralized by World ID</p>
-                  </div>
-                  <button
-                    onClick={() => navigate("/repay-loan")}
-                    className="glass-button transform hover:scale-105 transition-transform duration-300"
-                  >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center p-6 bg-secondary/5 hover:bg-secondary/10 dark:bg-secondary/10 dark:hover:bg-secondary/20 rounded-xl transition-colors duration-300">
-                <p className="text-lg font-semibold">No Active Loans</p>
-                <p className="text-muted-foreground">
-                  You currently have no loans. Would you like to apply for one?
-                </p>
-                <button
-                  onClick={() => navigate("/loan")}
-                  className="glass-button mt-4 transform hover:scale-105 transition-transform duration-300"
-                >
-                  Apply for Loan
-                </button>
-              </div>
-            )}
-          </motion.div>
-          */}
 
           {/* Collateral section */}
           {nftInfo.tokenId !== null ? (
@@ -165,6 +157,42 @@ const Dashboard = () => {
                 Upgrade Now
               </button>
             </div>
+          )}
+
+          {/* Notification Warning Section - Moved to the end */}
+          {notificationStatus && !notificationStatus.notificationAllowed && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <div className="flex items-center justify-center mb-6">
+                <AlertTriangle className="w-16 h-16 text-primary" />
+              </div>
+              <h2 className="text-xl font-bold text-gradient mb-3 text-center">Stay Updated!</h2>
+              <p className="text-muted-foreground text-center text-lg mb-6">
+                Enable notifications to get instant alerts on new announcements, liquidity updates, and important events.
+              </p>
+              
+              <div className="bg-black/5 p-4 rounded-md mt-2">
+                <h4 className="font-medium mb-2 text-center">
+                  How to enable notifications:
+                </h4>
+                <ol className="list-decimal list-inside space-y-1 ml-2 text-sm text-muted-foreground">
+                  <li>Open World App</li>
+                  <li>On the top right click settings</li>
+                  <li>Click Apps</li>
+                  <li>Click Magnify Cash</li>
+                  <li>Allow Notifications</li>
+                </ol>
+              </div>
+              
+              <div className="aspect-video w-full mt-6 rounded-md overflow-hidden bg-gradient-to-r from-[#1A1E8F] to-[#A11F75]/20 flex justify-center items-center">
+                <Bell className="w-16 h-16 text-white animate-pulse opacity-50" />
+                <p className="absolute text-xs text-white/70">Notification tutorial video</p>
+              </div>
+            </motion.div>
           )}
         </div>
       </div>

@@ -100,45 +100,38 @@ const Dashboard = () => {
               transition={{ delay: 0.2 }}
               className="glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
-                <Shield className="w-8 h-8 text-primary" />
-                Your NFT Tier
-              </h2>
+              <div className="flex items-center justify-center mb-6">
+                <Shield className="w-16 h-16 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Your NFT Tier</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                 <motion.div
                   key={nftInfo.tokenId}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * (1 + 1) }}
+                  transition={{ delay: 0.3 }}
                   className="transform hover:scale-105 transition-transform duration-300"
                 >
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + 1 * 0.1 }}
-                    className="cursor-pointer transition-transform hover:scale-105"
-                  >
-                    <Card className="p-4">
-                      <div className="flex-column items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <FileText className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium">{nftInfo?.tier.verificationStatus.level} Verified</h4>
-                          </div>
-                        </div>
-                        <div
-                          className={`px-3 py-1 rounded-full text-sm my-3 ${
-                            hasActiveLoan ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                          }`}
-                        >
-                          {hasActiveLoan ? "Used for Collateral" : "Available for Collateral"}
-                        </div>
+                  <Card className="p-6 shadow-md hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center space-x-4 mb-4">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-primary" />
                       </div>
-                    </Card>
-                  </motion.div>
+                      <div>
+                        <h4 className="font-medium text-lg">{nftInfo?.tier.verificationStatus.level} Verified</h4>
+                      </div>
+                    </div>
+                    <div
+                      className={`px-4 py-2 rounded-full text-sm my-3 font-medium text-center ${
+                        hasActiveLoan 
+                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" 
+                          : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      }`}
+                    >
+                      {hasActiveLoan ? "Used for Collateral" : "Available for Collateral"}
+                    </div>
+                  </Card>
                 </motion.div>
               </div>
             </motion.div>
@@ -179,12 +172,12 @@ const Dashboard = () => {
                 <h4 className="font-medium mb-2 text-center">
                   How to enable notifications:
                 </h4>
-                <ol className="list-decimal list-inside space-y-1 ml-2 text-sm text-muted-foreground">
-                  <li>Open World App</li>
-                  <li>On the top right click settings</li>
-                  <li>Click Apps</li>
-                  <li>Click Magnify Cash</li>
-                  <li>Allow Notifications</li>
+                <ol className="list-decimal list-inside space-y-1 ml-2 text-sm text-left text-muted-foreground">
+                  <li>Open the <span className="font-bold">World App</span></li>
+                  <li>Tap the <span className="font-bold">settings icon</span> in the top right corner</li>
+                  <li>Select <span className="font-bold">Apps</span></li>
+                  <li>Find and tap on <span className="font-bold">Magnify Cash</span></li>
+                  <li>Enable <span className="font-bold">Notifications</span> to stay updated</li>
                 </ol>
               </div>
               

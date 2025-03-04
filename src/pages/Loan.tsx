@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { formatUnits } from "viem";
 import { Shield } from "lucide-react";
@@ -86,22 +87,20 @@ const Loan = () => {
     setTimeout(() => navigate("/repay-loan"), 1000);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <Header title="Get a Loan" />
-        <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+  return (
+    <div className="min-h-screen">
+      <Header title="Get a Loan" />
+      {isLoading ? (
+        <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
+            <div className="dot-spinner">
+              <div className="dot bg-[#1A1E8E]"></div>
+              <div className="dot bg-[#4A3A9A]"></div>
+              <div className="dot bg-[#7A2F8A]"></div>
+              <div className="dot bg-[#A11F75]"></div>
+            </div>
         </div>
-      </div>
-    );
-  }
-
-  if (!isLoading && data && data?.nftInfo.tokenId === null) {
-    return (
-      <div className="min-h-screen">
+      ) : !data || data?.nftInfo.tokenId === null ? (
         <div className="p-6 space-y-6">
-          <Header title="Get a Loan" />
           <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
             <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
             <p className="mb-4">
@@ -117,14 +116,7 @@ const Loan = () => {
             </button>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  if (!isLoading && hasActiveLoan) {
-    return (
-      <div className="min-h-screen">
-        <Header title="Get a Loan" />
+      ) : hasActiveLoan ? (
         <div className="p-6 space-y-6">
           <div className="text-center">
             <h2 className="text-2xl font-semibold">You already have an active loan</h2>
@@ -136,15 +128,7 @@ const Loan = () => {
             </Button>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  if (!isLoading && data) {
-    return (
-      <div className="min-h-screen">
-        <Header title="Get a Loan" />
-
+      ) : (
         <div className="p-6 space-y-6">
           <div className="glass-card p-6">
             <h2 className="text-lg font-semibold text-center">Current Loan Eligibility</h2>
@@ -190,7 +174,20 @@ const Loan = () => {
                     {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
                   </span>
                 </p>
-                {isConfirming && <p>Confirming transaction...</p>}
+                {isConfirming && (
+                  <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+                    <div className="flex justify-center">
+                      <div className="orbit-spinner">
+                        <div className="orbit"></div>
+                        <div className="orbit"></div>
+                        <div className="center"></div>
+                      </div>
+                    </div>
+                    <p className="text-white text-center max-w-md px-4 text-lg font-medium">
+                      Confirming transaction, please do not leave this page until confirmation is complete.
+                    </p>
+                  </div>
+                )}
                 {isConfirmed && (
                   <>
                     <p>Transaction confirmed!</p>
@@ -203,9 +200,9 @@ const Loan = () => {
             )}
           </div>
         </div>
-      </div>
-    );
-  }
+      )}
+    </div>
+  );
 };
 
 export default Loan;

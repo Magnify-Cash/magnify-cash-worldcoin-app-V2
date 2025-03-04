@@ -62,7 +62,6 @@ const useRepayLoan = () => {
   const repayLoanWithPermit2 = useCallback(async (loanAmount: string, V1OrV2: string) => {
     setError(null);
     setTransactionId(null);
-    setIsConfirming(true); // Ensure the button is disabled immediately
     setIsConfirmed(false);
     setLoanDetails(null);
 
@@ -179,6 +178,7 @@ const useRepayLoan = () => {
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
         console.log("Loan repayment transaction sent:", finalPayload.transaction_id);
+        setIsConfirming(true);
 
         setLoanDetails({
           amount: parseInt(loanAmount),

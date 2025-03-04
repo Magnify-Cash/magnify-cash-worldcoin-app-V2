@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import {
@@ -39,13 +40,16 @@ const LoanHistory = () => {
         const response = await fetch(
           `${BACKEND_URL}/getTransactionHistory?wallet=${ls_wallet}`
         );
-
         if (!response.ok) {
           throw new Error(`API error: ${response.statusText}`);
         }
-
         const data: LoanTransaction[] = await response.json();
-        setTransactions(data);
+  
+        const sortedTransactions = data.sort(
+          (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+  
+        setTransactions(sortedTransactions);
       } catch (err) {
         setError("Failed to fetch transactions.");
         console.error("Error fetching transactions:", err);
@@ -53,7 +57,7 @@ const LoanHistory = () => {
         setLoading(false);
       }
     };
-
+  
     fetchTransactionHistory();
   }, []);
 
@@ -74,8 +78,15 @@ const LoanHistory = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center">
-                      Loading...
+                    <TableCell colSpan={3} className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="dot-spinner">
+                          <div className="dot bg-[#1A1E8E]"></div>
+                          <div className="dot bg-[#4A3A9A]"></div>
+                          <div className="dot bg-[#7A2F8A]"></div>
+                          <div className="dot bg-[#A11F75]"></div>
+                        </div>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : error ? (

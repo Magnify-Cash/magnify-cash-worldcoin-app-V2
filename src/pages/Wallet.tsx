@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { WalletCard } from "@/components/WalletCard";
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -248,6 +249,25 @@ const Wallet = () => {
               </div>
             </Button>
           </div>
+        </div>
+        <div className="space-y-4 mb-8">
+          {isLoading ? (
+            <>
+              <WalletCard currency="" symbol="" balance="" isLoading={true} />
+              <WalletCard currency="" symbol="" balance="" isLoading={true} />
+            </>
+          ) : tokens.length > 0 ? (
+            tokens.map((token) => (
+              <WalletCard
+                key={token.contractAddress}
+                currency={token.name}
+                symbol={token.symbol}
+                balance={token.balance}
+              />
+            ))
+          ) : (
+            <div className="text-center py-4">No tokens found. Add some to see your balance!</div>
+          )}
         </div>
       </div>
     </div>

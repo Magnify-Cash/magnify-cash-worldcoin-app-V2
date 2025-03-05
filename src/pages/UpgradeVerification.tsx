@@ -6,7 +6,7 @@ import { useMagnifyWorld, Tier, ContractData } from "@/hooks/useMagnifyWorld";
 import { Shield, FileCheck, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { IDKitWidget, VerificationLevel, ISuccessResult } from "@worldcoin/idkit";
-import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
+import { WORLDCOIN_CLIENT_ID, BACKEND_URL } from "@/utils/constants";
 
 const UpgradeVerification = () => {
   // hooks
@@ -38,7 +38,7 @@ const UpgradeVerification = () => {
     nftInfo: ContractData["nftInfo"],
   ) => {
     try {
-      const res = await fetch("https://worldid-backend-v2.kevin8396.workers.dev", {
+      const res = await fetch(BACKEND_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,8 +74,13 @@ const UpgradeVerification = () => {
     return (
       <div className="min-h-screen">
         <Header title="Verification Level" />
-        <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
+            <div className="dot-spinner">
+              <div className="dot bg-[#1A1E8E]"></div>
+              <div className="dot bg-[#4A3A9A]"></div>
+              <div className="dot bg-[#7A2F8A]"></div>
+              <div className="dot bg-[#A11F75]"></div>
+            </div>
         </div>
       </div>
     );

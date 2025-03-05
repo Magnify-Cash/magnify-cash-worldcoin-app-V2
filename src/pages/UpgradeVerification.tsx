@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Shield, FileCheck, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { IDKitWidget, VerificationLevel, ISuccessResult } from "@worldcoin/idkit";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
+import * as Sentry from "@sentry/react";
 
 const UpgradeVerification = () => {
   // hooks
@@ -14,6 +15,28 @@ const UpgradeVerification = () => {
   const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
+
+  useEffect(() => {
+    const originalConsoleLog = console.log;
+    console.log = (...args) => {
+      Sentry.captureMessage(`[UpgradeVerification] ${args.map(String).join(" ")}`, "info");
+      originalConsoleLog.apply(console, args);
+    };
+
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      Sentry.captureException(new Error(`[UpgradeVerification] ${args.map(String).join(" ")}`));
+      originalConsoleError.apply(console, args);
+    };
+
+    console.log("Sentry logging enabled on UpgradeVerification page.");
+
+    return () => {
+      console.log("Sentry logging disabled on UpgradeVerification page.");
+      console.log = originalConsoleLog;
+      console.error = originalConsoleError;
+    };
+  }, []);
 
   // icon mapping
   const IconMapping = ({ type, className, ...otherProps }) => {
@@ -38,6 +61,8 @@ const UpgradeVerification = () => {
     nftInfo: ContractData["nftInfo"],
   ) => {
     try {
+      console.log("🔹 Sending verification request...", { proof, action, nftInfo });
+
       const res = await fetch("https://worldid-backend-v2.kevin8396.workers.dev", {
         method: "POST",
         headers: {
@@ -50,23 +75,49 @@ const UpgradeVerification = () => {
           tokenId: nftInfo.tokenId === null ? "" : nftInfo.tokenId.toString(),
         }),
       });
+
+      console.log("🔹 Received response from backend:", res);
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Verification failed");
+        const errorResponse = await res.json();
+        console.error("❌ Backend error response:", errorResponse);
+        throw new Error(errorResponse.message || "Verification failed");
       }
+
       const data = await res.json();
-      console.log("NFT minted successfully:", data);
+      console.log("✅ NFT minted successfully:", data);
       return data;
     } catch (error) {
-      console.error("Verification error:", error);
+      console.error("❌ Verification process failed:", error);
       throw error;
     }
   };
 
   // - handle post-claim of verified NFT
-  const handleSuccessfulClaimOrUpgrade = () => {
-    refetch();
-    setTimeout(() => navigate("/profile"), 1500);
+  const handleSuccessfulClaimOrUpgrade = async () => {
+    console.log("🔹 User successfully verified. Refetching data...");
+    try {
+      refetch();
+      console.log("✅ User data refreshed successfully!");
+      setTimeout(() => navigate("/profile"), 1500);
+    } catch (error) {
+      console.error("❌ Failed to refresh user data after verification:", error);
+      Sentry.captureException(error);
+    }
+  };
+
+
+  // Debugging IDKitWidget response
+  const handleVerify = (proof: ISuccessResult) => {
+    console.log("🔹 Received proof from World ID:", proof);
+
+    return handleClaimOrUpgradeNFT(
+      proof,
+      data?.nftInfo.tokenId === null
+        ? currentTier?.verificationStatus.claimAction
+        : currentTier?.verificationStatus.upgradeAction,
+      data?.nftInfo || { tokenId: null, tier: null },
+    );
   };
 
   // Loading & error states
@@ -117,25 +168,17 @@ const UpgradeVerification = () => {
 
           {/* Verification cards */}
           <IDKitWidget
-            app_id={WORLDCOIN_CLIENT_ID}
-            action={
-              nftInfo.tokenId === null
-                ? currentTier?.verificationStatus.claimAction
-                : currentTier?.verificationStatus.upgradeAction
-            }
-            signal={ls_wallet}
-            onSuccess={handleSuccessfulClaimOrUpgrade}
-            handleVerify={(proof) =>
-              handleClaimOrUpgradeNFT(
-                proof,
-                nftInfo.tokenId === null
-                  ? currentTier?.verificationStatus.claimAction
-                  : currentTier?.verificationStatus.upgradeAction,
-                nftInfo,
-              )
-            }
-            verification_level={currentTier?.verificationStatus.verification_level as VerificationLevel}
-          >
+          app_id={WORLDCOIN_CLIENT_ID}
+          action={
+            data?.nftInfo.tokenId === null
+              ? currentTier?.verificationStatus.claimAction
+              : currentTier?.verificationStatus.upgradeAction
+          }
+          signal={ls_wallet}
+          onSuccess={handleSuccessfulClaimOrUpgrade}
+          handleVerify={handleVerify}
+          verification_level={currentTier?.verificationStatus.verification_level as VerificationLevel}
+        >
             {({ open }) => (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {Object.entries(data?.allTiers || {}).map(([index, tier]) => {

@@ -45,42 +45,44 @@ const Wallet = () => {
       console.error("MiniKit is not installed");
       return;
     }
-
+  
     const ls_wallet = localStorage.getItem("ls_wallet_address");
-
+  
     if (!ls_wallet) {
       console.error("No wallet found in localStorage");
       return;
     }
-
+  
     // Check if wallet already exists before saving
     const walletExists = await checkWalletExists(ls_wallet);
     if (walletExists) {
-      console.log("Wallet already exists. Skipping saveWallet request."); 
+      console.log("Wallet already exists. Skipping saveWallet request.");
       return;
     }
-
+  
     const requestPermissionPayload: RequestPermissionPayload = {
       permission: Permission.Notifications,
     };
-
+  
     console.log("Requesting permission...");
-    console.log(requestPermissionPayload);
-
+  
+    let notificationEnabled = false;
+  
     try {
       const payload = await MiniKit.commandsAsync.requestPermission(requestPermissionPayload);
-      
-      let notificationEnabled = false;
-
-      if (payload.finalPayload.status === "success") {
-        console.log("Notifications enabled:", payload.finalPayload);
-        notificationEnabled = true;
+      notificationEnabled = payload.finalPayload.status === "success";
+  
+      if (!notificationEnabled) {
+        console.warn("Notification permission request was unsuccessful:", payload);
       } else {
-        console.error("Permission request failed:", payload);
+        console.log("Notifications enabled:", payload.finalPayload);
       }
-
-      // Send backend request to save wallet and notification status
-      await fetch(`${BACKEND_URL}/saveWallet`, {
+    } catch (error) {
+      console.error("Error requesting notification permission:", error);
+    }
+  
+    try {
+      const saveResponse = await fetch(`${BACKEND_URL}/saveWallet`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -91,24 +93,38 @@ const Wallet = () => {
           notification: notificationEnabled,
         }),
       });
-
-      console.log("User permission saved successfully.");
-
+  
+      if (!saveResponse.ok) {
+        throw new Error(`Failed to save wallet. Status: ${saveResponse.status}`);
+      }
+  
+      console.log("User wallet saved successfully, notification status:", notificationEnabled);
     } catch (error) {
-      console.error("Error requesting notification permission:", error);
+      console.error("Error saving wallet:", error);
     }
   }, [checkWalletExists]);
+  
 
   // Request permission on mount if not already granted
   useEffect(() => {
-    const checkPermission = async () => {
+    const checkAndSaveWallet = async () => {
       if (!MiniKit.isInstalled()) return;
-
+  
+      const ls_wallet = localStorage.getItem("ls_wallet_address");
+      if (!ls_wallet) return;
+  
+      const walletExists = await checkWalletExists(ls_wallet);
+      if (!walletExists) {
+        console.log("Wallet not found in backend. Saving now...");
+        requestPermission();
+        return;
+      }
+  
       try {
         const result = await MiniKit.commandsAsync.requestPermission({ permission: Permission.Notifications });
-
+  
         console.log("Permission status:", result);
-
+  
         if (result.finalPayload.status === "error" && result.finalPayload.error_code !== "already_granted") {
           console.log("Requesting permission...");
           requestPermission();
@@ -117,9 +133,10 @@ const Wallet = () => {
         console.error("Error checking permission:", error);
       }
     };
-
-    checkPermission();
-  }, [requestPermission]);
+  
+    checkAndSaveWallet();
+  }, [requestPermission, checkWalletExists]);
+  
 
   useEffect(() => {
     const url = `https://worldchain-mainnet.g.alchemy.com/v2/j-_GFK85PRHN59YaKb8lmVbV0LHmFGBL`;

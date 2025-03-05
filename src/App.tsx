@@ -15,8 +15,6 @@ import eruda from "eruda";
 import { MiniKitProvider } from "./providers/MiniKitProvider";
 import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
 
-eruda.init();
-
 function App() {
   return (
     <MiniKitProvider>

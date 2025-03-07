@@ -1,9 +1,10 @@
+
 import { useState, useCallback } from "react";
 import { formatUnits } from "viem";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import useRequestLoan from "@/hooks/useRequestLoan";
 import { Button } from "@/components/ui/button";
@@ -14,19 +15,21 @@ const Loan = () => {
   const [isClicked, setIsClicked] = useState(false);
   const [liquidityError, setLiquidityError] = useState<string | null>(null);
 
-  // Hooks
+  // hooks
   const { toast } = useToast();
   const navigate = useNavigate();
-  const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const ls_wallet = localStorage.getItem("ls_wallet_address");
+  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet);
   const { requestNewLoan, error, transactionId, isConfirming, isConfirmed } = useRequestLoan();
+
   const { usdcBalance, refreshBalance } = useUSDCBalance();
 
-  const hasActiveLoan = data?.loan?.isActive ?? false;
+  // state
+  const hasActiveLoan = data?.loan[0] !== "";
 
   // Handle loan application
   const handleApplyLoan = useCallback(
-    async (event: React.FormEvent, requestedTierId: bigint) => {
+    async (requestedTierId: bigint) => {
       event.preventDefault();
       if (isClicked) return;
       setIsClicked(true);
@@ -34,6 +37,7 @@ const Loan = () => {
 
       try {
         await refreshBalance();
+
         const latestBalance = usdcBalance ?? 0;
         if (latestBalance < 1) {
           setLiquidityError("Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.");
@@ -74,7 +78,7 @@ const Loan = () => {
         setIsClicked(false);
       }
     },
-    [data, requestNewLoan, toast, usdcBalance, refreshBalance, isClicked]
+    [data, requestNewLoan, toast, usdcBalance, refreshBalance]
   );
 
   // Handle navigation after claiming loan
@@ -88,31 +92,38 @@ const Loan = () => {
       <Header title="Get a Loan" />
       {isLoading ? (
         <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
-          <div className="dot-spinner">
-            <div className="dot bg-[#1A1E8E]"></div>
-            <div className="dot bg-[#4A3A9A]"></div>
-            <div className="dot bg-[#7A2F8A]"></div>
-            <div className="dot bg-[#A11F75]"></div>
-          </div>
+            <div className="dot-spinner">
+              <div className="dot bg-[#1A1E8E]"></div>
+              <div className="dot bg-[#4A3A9A]"></div>
+              <div className="dot bg-[#7A2F8A]"></div>
+              <div className="dot bg-[#A11F75]"></div>
+            </div>
         </div>
       ) : !data || data?.nftInfo.tokenId === null ? (
         <div className="p-6 space-y-6">
           <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
             <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
             <p className="mb-4">
-              To be eligible for a loan, you need to own a specific NFT. Please upgrade your account.
+              To be eligible for a loan, you need to own a specific NFT. Please upgrade your account to
+              include this NFT.
             </p>
-            <Button onClick={() => navigate("/upgrade-verification")} className="glass-button w-full">
+            <button
+              onClick={() => navigate("/upgrade-verification")}
+              className="glass-button w-full"
+              disabled={isLoading}
+            >
               Upgrade Now
-            </Button>
+            </button>
           </div>
         </div>
       ) : hasActiveLoan ? (
         <div className="p-6 space-y-6">
           <div className="text-center">
             <h2 className="text-2xl font-semibold">You already have an active loan</h2>
-            <p className="mt-4 text-gray-600">You currently have an active loan. Please repay it first.</p>
-            <Button onClick={() => navigate("/repay-loan")} className="mt-4 w-full sm:w-auto">
+            <p className="mt-4 text-gray-600">
+              You currently have an active loan. Please navigate to your dashboard for more details.
+            </p>
+            <Button type="button" onClick={() => navigate("/repay-loan")} className="mt-4 w-full sm:w-auto">
               Repay Loan
             </Button>
           </div>
@@ -122,7 +133,7 @@ const Loan = () => {
           <div className="glass-card p-6">
             <h2 className="text-lg font-semibold text-center">Current Loan Eligibility</h2>
             {Object.entries(data?.allTiers || {}).map(([index, tier]) => {
-              if (tier.verificationStatus.level !== "NONE" && data?.nftInfo.tier.tierId >= tier.tierId) {
+              if (tier.verificationStatus.level !== "Passport" && data?.nftInfo.tier.tierId >= tier.tierId) {
                 return (
                   <div key={index} className="mt-10">
                     <div className="flex items-center">
@@ -130,16 +141,17 @@ const Loan = () => {
                       <span>{tier.verificationStatus.description}</span>
                     </div>
                     <div className="flex flex-col items-start space-y-3 my-3">
-                      <p className="text-gray-600">Loan Amount: ${formatUnits(tier.loanAmount, 6)}</p>
+                      <p className="text-gray-600">Loan Amount: ${formatUnits(tier.loanAmount, 6) || "$0"}</p>
                       <p className="text-gray-600">
-                        Interest Rate: {((tier.interestRate || BigInt(0)) / BigInt(100)).toString()}%
+                        Interest Rate: {((tier.interestRate || BigInt(0)) / BigInt(100)).toString() || "0"}%
                       </p>
                       <p className="text-gray-600">
-                        Duration: {((tier.loanPeriod || BigInt(0)) / BigInt(60 * 24 * 60)).toString()} days
+                        Duration:{" "}
+                        {((tier.loanPeriod || BigInt(0)) / BigInt(60 * 24 * 60)).toString() || "N/A"} days
                       </p>
                     </div>
                     <Button
-                      onClick={(event) => handleApplyLoan(event, tier.tierId)}
+                      onClick={() => handleApplyLoan(tier.tierId)}
                       disabled={isClicked || isConfirming || isConfirmed}
                       className="w-full"
                     >
@@ -148,8 +160,9 @@ const Loan = () => {
                     <hr className="border-t border-gray-300 mt-4" />
                   </div>
                 );
+              } else {
+                return null;
               }
-              return null;
             })}
             {liquidityError && <p className="text-red-500">{liquidityError}</p>}
             {error && <p className="text-red-500">{error}</p>}
@@ -193,3 +206,4 @@ const Loan = () => {
 };
 
 export default Loan;
+

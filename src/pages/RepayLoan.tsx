@@ -18,7 +18,7 @@ const RepayLoan = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet);
+  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const loan = data?.loan;
   const loanData: Loan = loan && loan[1];
 

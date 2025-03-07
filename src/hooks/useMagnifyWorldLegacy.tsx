@@ -4,27 +4,9 @@ import { MAGNIFY_WORLD_ADDRESS } from "@/utils/constants";
 import { config } from "@/providers/Wagmi";
 import { useEffect, useState, useCallback } from "react";
 
-export const VERIFICATION_TIERS: Record<"NONE" | "DEVICE" | "ORB", VerificationTier> = {
-  NONE: {
-    level: "NONE",
-    description: "Not Verified",
-    color: "text-gray-500",
-    message: "You have not been verified yet.",
-    claimAction: "",
-    upgradeAction: "mint-device-verified-nft",
-    verification_level: "none",
-  },
-  DEVICE: {
-    level: "DEVICE",
-    description: "Device Verified",
-    color: "text-brand-info",
-    message: "You are Device Verified! Upgrade to ORB for maximum benefits.",
-    claimAction: "mint-device-verified-nft",
-    upgradeAction: "upgrade-device-verified-nft",
-    verification_level: "device",
-  },
+export const VERIFICATION_TIERS = {
   ORB: {
-    level: "ORB",
+    level: "Orb Scan",
     description: "Orb Verified",
     color: "text-brand-success",
     message: "You're fully verified and eligible for maximum loan amounts!",
@@ -32,12 +14,31 @@ export const VERIFICATION_TIERS: Record<"NONE" | "DEVICE" | "ORB", VerificationT
     upgradeAction: "upgrade-orb-verified-nft",
     verification_level: "orb",
   },
+  PASSPORT: {
+    level: "Passport",
+    description: "Passport Verified",
+    color: "text-brand-warning",
+    message: "Get ORB verified to unlock $10 loans!",
+    claimAction: "mint-passport-verified-nft",
+    upgradeAction: "upgrade-passport-verified-nft",
+    verification_level: "passport",
+  },
+  NONE: {
+    level: "Device",
+    description: "Device Verified",
+    color: "text-brand-info",
+    message:
+      "Get World ID verified to unlock higher loan amounts! Verify with Passport for $5 loans or get ORB verified for $10 loans.",
+    claimAction: "mint-device-verified-nft",
+    upgradeAction: "upgrade-device-verified-nft",
+    verification_level: "device",
+  },
 };
 
 export type VerificationLevel = keyof typeof VERIFICATION_TIERS;
-
 export interface VerificationTier {
   level: VerificationLevel;
+  maxLoanAmount: number;
   description: string;
   color: string;
   message: string;
@@ -45,7 +46,6 @@ export interface VerificationTier {
   upgradeAction: string;
   verification_level: string;
 }
-
 export interface Tier {
   loanAmount: bigint;
   interestRate: bigint;
@@ -102,70 +102,59 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
       setIsLoading(true);
       setIsError(false);
 
-      // Fetch contract data
-      const [loanToken, tierCount, userNFT] = await Promise.all([
-        readContract(config, {
-          address: MAGNIFY_WORLD_ADDRESS,
-          abi: magnifyworldabi,
-          functionName: "loanToken",
-        }),
-        readContract(config, {
-          address: MAGNIFY_WORLD_ADDRESS,
-          abi: magnifyworldabi,
-          functionName: "tierCount",
-        }),
-        readContract(config, {
-          address: MAGNIFY_WORLD_ADDRESS,
-          abi: magnifyworldabi,
-          functionName: "userNFT",
-          args: [walletAddress],
-        }) as Promise<bigint>,
-      ]);
+      // Basic contract information
+      const loanToken = await readContract(config, {
+        address: MAGNIFY_WORLD_ADDRESS,
+        abi: magnifyworldabi,
+        functionName: "loanToken",
+      });
+
+      const tierCount = await readContract(config, {
+        address: MAGNIFY_WORLD_ADDRESS,
+        abi: magnifyworldabi,
+        functionName: "tierCount",
+      });
+
+      const userNFT = (await readContract(config, {
+        address: MAGNIFY_WORLD_ADDRESS,
+        abi: magnifyworldabi,
+        functionName: "userNFT",
+        args: [walletAddress],
+      })) as bigint;
 
       let tokenId: bigint | null = null;
       let nftTier: Tier | null = null;
-
       if (userNFT !== BigInt(0)) {
         tokenId = userNFT;
-        const [tierId, tierData] = await Promise.all([
-          readContract(config, {
-            address: MAGNIFY_WORLD_ADDRESS,
-            abi: magnifyworldabi,
-            functionName: "nftToTier",
-            args: [tokenId],
-          }) as Promise<bigint>,
-          readContract(config, {
-            address: MAGNIFY_WORLD_ADDRESS,
-            abi: magnifyworldabi,
-            functionName: "tiers",
-            args: [tokenId],
-          }),
-        ]);
-
-        nftTier = {
-          loanAmount: tierData[0],
-          interestRate: tierData[1],
-          loanPeriod: tierData[2],
-          tierId,
-          verificationStatus: getVerificationStatus(Number(tierId)),
-        };
+        const tierId = await readContract(config, {
+          address: MAGNIFY_WORLD_ADDRESS,
+          abi: magnifyworldabi,
+          functionName: "nftToTier",
+          args: [tokenId],
+        });
+        const tierData = await readContract(config, {
+          address: MAGNIFY_WORLD_ADDRESS,
+          abi: magnifyworldabi,
+          functionName: "tiers",
+          args: [tierId],
+        });
+        if (tierData) {
+          nftTier = {
+            loanAmount: tierData[0],
+            interestRate: tierData[1],
+            loanPeriod: tierData[2],
+            tierId: tierId,
+            verificationStatus: getVerificationStatus(tierId),
+          };
+        }
       }
 
-      const loan = (await readContract(config, {
+      const loan = await readContract(config, {
         address: MAGNIFY_WORLD_ADDRESS,
         abi: magnifyworldabi,
         functionName: "fetchLoanByAddress",
         args: [walletAddress],
-      })) as Loan;
-
-      // Ensure all properties are included in the loan object
-      const loanData: Loan = {
-        amount: loan?.amount ?? BigInt(0),
-        startTime: loan?.startTime ?? BigInt(0),
-        isActive: loan?.isActive ?? false,
-        interestRate: loan?.interestRate ?? BigInt(0),
-        loanPeriod: loan?.loanPeriod ?? BigInt(0),
-      };
+      });
 
       const allTiers = await fetchAllTiers(Number(tierCount));
 
@@ -176,11 +165,11 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
           tokenId,
           tier: nftTier,
         },
-        loan: loanData,
+        loan,
         allTiers,
       };
 
-      globalCache[walletAddress] = newData;
+      globalCache[walletAddress] = newData; // Update global cache
       setData(newData);
     } catch (error) {
       console.error("Error fetching contract data:", error);
@@ -207,7 +196,7 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
   return { data, isLoading, isError, refetch };
 }
 
-// Fetch all tiers
+// Helper function to fetch all tiers
 async function fetchAllTiers(tierCount: number): Promise<Record<number, Tier> | null> {
   const allTiers: Record<number, Tier> = {};
   for (let i = 1; i <= tierCount; i++) {
@@ -217,14 +206,13 @@ async function fetchAllTiers(tierCount: number): Promise<Record<number, Tier> | 
       functionName: "tiers",
       args: [BigInt(i)],
     });
-
     if (tierData) {
       allTiers[i] = {
         loanAmount: tierData[0],
         interestRate: tierData[1],
         loanPeriod: tierData[2],
         tierId: BigInt(i),
-        verificationStatus: getVerificationStatus(i),
+        verificationStatus: getVerificationStatus(Number(i)),
       };
     }
   }
@@ -233,14 +221,21 @@ async function fetchAllTiers(tierCount: number): Promise<Record<number, Tier> | 
 
 // Helper function to get verification status based on tier ID
 function getVerificationStatus(tierId: number): VerificationTier {
-  switch (tierId) {
-    case 0:
-      return VERIFICATION_TIERS.NONE; // No verification
+  let verificationLevel: VerificationLevel;
+  switch (Number(tierId)) {
     case 1:
-      return VERIFICATION_TIERS.DEVICE; // Device Verified
+      verificationLevel = "NONE";
+      break;
     case 2:
-      return VERIFICATION_TIERS.ORB; // Orb Scan Verified
+      verificationLevel = "PASSPORT";
+      break;
+    case 3:
+      verificationLevel = "ORB";
+      break;
     default:
-      return VERIFICATION_TIERS.NONE; // Default to No Verification
+      // You can decide what to do with unexpected tier IDs. Here, we default to NONE.
+      verificationLevel = "NONE";
   }
+
+  return VERIFICATION_TIERS[verificationLevel];
 }

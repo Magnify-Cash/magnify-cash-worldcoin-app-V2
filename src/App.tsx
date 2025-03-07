@@ -14,6 +14,7 @@ import "./App.css";
 import eruda from "eruda";
 import { MiniKitProvider } from "./providers/MiniKitProvider";
 import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
+import { Toaster } from "@/components/ui/toaster";
 
 eruda.init();
 
@@ -21,6 +22,7 @@ function App() {
   return (
     <MiniKitProvider>
       <USDCBalanceProvider>
+      <Toaster />
       <Router>
         <Routes>
           <Route path="/" element={<Navigate to="/welcome" replace />} />

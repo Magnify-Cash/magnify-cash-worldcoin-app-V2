@@ -16,8 +16,6 @@ import { MiniKitProvider } from "./providers/MiniKitProvider";
 import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
 import { Toaster } from "@/components/ui/toaster";
 
-eruda.init();
-
 function App() {
   return (
     <MiniKitProvider>

@@ -67,11 +67,20 @@ const UpgradeVerification = () => {
       const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
       if (finalPayload.status === "error") {
         console.error("Verification failed:", finalPayload);
-        toast({
-          title: "Verification Failed",
-          description: "Something went wrong. Please try again.",
-          variant: "destructive",
-        });
+
+        if (finalPayload.error_code === "credential_unavailable") {
+          toast({
+            title: "Verification Failed",
+            description: "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Verification Failed",
+            description: "Something went wrong. Please try again.",
+            variant: "destructive",
+          });
+        }
         setVerifying(false);
         return;
       }
@@ -169,7 +178,7 @@ const UpgradeVerification = () => {
           </div>
           <h2 className="text-2xl font-bold text-gradient mb-2 text-center">Verification Level</h2>
           <p className="text-muted-foreground text-center text-lg">
-            {nftInfo.tokenId === null ? "Unverified" : ` ${nftInfo.tier?.verificationStatus.level} Verified`}
+            {nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
           </p>
         </motion.div>
 

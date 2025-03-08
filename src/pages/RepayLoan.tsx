@@ -115,8 +115,8 @@ const RepayLoan = () => {
     );
   }
 
-  // No loan found
-  if (!isLoading && loan[0] === "") {
+  // Check if user has an active loan
+  if (!isLoading && (!loan || loanData?.amount === 0n || !loanData?.isActive)) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -148,17 +148,14 @@ const RepayLoan = () => {
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
-              {/*
-              TODO: NO LOAN TYPE
-              <h3 className="text-lg font-semibold">{loan.type} Loan</h3>
-              */}
               <span
-                className={`px-3 py-1 rounded-full ${minutesRemaining !== 0 ? "bg-green-300" : "bg-red-300"} text-black text-sm`}
+                className={`px-3 py-1 rounded-full ${
+                  loanData.isActive ? "bg-green-300" : "bg-red-300"
+                } text-black text-sm`}
               >
-                  {daysRemaining === 0 && hoursRemaining === 0 && minutesRemaining === 0
-                    ? "Defaulted"
-                    : "Active"}{" "}
-                  Loan
+                {loanData.isActive
+                  ? "Active Loan"
+                  : "Defaulted Loan"}
               </span>
             </div>
 

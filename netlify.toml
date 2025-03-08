@@ -7,10 +7,10 @@
   VITE_WORLDCOIN_CLIENT_ID = "app_cfd0a40d70419e3675be53a0aa9b7e10"
   VITE_BACKEND_URL = "https://magnify-cash-worldid-backend.kevin8396.workers.dev"
 
-[context.deploy-preview.environment]
+[context.staging.environment]
   VITE_WORLDCOIN_CLIENT_ID = "app_17bda0ba13c1f91c838218d2156b673c"
   VITE_BACKEND_URL = "https://staging-magnify-cash-worldid-backend.kevin8396.workers.dev"
 
-[context.dev.environment]
+[context.development.environment]
   VITE_WORLDCOIN_CLIENT_ID = "app_1801cb2a3556a82b82e2bf667a5f3c8b"
   VITE_BACKEND_URL = "https://dev-magnify-cash-worldid-backend.kevin8396.workers.dev"

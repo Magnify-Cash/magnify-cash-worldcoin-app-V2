@@ -22,8 +22,9 @@ const Loan = () => {
   const { requestNewLoan, error, transactionId, isConfirming, isConfirmed } = useRequestLoan();
   const { usdcBalance, refreshBalance } = useUSDCBalance();
 
-  const hasActiveLoan = data?.loan?.isActive ?? false;
-
+  const loanData = data?.loan ? data.loan[1] : null;
+  const hasActiveLoan = loanData?.isActive ?? false;
+  
   // Handle loan application
   const handleApplyLoan = useCallback(
     async (event: React.FormEvent, requestedTierId: bigint) => {

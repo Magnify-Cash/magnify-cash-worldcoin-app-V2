@@ -62,6 +62,8 @@ export interface Loan {
   loanPeriod: bigint;
 }
 
+export type LoanTuple = [string, Loan | null];
+
 export interface ContractData {
   loanToken: string | null;
   tierCount: number | null;
@@ -69,7 +71,7 @@ export interface ContractData {
     tokenId: bigint | null;
     tier: Tier | null;
   };
-  loan: Loan | null;
+  loan: LoanTuple; // tuple 
   allTiers: Record<number, Tier> | null;
 }
 
@@ -95,30 +97,30 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
     try {
       setIsLoading(true);
       setIsError(false);
-
+  
       // Fetch contract data
       const loanToken = await readContract(config, {
         address: MAGNIFY_WORLD_ADDRESS,
         abi: magnifyworldabi,
         functionName: "loanToken",
       });
-
+  
       const tierCount = await readContract(config, {
         address: MAGNIFY_WORLD_ADDRESS,
         abi: magnifyworldabi,
         functionName: "tierCount",
       });
-
+  
       const userNFT = (await readContract(config, {
         address: MAGNIFY_WORLD_ADDRESS,
         abi: magnifyworldabi,
         functionName: "userNFT",
         args: [walletAddress],
       })) as bigint;
-
+  
       let tokenId: bigint | null = null;
       let nftTier: Tier | null = null;
-
+  
       if (userNFT !== BigInt(0)) {
         tokenId = userNFT;
         const tierId = await readContract(config, {
@@ -133,7 +135,7 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
           functionName: "tiers",
           args: [tierId],
         });
-
+  
         if (tierData) {
           nftTier = {
             loanAmount: tierData[0],
@@ -144,16 +146,20 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
           };
         }
       }
-
-      const loan = await readContract(config, {
+  
+      const loanResult = await readContract(config, {
         address: MAGNIFY_WORLD_ADDRESS,
         abi: magnifyworldabi,
         functionName: "fetchLoanByAddress",
         args: [walletAddress],
-      });
-
+      }) as unknown;
+  
+      const loanData: Loan | null = Array.isArray(loanResult) && loanResult.length === 2
+        ? (loanResult[1] as Loan)
+        : null;
+  
       const allTiers = await fetchAllTiers(Number(tierCount));
-
+  
       const newData: ContractData = {
         loanToken: String(loanToken),
         tierCount: Number(tierCount),
@@ -161,10 +167,11 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
           tokenId,
           tier: nftTier,
         },
-        loan,
+        loan: ["V2", loanData],
         allTiers,
       };
-
+  
+  
       globalCache[walletAddress] = newData;
       setData(newData);
     } catch (error) {

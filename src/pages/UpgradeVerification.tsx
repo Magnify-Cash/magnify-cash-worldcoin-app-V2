@@ -88,7 +88,6 @@ const UpgradeVerification = () => {
       // Send proof to backend
       const response = await fetch(`${BACKEND_URL}/verify`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           payload: finalPayload as ISuccessResult,
           action: verificationStatus.claimAction || verificationStatus.upgradeAction,

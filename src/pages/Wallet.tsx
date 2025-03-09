@@ -19,20 +19,17 @@ const Wallet = () => {
   const checkWalletExists = useCallback(async (wallet: string) => {
     try {
       const response = await fetch(`${BACKEND_URL}/checkWallet?wallet=${encodeURIComponent(wallet)}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Origin": window.location.origin,
-        },
+        method: "GET"
       });
   
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+      if (response.status === 200) {
+        return true;
+      } else if (response.status === 400) {
+        return false;
+      } else {
+        throw new Error(`Unexpected status code: ${response.status}`);
       }
-  
-      const data = await response.json();
-      return data.exists; // Returns true if wallet exists, false otherwise
-    } catch (error) {
+      } catch (error) {
       console.error("Error checking wallet existence:", error);
       return false;
     }
@@ -84,21 +81,17 @@ const Wallet = () => {
     try {
       const saveResponse = await fetch(`${BACKEND_URL}/saveWallet`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Origin": window.location.origin,
-        },
         body: JSON.stringify({
           wallet: ls_wallet,
           notification: notificationEnabled,
         }),
       });
   
-      if (!saveResponse.ok) {
+      if (saveResponse.status === 200) {
+        console.log("User wallet saved successfully, notification status:", notificationEnabled);
+      } else {
         throw new Error(`Failed to save wallet. Status: ${saveResponse.status}`);
       }
-  
-      console.log("User wallet saved successfully, notification status:", notificationEnabled);
     } catch (error) {
       console.error("Error saving wallet:", error);
     }

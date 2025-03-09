@@ -1,5 +1,5 @@
-
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import {
   Table,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { BACKEND_URL } from "@/utils/constants";
+import { Button } from "@/components/ui/button";
 
 interface LoanTransaction {
   transactionHash: string;
@@ -26,6 +27,7 @@ const LoanHistory = () => {
   const [transactions, setTransactions] = useState<LoanTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTransactionHistory = async () => {
@@ -43,13 +45,17 @@ const LoanHistory = () => {
         if (!response.ok) {
           throw new Error(`API error: ${response.statusText}`);
         }
-        const data: LoanTransaction[] = await response.json();
-  
-        const sortedTransactions = data.sort(
-          (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-  
-        setTransactions(sortedTransactions);
+        const result = await response.json();
+        const data: LoanTransaction[] = result.data;
+
+        if (result.status === 200 && data.length === 0) {
+          setError("You don't have any transaction history yet. Would you like to request your first loan?");
+        } else {
+          const sortedTransactions = data.sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
+          setTransactions(sortedTransactions);
+        }
       } catch (err) {
         setError("Failed to fetch transactions.");
         console.error("Error fetching transactions:", err);
@@ -57,7 +63,7 @@ const LoanHistory = () => {
         setLoading(false);
       }
     };
-  
+
     fetchTransactionHistory();
   }, []);
 
@@ -93,6 +99,11 @@ const LoanHistory = () => {
                   <TableRow>
                     <TableCell colSpan={3} className="text-center text-red-500">
                       {error}
+                      {error.includes("your first loan") && (
+                        <Button onClick={() => navigate("/loan")} className="w-full mt-4">
+                          Request a Loan
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : transactions.length === 0 ? (

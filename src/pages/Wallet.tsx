@@ -19,20 +19,17 @@ const Wallet = () => {
   const checkWalletExists = useCallback(async (wallet: string) => {
     try {
       const response = await fetch(`${BACKEND_URL}/checkWallet?wallet=${encodeURIComponent(wallet)}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Origin": window.location.origin,
-        },
+        method: "GET"
       });
   
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+      if (response.status === 200) {
+        return true;
+      } else if (response.status === 400) {
+        return false;
+      } else {
+        throw new Error(`Unexpected status code: ${response.status}`);
       }
-  
-      const data = await response.json();
-      return data.exists; // Returns true if wallet exists, false otherwise
-    } catch (error) {
+      } catch (error) {
       console.error("Error checking wallet existence:", error);
       return false;
     }
@@ -84,21 +81,17 @@ const Wallet = () => {
     try {
       const saveResponse = await fetch(`${BACKEND_URL}/saveWallet`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Origin": window.location.origin,
-        },
         body: JSON.stringify({
           wallet: ls_wallet,
           notification: notificationEnabled,
         }),
       });
   
-      if (!saveResponse.ok) {
+      if (saveResponse.status === 200) {
+        console.log("User wallet saved successfully, notification status:", notificationEnabled);
+      } else {
         throw new Error(`Failed to save wallet. Status: ${saveResponse.status}`);
       }
-  
-      console.log("User wallet saved successfully, notification status:", notificationEnabled);
     } catch (error) {
       console.error("Error saving wallet:", error);
     }
@@ -108,29 +101,31 @@ const Wallet = () => {
   // Request permission on mount if not already granted
   useEffect(() => {
     const checkAndSaveWallet = async () => {
-      if (!MiniKit.isInstalled()) return;
-  
       const ls_wallet = localStorage.getItem("ls_wallet_address");
       if (!ls_wallet) return;
   
       const walletExists = await checkWalletExists(ls_wallet);
       if (!walletExists) {
         console.log("Wallet not found in backend. Saving now...");
-        requestPermission();
+        if (MiniKit.isInstalled()) {
+          requestPermission();
+        }
         return;
       }
   
-      try {
-        const result = await MiniKit.commandsAsync.requestPermission({ permission: Permission.Notifications });
+      if (MiniKit.isInstalled()) {
+        try {
+          const result = await MiniKit.commandsAsync.requestPermission({ permission: Permission.Notifications });
   
-        console.log("Permission status:", result);
+          console.log("Permission status:", result);
   
-        if (result.finalPayload.status === "error" && result.finalPayload.error_code !== "already_granted") {
-          console.log("Requesting permission...");
-          requestPermission();
+          if (result.finalPayload.status === "error" && result.finalPayload.error_code !== "already_granted") {
+            console.log("Requesting permission...");
+            requestPermission();
+          }
+        } catch (error) {
+          console.error("Error checking permission:", error);
         }
-      } catch (error) {
-        console.error("Error checking permission:", error);
       }
     };
   

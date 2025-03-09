@@ -101,29 +101,31 @@ const Wallet = () => {
   // Request permission on mount if not already granted
   useEffect(() => {
     const checkAndSaveWallet = async () => {
-      if (!MiniKit.isInstalled()) return;
-  
       const ls_wallet = localStorage.getItem("ls_wallet_address");
       if (!ls_wallet) return;
   
       const walletExists = await checkWalletExists(ls_wallet);
       if (!walletExists) {
         console.log("Wallet not found in backend. Saving now...");
-        requestPermission();
+        if (MiniKit.isInstalled()) {
+          requestPermission();
+        }
         return;
       }
   
-      try {
-        const result = await MiniKit.commandsAsync.requestPermission({ permission: Permission.Notifications });
+      if (MiniKit.isInstalled()) {
+        try {
+          const result = await MiniKit.commandsAsync.requestPermission({ permission: Permission.Notifications });
   
-        console.log("Permission status:", result);
+          console.log("Permission status:", result);
   
-        if (result.finalPayload.status === "error" && result.finalPayload.error_code !== "already_granted") {
-          console.log("Requesting permission...");
-          requestPermission();
+          if (result.finalPayload.status === "error" && result.finalPayload.error_code !== "already_granted") {
+            console.log("Requesting permission...");
+            requestPermission();
+          }
+        } catch (error) {
+          console.error("Error checking permission:", error);
         }
-      } catch (error) {
-        console.error("Error checking permission:", error);
       }
     };
   

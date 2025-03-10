@@ -48,6 +48,120 @@ export type Database = {
         }
         Relationships: []
       }
+      mag_roles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          role_id: number
+          role_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          role_id?: number
+          role_name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          role_id?: number
+          role_name?: string
+        }
+        Relationships: []
+      }
+      mag_user_roles: {
+        Row: {
+          assigned_at: string | null
+          role_id: number
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          role_id: number
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          role_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mag_user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "mag_roles"
+            referencedColumns: ["role_id"]
+          },
+          {
+            foreignKeyName: "mag_user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mag_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      mag_users: {
+        Row: {
+          created_at: string | null
+          email: string
+          is_active: boolean | null
+          password_hash: string
+          updated_at: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          is_active?: boolean | null
+          password_hash: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          is_active?: boolean | null
+          password_hash?: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      notifications_log: {
+        Row: {
+          created_at: string
+          environment: string
+          id: number
+          message: string
+          number_of_recipients: number
+          path: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          environment: string
+          id?: number
+          message: string
+          number_of_recipients: number
+          path: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          id?: number
+          message?: string
+          number_of_recipients?: number
+          path?: string
+          title?: string
+        }
+        Relationships: []
+      }
       user_announcement_reads: {
         Row: {
           announcement_id: number | null
@@ -95,6 +209,27 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_wallets: {
+        Row: {
+          created_at: string
+          id: number
+          notification: boolean | null
+          wallet: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          notification?: boolean | null
+          wallet?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          notification?: boolean | null
+          wallet?: string | null
         }
         Relationships: []
       }

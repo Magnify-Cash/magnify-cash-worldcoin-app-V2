@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { ethers } from "ethers";
-import { WORLDCHAIN_RPC_URL, MAGNIFY_WORLD_ADDRESS, WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
-
-const USDC_ABI = ["function balanceOf(address owner) view returns (uint256)"];
+import hyperOptimizedRequest from "@/lib/request";
+import { MAGNIFY_WORLD_ADDRESS } from "@/utils/constants";
 
 type USDCBalanceContextType = {
   usdcBalance: number | null;
@@ -26,16 +24,19 @@ export const USDCBalanceProvider = ({ children }: { children: React.ReactNode })
     setError(null);
 
     try {
-      const provider = new ethers.JsonRpcProvider(WORLDCHAIN_RPC_URL);
-      const usdcContract = new ethers.Contract(WORLDCOIN_TOKEN_COLLATERAL, USDC_ABI, provider);
+      interface BalanceResponse {
+        balance: number;
+      }
 
-      const balance = await usdcContract.balanceOf(MAGNIFY_WORLD_ADDRESS);
+      const response = await hyperOptimizedRequest<BalanceResponse>("GET", "getUSDCBalance", { wallet: MAGNIFY_WORLD_ADDRESS });
 
-      // Convert from 6 decimals
-      const formattedBalance = Number(ethers.formatUnits(balance, 6));
-
-      setUsdcBalance(formattedBalance);
-      setHasMoreThanOne(formattedBalance > 1);
+      if (response?.balance !== undefined) {
+        const formattedBalance = Number(response.balance);
+        setUsdcBalance(formattedBalance);
+        setHasMoreThanOne(formattedBalance > 1);
+      } else {
+        throw new Error("Invalid balance response");
+      }
     } catch (err) {
       console.error("Error fetching USDC balance:", err);
       setError("Failed to fetch USDC balance.");

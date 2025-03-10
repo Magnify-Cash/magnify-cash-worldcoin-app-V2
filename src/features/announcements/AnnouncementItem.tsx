@@ -102,14 +102,14 @@ export const AnnouncementItem = ({
     <div className="flex justify-between items-center mt-4">
       <p className="text-sm text-muted-foreground">{formattedDate}</p>
 
-      <Button
+      {/* <Button
         variant="ghost"
         size="icon"
         className={`${isRead ? 'text-primary' : 'text-muted-foreground'}`}
         onClick={() => onMarkRead(announcement.id)}
       >
         <Check className="h-4 w-4" />
-      </Button>
+      </Button> */}
     </div>
 
   </motion.div>

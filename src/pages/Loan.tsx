@@ -152,8 +152,6 @@ const Loan = () => {
               }
               return null;
             })}
-            {liquidityError && <p className="text-red-500">{liquidityError}</p>}
-            {error && <p className="text-red-500">{error}</p>}
             {transactionId && (
               <div className="mt-4">
                 <p className="overflow-hidden text-ellipsis whitespace-nowrap">

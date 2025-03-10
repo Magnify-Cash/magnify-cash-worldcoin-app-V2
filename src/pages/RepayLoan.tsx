@@ -207,7 +207,6 @@ const RepayLoan = () => {
             >
               {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
             </Button>
-            {error && <p className="text-red-500">{error}</p>}
             {transactionId && (
               <div className="mt-4">
                 <p className="overflow-hidden text-ellipsis whitespace-nowrap">

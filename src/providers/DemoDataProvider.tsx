@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { VERIFICATION_TIERS, VerificationTier, Tier } from "@/hooks/useMagnifyWorld";
 import type { Transaction, WalletBalance } from "@/types/wallet";
@@ -44,6 +43,7 @@ interface DemoContextType {
   repayLoan: (amount: string) => Promise<string>;
   upgradeVerification: (level: "DEVICE" | "ORB") => Promise<boolean>;
   readAnnouncement: (id: number) => void;
+  updateUSDCBalance: (newBalance: number) => void;
   isLoading: boolean;
 }
 
@@ -151,7 +151,7 @@ const initialDemoData: DemoData = {
       created_at: new Date(Date.now() - 86400000).toISOString(),
     }
   ],
-  usdcBalance: 10000.00
+  usdcBalance: Math.floor(Math.random() * (100 - 15 + 1)) + 15 // Random between 15 and 100
 };
 
 export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -389,6 +389,14 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     }));
   };
 
+  // Add updateUSDCBalance function
+  const updateUSDCBalance = (newBalance: number) => {
+    setDemoData(prev => ({
+      ...prev,
+      usdcBalance: newBalance
+    }));
+  };
+
   return (
     <DemoContext.Provider
       value={{
@@ -400,6 +408,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         repayLoan,
         upgradeVerification,
         readAnnouncement,
+        updateUSDCBalance,
         isLoading
       }}
     >

@@ -7,15 +7,35 @@ import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MiniKit, RequestPermissionPayload, Permission } from "@worldcoin/minikit-js";
 import { BACKEND_URL } from "@/utils/constants";
+import { useDemoData } from "@/providers/DemoDataProvider";
 
 const Wallet = () => {
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
+  const { demoData } = useDemoData();
   const [tokens, setBalances] = useState([]);
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Function to check if the wallet already exists in the database
+  useEffect(() => {
+    if (ls_wallet) {
+      setLoading(true);
+      // Create dummy token data including USDC
+      const dummyTokens = [
+        {
+          contractAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC contract address
+          balance: demoData.usdcBalance,
+          symbol: "USDC",
+          decimals: 6,
+          name: "USD Coin",
+        }
+      ];
+      
+      setBalances(dummyTokens);
+      setLoading(false);
+    }
+  }, [ls_wallet, demoData.usdcBalance]);
+
   const checkWalletExists = useCallback(async (wallet: string) => {
     try {
       const response = await fetch(`${BACKEND_URL}/checkWallet?wallet=${encodeURIComponent(wallet)}`, {
@@ -36,7 +56,6 @@ const Wallet = () => {
   }, []);
   
 
-  // Function to request notification permissions
   const requestPermission = useCallback(async () => {
     if (!MiniKit.isInstalled()) {
       console.error("MiniKit is not installed");
@@ -50,7 +69,6 @@ const Wallet = () => {
       return;
     }
   
-    // Check if wallet already exists before saving
     const walletExists = await checkWalletExists(ls_wallet);
     if (walletExists) {
       console.log("Wallet already exists. Skipping saveWallet request.");
@@ -98,7 +116,6 @@ const Wallet = () => {
   }, [checkWalletExists]);
   
 
-  // Request permission on mount if not already granted
   useEffect(() => {
     const checkAndSaveWallet = async () => {
       const ls_wallet = localStorage.getItem("ls_wallet_address");
@@ -287,3 +304,4 @@ const Wallet = () => {
 };
 
 export default Wallet;
+

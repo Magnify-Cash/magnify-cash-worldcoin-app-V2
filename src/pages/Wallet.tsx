@@ -20,22 +20,8 @@ const Wallet = () => {
 
   useEffect(() => {
     if (ls_wallet) {
-      // Simulated token balances (frontend-only)
+      // Simulated token balances (frontend-only) - now only including USDC.e
       const dummyTokens = [
-        {
-          contractAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC contract address
-          balance: demoData.usdcBalance || "1000.00", // Default balance for demo
-          symbol: "USDC",
-          decimals: 6,
-          name: "USD Coin",
-        },
-        {
-          contractAddress: "0x0000000000000000000000000000000000000000", // ETH
-          balance: "1.23", // Fixed demo ETH balance
-          symbol: "ETH",
-          decimals: 18,
-          name: "Ethereum",
-        },
         {
           contractAddress: "0x1234567890123456789012345678901234567890", // USDC.e
           balance: randomUSDCeAmount(), // Random amount between 15-100
@@ -80,7 +66,6 @@ const Wallet = () => {
         <div className="space-y-4 mb-8">
           {isLoading ? (
             <>
-              <WalletCard currency="" symbol="" balance="" isLoading={true} />
               <WalletCard currency="" symbol="" balance="" isLoading={true} />
             </>
           ) : tokens.length > 0 ? (

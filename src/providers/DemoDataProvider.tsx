@@ -9,7 +9,18 @@ interface DemoData {
   transactions: Transaction[];
   usdcBalance: number;
   announcements: Announcement[];
-  contractData: any; // Added for MagnifyWorld contract data
+  contractData: {
+    nftInfo: {
+      tokenId: bigint | null;
+      tier: {
+        tierId: bigint;
+        verificationStatus: {
+          level: string;
+          verification_level: string;
+        };
+      } | null;
+    };
+  };
 }
 
 interface DemoContextType {
@@ -17,10 +28,11 @@ interface DemoContextType {
   login: (address: string) => void;
   logout: () => void;
   updateUSDCBalance: (newBalance: number) => void;
+  updateVerificationStatus: (level: "DEVICE" | "ORB") => void;
   isLoading: boolean;
-  requestLoan: (tierId: number) => Promise<string>; // Added for loan functionality
-  repayLoan: (amount: string) => Promise<string>; // Added for repayment functionality
-  refreshBalance: () => void; // Added for balance refresh
+  requestLoan: (tierId: number) => Promise<string>;
+  repayLoan: (amount: string) => Promise<string>;
+  refreshBalance: () => void;
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
@@ -33,7 +45,7 @@ const initialDemoData: DemoData = {
       id: 1,
       currency: "USD Coin",
       symbol: "USDC",
-      balance: "1250.75", // Default USDC balance
+      balance: "1250.75",
       updated_at: new Date().toISOString(),
     }
   ],
@@ -57,7 +69,7 @@ const initialDemoData: DemoData = {
       metadata: { txHash: "0x5678...efgh" }
     }
   ],
-  usdcBalance: 1250.75, // Default USDC balance
+  usdcBalance: 1250.75,
   announcements: [
     {
       id: 1,
@@ -70,11 +82,15 @@ const initialDemoData: DemoData = {
       created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
     }
   ],
-  contractData: {} // Empty object for contract data
+  contractData: {
+    nftInfo: {
+      tokenId: null,
+      tier: null
+    }
+  }
 };
 
 export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Load demo data from localStorage (fallback to initialDemoData if none exists)
   const [demoData, setDemoData] = useState<DemoData>(() => {
     const savedData = localStorage.getItem("demoData");
     if (savedData) {
@@ -90,7 +106,6 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Persist demo data to localStorage whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem("demoData", JSON.stringify(demoData));
@@ -99,7 +114,6 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [demoData]);
 
-  // Load wallet from localStorage on mount (if available)
   useEffect(() => {
     const savedWallet = localStorage.getItem("ls_wallet_address");
     if (savedWallet) {
@@ -110,7 +124,6 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, []);
 
-  // Login function (persists wallet address)
   const login = (address: string) => {
     setDemoData(prev => ({
       ...prev,
@@ -119,7 +132,6 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     localStorage.setItem("ls_wallet_address", address);
   };
 
-  // Logout function (clears wallet address)
   const logout = () => {
     setDemoData(prev => ({
       ...prev,
@@ -128,7 +140,6 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     localStorage.removeItem("ls_wallet_address");
   };
 
-  // Update USDC balance (persists to localStorage)
   const updateUSDCBalance = (newBalance: number) => {
     setDemoData(prev => {
       const updatedData = {
@@ -139,32 +150,44 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         )
       };
 
-      localStorage.setItem("demoData", JSON.stringify(updatedData)); // Persist update
+      localStorage.setItem("demoData", JSON.stringify(updatedData));
       return updatedData;
     });
   };
 
-  // Add new methods for loan functionality
+  const updateVerificationStatus = (level: "DEVICE" | "ORB") => {
+    setDemoData(prev => ({
+      ...prev,
+      contractData: {
+        nftInfo: {
+          tokenId: BigInt(1),
+          tier: {
+            tierId: level === "DEVICE" ? BigInt(1) : BigInt(2),
+            verificationStatus: {
+              level: level,
+              verification_level: level.toLowerCase()
+            }
+          }
+        }
+      }
+    }));
+  };
+
   const requestLoan = async (tierId: number): Promise<string> => {
-    // Generate a random transaction hash for demo
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
     return txHash;
   };
 
   const repayLoan = async (amount: string): Promise<string> => {
-    // Generate a random transaction hash for demo
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
     
-    // Deduct the amount from the user's USDC balance (for demo purposes)
     const amountNum = parseFloat(amount);
     updateUSDCBalance(demoData.usdcBalance - amountNum);
     
     return txHash;
   };
 
-  // Refresh balance function (no-op in demo)
   const refreshBalance = () => {
-    // In a real app, this would fetch the latest balance
     console.log("Refreshing balance...");
   };
 
@@ -175,6 +198,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         login,
         logout,
         updateUSDCBalance,
+        updateVerificationStatus,
         isLoading,
         requestLoan,
         repayLoan,
@@ -186,7 +210,6 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   );
 };
 
-// Hook to use demo data
 export const useDemoData = () => {
   const context = useContext(DemoContext);
   if (!context) {

@@ -8,7 +8,12 @@ import { useDemoData } from "@/providers/DemoDataProvider";
 const Welcome = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const { login } = useDemoData();
+  const { login, updateUSDCBalance } = useDemoData();
+
+  // Generate a random USDC.e amount between 15 and 100
+  const generateRandomUSDCeAmount = () => {
+    return Number((Math.random() * (100 - 15) + 15).toFixed(2));
+  };
 
   const handleDummySignIn = async () => {
     try {
@@ -21,17 +26,22 @@ const Welcome = () => {
       // Set the demo username
       const demoUsername = "demo_user_" + Math.floor(Math.random() * 1000);
       
+      // Generate random USDC.e balance
+      const randomBalance = generateRandomUSDCeAmount();
+      
       // Store in localStorage to maintain session
       localStorage.setItem("ls_wallet_address", demoWalletAddress);
       localStorage.setItem("ls_username", demoUsername);
       
-      // Update the demo data with the login
+      // Update the demo data with the login and balance
       login(demoWalletAddress);
+      updateUSDCBalance(randomBalance);
       
       setLoading(false);
       toast.success("Successfully signed in with demo wallet!");
       console.log("DEMO ADDRESS:", demoWalletAddress);
       console.log("DEMO USERNAME:", demoUsername);
+      console.log("DEMO USDC.e BALANCE:", randomBalance);
       
       navigate("/wallet");
     } catch (error) {

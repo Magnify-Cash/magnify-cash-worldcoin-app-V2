@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { WalletCard } from "@/components/WalletCard";
 import { Header } from "@/components/Header";
@@ -13,18 +12,13 @@ const Wallet = () => {
   const [tokens, setTokens] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Generate a random USDC.e amount between 15 and 100
-  const randomUSDCeAmount = () => {
-    return (Math.random() * (100 - 15) + 15).toFixed(2);
-  };
-
   useEffect(() => {
     if (ls_wallet) {
-      // Simulated token balances (frontend-only) - now only including USDC.e
+      // Simulated token balances (frontend-only) - using the stored USDC.e balance
       const dummyTokens = [
         {
           contractAddress: "0x1234567890123456789012345678901234567890", // USDC.e
-          balance: randomUSDCeAmount(), // Random amount between 15-100
+          balance: demoData.usdcBalance.toString(), // Use the stored balance
           symbol: "USDC.e",
           decimals: 6,
           name: "Bridged USDC (world-chain-mainnet)",

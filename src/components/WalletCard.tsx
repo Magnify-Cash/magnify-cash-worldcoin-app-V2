@@ -1,6 +1,7 @@
 
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CoinIcon } from "lucide-react";
 
 interface WalletCardProps {
   currency: string;
@@ -38,6 +39,9 @@ export const WalletCard = ({
       className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/5 transition-colors"
     >
       <div className="flex items-center gap-3">
+        <div className="bg-primary/10 w-10 h-10 rounded-full flex items-center justify-center text-primary">
+          {symbol === "USDC" ? "💲" : symbol === "ETH" ? "Ξ" : <CoinIcon size={20} />}
+        </div>
         <div>
           <h3 className="font-medium text-foreground">{symbol}</h3>
           <p className="text-sm text-muted-foreground">{currency}</p>

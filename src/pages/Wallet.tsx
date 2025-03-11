@@ -261,7 +261,7 @@ const Wallet = () => {
 
         <div className="text-center mb-12">
           <h1 className="text text-2xl font-bold mb-8">
-            {ls_wallet.substring(0, 6)}...{ls_wallet.substring(ls_wallet.length - 6)}
+            {ls_wallet ? `${ls_wallet.substring(0, 6)}...${ls_wallet.substring(ls_wallet.length - 6)}` : 'No Wallet Connected'}
           </h1>
 
           <div className="grid grid-cols-2 gap-4 mb-8">
@@ -285,7 +285,7 @@ const Wallet = () => {
               <WalletCard currency="" symbol="" balance="" isLoading={true} />
               <WalletCard currency="" symbol="" balance="" isLoading={true} />
             </>
-          ) : tokens.length > 0 ? (
+          ) : tokens && tokens.length > 0 ? (
             tokens.map((token) => (
               <WalletCard
                 key={token.contractAddress}
@@ -304,4 +304,3 @@ const Wallet = () => {
 };
 
 export default Wallet;
-

@@ -1,8 +1,6 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { ethers } from "ethers";
-import { WORLDCHAIN_RPC_URL, MAGNIFY_WORLD_ADDRESS, WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 
-const USDC_ABI = ["function balanceOf(address owner) view returns (uint256)"];
+import { createContext, useContext } from "react";
+import { useDemoUSDCBalance } from "@/hooks/useDemoMagnifyWorld";
 
 type USDCBalanceContextType = {
   usdcBalance: number | null;
@@ -14,46 +12,24 @@ type USDCBalanceContextType = {
 
 const USDCBalanceContext = createContext<USDCBalanceContextType | undefined>(undefined);
 
-// Provider Component
+// Provider Component that now uses the demo data
 export const USDCBalanceProvider = ({ children }: { children: React.ReactNode }) => {
-  const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
-  const [hasMoreThanOne, setHasMoreThanOne] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchBalance = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const provider = new ethers.JsonRpcProvider(WORLDCHAIN_RPC_URL);
-      const usdcContract = new ethers.Contract(WORLDCOIN_TOKEN_COLLATERAL, USDC_ABI, provider);
-
-      const balance = await usdcContract.balanceOf(MAGNIFY_WORLD_ADDRESS);
-
-      // Convert from 6 decimals
-      const formattedBalance = Number(ethers.formatUnits(balance, 6));
-
-      setUsdcBalance(formattedBalance);
-      setHasMoreThanOne(formattedBalance > 1);
-    } catch (err) {
-      console.error("Error fetching USDC balance:", err);
-      setError("Failed to fetch USDC balance.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchBalance();
-  }, [fetchBalance]);
-
+  // Use the demo hook implementation
+  const demoBalance = useDemoUSDCBalance();
+  
+  // Convert the refresh function to match the original interface
   const refreshBalance = async () => {
-    return fetchBalance();
+    demoBalance.refreshBalance();
   };
-
+  
   return (
-    <USDCBalanceContext.Provider value={{ usdcBalance, hasMoreThanOne, loading, error, refreshBalance }}>
+    <USDCBalanceContext.Provider value={{ 
+      usdcBalance: demoBalance.usdcBalance,
+      hasMoreThanOne: demoBalance.hasMoreThanOne,
+      loading: demoBalance.loading,
+      error: demoBalance.error,
+      refreshBalance
+    }}>
       {children}
     </USDCBalanceContext.Provider>
   );

@@ -1,47 +1,43 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MiniKit } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
+import { useDemoData } from "@/providers/DemoDataProvider";
 
 const Welcome = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { login } = useDemoData();
 
-  const handleSignIn = async () => {
-    const wallet_address = localStorage.getItem("ls_wallet_address");
-    const username = localStorage.getItem("ls_username");
-    if (username && wallet_address) {
-      navigate("/wallet");
-      return;
-    }
+  const handleDummySignIn = async () => {
     try {
       setLoading(true);
-      console.log("Initiating wallet authentication...");
-      const nonce = crypto.randomUUID().replace(/-/g, "");
-      const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
-        nonce,
-        statement: "Sign in to Magnify Cash to manage your loans.",
-        expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
-        notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
-      });
-      if (finalPayload && finalPayload.address) {
-        const user = await MiniKit.getUserByAddress(finalPayload.address);
-        localStorage.setItem("ls_wallet_address", user.walletAddress);
-        localStorage.setItem("ls_username", user.username);
-        toast.success("Successfully signed in!");
-        console.log("ADDRESS:", user.walletAddress);
-        console.log("USERNAME:", user.username);
-        setLoading(false);
-        navigate("/wallet");
-      } else {
-        setLoading(false);
-        toast.error("Failed to retrieve wallet address.");
-      }
+      
+      // Generate a random demo wallet address
+      const demoWalletAddress = "0x" + Array(40).fill(0).map(() => 
+        Math.floor(Math.random() * 16).toString(16)).join('');
+      
+      // Set the demo username
+      const demoUsername = "demo_user_" + Math.floor(Math.random() * 1000);
+      
+      // Store in localStorage to maintain session
+      localStorage.setItem("ls_wallet_address", demoWalletAddress);
+      localStorage.setItem("ls_username", demoUsername);
+      
+      // Update the demo data with the login
+      login(demoWalletAddress);
+      
+      setLoading(false);
+      toast.success("Successfully signed in with demo wallet!");
+      console.log("DEMO ADDRESS:", demoWalletAddress);
+      console.log("DEMO USERNAME:", demoUsername);
+      
+      navigate("/wallet");
     } catch (error) {
       setLoading(false);
-      console.error("Authentication failed:", error);
-      toast.error("Failed to sign in. Please try again.");
+      console.error("Demo authentication failed:", error);
+      toast.error("Failed to sign in with demo wallet. Please try again.");
     }
   };
 
@@ -76,10 +72,10 @@ const Welcome = () => {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6 sm:mb-16 px-3 sm:px-4">
             <button
               disabled={loading}
-              onClick={handleSignIn}
+              onClick={handleDummySignIn}
               className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
             >
-              {loading ? "Connecting..." : "Start Your Journey"}
+              {loading ? "Connecting..." : "Connect Demo Wallet"}
               <ArrowRight className="w-5 h-5" />
             </button>
 

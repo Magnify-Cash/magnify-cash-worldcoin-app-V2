@@ -9,6 +9,7 @@ interface DemoData {
   transactions: Transaction[];
   usdcBalance: number;
   announcements: Announcement[];
+  contractData: any; // Added for MagnifyWorld contract data
 }
 
 interface DemoContextType {
@@ -17,6 +18,9 @@ interface DemoContextType {
   logout: () => void;
   updateUSDCBalance: (newBalance: number) => void;
   isLoading: boolean;
+  requestLoan: (tierId: number) => Promise<string>; // Added for loan functionality
+  repayLoan: (amount: string) => Promise<string>; // Added for repayment functionality
+  refreshBalance: () => void; // Added for balance refresh
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
@@ -65,7 +69,8 @@ const initialDemoData: DemoData = {
       is_new: true,
       created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
     }
-  ]
+  ],
+  contractData: {} // Empty object for contract data
 };
 
 export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -139,6 +144,30 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     });
   };
 
+  // Add new methods for loan functionality
+  const requestLoan = async (tierId: number): Promise<string> => {
+    // Generate a random transaction hash for demo
+    const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
+    return txHash;
+  };
+
+  const repayLoan = async (amount: string): Promise<string> => {
+    // Generate a random transaction hash for demo
+    const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
+    
+    // Deduct the amount from the user's USDC balance (for demo purposes)
+    const amountNum = parseFloat(amount);
+    updateUSDCBalance(demoData.usdcBalance - amountNum);
+    
+    return txHash;
+  };
+
+  // Refresh balance function (no-op in demo)
+  const refreshBalance = () => {
+    // In a real app, this would fetch the latest balance
+    console.log("Refreshing balance...");
+  };
+
   return (
     <DemoContext.Provider
       value={{
@@ -146,7 +175,10 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         login,
         logout,
         updateUSDCBalance,
-        isLoading
+        isLoading,
+        requestLoan,
+        repayLoan,
+        refreshBalance
       }}
     >
       {children}

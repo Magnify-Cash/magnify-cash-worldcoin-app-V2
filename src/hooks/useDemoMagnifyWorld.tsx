@@ -19,7 +19,7 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
   };
 
   return {
-    data: demoData.contractData,
+    data: demoData.contractData, // Now this property exists
     isLoading,
     isError,
     refetch
@@ -28,7 +28,7 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
 
 // Demo version of useRequestLoan hook
 export function useDemoRequestLoan() {
-  const { requestLoan, isLoading } = useDemoData();
+  const { requestLoan, isLoading } = useDemoData(); // requestLoan now exists
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -74,7 +74,7 @@ export function useDemoRequestLoan() {
 
 // Demo version of useRepayLoan hook
 export function useDemoRepayLoan() {
-  const { repayLoan, isLoading } = useDemoData();
+  const { repayLoan, isLoading } = useDemoData(); // repayLoan now exists
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -126,7 +126,7 @@ export function useDemoRepayLoan() {
 
 // Demo version of useUSDCBalance hook
 export function useDemoUSDCBalance() {
-  const { demoData, refreshBalance, isLoading } = useDemoData();
+  const { demoData, isLoading, refreshBalance } = useDemoData(); // refreshBalance now exists
   
   return {
     usdcBalance: demoData.usdcBalance,

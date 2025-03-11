@@ -1,20 +1,13 @@
-
-import React, { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { useDemoData } from "@/providers/DemoDataProvider";
 
-interface ProtectedRouteProps {
-  children: ReactNode;
-}
+const ProtectedRoute = ({ children }) => {
+  const isAuthorized = localStorage.getItem("ls_wallet_address");
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isConnected } = useDemoData();
-
-  if (!isConnected) {
-    return <Navigate to="/welcome" />;
+  if (!isAuthorized) {
+    return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return children;
 };
 
 export default ProtectedRoute;

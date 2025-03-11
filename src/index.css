@@ -1,72 +1,78 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
- 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
- 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
- 
-    --primary: 210 100% 50%;
+    
+    --primary: 240 82% 33%;
     --primary-foreground: 210 40% 98%;
- 
-    --secondary: 210 40% 96.1%;
+    --primary-light: 271 69% 33%;
+    --primary-dark: 329 71% 37%;
+    
+    --secondary: 217 91% 60%;
     --secondary-foreground: 222.2 47.4% 11.2%;
- 
+    --secondary-light: 217 91% 70%;
+    --secondary-dark: 217 91% 50%;
+    
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
- 
-    --accent: 210 40% 96.1%;
+    
+    --accent: 240 82% 33%;
     --accent-foreground: 222.2 47.4% 11.2%;
- 
+    --accent-light: 271 69% 33%;
+    --accent-dark: 329 71% 37%;
+    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
- 
+    
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
- 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
- 
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
- 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
- 
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
- 
-    --primary: 210 100% 50%;
+    
+    --primary: 0 100% 73%;
     --primary-foreground: 210 40% 98%;
- 
-    --secondary: 217.2 32.6% 17.5%;
+    --primary-light: 0 100% 80%;
+    --primary-dark: 0 100% 66%;
+    
+    --secondary: 217 91% 60%;
     --secondary-foreground: 210 40% 98%;
- 
+    --secondary-light: 217 91% 70%;
+    --secondary-dark: 217 91% 50%;
+    
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
- 
-    --accent: 217.2 32.6% 17.5%;
+    
+    --accent: 0 100% 73%;
     --accent-foreground: 210 40% 98%;
- 
+    --accent-light: 0 100% 80%;
+    --accent-dark: 0 100% 66%;
+    
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
- 
+    
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
@@ -77,82 +83,143 @@
   }
 }
 
-/* Custom animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.glass-card {
+  @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm 
+         shadow-lg hover:shadow-xl transition-all duration-300 
+         rounded-xl border border-gray-100/20 dark:border-gray-800/20;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+.glass-button {
+  @apply bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-white font-medium 
+         py-3 px-6 rounded-xl transition-all duration-300 
+         shadow-lg hover:shadow-xl disabled:opacity-50 
+         disabled:cursor-not-allowed hover:opacity-90;
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+.tip-card {
+  @apply bg-accent/50 p-4 rounded-lg;     
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+/* Add smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
-.animate-slide-up {
-  animation: slideUp 0.7s ease-out forwards;
+/* Add text gradient animation */
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.animate-shimmer {
-  background: linear-gradient(90deg, 
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 6s ease infinite;
 }
 
-/* Glass morphism effects */
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius);
+/* Custom utility classes */
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r 
+         from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] animate-gradient;
 }
 
-.glass-dark {
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  border-radius: var(--radius);
+.hover-lift {
+  @apply transition-transform duration-300 hover:-translate-y-1;
 }
 
-/* 3D effects */
-.card-3d {
-  transition: transform 0.5s ease, box-shadow 0.5s ease;
-  box-shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.1);
+/* Dot Spinner Animation */
+.dot-spinner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.card-3d:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.2);
+.dot-spinner .dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  animation: dot-pulse 1.5s ease-in-out infinite;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+.dot-spinner .dot:nth-child(1) {
+  animation-delay: 0s;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.dot-spinner .dot:nth-child(2) {
+  animation-delay: 0.2s;
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+.dot-spinner .dot:nth-child(3) {
+  animation-delay: 0.4s;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+.dot-spinner .dot:nth-child(4) {
+  animation-delay: 0.6s;
+}
+
+@keyframes dot-pulse {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.orbit-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.orbit-spinner .orbit {
+  position: absolute;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.orbit-spinner .orbit:nth-child(1) {
+  border-top-color: #1A1E8E;
+  animation: orbit-spin 1.5s linear infinite;
+}
+
+.orbit-spinner .orbit:nth-child(2) {
+  border-bottom-color: #A11F75;
+  animation: orbit-spin 1s linear infinite;
+}
+
+.orbit-spinner .center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+  margin-left: -10px;
+  border-radius: 50%;
+  background: linear-gradient(to right, #1A1E8E, #A11F75);
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes orbit-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1.2);
+  }
 }

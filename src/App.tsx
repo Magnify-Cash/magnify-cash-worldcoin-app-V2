@@ -12,8 +12,9 @@ import LoanHistory from "@/pages/LoanHistory";
 import ProtectedRoute from "@/pages/ProtectedPage";
 import "./App.css";
 import eruda from "eruda";
+import { MiniKitProvider } from "./providers/MiniKitProvider";
+import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
 import { Toaster } from "@/components/ui/toaster";
-import { DemoDataProvider } from "./providers/DemoDataProvider";
 
 const allowedWallets = [
   "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c",
@@ -30,7 +31,8 @@ if (allowedWallets.includes(ls_wallet)) {
 
 function App() {
   return (
-    <DemoDataProvider>
+    <MiniKitProvider>
+      <USDCBalanceProvider>
       <Toaster />
       <Router>
         <Routes>
@@ -95,7 +97,8 @@ function App() {
           />
         </Routes>
       </Router>
-    </DemoDataProvider>
+      </USDCBalanceProvider>
+    </MiniKitProvider>
   );
 }
 

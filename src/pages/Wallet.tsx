@@ -1,9 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { WalletCard } from "@/components/WalletCard";
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDemoData } from "@/providers/DemoDataProvider";
 
@@ -13,6 +12,11 @@ const Wallet = () => {
   const { demoData } = useDemoData();
   const [tokens, setTokens] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Generate a random USDC.e amount between 15 and 100
+  const randomUSDCeAmount = () => {
+    return (Math.random() * (100 - 15) + 15).toFixed(2);
+  };
 
   useEffect(() => {
     if (ls_wallet) {
@@ -31,6 +35,13 @@ const Wallet = () => {
           symbol: "ETH",
           decimals: 18,
           name: "Ethereum",
+        },
+        {
+          contractAddress: "0x1234567890123456789012345678901234567890", // USDC.e
+          balance: randomUSDCeAmount(), // Random amount between 15-100
+          symbol: "USDC.e",
+          decimals: 6,
+          name: "Bridged USDC (world-chain-mainnet)",
         },
       ];
       

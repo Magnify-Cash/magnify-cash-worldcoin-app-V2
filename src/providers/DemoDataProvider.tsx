@@ -1,9 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import type { Transaction, WalletBalance } from "@/types/wallet";
 import type { Announcement } from "@/features/announcements/utils";
 
-// Types for our demo data
 interface DemoData {
   walletAddress: string | null;
   walletBalances: WalletBalance[];
@@ -12,9 +10,9 @@ interface DemoData {
   announcements: Announcement[];
   contractData: {
     nftInfo: {
-      tokenId: bigint | null;
+      tokenId: string | null; // Converted from BigInt to string
       tier: {
-        tierId: bigint;
+        tierId: string; // Converted from BigInt to string
         verificationStatus: {
           level: string;
           verification_level: string;
@@ -43,9 +41,7 @@ interface DemoContextType {
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
 
 // Generate a random USDC balance between 30 and 100
-const generateRandomBalance = (): number => {
-  return Math.floor(Math.random() * 70) + 30; // Random number between 30 and 100
-};
+const generateRandomBalance = (): number => Math.floor(Math.random() * 70) + 30;
 
 // Initial demo data
 const getInitialDemoData = (): DemoData => ({
@@ -154,57 +150,42 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const updateUSDCBalance = (newBalance: number) => {
-    setDemoData(prev => {
-      const updatedData = {
-        ...prev,
-        usdcBalance: newBalance,
-        walletBalances: prev.walletBalances.map(balance =>
-          balance.symbol === "USDC" ? { ...balance, balance: newBalance.toFixed(2) } : balance
-        )
-      };
-
-      localStorage.setItem("demoData", JSON.stringify(updatedData));
-      return updatedData;
-    });
+    setDemoData(prev => ({
+      ...prev,
+      usdcBalance: newBalance,
+      walletBalances: prev.walletBalances.map(balance =>
+        balance.symbol === "USDC" ? { ...balance, balance: newBalance.toFixed(2) } : balance
+      )
+    }));
   };
 
   const updateVerificationStatus = (level: "DEVICE" | "ORB") => {
-    setDemoData(prev => {
-      const updatedData = {
-        ...prev,
-        isDeviceVerified: level === "DEVICE" || level === "ORB",
-        isOrbVerified: level === "ORB",
-        contractData: {
-          nftInfo: {
-            tokenId: BigInt(1),
-            tier: {
-              tierId: level === "DEVICE" ? BigInt(1) : BigInt(2),
-              verificationStatus: {
-                level: level,
-                verification_level: level.toLowerCase()
-              }
+    setDemoData(prev => ({
+      ...prev,
+      isDeviceVerified: level === "DEVICE" || level === "ORB",
+      isOrbVerified: level === "ORB",
+      contractData: {
+        nftInfo: {
+          tokenId: "1", // Converted from BigInt to string
+          tier: {
+            tierId: level === "DEVICE" ? "1" : "2", // Converted from BigInt to string
+            verificationStatus: {
+              level: level,
+              verification_level: level.toLowerCase()
             }
           }
         }
-      };
-      
-      localStorage.setItem("demoData", JSON.stringify(updatedData));
-      return updatedData;
-    });
+      }
+    }));
   };
 
   const requestLoan = async (tierId: number): Promise<string> => {
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
     
-    setDemoData(prev => {
-      const updatedData = {
-        ...prev,
-        hasLoan: true
-      };
-      
-      localStorage.setItem("demoData", JSON.stringify(updatedData));
-      return updatedData;
-    });
+    setDemoData(prev => ({
+      ...prev,
+      hasLoan: true
+    }));
     
     return txHash;
   };
@@ -215,28 +196,20 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     const amountNum = parseFloat(amount);
     updateUSDCBalance(demoData.usdcBalance - amountNum);
     
-    setDemoData(prev => {
-      const updatedData = {
-        ...prev,
-        hasLoan: false
-      };
-      
-      localStorage.setItem("demoData", JSON.stringify(updatedData));
-      return updatedData;
-    });
+    setDemoData(prev => ({
+      ...prev,
+      hasLoan: false
+    }));
     
     return txHash;
   };
 
   const refreshBalance = useCallback(() => {
     console.log("Refreshing balance...");
-    // We don't actually refresh the balance here to prevent continuous refetching
-    // This is intentional to resolve the issue
   }, []);
   
   const resetSession = useCallback(() => {
     const newData = getInitialDemoData();
-    // Keep the wallet address if it exists
     if (demoData.walletAddress) {
       newData.walletAddress = demoData.walletAddress;
     }

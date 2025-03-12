@@ -1,12 +1,20 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
+import { useDemoData } from "@/providers/DemoDataProvider";
 
 const Welcome = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { resetSession } = useDemoData();
+
+  // Reset session data when component mounts
+  useEffect(() => {
+    resetSession();
+  }, [resetSession]);
 
   const handleSignIn = async () => {
     const wallet_address = localStorage.getItem("ls_wallet_address");

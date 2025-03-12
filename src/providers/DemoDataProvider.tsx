@@ -21,6 +21,9 @@ interface DemoData {
       } | null;
     };
   };
+  isDeviceVerified: boolean;
+  isOrbVerified: boolean;
+  hasLoan: boolean;
 }
 
 interface DemoContextType {
@@ -33,19 +36,25 @@ interface DemoContextType {
   requestLoan: (tierId: number) => Promise<string>;
   repayLoan: (amount: string) => Promise<string>;
   refreshBalance: () => void;
+  resetSession: () => void;
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
 
+// Generate a random USDC balance between 30 and 100
+const generateRandomBalance = (): number => {
+  return Math.floor(Math.random() * 70) + 30; // Random number between 30 and 100
+};
+
 // Initial demo data
-const initialDemoData: DemoData = {
+const getInitialDemoData = (): DemoData => ({
   walletAddress: null,
   walletBalances: [
     {
       id: 1,
       currency: "USD Coin",
       symbol: "USDC",
-      balance: "1250.75",
+      balance: generateRandomBalance().toFixed(2),
       updated_at: new Date().toISOString(),
     }
   ],
@@ -69,7 +78,7 @@ const initialDemoData: DemoData = {
       metadata: { txHash: "0x5678...efgh" }
     }
   ],
-  usdcBalance: 1250.75,
+  usdcBalance: generateRandomBalance(),
   announcements: [
     {
       id: 1,
@@ -87,8 +96,11 @@ const initialDemoData: DemoData = {
       tokenId: null,
       tier: null
     }
-  }
-};
+  },
+  isDeviceVerified: false,
+  isOrbVerified: false,
+  hasLoan: false
+});
 
 export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [demoData, setDemoData] = useState<DemoData>(() => {
@@ -98,10 +110,10 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         return JSON.parse(savedData);
       } catch (error) {
         console.error("Error parsing demo data from localStorage:", error);
-        return initialDemoData;
+        return getInitialDemoData();
       }
     }
-    return initialDemoData;
+    return getInitialDemoData();
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -156,25 +168,43 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const updateVerificationStatus = (level: "DEVICE" | "ORB") => {
-    setDemoData(prev => ({
-      ...prev,
-      contractData: {
-        nftInfo: {
-          tokenId: BigInt(1),
-          tier: {
-            tierId: level === "DEVICE" ? BigInt(1) : BigInt(2),
-            verificationStatus: {
-              level: level,
-              verification_level: level.toLowerCase()
+    setDemoData(prev => {
+      const updatedData = {
+        ...prev,
+        isDeviceVerified: level === "DEVICE" || level === "ORB",
+        isOrbVerified: level === "ORB",
+        contractData: {
+          nftInfo: {
+            tokenId: BigInt(1),
+            tier: {
+              tierId: level === "DEVICE" ? BigInt(1) : BigInt(2),
+              verificationStatus: {
+                level: level,
+                verification_level: level.toLowerCase()
+              }
             }
           }
         }
-      }
-    }));
+      };
+      
+      localStorage.setItem("demoData", JSON.stringify(updatedData));
+      return updatedData;
+    });
   };
 
   const requestLoan = async (tierId: number): Promise<string> => {
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
+    
+    setDemoData(prev => {
+      const updatedData = {
+        ...prev,
+        hasLoan: true
+      };
+      
+      localStorage.setItem("demoData", JSON.stringify(updatedData));
+      return updatedData;
+    });
+    
     return txHash;
   };
 
@@ -184,11 +214,31 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     const amountNum = parseFloat(amount);
     updateUSDCBalance(demoData.usdcBalance - amountNum);
     
+    setDemoData(prev => {
+      const updatedData = {
+        ...prev,
+        hasLoan: false
+      };
+      
+      localStorage.setItem("demoData", JSON.stringify(updatedData));
+      return updatedData;
+    });
+    
     return txHash;
   };
 
   const refreshBalance = () => {
     console.log("Refreshing balance...");
+  };
+  
+  const resetSession = () => {
+    const newData = getInitialDemoData();
+    // Keep the wallet address if it exists
+    if (demoData.walletAddress) {
+      newData.walletAddress = demoData.walletAddress;
+    }
+    setDemoData(newData);
+    console.log("Session data reset with random balance:", newData.usdcBalance);
   };
 
   return (
@@ -202,7 +252,8 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         isLoading,
         requestLoan,
         repayLoan,
-        refreshBalance
+        refreshBalance,
+        resetSession
       }}
     >
       {children}

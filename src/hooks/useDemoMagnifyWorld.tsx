@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 // This hook replaces the useMagnifyWorld hook with demo data
 export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
-  const { demoData, isLoading } = useDemoData();
+  const { demoData, isLoading, resetSession } = useDemoData();
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
@@ -22,7 +22,8 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
     data: demoData.contractData, // Now this property exists
     isLoading,
     isError,
-    refetch
+    refetch,
+    resetSession
   };
 }
 

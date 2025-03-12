@@ -1,3 +1,4 @@
+
 import * as Sentry from "@sentry/react";
 import eruda from "eruda";
 
@@ -12,7 +13,8 @@ export const initializeMonitoring = () => {
     });
   }
 
-    eruda.init();
+  eruda.init();
+}; // Added the missing closing curly brace here
 
 // Custom logger with different log levels
 export const logger = {

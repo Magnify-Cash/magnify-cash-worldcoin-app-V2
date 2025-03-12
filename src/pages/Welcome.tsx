@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { MiniKit } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useDemoData } from "@/providers/DemoDataProvider";
-import { MiniKit } from "@worldcoin/minikit-js";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 
 const Welcome = () => {
@@ -16,9 +17,19 @@ const Welcome = () => {
     return Number((Math.random() * (100 - 15) + 15).toFixed(2));
   };
 
-  const handleWorldAppSignIn = async () => {
+  const handleSignIn = async () => {
+    const wallet_address = localStorage.getItem("ls_wallet_address");
+    const username = localStorage.getItem("ls_username");
+    if (username && wallet_address) {
+      // Update the demo data with the existing session
+      login(wallet_address);
+      navigate("/wallet");
+      return;
+    }
+    
     try {
       setLoading(true);
+      console.log("Initiating wallet authentication...");
       
       if (!MiniKit.isInstalled()) {
         toast.error("Please install World App to connect your wallet.");
@@ -26,14 +37,23 @@ const Welcome = () => {
         return;
       }
       
-      const result = await MiniKit.commands.connect({
-        client_id: WORLDCOIN_CLIENT_ID,
-        app_name: "Magnify Cash",
+      const nonce = crypto.randomUUID().replace(/-/g, "");
+      
+      // Using the correct MiniKit API
+      const result = await MiniKit.commands.walletAuth({
+        nonce,
+        statement: "Sign in to Magnify Cash to manage your loans.",
+        expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
+        notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
       
-      if (result.status === "success") {
-        const walletAddress = result.wallet.address;
+      if (result.status === "success" && result.address) {
+        // Get user wallet address
+        const walletAddress = result.address;
         const username = `world_${walletAddress.substring(2, 8)}`;
+        
+        // Generate random USDC.e balance
+        const randomBalance = generateRandomUSDCeAmount();
         
         // Store in localStorage to maintain session
         localStorage.setItem("ls_wallet_address", walletAddress);
@@ -41,19 +61,20 @@ const Welcome = () => {
         
         // Update the demo data with the login and balance
         login(walletAddress);
-        updateUSDCBalance(generateRandomUSDCeAmount());
+        updateUSDCBalance(randomBalance);
         
-        toast.success("Successfully connected with World App wallet!");
+        toast.success("Successfully signed in!");
         console.log("WORLD APP ADDRESS:", walletAddress);
         console.log("USERNAME:", username);
+        console.log("USDC.e BALANCE:", randomBalance);
         
         navigate("/wallet");
       } else {
-        toast.error("Failed to connect wallet. Please try again.");
+        toast.error("Failed to retrieve wallet address.");
       }
     } catch (error) {
-      console.error("World App authentication failed:", error);
-      toast.error("Failed to connect with World App. Please try again.");
+      console.error("Authentication failed:", error);
+      toast.error("Failed to sign in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -126,7 +147,7 @@ const Welcome = () => {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6 sm:mb-16 px-3 sm:px-4">
             <button
               disabled={loading}
-              onClick={handleWorldAppSignIn}
+              onClick={handleSignIn}
               className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
             >
               {loading ? "Connecting..." : "Connect with World App"}

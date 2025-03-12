@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit } from "@worldcoin/minikit-js";
@@ -38,7 +39,7 @@ const Welcome = () => {
       
       const nonce = crypto.randomUUID().replace(/-/g, "");
       
-      // Using the correct MiniKit API and properly accessing the response
+      // Using the correct MiniKit API and properly accessing the response object
       const result = await MiniKit.commands.walletAuth({
         nonce,
         statement: "Sign in to Magnify Cash to manage your loans.",
@@ -46,9 +47,9 @@ const Welcome = () => {
         notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
       
-      // Check if we have a valid wallet address from the authentication
+      // Based on MiniKit's WalletAuthPayload documentation, access the correct property
       if (result && result.walletAddress) {
-        // Get user wallet address
+        // Get user wallet address - this exists in the result object
         const walletAddress = result.walletAddress;
         const username = `world_${walletAddress.substring(2, 8)}`;
         

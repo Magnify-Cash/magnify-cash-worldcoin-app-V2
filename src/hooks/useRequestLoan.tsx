@@ -63,11 +63,11 @@ const useRequestLoan = () => {
       }
 
       // Determine loan amount and duration based on verification level
-      let loanAmount = "0.000001"; // Default: 0.000001 USDC
+      let loanAmount = "1"; // Default: 0.000001 USDC
       let loanDuration = "30"; // Default: 30 days
 
       if (demoData.isOrbVerified) {
-        loanAmount = "0.00001"; // Orb Verified gets 0.00001 USDC
+        loanAmount = "1"; // Orb Verified gets 0.00001 USDC
         loanDuration = "90"; // 90-day loan for Orb Verified
       }
 

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
 import { useNavigate } from "react-router-dom";
@@ -8,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { BACKEND_URL } from "@/utils/constants";
 import { toast } from "@/hooks/use-toast";
+import { useDemoData } from "@/providers/DemoDataProvider";
 
 const UpgradeVerification = () => {
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
+  const { demoData, updateVerificationStatus } = useDemoData();
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
   const [verifying, setVerifying] = useState(false);
@@ -86,35 +89,24 @@ const UpgradeVerification = () => {
       }
 
       console.log("Final payload:", finalPayload);
-
-      return;
-  
-      // Send proof to backend
-      const response = await fetch(`${BACKEND_URL}/verify`, {
-        method: "POST",
-        body: JSON.stringify({
-          payload: finalPayload as ISuccessResult,
-          action: verificationStatus.claimAction || verificationStatus.upgradeAction,
-          signal: ls_wallet,
-        }),
-      });
-  
-      const result = await response.json();
-      if (response.ok) {
+      
+      // Update the demo data with the new verification status
+      if (tier.level === "Device") {
+        updateVerificationStatus("DEVICE");
         toast({
           title: "Verification Successful",
-          description: `You are now ${verificationStatus.level} Verified.`,
+          description: "You are now Device Verified.",
         });
-        refetch();
-        setTimeout(() => navigate("/profile"), 1500);
-      } else {
+      } else if (tier.level === "Orb Scan") {
+        updateVerificationStatus("ORB");
         toast({
-          title: "Backend Error",
-          description: result.message || "Something went wrong.",
-          variant: "destructive",
+          title: "Verification Successful",
+          description: "You are now Orb Verified.",
         });
-        console.error("Backend verification failed:", result);
       }
+
+      refetch();
+      setTimeout(() => navigate("/profile"), 1500);
     } catch (error: any) {
       console.error("Error during verification:", error);
   
@@ -134,8 +126,6 @@ const UpgradeVerification = () => {
     }
   };
   
-  
-
   if (isLoading) {
     return (
       <div className="min-h-screen">
@@ -166,6 +156,10 @@ const UpgradeVerification = () => {
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
   const userTierId = nftInfo?.tier?.tierId || BigInt(0);
 
+  // Use demoData to check verification status
+  const isDeviceVerified = demoData.isDeviceVerified;
+  const isOrbVerified = demoData.isOrbVerified;
+
   return (
     <div className="min-h-screen bg-background">
       <Header title="Verification Level" />
@@ -181,7 +175,9 @@ const UpgradeVerification = () => {
           </div>
           <h2 className="text-2xl font-bold text-gradient mb-2 text-center">Verification Level</h2>
           <p className="text-muted-foreground text-center text-lg">
-            {nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
+            {!isDeviceVerified && !isOrbVerified 
+              ? "Unverified" 
+              : `Currently: ${isOrbVerified ? "Orb" : "Device"} Verified`}
           </p>
         </motion.div>
 
@@ -189,6 +185,12 @@ const UpgradeVerification = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {Object.values(verificationLevels).map((tier) => {
             const IconComponent = tier.icon;
+            const isVerified = tier.level === "Device" ? isDeviceVerified : isOrbVerified;
+            const isDisabled = 
+              verifying || 
+              (tier.level === "Device" && isDeviceVerified) || 
+              (tier.level === "Orb Scan" && isOrbVerified) ||
+              (tier.level === "Orb Scan" && !isDeviceVerified); // Orb requires Device first
 
             return (
               <motion.div
@@ -204,21 +206,16 @@ const UpgradeVerification = () => {
                 <Button
                   className="w-full"
                   variant="default"
-                  disabled={
-                    verifying || // Disable while verifying
-                    userTierId > tier.tierId || // User already at a higher tier
-                    tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
-                  }
+                  disabled={isDisabled}
                   onClick={() => handleVerify(tier)}
                   >
                   {verifying && currentTier?.tierId === tier.tierId
                     ? "Verifying..."
-                    : nftInfo.tokenId === null
-                    ? "Claim NFT"
-                    : userTierId > tier.tierId ||
-                      tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
-                    ? "Already Claimed"
-                    : `Upgrade to ${tier.level}`}
+                    : isVerified
+                    ? "Already Verified"
+                    : tier.level === "Orb Scan" && !isDeviceVerified
+                    ? "Requires Device Verification"
+                    : "Verify Now"}
                 </Button>
               </motion.div>
             );

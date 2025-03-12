@@ -1,119 +1,47 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
-import { useDemoData } from "@/providers/DemoDataProvider";
-import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 
 const Welcome = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const { login, updateUSDCBalance } = useDemoData();
-
-  // Generate a random USDC.e amount between 15 and 100
-  const generateRandomUSDCeAmount = () => {
-    return Number((Math.random() * (100 - 15) + 15).toFixed(2));
-  };
 
   const handleSignIn = async () => {
     const wallet_address = localStorage.getItem("ls_wallet_address");
     const username = localStorage.getItem("ls_username");
     if (username && wallet_address) {
-      // Update the demo data with the existing session
-      login(wallet_address);
       navigate("/wallet");
       return;
     }
-    
     try {
       setLoading(true);
       console.log("Initiating wallet authentication...");
-      
-      if (!MiniKit.isInstalled()) {
-        toast.error("Please install World App to connect your wallet.");
-        setLoading(false);
-        return;
-      }
-      
       const nonce = crypto.randomUUID().replace(/-/g, "");
-      
-      // Using the correct MiniKit API and properly accessing the response object
-      const result = await MiniKit.commands.walletAuth({
+      const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
         nonce,
         statement: "Sign in to Magnify Cash to manage your loans.",
         expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
         notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
-      
-      // Based on MiniKit's WalletAuthPayload documentation, access the correct property
-      if (result && result.walletAddress) {
-        // Get user wallet address - this exists in the result object
-        const walletAddress = result.walletAddress;
-        const username = `world_${walletAddress.substring(2, 8)}`;
-        
-        // Generate random USDC.e balance
-        const randomBalance = generateRandomUSDCeAmount();
-        
-        // Store in localStorage to maintain session
-        localStorage.setItem("ls_wallet_address", walletAddress);
-        localStorage.setItem("ls_username", username);
-        
-        // Update the demo data with the login and balance
-        login(walletAddress);
-        updateUSDCBalance(randomBalance);
-        
+      if (finalPayload && finalPayload.address) {
+        const user = await MiniKit.getUserByAddress(finalPayload.address);
+        localStorage.setItem("ls_wallet_address", user.walletAddress);
+        localStorage.setItem("ls_username", user.username);
         toast.success("Successfully signed in!");
-        console.log("WORLD APP ADDRESS:", walletAddress);
-        console.log("USERNAME:", username);
-        console.log("USDC.e BALANCE:", randomBalance);
-        
+        console.log("ADDRESS:", user.walletAddress);
+        console.log("USERNAME:", user.username);
+        setLoading(false);
         navigate("/wallet");
       } else {
+        setLoading(false);
         toast.error("Failed to retrieve wallet address.");
       }
     } catch (error) {
+      setLoading(false);
       console.error("Authentication failed:", error);
       toast.error("Failed to sign in. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDummySignIn = async () => {
-    try {
-      setLoading(true);
-      
-      // Generate a random demo wallet address
-      const demoWalletAddress = "0x" + Array(40).fill(0).map(() => 
-        Math.floor(Math.random() * 16).toString(16)).join('');
-      
-      // Set the demo username
-      const demoUsername = "demo_user_" + Math.floor(Math.random() * 1000);
-      
-      // Generate random USDC.e balance
-      const randomBalance = generateRandomUSDCeAmount();
-      
-      // Store in localStorage to maintain session
-      localStorage.setItem("ls_wallet_address", demoWalletAddress);
-      localStorage.setItem("ls_username", demoUsername);
-      
-      // Update the demo data with the login and balance
-      login(demoWalletAddress);
-      updateUSDCBalance(randomBalance);
-      
-      toast.success("Successfully signed in with demo wallet!");
-      console.log("DEMO ADDRESS:", demoWalletAddress);
-      console.log("DEMO USERNAME:", demoUsername);
-      console.log("DEMO USDC.e BALANCE:", randomBalance);
-      
-      navigate("/wallet");
-    } catch (error) {
-      console.error("Demo authentication failed:", error);
-      toast.error("Failed to sign in with demo wallet. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -151,16 +79,15 @@ const Welcome = () => {
               onClick={handleSignIn}
               className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
             >
-              {loading ? "Connecting..." : "Connect with World App"}
+              {loading ? "Connecting..." : "Start Your Journey"}
               <ArrowRight className="w-5 h-5" />
             </button>
 
             <button
-              disabled={loading}
-              onClick={handleDummySignIn}
-              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 text-gray-600 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base hover:bg-gray-50"
+              disabled
+              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 text-gray-600 cursor-not-allowed opacity-75 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
             >
-              Use Demo Wallet
+              Become a Lender - Coming Soon
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

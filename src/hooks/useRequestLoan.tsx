@@ -77,7 +77,7 @@ const useRequestLoan = () => {
       const permitTransfer = {
         permitted: {
           token: WORLDCHAIN_USDC_CONTRACT,
-          amount: "0.000001 ",
+          amount: "0", // ✅ Send 0 USDC
         },
         spender: STAGING_CONTRACT_ADDRESS,
         nonce: Date.now().toString(),

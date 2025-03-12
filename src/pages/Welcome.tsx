@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Shield } from "lucide-react";
@@ -27,17 +26,14 @@ const Welcome = () => {
         return;
       }
       
-      const { finalPayload } = await MiniKit.connectAsync({
+      const result = await MiniKit.commands.connect({
         client_id: WORLDCOIN_CLIENT_ID,
         app_name: "Magnify Cash",
       });
       
-      if (finalPayload.status === "success") {
-        const walletAddress = finalPayload.wallet.address;
+      if (result.status === "success") {
+        const walletAddress = result.wallet.address;
         const username = `world_${walletAddress.substring(2, 8)}`;
-        
-        // Generate random USDC.e balance
-        const randomBalance = generateRandomUSDCeAmount();
         
         // Store in localStorage to maintain session
         localStorage.setItem("ls_wallet_address", walletAddress);
@@ -45,12 +41,11 @@ const Welcome = () => {
         
         // Update the demo data with the login and balance
         login(walletAddress);
-        updateUSDCBalance(randomBalance);
+        updateUSDCBalance(generateRandomUSDCeAmount());
         
         toast.success("Successfully connected with World App wallet!");
         console.log("WORLD APP ADDRESS:", walletAddress);
         console.log("USERNAME:", username);
-        console.log("USDC.e BALANCE:", randomBalance);
         
         navigate("/wallet");
       } else {

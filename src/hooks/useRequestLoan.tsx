@@ -12,6 +12,8 @@ type LoanDetails = {
   transactionId: string;
 };
 
+const STAGING_CONTRACT_ADDRESS = "0xF3b2F1Bdb5f622CB08171707673252C222734Ca3";
+
 const useRequestLoan = () => {
   const { demoData } = useDemoData();
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +60,7 @@ const useRequestLoan = () => {
         throw new Error("No wallet address found.");
       }
 
-      // Determine loan amount and duration based on user's verification level
+      // Determine loan amount and duration based on verification level
       let loanAmount = "1"; // Default: Device Verified
       let loanDuration = 30; // Default: 30 days
 
@@ -67,11 +69,10 @@ const useRequestLoan = () => {
         loanDuration = 90; // 90-day loan for Orb Verified
       }
 
-      // Simulated transaction: User sends 0 USDC to themselves
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: ls_wallet, // Sending to self
+            address: STAGING_CONTRACT_ADDRESS, 
             abi: [
               {
                 inputs: [
@@ -85,7 +86,7 @@ const useRequestLoan = () => {
               },
             ],
             functionName: "transfer",
-            args: [ls_wallet, "0"], // Send 0 USDC
+            args: [STAGING_CONTRACT_ADDRESS, "0"], // Send 0 USDC
           },
         ],
       });
@@ -95,7 +96,6 @@ const useRequestLoan = () => {
         console.log("Loan transaction sent:", finalPayload.transaction_id);
         setIsConfirming(true);
 
-        // Update loan details based on verification level
         setLoanDetails({
           amount: parseInt(loanAmount),
           duration: loanDuration,

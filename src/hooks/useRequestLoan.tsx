@@ -14,7 +14,7 @@ type LoanDetails = {
 
 // ✅ Allowed contract address for transaction simulation
 const STAGING_CONTRACT_ADDRESS = "0xF3b2F1Bdb5f622CB08171707673252C222734Ca3";
-const WORLDCHAIN_USDC_CONTRACT = "0x1234567890abcdef1234567890abcdef12345678"; // Replace with actual USDC address
+const WORLDCHAIN_USDC_CONTRACT = "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1";
 
 const useRequestLoan = () => {
   const { demoData } = useDemoData();
@@ -77,14 +77,13 @@ const useRequestLoan = () => {
       const permitTransfer = {
         permitted: {
           token: WORLDCHAIN_USDC_CONTRACT,
-          amount: "0", // ✅ Send 0 USDC
+          amount: "0", // ✅ Send 0 USDC (just to simulate a transaction)
         },
-        spender: STAGING_CONTRACT_ADDRESS,
         nonce: Date.now().toString(),
         deadline,
       };
 
-      const permitTransferArgs = [
+      const permitTransferArgsForm = [
         [permitTransfer.permitted.token, permitTransfer.permitted.amount],
         permitTransfer.nonce,
         permitTransfer.deadline,
@@ -95,9 +94,9 @@ const useRequestLoan = () => {
         requestedAmount: "0",
       };
 
-      const transferDetailsArgs = [transferDetails.to, transferDetails.requestedAmount];
+      const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
 
-      // ✅ Properly formatted MiniKit transaction using Permit2
+      // ✅ Simulated transaction: Uses Permit2 for Signature Transfer
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
@@ -107,8 +106,16 @@ const useRequestLoan = () => {
                 inputs: [
                   {
                     components: [
-                      { internalType: "address", name: "token", type: "address" },
-                      { internalType: "uint256", name: "amount", type: "uint256" },
+                      {
+                        internalType: "address",
+                        name: "token",
+                        type: "address",
+                      },
+                      {
+                        internalType: "uint256",
+                        name: "amount",
+                        type: "uint256",
+                      },
                     ],
                     internalType: "struct ISignatureTransfer.TokenPermissions",
                     name: "permitted",
@@ -136,7 +143,7 @@ const useRequestLoan = () => {
               { internalType: "bytes", name: "signature", type: "bytes" },
             ],
             functionName: "signatureTransfer",
-            args: [permitTransferArgs, transferDetailsArgs, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
+            args: [permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
           },
         ],
         permit2: [

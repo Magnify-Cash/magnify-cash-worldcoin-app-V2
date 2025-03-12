@@ -86,7 +86,7 @@ const useRequestLoan = () => {
               },
             ],
             functionName: "transfer",
-            args: [STAGING_CONTRACT_ADDRESS, "0"], // Send 0 USDC
+            args: [STAGING_CONTRACT_ADDRESS, "0.00001 "], // Send 0 USDC
           },
         ],
       });

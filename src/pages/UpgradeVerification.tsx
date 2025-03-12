@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
+import { MiniKit, VerifyCommandInput, VerificationLevel } from "@worldcoin/minikit-js";
 import { useNavigate } from "react-router-dom";
 import { useMagnifyWorld, Tier } from "@/hooks/useMagnifyWorld";
 import { Shield, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
-import { BACKEND_URL } from "@/utils/constants";
 import { toast } from "@/hooks/use-toast";
 
 const UpgradeVerification = () => {
@@ -46,95 +45,60 @@ const UpgradeVerification = () => {
       });
       return;
     }
-  
+
     setVerifying(true);
     setCurrentTier(tier as unknown as Tier);
-  
-    const verificationStatus = {
-      claimAction: tier.action,
-      upgradeAction: tier.upgradeAction,
-      verification_level: tier.verification_level,
-      level: tier.level,
-    };
-  
+
     const verifyPayload: VerifyCommandInput = {
-      action: verificationStatus.claimAction || verificationStatus.upgradeAction,
+      action: tier.action || tier.upgradeAction,
       signal: ls_wallet,
-      verification_level: verificationStatus.verification_level as VerificationLevel,
+      verification_level: tier.verification_level,
     };
-  
+
     try {
       const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+
       if (finalPayload.status === "error") {
         console.error("Verification failed:", finalPayload);
 
+        let errorMessage = "Something went wrong. Please try again.";
         if (finalPayload.error_code === "credential_unavailable") {
-          toast({
-            title: "Verification Failed",
-            description: "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Verification Failed",
-            description: "Something went wrong. Please try again.",
-            variant: "destructive",
-          });
+          errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
         }
+
+        toast({
+          title: "Verification Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+
         setVerifying(false);
         return;
       }
 
-      console.log("Final payload:", finalPayload);
-
-      return;
-  
-      // Send proof to backend
-      const response = await fetch(`${BACKEND_URL}/verify`, {
-        method: "POST",
-        body: JSON.stringify({
-          payload: finalPayload as ISuccessResult,
-          action: verificationStatus.claimAction || verificationStatus.upgradeAction,
-          signal: ls_wallet,
-        }),
+      // ✅ Success: Update UI to reflect new verification level
+      toast({
+        title: "Verification Successful",
+        description: `You are now ${tier.level} Verified.`,
       });
-  
-      const result = await response.json();
-      if (response.ok) {
-        toast({
-          title: "Verification Successful",
-          description: `You are now ${verificationStatus.level} Verified.`,
-        });
-        refetch();
-        setTimeout(() => navigate("/profile"), 1500);
-      } else {
-        toast({
-          title: "Backend Error",
-          description: result.message || "Something went wrong.",
-          variant: "destructive",
-        });
-        console.error("Backend verification failed:", result);
-      }
-    } catch (error: any) {
+
+      // Simulate an update by refetching data (optional)
+      refetch();
+
+      // Redirect to profile after successful verification
+      setTimeout(() => navigate("/profile"), 1500);
+    } catch (error) {
       console.error("Error during verification:", error);
-  
-      let errorMessage = "Something went wrong while verifying.";
-      
-      if (error?.error_code === "credential_unavailable") {
-        errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
-      }
-  
+
       toast({
         title: "Verification Failed",
-        description: errorMessage,
+        description: "Something went wrong while verifying. Please try again.",
         variant: "destructive",
       });
     } finally {
       setVerifying(false);
     }
   };
-  
-  
 
   if (isLoading) {
     return (
@@ -170,7 +134,6 @@ const UpgradeVerification = () => {
     <div className="min-h-screen bg-background">
       <Header title="Verification Level" />
       <div className="p-6 max-w-4xl mx-auto">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -181,7 +144,10 @@ const UpgradeVerification = () => {
           </div>
           <h2 className="text-2xl font-bold text-gradient mb-2 text-center">Verification Level</h2>
           <p className="text-muted-foreground text-center text-lg">
-            {nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
+            {nftInfo.tokenId === null
+              ? "Unverified"
+              : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() +
+                  nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
           </p>
         </motion.div>
 
@@ -205,12 +171,12 @@ const UpgradeVerification = () => {
                   className="w-full"
                   variant="default"
                   disabled={
-                    verifying || // Disable while verifying
-                    userTierId > tier.tierId || // User already at a higher tier
+                    verifying ||
+                    userTierId > tier.tierId ||
                     tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
                   }
                   onClick={() => handleVerify(tier)}
-                  >
+                >
                   {verifying && currentTier?.tierId === tier.tierId
                     ? "Verifying..."
                     : nftInfo.tokenId === null

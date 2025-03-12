@@ -33,8 +33,13 @@ const Welcome = () => {
         expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
         notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
-      if (finalPayload && finalPayload.walletAddress) {
-        const user = await MiniKit.getUserByAddress(finalPayload.walletAddress);
+      
+      // Log the finalPayload to see its actual structure
+      console.log("Authentication payload:", finalPayload);
+      
+      // Check if finalPayload exists and has an address property
+      if (finalPayload && finalPayload.address) {
+        const user = await MiniKit.getUserByAddress(finalPayload.address);
         localStorage.setItem("ls_wallet_address", user.walletAddress);
         localStorage.setItem("ls_username", user.username);
         toast.success("Successfully signed in!");

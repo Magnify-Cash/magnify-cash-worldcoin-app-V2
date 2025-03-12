@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { MiniKit, VerifyCommandInput, VerificationLevel } from "@worldcoin/minikit-js";
 import { useNavigate } from "react-router-dom";
-import { useMagnifyWorld, Tier } from "@/hooks/useMagnifyWorld";
 import { Shield, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -13,14 +12,12 @@ const UpgradeVerification = () => {
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { demoData, updateVerificationStatus } = useDemoData();
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
-  const [currentTier, setCurrentTier] = useState<Tier | null>(null);
+  const [currentTier, setCurrentTier] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
 
-  // Verification levels
   const verificationLevels = {
     device: {
-      tierId: BigInt(1),
+      tierId: "1",
       level: "Device",
       icon: Shield,
       action: "mint-device-verified-nft",
@@ -28,7 +25,7 @@ const UpgradeVerification = () => {
       verification_level: VerificationLevel.Device,
     },
     orb: {
-      tierId: BigInt(2),
+      tierId: "2",
       level: "Orb Scan",
       icon: Globe,
       action: "mint-orb-verified-nft",
@@ -49,7 +46,7 @@ const UpgradeVerification = () => {
     }
 
     setVerifying(true);
-    setCurrentTier(tier as unknown as Tier);
+    setCurrentTier(tier.tierId);
 
     const verifyPayload: VerifyCommandInput = {
       action: tier.action || tier.upgradeAction,
@@ -78,7 +75,6 @@ const UpgradeVerification = () => {
         return;
       }
 
-      // ✅ Success: Update the demo data with the new verification status
       if (tier.level === "Device") {
         updateVerificationStatus("DEVICE");
         toast({
@@ -93,7 +89,6 @@ const UpgradeVerification = () => {
         });
       }
 
-      refetch();
       setTimeout(() => navigate("/profile"), 1500);
     } catch (error) {
       console.error("Error during verification:", error);
@@ -107,33 +102,6 @@ const UpgradeVerification = () => {
       setVerifying(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <Header title="Verification Level" />
-        <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="dot-spinner">
-            <div className="dot bg-[#1A1E8E]"></div>
-            <div className="dot bg-[#4A3A9A]"></div>
-            <div className="dot bg-[#7A2F8A]"></div>
-            <div className="dot bg-[#A11F75]"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="min-h-screen">
-        <Header title="Verification Level" />
-        <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <p className="text-red-500">Error fetching data. Please try again.</p>
-        </div>
-      </div>
-    );
-  }
 
   // Use demoData to check verification status
   const isDeviceVerified = demoData.isDeviceVerified;
@@ -165,11 +133,7 @@ const UpgradeVerification = () => {
           {Object.values(verificationLevels).map((tier) => {
             const IconComponent = tier.icon;
             const isVerified = tier.level === "Device" ? isDeviceVerified : isOrbVerified;
-            const isDisabled =
-              verifying ||
-              (tier.level === "Device" && isDeviceVerified) ||
-              (tier.level === "Orb Scan" && isOrbVerified) ||
-              (tier.level === "Orb Scan" && !isDeviceVerified); // Orb requires Device first
+            const isDisabled = verifying || isVerified;
 
             return (
               <motion.div
@@ -188,12 +152,10 @@ const UpgradeVerification = () => {
                   disabled={isDisabled}
                   onClick={() => handleVerify(tier)}
                 >
-                  {verifying && currentTier?.tierId === tier.tierId
+                  {verifying && currentTier === tier.tierId
                     ? "Verifying..."
                     : isVerified
                     ? "Already Verified"
-                    : tier.level === "Orb Scan" && !isDeviceVerified
-                    ? "Requires Device Verification"
                     : "Verify Now"}
                 </Button>
               </motion.div>

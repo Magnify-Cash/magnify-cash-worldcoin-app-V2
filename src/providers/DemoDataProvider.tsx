@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import type { Transaction, WalletBalance } from "@/types/wallet";
 import type { Announcement } from "@/features/announcements/utils";
 
@@ -227,11 +228,13 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     return txHash;
   };
 
-  const refreshBalance = () => {
+  const refreshBalance = useCallback(() => {
     console.log("Refreshing balance...");
-  };
+    // We don't actually refresh the balance here to prevent continuous refetching
+    // This is intentional to resolve the issue
+  }, []);
   
-  const resetSession = () => {
+  const resetSession = useCallback(() => {
     const newData = getInitialDemoData();
     // Keep the wallet address if it exists
     if (demoData.walletAddress) {
@@ -239,7 +242,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
     setDemoData(newData);
     console.log("Session data reset with random balance:", newData.usdcBalance);
-  };
+  }, [demoData.walletAddress]);
 
   return (
     <DemoContext.Provider

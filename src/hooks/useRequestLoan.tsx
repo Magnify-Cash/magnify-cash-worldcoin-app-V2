@@ -72,7 +72,7 @@ const useRequestLoan = () => {
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: STAGING_CONTRACT_ADDRESS, 
+            address: ls_wallet, 
             abi: [
               {
                 inputs: [

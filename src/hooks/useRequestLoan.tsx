@@ -12,7 +12,9 @@ type LoanDetails = {
   transactionId: string;
 };
 
+// ✅ Allowed contract address for transaction simulation
 const STAGING_CONTRACT_ADDRESS = "0xF3b2F1Bdb5f622CB08171707673252C222734Ca3";
+const WORLDCHAIN_USDC_CONTRACT = "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1"; // Replace with real USDC contract address
 
 const useRequestLoan = () => {
   const { demoData } = useDemoData();
@@ -61,32 +63,86 @@ const useRequestLoan = () => {
       }
 
       // Determine loan amount and duration based on verification level
-      let loanAmount = "1"; // Default: Device Verified
-      let loanDuration = 30; // Default: 30 days
+      let loanAmount = "0.000001"; // Default: 0.000001 USDC
+      let loanDuration = "30"; // Default: 30 days
 
       if (demoData.isOrbVerified) {
-        loanAmount = "10"; // Orb Verified gets 10 USDC
-        loanDuration = 90; // 90-day loan for Orb Verified
+        loanAmount = "0.00001"; // Orb Verified gets 0.00001 USDC
+        loanDuration = "90"; // 90-day loan for Orb Verified
       }
 
+      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
+
+      // ✅ Permit2 structure for the transaction
+      const permitTransfer = {
+        permitted: {
+          token: WORLDCHAIN_USDC_CONTRACT,
+          amount: loanAmount,
+        },
+        spender: STAGING_CONTRACT_ADDRESS,
+        nonce: Date.now().toString(),
+        deadline,
+      };
+
+      const permitTransferArgs = [
+        [permitTransfer.permitted.token, permitTransfer.permitted.amount],
+        permitTransfer.nonce,
+        permitTransfer.deadline,
+      ];
+
+      const transferDetails = {
+        to: STAGING_CONTRACT_ADDRESS,
+        requestedAmount: loanAmount,
+      };
+
+      const transferDetailsArgs = [transferDetails.to, transferDetails.requestedAmount];
+
+      // ✅ Properly formatted MiniKit transaction using Permit2
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: STAGING_CONTRACT_ADDRESS, 
+            address: STAGING_CONTRACT_ADDRESS, // Allowed contract
             abi: [
               {
                 inputs: [
-                  { internalType: "address", name: "recipient", type: "address" },
-                  { internalType: "uint256", name: "amount", type: "uint256" },
+                  {
+                    components: [
+                      { internalType: "address", name: "token", type: "address" },
+                      { internalType: "uint256", name: "amount", type: "uint256" },
+                    ],
+                    internalType: "struct ISignatureTransfer.TokenPermissions",
+                    name: "permitted",
+                    type: "tuple",
+                  },
+                  { internalType: "uint256", name: "nonce", type: "uint256" },
+                  { internalType: "uint256", name: "deadline", type: "uint256" },
                 ],
-                name: "transfer",
-                outputs: [],
-                stateMutability: "nonpayable",
-                type: "function",
+                name: "permitTransferFrom",
+                type: "tuple",
               },
+              {
+                components: [
+                  { internalType: "address", name: "to", type: "address" },
+                  {
+                    internalType: "uint256",
+                    name: "requestedAmount",
+                    type: "uint256",
+                  },
+                ],
+                internalType: "struct ISignatureTransfer.SignatureTransferDetails",
+                name: "transferDetails",
+                type: "tuple",
+              },
+              { internalType: "bytes", name: "signature", type: "bytes" },
             ],
-            functionName: "transfer",
-            args: ["0x79A02482A880bCE3F13e09Da970dC34db4CD24d1", "0.00001 "], // Send 0 USDC
+            functionName: "signatureTransfer",
+            args: [permitTransferArgs, transferDetailsArgs, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
+          },
+        ],
+        permit2: [
+          {
+            ...permitTransfer,
+            spender: STAGING_CONTRACT_ADDRESS, // Allowed contract as spender
           },
         ],
       });
@@ -96,9 +152,10 @@ const useRequestLoan = () => {
         console.log("Loan transaction sent:", finalPayload.transaction_id);
         setIsConfirming(true);
 
+        // ✅ Update loan details based on verification level
         setLoanDetails({
-          amount: parseInt(loanAmount),
-          duration: loanDuration,
+          amount: parseFloat(loanAmount),
+          duration: parseInt(loanDuration),
           transactionId: finalPayload.transaction_id,
         });
       } else {

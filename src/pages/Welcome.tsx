@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useDemoData } from "@/providers/DemoDataProvider";
+import { MiniKit } from "@worldcoin/minikit-js";
+import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -13,6 +15,53 @@ const Welcome = () => {
   // Generate a random USDC.e amount between 15 and 100
   const generateRandomUSDCeAmount = () => {
     return Number((Math.random() * (100 - 15) + 15).toFixed(2));
+  };
+
+  const handleWorldAppSignIn = async () => {
+    try {
+      setLoading(true);
+      
+      if (!MiniKit.isInstalled()) {
+        toast.error("Please install World App to connect your wallet.");
+        setLoading(false);
+        return;
+      }
+      
+      const { finalPayload } = await MiniKit.connectAsync({
+        client_id: WORLDCOIN_CLIENT_ID,
+        app_name: "Magnify Cash",
+      });
+      
+      if (finalPayload.status === "success") {
+        const walletAddress = finalPayload.wallet.address;
+        const username = `world_${walletAddress.substring(2, 8)}`;
+        
+        // Generate random USDC.e balance
+        const randomBalance = generateRandomUSDCeAmount();
+        
+        // Store in localStorage to maintain session
+        localStorage.setItem("ls_wallet_address", walletAddress);
+        localStorage.setItem("ls_username", username);
+        
+        // Update the demo data with the login and balance
+        login(walletAddress);
+        updateUSDCBalance(randomBalance);
+        
+        toast.success("Successfully connected with World App wallet!");
+        console.log("WORLD APP ADDRESS:", walletAddress);
+        console.log("USERNAME:", username);
+        console.log("USDC.e BALANCE:", randomBalance);
+        
+        navigate("/wallet");
+      } else {
+        toast.error("Failed to connect wallet. Please try again.");
+      }
+    } catch (error) {
+      console.error("World App authentication failed:", error);
+      toast.error("Failed to connect with World App. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDummySignIn = async () => {
@@ -37,7 +86,6 @@ const Welcome = () => {
       login(demoWalletAddress);
       updateUSDCBalance(randomBalance);
       
-      setLoading(false);
       toast.success("Successfully signed in with demo wallet!");
       console.log("DEMO ADDRESS:", demoWalletAddress);
       console.log("DEMO USERNAME:", demoUsername);
@@ -45,9 +93,10 @@ const Welcome = () => {
       
       navigate("/wallet");
     } catch (error) {
-      setLoading(false);
       console.error("Demo authentication failed:", error);
       toast.error("Failed to sign in with demo wallet. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,18 +131,19 @@ const Welcome = () => {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6 sm:mb-16 px-3 sm:px-4">
             <button
               disabled={loading}
-              onClick={handleDummySignIn}
+              onClick={handleWorldAppSignIn}
               className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
             >
-              {loading ? "Connecting..." : "Connect Demo Wallet"}
+              {loading ? "Connecting..." : "Connect with World App"}
               <ArrowRight className="w-5 h-5" />
             </button>
 
             <button
-              disabled
-              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 text-gray-600 cursor-not-allowed opacity-75 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
+              disabled={loading}
+              onClick={handleDummySignIn}
+              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 text-gray-600 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base hover:bg-gray-50"
             >
-              Become a Lender - Coming Soon
+              Use Demo Wallet
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

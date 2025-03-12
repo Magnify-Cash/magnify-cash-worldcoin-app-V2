@@ -19,13 +19,13 @@ const UpgradeVerification = () => {
   // Verification levels
   const verificationLevels = {
     device: {
-      level: "DEVICE",
+      level: "DEVICE" as const,
       icon: Shield,
       action: "mint-device-verified-nft",
       verification_level: VerificationLevel.Device,
     },
     orb: {
-      level: "ORB",
+      level: "ORB" as const,
       icon: Globe,
       action: "mint-orb-verified-nft",
       verification_level: VerificationLevel.Orb,

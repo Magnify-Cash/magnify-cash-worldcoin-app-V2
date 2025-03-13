@@ -1,4 +1,3 @@
-
 import { useDemoData } from "@/providers/DemoDataProvider";
 import { useEffect, useState } from "react";
 
@@ -19,13 +18,9 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
     let interestRate = 250n; // 2.5%
     let loanPeriod = 2592000n; // 30 days
     
-    // Set loan terms based on tier
-    if (tierIdNumber === 2) {
-      loanAmount = 10n * 1000000n; // 10 USDC
-      interestRate = 250n; // 2.5%
-      loanPeriod = 2592000n; // 30 days
-    } else if (tierIdNumber === 3) {
-      loanAmount = 10n * 1000000n; // 10 USDC
+    // Set loan terms based on tier - giving Device users (tier 1) the same terms as Orb users (tier 2)
+    if (tierIdNumber === 1 || tierIdNumber === 2 || tierIdNumber === 3) {
+      loanAmount = 10n * 1000000n; // 10 USDC for both Device and Orb users
       interestRate = 250n; // 2.5%
       loanPeriod = 2592000n; // 30 days
     }
@@ -59,8 +54,8 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
     allTiers: {
       1: {
         tierId: 1n,
-        loanAmount: 1000000n, // 1 USDC
-        interestRate: 250n, // 2%
+        loanAmount: 10000000n, // 10 USDC (increased from 1 USDC) to match tier 2
+        interestRate: 250n, // 2.5%
         loanPeriod: 2592000n, // 30 days
         verificationStatus: {
           level: "DEVICE",
@@ -71,7 +66,7 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
       2: {
         tierId: 2n,
         loanAmount: 10000000n, // 10 USDC
-        interestRate: 250n, // 2%
+        interestRate: 250n, // 2.5%
         loanPeriod: 2592000n, // 30 days
         verificationStatus: {
           level: "ORB",

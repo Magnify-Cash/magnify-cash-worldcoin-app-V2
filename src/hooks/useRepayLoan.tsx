@@ -46,8 +46,9 @@ const useRepayLoan = () => {
       // Mark as confirmed after the delay
       setIsConfirmed(true);
       
-      // Don't finalize the loan repayment immediately
-      // This will now be explicitly called by RepayLoan component when ready
+      // Immediately mark the loan as repaid in the data store
+      // This is the key change to fix the bug
+      finalizeLoanRepayment();
       
       setIsConfirming(false);
       return txId;
@@ -64,7 +65,7 @@ const useRepayLoan = () => {
     isConfirming,
     isConfirmed,
     error,
-    finalizeLoanRepayment // Export the finalizeLoanRepayment function
+    finalizeLoanRepayment // Still export this in case it's needed elsewhere
   };
 };
 

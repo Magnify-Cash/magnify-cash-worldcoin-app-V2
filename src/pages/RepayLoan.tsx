@@ -24,7 +24,7 @@ const RepayLoan = () => {
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { data, isLoading, isError, refetch } = useDemoMagnifyWorld(ls_wallet as `0x${string}`);
-  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed, finalizeLoanRepayment } = useRepayLoan();
+  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
   
   // Safely extract loan data
   const loanData = data?.loan ? data.loan[1] : undefined;
@@ -56,7 +56,8 @@ const RepayLoan = () => {
           const txHash = await repayLoanWithPermit2(loanAmountDueReadable.toString());
           setTxId(txHash);
           
-          // After successful transaction
+          // After successful transaction, we'll still need to show the success UI
+          // but the loan is already marked as inactive by useRepayLoan
           setTimeout(() => {
             setIsProcessing(false);
             setIsSuccess(true);
@@ -99,12 +100,11 @@ const RepayLoan = () => {
     setIsDrawerOpen(false);
   }, [handleRepayLoan]);
 
-  // Only finalize loan repayment and update state AFTER user clicks "Return to Wallet"
+  // Simplified handler just to return to wallet - no longer responsible for finalizing the loan repayment
   const handleReturnToWallet = useCallback(() => {
-    finalizeLoanRepayment(); // Now we finalize the loan repayment
-    refetch(); // Refresh data
+    refetch(); // Just refresh data
     navigate("/wallet"); // Navigate away
-  }, [finalizeLoanRepayment, navigate, refetch]);
+  }, [navigate, refetch]);
 
   // Loading & error states - but not when in processing or success state
   if (isLoading && !isProcessing && !isSuccess) {

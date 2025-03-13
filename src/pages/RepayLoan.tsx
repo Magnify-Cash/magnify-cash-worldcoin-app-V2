@@ -14,6 +14,8 @@ const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isRepaying, setIsRepaying] = useState(false); // Added to track repayment process
+  const [localLoanData, setLocalLoanData] = useState<any>(null); // Local loan data to persist during repayment
 
   // hooks
   const toast = useToast();
@@ -40,6 +42,13 @@ const RepayLoan = () => {
 
   const loanAmountDueReadable = loanAmountDue ? Number(formatUnits(loanAmountDue, 6)) : 0;
 
+  // When loan data changes and not in repayment process, update local loan data
+  useEffect(() => {
+    if (loanData && !isRepaying) {
+      setLocalLoanData(loanData);
+    }
+  }, [loanData, isRepaying]);
+
   const handleOpenDrawer = () => {
     setIsDrawerOpen(true);
   };
@@ -47,6 +56,7 @@ const RepayLoan = () => {
   const handleRepayConfirm = useCallback(
     async () => {
       setIsClicked(true);
+      setIsRepaying(true); // Start repayment process
   
       try {
         if (data?.nftInfo?.tokenId) {
@@ -73,6 +83,7 @@ const RepayLoan = () => {
             variant: "destructive",
           });
         }
+        setIsRepaying(false); // Reset repayment process on error
       } finally {
         setIsClicked(false);
       }
@@ -82,8 +93,12 @@ const RepayLoan = () => {
   
   // Handle navigation after repayment
   const handleNavigateAfterTransaction = () => {
-    refetch();
-    setTimeout(() => navigate("/wallet"), 1000);
+    // Wait for the local state to update before navigating
+    setTimeout(() => {
+      setIsRepaying(false); // End repayment process
+      refetch();
+      navigate("/wallet");
+    }, 1000);
   };
 
   // Call refetch after loan repayment is confirmed
@@ -91,7 +106,7 @@ const RepayLoan = () => {
     if (isConfirmed) {
       const timeout = setTimeout(() => {
         refetch();
-      }, 1000);
+      }, 2000);
 
       return () => clearTimeout(timeout);
     }
@@ -123,8 +138,12 @@ const RepayLoan = () => {
     );
   }
 
+  // If in repayment process, use local loan data
+  const activeLoanData = isRepaying ? localLoanData : loanData;
+  const showActiveLoan = (hasLoan || isRepaying) && activeLoanData && typeof activeLoanData !== 'string';
+
   // Check if user has an active loan - handle the case when loanData is undefined
-  if (!isLoading && (!hasLoan || !loanData)) {
+  if (!isLoading && !showActiveLoan) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -144,12 +163,16 @@ const RepayLoan = () => {
   }
 
   // Active loan
-  if (!isLoading && loanData && hasLoan && typeof loanData !== 'string') {
+  if (!isLoading && showActiveLoan) {
+    // Use the active loan data (either real or kept during repayment)
+    const loan = activeLoanData;
+    
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
-      loanData.startTime,
-      loanData.loanPeriod,
+      loan.startTime,
+      loan.loanPeriod,
     );
-    const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
+    
+    const amountDue = loan.amount + (loan.amount * loan.interestRate) / 10000n;
     
     return (
       <div className="min-h-screen bg-background">
@@ -159,10 +182,10 @@ const RepayLoan = () => {
             <div className="flex items-center justify-between">
               <span
                 className={`px-3 py-1 rounded-full ${
-                  loanData.isActive ? "bg-green-300" : "bg-red-300"
+                  loan.isActive ? "bg-green-300" : "bg-red-300"
                 } text-black text-sm`}
               >
-                {loanData.isActive
+                {loan.isActive
                   ? "Active Loan"
                   : "Defaulted Loan"}
               </span>
@@ -173,7 +196,7 @@ const RepayLoan = () => {
                 <DollarSign className="w-5 h-5 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
-                  <p className="text-start font-semibold">${formatUnits(loanData.amount, 6)} </p>
+                  <p className="text-start font-semibold">${formatUnits(loan.amount, 6)} </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">

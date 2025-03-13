@@ -160,8 +160,12 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const requestLoan = async (tierId: number): Promise<string> => {
+    setIsLoading(true);
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
     const loanAmount = tierId === 2 ? 10 : 1;
+
+    // Introduce a delay to simulate network request
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     setDemoData(prev => ({
       ...prev,
@@ -184,27 +188,24 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       ]
     }));
 
+    setIsLoading(false);
     return txHash;
   };
 
   const repayLoan = async (amount: string): Promise<string> => {
+    setIsLoading(true);
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
     const amountNum = parseFloat(amount);
 
-
-    console.log(amount)
-    console.log("---")
-    console.log(amountNum)
+    // Introduce a delay to simulate network request
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Update user's USDC balance by deducting the repayment amount
     updateUSDCBalance(demoData.usdcBalance - amountNum);
-    console.log("---")
-    console.log(demoData.usdcBalance)
 
-    // Mark the loan as repaid and add a repayment transaction
+    // Create the transaction record first, leave hasLoan as true
     setDemoData(prev => ({
       ...prev,
-      hasLoan: false, // Mark loan as repaid
       transactions: [
         {
           id: Date.now(),
@@ -218,8 +219,20 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         ...prev.transactions
       ]
     }));
-
+    
+    // Reset the loading state
+    setIsLoading(false);
+    
+    // Return the transaction hash immediately, but allow the UI to stay on the loan page
     return txHash;
+  };
+  
+  // Function to actually mark the loan as repaid - called after UI confirmation
+  const finalizeLoanRepayment = () => {
+    setDemoData(prev => ({
+      ...prev,
+      hasLoan: false
+    }));
   };
 
   const refreshBalance = useCallback(() => {

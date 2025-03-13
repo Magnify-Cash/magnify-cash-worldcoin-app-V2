@@ -102,7 +102,8 @@ const Loan = () => {
               </div>
               <div className="flex flex-col items-start space-y-3 my-3">
                 <p className="text-gray-600">Loan Amount: ${loanAmount}</p>
-                <p className="text-gray-600">Interest Rate: 2%</p>
+                <p className="text-gray-600">Interest Rate: 17.5%</p>
+                <p className="text-gray-600">Origination Fee: 10.0%</p>
                 <p className="text-gray-600">Duration: {loanDuration} days</p>
               </div>
               <Button

@@ -40,3 +40,50 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Orbit Spinner */
+.orbit-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 20px auto;
+}
+
+.orbit-spinner .orbit {
+  position: absolute;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #fff;
+  animation: orbit-spinner-animation 1s linear infinite;
+}
+
+.orbit-spinner .orbit:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.orbit-spinner .orbit:nth-child(2) {
+  animation-delay: -0.5s;
+}
+
+.orbit-spinner .center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background-color: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes orbit-spinner-animation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

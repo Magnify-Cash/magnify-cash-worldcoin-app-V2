@@ -1,61 +1,22 @@
 
-import React, { useState } from "react";
-import { X, Check, ArrowRight, ArrowDownLeft } from "lucide-react";
+import React from "react";
+import { X, ArrowDownLeft } from "lucide-react";
 import { Drawer, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { useDemoData } from "@/providers/DemoDataProvider";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 
 interface LoanDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   loanAmount: number;
   loanDuration: number;
+  onConfirm: () => void;
 }
 
-export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: LoanDrawerProps) {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { requestLoan } = useDemoData();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
-  const [transactionId, setTransactionId] = useState<string | null>(null);
-
-  const handleConfirm = async () => {
-    try {
-      setIsProcessing(true);
-
-      // Simulate a delay for transaction processing
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // Use the tierId as 1 for device verification, 2 for orb verification
-      const tierId = loanAmount > 1 ? 2 : 1;
-      const txId = await requestLoan(tierId);
-      
-      setTransactionId(txId);
-      setIsConfirmed(true);
-      setIsProcessing(false);
-
-      toast({
-        title: "Loan Approved!",
-        description: "Your loan has been successfully processed.",
-      });
-    } catch (error) {
-      console.error("Error confirming loan:", error);
-      toast({
-        title: "Error",
-        description: "Failed to process loan. Please try again.",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-    }
-  };
-
-  const handleComplete = () => {
-    onOpenChange(false);
-    navigate("/repay-loan");
+export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration, onConfirm }: LoanDrawerProps) {
+  const handleConfirm = () => {
+    onConfirm();
+    onOpenChange(false); // Close drawer immediately
   };
 
   return (
@@ -91,60 +52,28 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
           
           <div className="px-4 py-2">
             <div className="my-4 space-y-4">
-              {!isConfirmed ? (
-                <div className="bg-[#F1F0FB] p-4 rounded-lg space-y-4">
-                  <h3 className="text-xs text-muted-foreground">Transaction preview</h3>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="bg-green-500 text-white p-2 rounded-full mr-3">
-                        <ArrowDownLeft className="h-3 w-3" />
-                      </div>
-                      <span className="font-medium">Receive</span>
+              <div className="bg-[#F1F0FB] p-4 rounded-lg space-y-4">
+                <h3 className="text-xs text-muted-foreground">Transaction preview</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="bg-green-500 text-white p-2 rounded-full mr-3">
+                      <ArrowDownLeft className="h-3 w-3" />
                     </div>
-                    <span className="font-medium">{loanAmount} USDC.e</span>
+                    <span className="font-medium">Receive</span>
                   </div>
+                  <span className="font-medium">{loanAmount} USDC.e</span>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center space-y-4 py-6">
-                  <div className="rounded-full bg-green-100 p-3">
-                    <Check className="h-8 w-8 text-green-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-center">Loan Approved!</h3>
-                  <p className="text-sm text-gray-500 text-center">
-                    Your loan of {loanAmount} USDC.e has been approved and funds have been transferred to your wallet.
-                  </p>
-                  {transactionId && (
-                    <div className="w-full mt-4">
-                      <p className="text-xs text-gray-500">
-                        Transaction ID:
-                      </p>
-                      <p className="text-xs font-mono bg-gray-100 p-2 rounded overflow-x-auto">
-                        {transactionId}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+              </div>
             </div>
           </div>
 
           <DrawerFooter className="pb-6">
-            {!isConfirmed ? (
-              <Button 
-                onClick={handleConfirm} 
-                disabled={isProcessing}
-                className="w-full h-16 bg-black hover:bg-black/90 text-white text-lg mb-2"
-              >
-                {isProcessing ? "Processing..." : "Confirm"}
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleComplete}
-                className="w-full h-16 text-lg"
-              >
-                View Loan Details <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            )}
+            <Button 
+              onClick={handleConfirm}
+              className="w-full h-16 bg-black hover:bg-black/90 text-white text-lg mb-2"
+            >
+              Confirm
+            </Button>
           </DrawerFooter>
         </div>
       </DrawerContent>

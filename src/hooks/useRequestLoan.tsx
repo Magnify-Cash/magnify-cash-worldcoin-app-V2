@@ -4,7 +4,6 @@ import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
-import { useDemoData } from "@/providers/DemoDataProvider";
 
 type LoanDetails = {
   amount: number;
@@ -16,8 +15,10 @@ type LoanDetails = {
 const STAGING_CONTRACT_ADDRESS = "0xF3b2F1Bdb5f622CB08171707673252C222734Ca3";
 const WORLDCHAIN_USDC_CONTRACT = "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1";
 
+// ✅ 1 USDC in 6 decimals
+const DEMO_USDC_AMOUNT = "1000000"; // 1 USDC (1_000_000)
+
 const useRequestLoan = () => {
-  const { demoData } = useDemoData();
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
@@ -38,7 +39,6 @@ const useRequestLoan = () => {
       },
     });
 
-  // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
     if (isConfirmingTransaction) {
       setIsConfirming(true);
@@ -49,31 +49,19 @@ const useRequestLoan = () => {
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
-  const requestNewLoan = useCallback(async (requestedTierId: bigint) => {
+  const requestDemoLoan = useCallback(async () => {
     setError(null);
     setTransactionId(null);
     setIsConfirmed(false);
     setLoanDetails(null);
 
     try {
-      const ls_wallet = localStorage.getItem("ls_wallet_address");
-      if (!ls_wallet) throw new Error("No wallet address found.");
-
-      // Define loan parameters based on verification level
-      let loanAmount = "1000000"; // Default: 0.000001 USDC (6 decimals)
-      let loanDuration = "30"; // Default: 30 days
-
-      if (demoData.isOrbVerified) {
-        loanAmount = "10000000"; // Orb Verified: 0.00001 USDC
-        loanDuration = "90"; // 90-day loan
-      }
-
-      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 minutes validity
+      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 min validity
 
       const permitTransfer = {
         permitted: {
           token: WORLDCHAIN_USDC_CONTRACT,
-          amount: loanAmount,
+          amount: DEMO_USDC_AMOUNT,
         },
         nonce: Date.now().toString(),
         deadline,
@@ -81,7 +69,7 @@ const useRequestLoan = () => {
 
       const transferDetails = {
         to: STAGING_CONTRACT_ADDRESS,
-        requestedAmount: loanAmount,
+        requestedAmount: DEMO_USDC_AMOUNT,
       };
 
       const permitTransferArgsForm = [
@@ -92,7 +80,7 @@ const useRequestLoan = () => {
 
       const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
 
-      console.log(`Requesting loan from ${STAGING_CONTRACT_ADDRESS}`);
+      console.log(`Sending 1 USDC to staging contract at ${STAGING_CONTRACT_ADDRESS}`);
 
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
@@ -128,7 +116,7 @@ const useRequestLoan = () => {
               { internalType: "bytes", name: "signature", type: "bytes" },
             ],
             functionName: "requestLoanWithPermit2",
-            args: [permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
+            args: [permitTransferArgsForm, transferDetailsArgsForm], // ✅ Removed PERMIT2_SIGNATURE_PLACEHOLDER_0
           },
         ],
         permit2: [
@@ -141,27 +129,27 @@ const useRequestLoan = () => {
 
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
-        console.log("Loan request transaction sent:", finalPayload.transaction_id);
+        console.log("Demo transaction sent:", finalPayload.transaction_id);
         setIsConfirming(true);
 
         setLoanDetails({
-          amount: parseFloat(loanAmount) / 1e6, // Convert back to normal value
-          duration: parseInt(loanDuration),
+          amount: 1, // 1 USDC
+          duration: 30, // Placeholder (no real loan)
           transactionId: finalPayload.transaction_id,
         });
       } else {
-        console.error("Error sending transaction", finalPayload, commandPayload);
+        console.error("Error sending demo transaction", finalPayload, commandPayload);
         setError(finalPayload.error_code === "user_rejected" ? "User rejected transaction" : "Transaction failed");
         setIsConfirming(false);
       }
     } catch (err) {
-      console.error("Error sending transaction", err);
+      console.error("Error sending demo transaction", err);
       setError(`Transaction failed: ${(err as Error).message}`);
       setIsConfirming(false);
     }
-  }, [demoData.isOrbVerified]);
+  }, []);
 
-  return { requestNewLoan, error, transactionId, isConfirming, isConfirmed, loanDetails };
+  return { requestDemoLoan, error, transactionId, isConfirming, isConfirmed, loanDetails };
 };
 
 export default useRequestLoan;

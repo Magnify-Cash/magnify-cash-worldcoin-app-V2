@@ -1,6 +1,6 @@
 
 import React from "react";
-import { X, Check, ArrowRight } from "lucide-react";
+import { X, Check, ArrowRight, ArrowDownLeft } from "lucide-react";
 import { Drawer, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { useDemoData } from "@/providers/DemoDataProvider";
@@ -79,11 +79,13 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
           
           {/* Logo and App info section */}
           <div className="px-4 py-3 flex items-center">
-            <img 
-              src="/lovable-uploads/a58f7265-4f91-4fe4-9870-a88ac9aadba9.jpg" 
-              alt="Magnify Logo"
-              className="w-10 h-10 rounded-full mr-3"
-            />
+            <div className="w-10 h-10 rounded-md overflow-hidden mr-3">
+              <img 
+                src="/lovable-uploads/a58f7265-4f91-4fe4-9870-a88ac9aadba9.jpg" 
+                alt="Magnify Logo"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <div>
               <p className="text-sm font-medium text-black">Demo: Magnify Cash</p>
               <p className="text-xs text-muted-foreground">https://demo.magnify.cash</p>
@@ -94,12 +96,18 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
             <div className="my-4 space-y-4">
               {!isConfirmed ? (
                 <>
-                  <h3 className="text-lg font-medium">Transaction Details</h3>
-                  <div className="space-y-2 rounded-lg border p-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Amount</span>
-                      <span className="font-medium">${loanAmount} USDC</span>
+                  <h3 className="text-lg font-medium">Transaction Preview</h3>
+                  <div className="bg-[#F1F0FB] p-4 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="bg-green-500 text-white p-2 rounded-full mr-3">
+                        <ArrowDownLeft className="h-5 w-5" />
+                      </div>
+                      <span className="font-medium">Receive</span>
                     </div>
+                    <span className="font-medium">{loanAmount} USDC.e</span>
+                  </div>
+
+                  <div className="space-y-2 rounded-lg border p-4 mt-4">
                     <div className="flex justify-between">
                       <span className="text-gray-500">Interest Rate</span>
                       <span className="font-medium">5%</span>
@@ -110,7 +118,7 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Total Repayment</span>
-                      <span className="font-medium">${(loanAmount * 1.05).toFixed(2)} USDC</span>
+                      <span className="font-medium">${(loanAmount * 1.05).toFixed(2)} USDC.e</span>
                     </div>
                   </div>
                 </>
@@ -121,7 +129,7 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
                   </div>
                   <h3 className="text-lg font-medium text-center">Loan Approved!</h3>
                   <p className="text-sm text-gray-500 text-center">
-                    Your loan of ${loanAmount} USDC has been approved and funds have been transferred to your wallet.
+                    Your loan of ${loanAmount} USDC.e has been approved and funds have been transferred to your wallet.
                   </p>
                   {transactionId && (
                     <div className="w-full mt-4">

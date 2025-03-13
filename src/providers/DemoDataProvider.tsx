@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import type { Transaction, WalletBalance } from "@/types/wallet";
+import type { WalletBalance } from "@/types/wallet";
 import type { Announcement } from "@/features/announcements/utils";
+
+// Ensure the Transaction type supports "loan" and "repayment"
+export type Transaction = {
+  id: number;
+  type: "deposit" | "withdrawal" | "transfer" | "loan" | "repayment"; // Added "loan" and "repayment"
+  currency: string;
+  amount: number;
+  status: "completed" | "pending" | "failed";
+  created_at: string;
+  metadata: { txHash: string };
+};
 
 interface DemoData {
   walletAddress: string | null;
@@ -10,9 +21,9 @@ interface DemoData {
   announcements: Announcement[];
   contractData: {
     nftInfo: {
-      tokenId: string | null; // Converted from BigInt to string
+      tokenId: string | null;
       tier: {
-        tierId: string; // Converted from BigInt to string
+        tierId: string;
         verificationStatus: {
           level: string;
           verification_level: string;
@@ -53,39 +64,9 @@ const getInitialDemoData = (): DemoData => ({
       updated_at: new Date().toISOString(),
     }
   ],
-  transactions: [
-    {
-      id: 1,
-      type: "deposit",
-      currency: "USDC",
-      amount: 500,
-      status: "completed",
-      created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-      metadata: { txHash: "0x1234...abcd" }
-    },
-    {
-      id: 2,
-      type: "withdrawal",
-      currency: "USDC",
-      amount: 100,
-      status: "completed",
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      metadata: { txHash: "0x5678...efgh" }
-    }
-  ],
+  transactions: [],
   usdcBalance: generateRandomBalance(),
-  announcements: [
-    {
-      id: 1,
-      title: "Welcome to Magnify World!",
-      content: "We're excited to have you join our platform. Explore our features to get the most out of your experience.",
-      date: new Date(Date.now() - 86400000 * 7).toISOString(),
-      type: "announcement",
-      is_highlighted: true,
-      is_new: true,
-      created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
-    }
-  ],
+  announcements: [],
   contractData: {
     nftInfo: {
       tokenId: null,
@@ -164,9 +145,9 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       isOrbVerified: level === "ORB",
       contractData: {
         nftInfo: {
-          tokenId: "1", // Converted from BigInt to string
+          tokenId: "1",
           tier: {
-            tierId: level === "DEVICE" ? "1" : "2", // Converted from BigInt to string
+            tierId: level === "DEVICE" ? "1" : "2",
             verificationStatus: {
               level: level,
               verification_level: level.toLowerCase()
@@ -179,8 +160,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const requestLoan = async (tierId: number): Promise<string> => {
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
-    
-    const loanAmount = tierId === 2 ? 10 : 1; // Determine loan amount based on tierId
+    const loanAmount = tierId === 2 ? 10 : 1;
 
     setDemoData(prev => ({
       ...prev,
@@ -200,18 +180,18 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
           metadata: { txHash }
         },
         ...prev.transactions
-      ]
+      ] as Transaction[] // Ensure type compatibility
     }));
-    
+
     return txHash;
   };
 
   const repayLoan = async (amount: string): Promise<string> => {
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
-    
     const amountNum = parseFloat(amount);
+
     updateUSDCBalance(demoData.usdcBalance - amountNum);
-    
+
     setDemoData(prev => ({
       ...prev,
       hasLoan: false,
@@ -226,16 +206,16 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
           metadata: { txHash }
         },
         ...prev.transactions
-      ]
+      ] as Transaction[] // Ensure type compatibility
     }));
-    
+
     return txHash;
   };
 
   const refreshBalance = useCallback(() => {
     console.log("Refreshing balance...");
   }, []);
-  
+
   const resetSession = useCallback(() => {
     const newData = getInitialDemoData();
     if (demoData.walletAddress) {

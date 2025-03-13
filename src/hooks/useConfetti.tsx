@@ -50,6 +50,13 @@ const useConfetti = (isActive: boolean, duration: number = 5000) => {
       numberOfPieces={500}
       gravity={0.15}
       colors={colors}
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 1000, // Very high z-index to ensure it's above everything
+        pointerEvents: 'none' // Ensures clicks pass through the confetti
+      }}
     />
   ) : null;
 

@@ -1,19 +1,35 @@
+[build]
+  # Directory to publish (relative to root of your repo)
+  publish = "dist"
+  # Default build command
+  command = "npm run build"
+
+# Redirects and rewrites
 [[redirects]]
+  # Redirect all paths to index.html for client-side routing
   from = "/*"
   to = "/index.html"
   status = 200
 
+# Headers to set
+[[headers]]
+  # Define which paths this specific [[headers]] block will cover
+  for = "/*"
+    [headers.values]
+    # Allow all cross-origin requests
+    Access-Control-Allow-Origin = "*"
+    # Cache control
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Environment variables
 [context.production.environment]
-  VITE_WORLDCOIN_CLIENT_ID = "app_cfd0a40d70419e3675be53a0aa9b7e10"
-  VITE_BACKEND_URL = "https://magnify-cash-worldid-backend.kevin8396.workers.dev"
-  VITE_ENVIRONMENT = "production"
+  VITE_APP_ENV = "production"
+  VITE_DEMO_MODE = "true"
 
-[context.staging.environment]
-  VITE_WORLDCOIN_CLIENT_ID = "app_17bda0ba13c1f91c838218d2156b673c"
-  VITE_BACKEND_URL = "https://staging-magnify-cash-worldid-backend.kevin8396.workers.dev"
-  VITE_ENVIRONMENT = "staging"
+[context.deploy-preview.environment]
+  VITE_APP_ENV = "preview"
+  VITE_DEMO_MODE = "true"
 
-[context.development.environment]
-  VITE_WORLDCOIN_CLIENT_ID = "app_1801cb2a3556a82b82e2bf667a5f3c8b"
-  VITE_BACKEND_URL = "https://dev-magnify-cash-worldid-backend.kevin8396.workers.dev"
-  VITE_ENVIRONMENT = "development"
+[context.branch-deploy.environment]
+  VITE_APP_ENV = "development"
+  VITE_DEMO_MODE = "true"

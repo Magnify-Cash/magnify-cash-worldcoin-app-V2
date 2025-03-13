@@ -8,7 +8,11 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "netlify:build": "vite build",
+    "netlify:dev": "netlify dev",
+    "predeploy": "npm run build",
+    "deploy": "netlify deploy --prod"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

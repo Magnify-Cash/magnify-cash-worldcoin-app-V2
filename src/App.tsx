@@ -20,10 +20,16 @@ import DemoBanner from "./components/DemoBanner";
 
 //eruda.init();
 
+// Check if demo mode is enabled via environment variable
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
+
 function App() {
-  // Initialize mock user data when the app starts
+  // Initialize mock user data when the app starts in demo mode
   useEffect(() => {
-    initializeMockUserData();
+    if (isDemoMode) {
+      console.log("Running in demo mode - initializing mock data");
+      initializeMockUserData();
+    }
   }, []);
 
   return (
@@ -93,7 +99,8 @@ function App() {
                 }
               />
             </Routes>
-            <DemoBanner />
+            {/* Only show the demo banner in demo mode */}
+            {isDemoMode && <DemoBanner />}
           </Router>
         </USDCBalanceProvider>
       </DemoDataProvider>

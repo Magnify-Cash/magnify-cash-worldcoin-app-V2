@@ -144,9 +144,6 @@ const Loan = () => {
             {isConfirmed && (
               <div className="mt-4">
                 <div className="flex justify-center mb-4">
-                  <div className="rounded-full bg-green-100 p-3">
-                    <Check className="h-8 w-8 text-green-600" />
-                  </div>
                 </div>
                 <p>Transaction confirmed!</p>
                 <Button 

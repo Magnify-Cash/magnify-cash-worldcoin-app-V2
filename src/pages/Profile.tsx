@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DollarSign, Shield, User, FileText, Pi, AlertTriangle, Bell } from "lucide-react";
@@ -23,8 +22,11 @@ const Dashboard = () => {
   const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
+  // Check if the user is verified by ORB device
 
-  if (isLoading ) {
+  const isOrbVerified = nftInfo?.tier?.verificationStatus?.verification_level === "orb";
+  
+  if (isLoading) {
     return (
       <div className="min-h-screen">
         <Header title="Profile" />
@@ -58,17 +60,17 @@ const Dashboard = () => {
               <User className="w-16 h-16 text-primary" />
             </div>
             <h2 className="text-xl font-bold text-gradient mb-3 text-center break-words">@{ls_username}</h2>
-            {nftInfo.tokenId === null ? (
-              <p className="text-muted-foreground text-center text-lg">Unverified</p>
-            ) : (
+            {isOrbVerified ? (
               <p className="text-muted-foreground text-center text-lg">
                 {nftInfo?.tier.verificationStatus.level} Verified User
               </p>
+            ) : (
+              <p className="text-muted-foreground text-center text-lg">Unverified</p>
             )}
           </motion.div>
 
           {/* Collateral section */}
-          {nftInfo.tokenId !== null ? (
+          {isOrbVerified ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -114,8 +116,7 @@ const Dashboard = () => {
             <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
               <h2 className="text-2xl font-semibold mb-4">You are unverified</h2>
               <p className="mb-4">
-                To be eligible for a loan, you need to own a specific NFT. Please upgrade your account to
-                include this NFT.
+                To be eligible for a loan, you need to own a specific NFT and be verified by an ORB device. Please upgrade your account to include this NFT.
               </p>
               <button
                 onClick={() => navigate("/upgrade-verification")}

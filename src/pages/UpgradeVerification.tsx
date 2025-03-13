@@ -18,14 +18,6 @@ const UpgradeVerification = () => {
 
   // Verification levels
   const verificationLevels = {
-    device: {
-      tierId: BigInt(1),
-      level: "Device",
-      icon: Shield,
-      action: "mint-device-verified-nft",
-      upgradeAction: "upgrade-device-verified-nft",
-      verification_level: VerificationLevel.Device,
-    },
     orb: {
       tierId: BigInt(2),
       level: "Orb Scan",
@@ -37,7 +29,7 @@ const UpgradeVerification = () => {
   };
 
   // Handle verification process
-  const handleVerify = async (tier: typeof verificationLevels.device | typeof verificationLevels.orb) => {
+  const handleVerify = async (tier: typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {
       toast({
         title: "Verification Failed",
@@ -46,23 +38,23 @@ const UpgradeVerification = () => {
       });
       return;
     }
-  
+
     setVerifying(true);
     setCurrentTier(tier as unknown as Tier);
-  
+
     const verificationStatus = {
       claimAction: tier.action,
       upgradeAction: tier.upgradeAction,
       verification_level: tier.verification_level,
       level: tier.level,
     };
-  
+
     const verifyPayload: VerifyCommandInput = {
       action: verificationStatus.claimAction || verificationStatus.upgradeAction,
       signal: ls_wallet,
       verification_level: verificationStatus.verification_level as VerificationLevel,
     };
-  
+
     try {
       const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
       if (finalPayload.status === "error") {
@@ -84,7 +76,7 @@ const UpgradeVerification = () => {
         setVerifying(false);
         return;
       }
-  
+
       // Send proof to backend
       const response = await fetch(`${BACKEND_URL}/verify`, {
         method: "POST",
@@ -94,7 +86,7 @@ const UpgradeVerification = () => {
           signal: ls_wallet,
         }),
       });
-  
+
       const result = await response.json();
       if (response.ok) {
         toast({
@@ -113,13 +105,13 @@ const UpgradeVerification = () => {
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
-  
+
       let errorMessage = "Something went wrong while verifying.";
-      
+
       if (error?.error_code === "credential_unavailable") {
         errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
       }
-  
+
       toast({
         title: "Verification Failed",
         description: errorMessage,
@@ -129,8 +121,6 @@ const UpgradeVerification = () => {
       setVerifying(false);
     }
   };
-  
-  
 
   if (isLoading) {
     return (
@@ -161,6 +151,7 @@ const UpgradeVerification = () => {
 
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
   const userTierId = nftInfo?.tier?.tierId || BigInt(0);
+  const isDeviceVerified = nftInfo?.tier?.verificationStatus?.verification_level === "device";
 
   return (
     <div className="min-h-screen bg-background">
@@ -177,7 +168,7 @@ const UpgradeVerification = () => {
           </div>
           <h2 className="text-2xl font-bold text-gradient mb-2 text-center">Verification Level</h2>
           <p className="text-muted-foreground text-center text-lg">
-            {nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
+            {isDeviceVerified || nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
           </p>
         </motion.div>
 
@@ -206,10 +197,10 @@ const UpgradeVerification = () => {
                     tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
                   }
                   onClick={() => handleVerify(tier)}
-                  >
+                >
                   {verifying && currentTier?.tierId === tier.tierId
                     ? "Verifying..."
-                    : nftInfo.tokenId === null
+                    : nftInfo.tokenId === null || isDeviceVerified
                     ? "Claim NFT"
                     : userTierId > tier.tierId ||
                       tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level

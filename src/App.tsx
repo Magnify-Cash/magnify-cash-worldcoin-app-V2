@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Welcome from "@/pages/Welcome";
 import Guide from "@/pages/Guide";
@@ -11,15 +10,22 @@ import Announcements from "@/pages/Announcements";
 import LoanHistory from "@/pages/LoanHistory";
 import ProtectedRoute from "@/pages/ProtectedPage";
 import "./App.css";
-import eruda from "eruda";
 import { MiniKitProvider } from "./providers/MiniKitProvider";
 import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
 import { DemoDataProvider } from "./providers/DemoDataProvider";
 import { Toaster } from "@/components/ui/toaster";
+import { useEffect } from "react";
+import { initializeMockUserData } from "./utils/mockUserData";
+import DemoBanner from "./components/DemoBanner";
 
 //eruda.init();
 
 function App() {
+  // Initialize mock user data when the app starts
+  useEffect(() => {
+    initializeMockUserData();
+  }, []);
+
   return (
     <MiniKitProvider>
       <DemoDataProvider>
@@ -87,6 +93,7 @@ function App() {
                 }
               />
             </Routes>
+            <DemoBanner />
           </Router>
         </USDCBalanceProvider>
       </DemoDataProvider>

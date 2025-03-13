@@ -1,8 +1,9 @@
+
 import { useCallback, useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Calendar, DollarSign, Clock } from "lucide-react";
+import { Calendar, DollarSign, Clock, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
 import { useDemoMagnifyWorld } from "@/hooks/useDemoMagnifyWorld";
@@ -12,16 +13,18 @@ import { RepayDrawer } from "@/components/RepayDrawer";
 
 const RepayLoan = () => {
   // States
-  const [isClicked, setIsClicked] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [localLoanData, setLocalLoanData] = useState<any>(null); // Local loan data to persist during repayment
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [txId, setTxId] = useState<string | null>(null);
 
   // hooks
   const { toast } = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { data, isLoading, isError, refetch } = useDemoMagnifyWorld(ls_wallet as `0x${string}`);
-  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
+  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed, finalizeLoanRepayment } = useRepayLoan();
   
   // Safely extract loan data
   const loanData = data?.loan ? data.loan[1] : undefined;
@@ -37,32 +40,34 @@ const RepayLoan = () => {
 
   const loanAmountDueReadable = loanAmountDue ? Number(formatUnits(loanAmountDue, 6)) : 0;
 
-  // When loan data changes and not in repayment process, update local loan data
+  // Save loan data locally when it's first fetched and NOT in processing state
   useEffect(() => {
-    if (loanData && !isConfirming && !isConfirmed) {
+    if (loanData && typeof loanData !== 'string' && !isProcessing && !isSuccess) {
       setLocalLoanData(loanData);
     }
-  }, [loanData, isConfirming, isConfirmed]);
+  }, [loanData, isProcessing, isSuccess]);
 
   const handleRepayLoan = useCallback(
     async () => {
-      setIsClicked(true);
-  
       try {
+        setIsProcessing(true);
+        
         if (data?.nftInfo?.tokenId) {
-          await repayLoanWithPermit2(loanAmountDueReadable.toString());
+          const txHash = await repayLoanWithPermit2(loanAmountDueReadable.toString());
+          setTxId(txHash);
           
-          // After successful repayment, update UI and navigate
+          // After successful transaction
           setTimeout(() => {
-            //refetch();
-            //navigate("/wallet");
-          }, 3000);
+            setIsProcessing(false);
+            setIsSuccess(true);
+          }, 1500);
         } else {
           toast({
             title: "Error",
             description: "Unable to pay back loan.",
             variant: "destructive",
           });
+          setIsProcessing(false);
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
@@ -79,11 +84,10 @@ const RepayLoan = () => {
             variant: "destructive",
           });
         }
-      } finally {
-        setIsClicked(false);
+        setIsProcessing(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDueReadable, toast, navigate, refetch]
+    [data, repayLoanWithPermit2, loanAmountDueReadable, toast]
   );
 
   const handleOpenDrawer = useCallback(() => {
@@ -91,25 +95,19 @@ const RepayLoan = () => {
   }, []);
 
   const handleConfirmRepay = useCallback(() => {
-    setIsClicked(true);
-    setTimeout(() => {
-      handleRepayLoan();
-    }, 2000);
+    handleRepayLoan();
+    setIsDrawerOpen(false);
   }, [handleRepayLoan]);
 
-  // Call refetch after loan repayment is confirmed
-  useEffect(() => {
-    if (isConfirmed) {
-      const timeout = setTimeout(() => {
-        refetch();
-      }, 2000);
+  // Only finalize loan repayment and update state AFTER user clicks "Return to Wallet"
+  const handleReturnToWallet = useCallback(() => {
+    finalizeLoanRepayment(); // Now we finalize the loan repayment
+    refetch(); // Refresh data
+    navigate("/wallet"); // Navigate away
+  }, [finalizeLoanRepayment, navigate, refetch]);
 
-      return () => clearTimeout(timeout);
-    }
-  }, [isConfirmed, refetch]);
-
-  // Loading & error states
-  if (isLoading && !isConfirming && !isConfirmed) {
+  // Loading & error states - but not when in processing or success state
+  if (isLoading && !isProcessing && !isSuccess) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -125,7 +123,7 @@ const RepayLoan = () => {
     );
   }
 
-  if (isError && !isConfirming && !isConfirmed) {
+  if (isError && !isProcessing && !isSuccess) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -134,12 +132,12 @@ const RepayLoan = () => {
     );
   }
 
-  // Use local loan data during the repayment process to maintain UI consistency
-  const activeLoanData = isConfirming || isConfirmed ? localLoanData : loanData;
-  const showActiveLoan = (hasLoan || isConfirming || isConfirmed) && activeLoanData && typeof activeLoanData !== 'string';
+  // Use local loan data during processing or success states to maintain UI consistency
+  const activeLoanData = (isProcessing || isSuccess) ? localLoanData : loanData;
+  const showActiveLoan = (hasLoan || isProcessing || isSuccess) && activeLoanData && typeof activeLoanData !== 'string';
 
-  // Check if user has an active loan - handle the case when loanData is undefined
-  if (!isLoading && !showActiveLoan && !isConfirming && !isConfirmed) {
+  // Check if user has no active loan
+  if (!isLoading && !showActiveLoan && !isProcessing && !isSuccess) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -158,9 +156,9 @@ const RepayLoan = () => {
     );
   }
 
-  // Active loan
-  if (!isLoading && showActiveLoan) {
-    // Use the active loan data (either real or kept during repayment)
+  // Active loan or processing states
+  if (showActiveLoan) {
+    // Use the active loan data (either real or kept during processing)
     const loan = activeLoanData;
     
     // Calculate time remaining using the utility function
@@ -230,40 +228,40 @@ const RepayLoan = () => {
               </div>
             </div>
 
-            <Button
-              onClick={handleOpenDrawer}
-              className="w-full primary-button"
-              disabled={isClicked || isConfirming || isConfirmed}
-            >
-              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
-            </Button>
-
-            {isConfirming && (
-          <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-            <div className="flex justify-center">
-              <div className="orbit-spinner">
-                <div className="orbit"></div>
-                <div className="orbit"></div>
-                <div className="center"></div>
+            {isSuccess ? (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center py-4">
+                  <CheckCircle2 className="w-16 h-16 text-green-500 mb-2" />
+                  <p className="text-xl font-semibold text-center">Loan Successfully Repaid!</p>
+                  <p className="text-sm text-muted-foreground text-center mt-1">
+                    Your loan has been repaid successfully. Thank you for using Magnify Cash!
+                  </p>
+                </div>
+                <Button
+                  onClick={handleReturnToWallet}
+                  className="w-full primary-button"
+                >
+                  Return to Wallet
+                </Button>
               </div>
-            </div>
-            <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
-              Confirming transaction, please do not leave this page until confirmation is complete.
-            </p>
-          </div>
-        )}
-            
-            {transactionId && (
-              <div className="mt-4">
-                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+            ) : (
+              <Button
+                onClick={handleOpenDrawer}
+                className="w-full primary-button"
+                disabled={isProcessing}
+              >
+                {isProcessing ? "Processing..." : "Repay Loan"}
+              </Button>
+            )}
+
+            {txId && (
+              <div className="mt-2">
+                <p className="text-sm text-center overflow-hidden text-ellipsis whitespace-nowrap">
                   Transaction ID:{" "}
-                  <span title={transactionId}>
-                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+                  <span title={txId}>
+                    {txId.slice(0, 10)}...{txId.slice(-10)}
                   </span>
                 </p>
-                {isConfirmed && (
-                  <p className="text-green-500 font-medium">Transaction confirmed!</p>
-                )}
               </div>
             )}
           </div>
@@ -276,6 +274,22 @@ const RepayLoan = () => {
           repayAmount={amountDue}
           onConfirm={handleConfirmRepay}
         />
+
+        {/* Loading Overlay */}
+        {isProcessing && (
+          <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+            <div className="flex justify-center">
+              <div className="orbit-spinner">
+                <div className="orbit"></div>
+                <div className="orbit"></div>
+                <div className="center"></div>
+              </div>
+            </div>
+            <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
+              Processing transaction, please do not leave this page.
+            </p>
+          </div>
+        )}
       </div>
     );
   }

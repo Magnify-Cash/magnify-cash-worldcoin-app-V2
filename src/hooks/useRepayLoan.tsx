@@ -46,9 +46,8 @@ const useRepayLoan = () => {
       // Mark as confirmed after the delay
       setIsConfirmed(true);
       
-      // Update the loan status to inactive after confirmation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      finalizeLoanRepayment();
+      // Don't finalize the loan repayment immediately
+      // This will now be explicitly called by RepayLoan component when ready
       
       setIsConfirming(false);
       return txId;
@@ -64,7 +63,8 @@ const useRepayLoan = () => {
     transactionId,
     isConfirming,
     isConfirmed,
-    error
+    error,
+    finalizeLoanRepayment // Export the finalizeLoanRepayment function
   };
 };
 

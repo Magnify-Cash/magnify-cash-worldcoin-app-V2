@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,10 +12,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     
-    --primary: 240 82% 33%;
+    --primary: 252 82% 35%;
     --primary-foreground: 210 40% 98%;
-    --primary-light: 271 69% 33%;
-    --primary-dark: 329 71% 37%;
+    --primary-light: 271 69% 55%;
+    --primary-dark: 329 71% 56%;
     
     --secondary: 217 91% 60%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -24,10 +25,10 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     
-    --accent: 240 82% 33%;
+    --accent: 252 82% 35%;
     --accent-foreground: 222.2 47.4% 11.2%;
-    --accent-light: 271 69% 33%;
-    --accent-dark: 329 71% 37%;
+    --accent-light: 271 69% 55%;
+    --accent-dark: 329 71% 56%;
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -84,13 +85,13 @@
 }
 
 .glass-card {
-  @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm 
+  @apply bg-white/95 backdrop-blur-sm 
          shadow-lg hover:shadow-xl transition-all duration-300 
-         rounded-xl border border-gray-100/20 dark:border-gray-800/20;
+         rounded-xl border border-gray-100/40;
 }
 
 .glass-button {
-  @apply bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-white font-medium 
+  @apply bg-gradient-to-r from-[#4338CA] via-[#7E22CE] to-[#BE185D] text-white font-medium 
          py-3 px-6 rounded-xl transition-all duration-300 
          shadow-lg hover:shadow-xl disabled:opacity-50 
          disabled:cursor-not-allowed hover:opacity-90;
@@ -120,7 +121,7 @@ html {
 /* Custom utility classes */
 .text-gradient {
   @apply bg-clip-text text-transparent bg-gradient-to-r 
-         from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] animate-gradient;
+         from-[#4338CA] via-[#7E22CE] to-[#BE185D] animate-gradient;
 }
 
 .hover-lift {
@@ -184,12 +185,12 @@ html {
 }
 
 .orbit-spinner .orbit:nth-child(1) {
-  border-top-color: #1A1E8E;
+  border-top-color: #4338CA;
   animation: orbit-spin 1.5s linear infinite;
 }
 
 .orbit-spinner .orbit:nth-child(2) {
-  border-bottom-color: #A11F75;
+  border-bottom-color: #BE185D;
   animation: orbit-spin 1s linear infinite;
 }
 
@@ -202,7 +203,7 @@ html {
   margin-top: -10px;
   margin-left: -10px;
   border-radius: 50%;
-  background: linear-gradient(to right, #1A1E8E, #A11F75);
+  background: linear-gradient(to right, #4338CA, #BE185D);
   animation: pulse 1s ease-in-out infinite alternate;
 }
 

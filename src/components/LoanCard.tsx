@@ -20,11 +20,11 @@ export const LoanCard = ({
   const getIcon = (): { Icon: LucideIcon; color: string } => {
     switch (icon) {
       case "passport":
-        return { Icon: IdCard, color: "text-[#5A1A8F]" };
+        return { Icon: IdCard, color: "text-[#7E22CE]" };
       case "orb":
-        return { Icon: ScanLine, color: "text-[#A11F75]" };
+        return { Icon: ScanLine, color: "text-[#BE185D]" };
       default:
-        return { Icon: Globe, color: "text-[#1A1E8F]" };
+        return { Icon: Globe, color: "text-[#4338CA]" };
     }
   };
 
@@ -32,14 +32,14 @@ export const LoanCard = ({
 
   return (
     <div className="glass-card w-full p-6 mb-1 flex flex-col justify-between 
-                    hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] 
+                    hover:shadow-[0_0_15px_rgba(126,34,206,0.1)] 
                     transition-all duration-300 
                     border border-gray-100/20 
-                    hover:border-[#5A1A8F]/20">
+                    hover:border-[#7E22CE]/20">
       <div>
         <div className="flex items-center mb-4">
           <Icon className={`w-8 h-8 mr-3 ${color}`} />
-          <h3 className="text-lg font-medium bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+          <h3 className="text-lg font-medium bg-gradient-to-r from-[#4338CA] via-[#7E22CE] to-[#BE185D] bg-clip-text text-transparent">
             {title}
           </h3>
         </div>

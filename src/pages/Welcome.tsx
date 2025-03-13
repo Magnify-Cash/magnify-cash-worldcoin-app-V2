@@ -101,7 +101,7 @@ const Welcome = () => {
       {/* Hero Section - Mobile Optimized */}
       <div className="container mx-auto px-3 sm:px-6 pt-8 sm:pt-20 pb-12 sm:pb-24">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text animate-gradient leading-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#4338CA] via-[#7E22CE] to-[#BE185D] text-transparent bg-clip-text animate-gradient leading-tight">
             Get a loan just by being you.
           </h1>
 

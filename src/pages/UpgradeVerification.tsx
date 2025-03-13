@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { MiniKit, VerifyCommandInput, VerificationLevel } from "@worldcoin/minikit-js";
 import { useNavigate } from "react-router-dom";
 import { Shield, Globe } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,10 +7,13 @@ import { Header } from "@/components/Header";
 import { toast } from "@/hooks/use-toast";
 import { useDemoData } from "@/providers/DemoDataProvider";
 
+// Check if demo mode is enabled via environment variable
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
+
 const UpgradeVerification = () => {
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
-  const { demoData, updateVerificationStatus } = useDemoData();
+  const { demoData, updateVerificationStatus, originationFee } = useDemoData();
   const [currentTier, setCurrentTier] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
 
@@ -22,7 +24,7 @@ const UpgradeVerification = () => {
       icon: Shield,
       action: "mint-device-verified-nft",
       upgradeAction: "upgrade-device-verified-nft",
-      verification_level: VerificationLevel.Device,
+      verification_level: "Device",
     },
     orb: {
       tierId: "2",
@@ -30,66 +32,102 @@ const UpgradeVerification = () => {
       icon: Globe,
       action: "mint-orb-verified-nft",
       upgradeAction: "upgrade-orb-verified-nft",
-      verification_level: VerificationLevel.Orb,
+      verification_level: "Orb",
     },
   };
 
   // Handle verification process
   const handleVerify = async (tier: typeof verificationLevels.device | typeof verificationLevels.orb) => {
-    if (!MiniKit.isInstalled()) {
-      toast({
-        title: "Verification Failed",
-        description: "Please install World App to verify.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setVerifying(true);
     setCurrentTier(tier.tierId);
 
-    const verifyPayload: VerifyCommandInput = {
-      action: tier.action || tier.upgradeAction,
-      signal: ls_wallet,
-      verification_level: tier.verification_level,
-    };
-
     try {
-      const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
-
-      if (finalPayload.status === "error") {
-        console.error("Verification failed:", finalPayload);
-
-        let errorMessage = "Something went wrong. Please try again.";
-        if (finalPayload.error_code === "credential_unavailable") {
-          errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
+      // Demo mode - simulate verification
+      if (isDemoMode) {
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Apply origination fee
+        if (tier.level === "Device") {
+          originationFee(true);
+          updateVerificationStatus("DEVICE");
+          toast({
+            title: "Verification Successful",
+            description: "You are now Device Verified.",
+          });
+        } else if (tier.level === "Orb Scan") {
+          originationFee(false);
+          updateVerificationStatus("ORB");
+          toast({
+            title: "Verification Successful",
+            description: "You are now Orb Verified.",
+          });
         }
 
-        toast({
-          title: "Verification Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-
-        setVerifying(false);
-        return;
+        setTimeout(() => navigate("/loan"), 1500);
+      } else {
+        // Original World ID verification code (this will never run in demo mode)
+        if (!MiniKit.isInstalled()) {
+          toast({
+            title: "Verification Failed",
+            description: "Please install World App to verify.",
+            variant: "destructive",
+          });
+          return;
+        }
+    
+        const verifyPayload = {
+          action: tier.action || tier.upgradeAction,
+          signal: ls_wallet,
+          verification_level: tier.verification_level,
+        };
+    
+        try {
+          const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+    
+          if (finalPayload.status === "error") {
+            console.error("Verification failed:", finalPayload);
+    
+            let errorMessage = "Something went wrong. Please try again.";
+            if (finalPayload.error_code === "credential_unavailable") {
+              errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
+            }
+    
+            toast({
+              title: "Verification Failed",
+              description: errorMessage,
+              variant: "destructive",
+            });
+    
+            setVerifying(false);
+            return;
+          }
+    
+          if (tier.level === "Device") {
+            updateVerificationStatus("DEVICE");
+            toast({
+              title: "Verification Successful",
+              description: "You are now Device Verified.",
+            });
+          } else if (tier.level === "Orb Scan") {
+            updateVerificationStatus("ORB");
+            toast({
+              title: "Verification Successful",
+              description: "You are now Orb Verified.",
+            });
+          }
+    
+          setTimeout(() => navigate("/loan"), 1500);
+        } catch (error) {
+          console.error("Error during verification:", error);
+    
+          toast({
+            title: "Verification Failed",
+            description: "Something went wrong while verifying. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
-
-      if (tier.level === "Device") {
-        updateVerificationStatus("DEVICE");
-        toast({
-          title: "Verification Successful",
-          description: "You are now Device Verified.",
-        });
-      } else if (tier.level === "Orb Scan") {
-        updateVerificationStatus("ORB");
-        toast({
-          title: "Verification Successful",
-          description: "You are now Orb Verified.",
-        });
-      }
-
-      setTimeout(() => navigate("/loan"), 1500);
     } catch (error) {
       console.error("Error during verification:", error);
 

@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect } from "react";
 // Comment out actual MiniKit import
 // import { MiniKit } from "@worldcoin/minikit-js";
@@ -33,6 +34,15 @@ export const MiniKitProvider = ({ children }: { children: ReactNode }) => {
             return Promise.resolve({ success: true });
           },
           getWalletAddress: () => "0xMockWalletAddress123456789",
+          commandsAsync: {
+            verify: () => Promise.resolve({ 
+              finalPayload: { 
+                status: "success", 
+                message: "Demo verification successful" 
+              } 
+            }),
+          },
+          isInstalled: () => true,
           // Add other methods as needed based on what's used in the app
         };
       } else {

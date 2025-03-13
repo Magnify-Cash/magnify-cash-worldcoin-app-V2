@@ -1,3 +1,4 @@
+
 /**
  * Utility functions to initialize mock user data for the non-authenticated version
  * of the application.
@@ -15,7 +16,6 @@ export const initializeMockUserData = () => {
       verified: true,
       kycStatus: "verified",
       worldId: "0xMockWorldId123456789",
-      // Add other necessary fields
     }));
   }
 
@@ -24,39 +24,10 @@ export const initializeMockUserData = () => {
     localStorage.setItem("ls_wallet_address", "0xMockWalletAddress123456789");
   }
 
-  // Set mock transaction history if needed
-  if (!localStorage.getItem("transaction_history")) {
-    localStorage.setItem("transaction_history", JSON.stringify([
-      {
-        id: "tx1",
-        type: "deposit",
-        amount: 100,
-        timestamp: Date.now() - 86400000 * 7, // 7 days ago
-        status: "completed"
-      },
-      {
-        id: "tx2",
-        type: "loan",
-        amount: 50,
-        timestamp: Date.now() - 86400000 * 3, // 3 days ago
-        status: "completed"
-      }
-    ]));
-  }
-
-  // Set mock loan data if needed
-  if (!localStorage.getItem("active_loans")) {
-    localStorage.setItem("active_loans", JSON.stringify([
-      {
-        id: "loan1",
-        amount: 50,
-        interestRate: 0.05,
-        startDate: Date.now() - 86400000 * 3, // 3 days ago
-        dueDate: Date.now() + 86400000 * 27, // 27 days from now
-        status: "active"
-      }
-    ]));
+  // Set mock username if not already present
+  if (!localStorage.getItem("ls_username")) {
+    localStorage.getItem("ls_username") || localStorage.setItem("ls_username", "DemoUser");
   }
 
   console.log("Mock user data initialized successfully");
-}; 
+};

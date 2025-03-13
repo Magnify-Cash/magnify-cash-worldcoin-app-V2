@@ -10,10 +10,12 @@ import useRepayLoan from "@/hooks/useRepayLoan";
 import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
 import { useDemoMagnifyWorld } from "@/hooks/useDemoMagnifyWorld";
+import { RepayDrawer } from "@/components/RepayDrawer";
 
 const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // hooks
   const toast = useToast();
@@ -42,11 +44,12 @@ const RepayLoan = () => {
     return 0n; // Default value if loanData is not available
   }, [loanData]);
 
-  const handleApplyLoan = useCallback(
-    async (event: React.FormEvent) => {
-      event.preventDefault();
-      if (isClicked) return;
-  
+  const handleOpenDrawer = () => {
+    setIsDrawerOpen(true);
+  };
+
+  const handleRepayConfirm = useCallback(
+    async () => {
       setIsClicked(true);
   
       try {
@@ -210,7 +213,7 @@ const RepayLoan = () => {
               </div>
             </div>
             <Button
-              onClick={handleApplyLoan}
+              onClick={handleOpenDrawer}
               className="w-full primary-button"
               disabled={isClicked || isConfirming || isConfirmed}
             >
@@ -250,8 +253,16 @@ const RepayLoan = () => {
             )}
           </div>
         </div>
-    </div>
-  );
+
+        {/* Repay Drawer */}
+        <RepayDrawer
+          open={isDrawerOpen} 
+          onOpenChange={setIsDrawerOpen}
+          repayAmount={amountDue}
+          onConfirm={handleRepayConfirm}
+        />
+      </div>
+    );
   }
 
   // Fallback return for any other case

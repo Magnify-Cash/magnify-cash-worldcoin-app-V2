@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { X, Check, ArrowRight, ArrowDownLeft } from "lucide-react";
 import { Drawer, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -19,9 +19,9 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
   const navigate = useNavigate();
   const { toast } = useToast();
   const { requestLoan } = useDemoData();
-  const [isProcessing, setIsProcessing] = React.useState(false);
-  const [isConfirmed, setIsConfirmed] = React.useState(false);
-  const [transactionId, setTransactionId] = React.useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
 
   const handleConfirm = async () => {
     try {
@@ -60,14 +60,11 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={cn(
-        "max-h-[85vh]",
-        "rounded-t-[30px]" // Increased rounded corners at the top
-      )}>
+      <DrawerContent className="max-h-[85vh] rounded-t-[30px]">
         <div className="mx-auto w-full max-w-sm">
           {/* Header layout with Transaction Request on left and X button on right */}
           <div className="flex items-center justify-between px-4 pt-6 pb-2">
-            <h2 className="text-xl font-bold">Transaction Request</h2>
+            <h2 className="text-2xl font-bold">Transaction Request</h2>
             <button 
               onClick={() => onOpenChange(false)}
               className="rounded-full p-2 bg-[#F1F1F1] transition-colors hover:bg-gray-200 focus:outline-none"
@@ -96,7 +93,7 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
             <div className="my-4 space-y-4">
               {!isConfirmed ? (
                 <div className="bg-[#F1F0FB] p-4 rounded-lg space-y-4">
-                  <h3 className="text-sm text-muted-foreground font-bold">Transaction preview</h3>
+                  <h3 className="text-xs text-muted-foreground">Transaction preview</h3>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="bg-green-500 text-white p-2 rounded-full mr-3">
@@ -114,7 +111,7 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
                   </div>
                   <h3 className="text-lg font-medium text-center">Loan Approved!</h3>
                   <p className="text-sm text-gray-500 text-center">
-                    Your loan of ${loanAmount} USDC.e has been approved and funds have been transferred to your wallet.
+                    Your loan of {loanAmount} USDC.e has been approved and funds have been transferred to your wallet.
                   </p>
                   {transactionId && (
                     <div className="w-full mt-4">
@@ -136,14 +133,14 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
               <Button 
                 onClick={handleConfirm} 
                 disabled={isProcessing}
-                className="w-full h-14 bg-black hover:bg-black/90 text-white text-base"
+                className="w-full h-16 bg-black hover:bg-black/90 text-white text-lg mb-2"
               >
                 {isProcessing ? "Processing..." : "Confirm"}
               </Button>
             ) : (
               <Button 
                 onClick={handleComplete}
-                className="w-full h-14"
+                className="w-full h-16 text-lg"
               >
                 View Loan Details <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

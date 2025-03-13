@@ -1,3 +1,4 @@
+
 /**
  * Mock API service to replace actual API calls to World ID or World Wallet services
  */

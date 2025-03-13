@@ -1,18 +1,16 @@
-import { useState, useCallback } from "react";
+
+import { useState } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { useToast } from "@/hooks/use-toast";
-import useRequestLoan from "@/hooks/useRequestLoan";
 import { Button } from "@/components/ui/button";
 import { useDemoData } from "@/providers/DemoDataProvider";
+import { LoanDrawer } from "@/components/LoanDrawer";
 
 const Loan = () => {
-  const [isClicked, setIsClicked] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { demoData } = useDemoData();
-  const { requestNewLoan, transactionId, isConfirming, isConfirmed } = useRequestLoan();
 
   // Extract user data
   const { isDeviceVerified, isOrbVerified, hasLoan } = demoData;
@@ -23,37 +21,9 @@ const Loan = () => {
   const loanDuration = isOrbVerified ? 90 : 30;
 
   // Handle loan application
-  const handleApplyLoan = useCallback(
-    async (event: React.FormEvent) => {
-      event.preventDefault();
-      if (isClicked) return;
-      setIsClicked(true);
-
-      if (!isVerified) {
-        toast({
-          title: "Error",
-          description: "Unable to apply for loan. Ensure you have a verified NFT.",
-          variant: "destructive",
-        });
-        setIsClicked(false);
-        return;
-      }
-
-      try {
-        await requestNewLoan(BigInt(isOrbVerified ? 2 : 1));
-      } catch (error: any) {
-        console.error("Loan application error:", error);
-        toast({
-          title: "Error",
-          description: error?.message || "Unable to request loan.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsClicked(false);
-      }
-    },
-    [isVerified, isOrbVerified, requestNewLoan, toast, isClicked]
-  );
+  const handleApplyLoan = () => {
+    setIsDrawerOpen(true);
+  };
 
   return (
     <div className="min-h-screen">
@@ -90,30 +60,22 @@ const Loan = () => {
                 <p>Duration: {loanDuration} days</p>
               </div>
               <Button
-                onClick={(event) => handleApplyLoan(event)}
-                disabled={isClicked || isConfirming || isConfirmed}
+                onClick={handleApplyLoan}
                 className="w-full mt-4"
               >
-                {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Apply Now"}
+                Apply Now
               </Button>
             </div>
-
-            {transactionId && (
-              <div className="mt-4">
-                <p className="text-sm">
-                  Transaction ID:{" "}
-                  <span title={transactionId}>{transactionId.slice(0, 10)}...{transactionId.slice(-10)}</span>
-                </p>
-                {isConfirmed && (
-                  <Button onClick={() => navigate("/repay-loan")} className="mt-2 w-full">
-                    View Loan Details
-                  </Button>
-                )}
-              </div>
-            )}
           </div>
         </div>
       )}
+
+      <LoanDrawer 
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+        loanAmount={loanAmount}
+        loanDuration={loanDuration}
+      />
     </div>
   );
 };

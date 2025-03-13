@@ -1,6 +1,5 @@
 
 import { useDemoData } from "@/providers/DemoDataProvider";
-import { VERIFICATION_TIERS, VerificationTier, Tier } from "@/hooks/useMagnifyWorld";
 import { useEffect, useState } from "react";
 
 // This hook replaces the useMagnifyWorld hook with demo data
@@ -22,20 +21,20 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
     
     // Set loan terms based on tier
     if (tierIdNumber === 2) {
-      loanAmount = 5n * 1000000n; // 5 USDC
-      interestRate = 200n; // 2.0%
-      loanPeriod = 5184000n; // 60 days
+      loanAmount = 10n * 1000000n; // 10 USDC
+      interestRate = 250n; // 2.5%
+      loanPeriod = 2592000n; // 60 days
     } else if (tierIdNumber === 3) {
       loanAmount = 10n * 1000000n; // 10 USDC
-      interestRate = 150n; // 1.5%
-      loanPeriod = 7776000n; // 90 days
+      interestRate = 250n; // 2.5%
+      loanPeriod = 2592000n; // 90 days
     }
 
     return [
       "v2", // Version of the loan
       {
         amount: loanAmount,
-        startTime: BigInt(Math.floor(Date.now() / 1000) - 86400), // Started 1 day ago
+        startTime: BigInt(Math.floor(Date.now() / 1000)),
         isActive: true,
         interestRate: interestRate,
         loanPeriod: loanPeriod
@@ -61,7 +60,7 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
       1: {
         tierId: 1n,
         loanAmount: 1000000n, // 1 USDC
-        interestRate: 250n, // 2.5%
+        interestRate: 250n, // 2%
         loanPeriod: 2592000n, // 30 days
         verificationStatus: {
           level: "DEVICE",
@@ -71,9 +70,9 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
       },
       2: {
         tierId: 2n,
-        loanAmount: 5000000n, // 5 USDC
-        interestRate: 200n, // 2%
-        loanPeriod: 5184000n, // 60 days
+        loanAmount: 10000000n, // 10 USDC
+        interestRate: 250n, // 2%
+        loanPeriod: 2592000n, // 30 days
         verificationStatus: {
           level: "ORB",
           verification_level: "orb",
@@ -166,7 +165,7 @@ export function useDemoRepayLoan() {
       setIsConfirmed(true);
       
       const amount = parseFloat(loanAmount);
-      const interest = amount * 0.025; // 5% interest for demo
+      const interest = amount * 0.025; // 2.5% interest for demo
       
       setLoanDetails({
         amount,

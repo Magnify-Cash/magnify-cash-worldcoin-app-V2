@@ -43,6 +43,8 @@ const RepayLoan = () => {
     ? loanData.amount + (loanData.amount * 2n) / 100n
     : 0n;
 
+  const loanAmountDueReadable = loanAmountDue ? Number(formatUnits(loanAmountDue, 6)) : 0;
+
   const handleOpenDrawer = () => {
     setIsDrawerOpen(true);
   };
@@ -53,7 +55,7 @@ const RepayLoan = () => {
   
       try {
         if (data?.nftInfo?.tokenId) {
-          await repayLoanWithPermit2(loanAmountDue.toString());
+          await repayLoanWithPermit2(loanAmountDueReadable.toString());
         } else {
           toast.toast({
             title: "Error",
@@ -80,7 +82,7 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast]
+    [data, repayLoanWithPermit2, loanAmountDueReadable, loanVersion, toast]
   );
   
   // Handle navigation after repayment

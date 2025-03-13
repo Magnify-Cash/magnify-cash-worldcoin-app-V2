@@ -34,7 +34,7 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
       "v2", // Version of the loan
       {
         amount: loanAmount,
-        startTime: BigInt(Math.floor(Date.now() / 1000)),
+        startTime: BigInt(Math.floor(Date.now() / 1000) - 60 ), // 1 minute ago
         isActive: true,
         interestRate: interestRate,
         loanPeriod: loanPeriod
@@ -76,7 +76,7 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
         verificationStatus: {
           level: "ORB",
           verification_level: "orb",
-          description: "World ID Verified Tier"
+          description: "Orb Verified Tier"
         }
       }
     }

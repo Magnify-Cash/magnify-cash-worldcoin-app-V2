@@ -24,7 +24,7 @@ const Loan = () => {
 
   const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = loanData?.isActive ?? false;
-  
+
   // Handle loan application
   const handleApplyLoan = useCallback(
     async (event: React.FormEvent, requestedTierId: bigint) => {
@@ -106,7 +106,7 @@ const Loan = () => {
             </Button>
           </div>
         </div>
-      ) : !data || data?.nftInfo.tokenId === null || data?.nftInfo?.tier?.verificationStatus?.verification_level === "device" ? (
+      ) : !data || data?.nftInfo.tokenId === null ? (
         <div className="p-6 space-y-6">
           <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
             <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
@@ -118,40 +118,47 @@ const Loan = () => {
             </Button>
           </div>
         </div> 
-        ) : (
+      ) : data?.nftInfo?.tier?.verificationStatus?.verification_level === "device" ? (
+        <div className="p-6 space-y-6">
+          <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
+            <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
+            <p className="mb-4">
+              We no longer support loans for Device Verified Users. Get Orb verified to access instant loans!
+            </p>
+            <Button onClick={() => navigate("/profile")} className="glass-button w-full">
+              Upgrade Now
+            </Button>
+          </div>
+        </div> 
+      ) : (
         <div className="p-6 space-y-6">
           <div className="glass-card p-6">
             <h2 className="text-lg font-semibold text-center">Current Loan Eligibility</h2>
-            {Object.entries(data?.allTiers || {}).map(([index, tier]) => {
-              if (tier.verificationStatus.level !== "NONE" && tier.verificationStatus.level !== "DEVICE" && data?.nftInfo.tier.tierId >= tier.tierId) {
-                return (
-                  <div key={index} className="mt-10">
-                    <div className="flex items-center">
-                      <Shield className="w-6 h-6 mr-2" />
-                      <span>{tier.verificationStatus.description}</span>
-                    </div>
-                    <div className="flex flex-col items-start space-y-3 my-3">
-                      <p className="text-gray-600">Loan Amount: ${formatUnits(tier.loanAmount, 6)}</p>
-                      <p className="text-gray-600">
-                        Interest Rate: {((tier.interestRate || BigInt(0)) / BigInt(100)).toString()}%
-                      </p>
-                      <p className="text-gray-600">
-                        Duration: {((tier.loanPeriod || BigInt(0)) / BigInt(60 * 24 * 60)).toString()} days
-                      </p>
-                    </div>
-                    <Button
-                      onClick={(event) => handleApplyLoan(event, tier.tierId)}
-                      disabled={isClicked || isConfirming || isConfirmed}
-                      className="w-full"
-                    >
-                      {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Apply Now"}
-                    </Button>
-                    <hr className="border-t border-gray-300 mt-4" />
-                  </div>
-                );
-              }
-              return null;
-            })}
+            {data.allTiers[3] && (
+              <div className="mt-10">
+                <div className="flex items-center">
+                  <Shield className="w-6 h-6 mr-2" />
+                  <span>{data.allTiers[3].verificationStatus.description}</span>
+                </div>
+                <div className="flex flex-col items-start space-y-3 my-3">
+                  <p className="text-gray-600">Loan Amount: ${formatUnits(data.allTiers[3].loanAmount, 6)}</p>
+                  <p className="text-gray-600">
+                    Interest Rate: {((data.allTiers[3].interestRate || BigInt(0)) / BigInt(100)).toString()}%
+                  </p>
+                  <p className="text-gray-600">
+                    Duration: {((data.allTiers[3].loanPeriod || BigInt(0)) / BigInt(60 * 24 * 60)).toString()} days
+                  </p>
+                </div>
+                <Button
+                  onClick={(event) => handleApplyLoan(event, data.allTiers[3].tierId)}
+                  disabled={isClicked || isConfirming || isConfirmed}
+                  className="w-full"
+                >
+                  {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Apply Now"}
+                </Button>
+                <hr className="border-t border-gray-300 mt-4" />
+              </div>
+            )}
             {transactionId && (
               <div className="mt-4">
                 <p className="overflow-hidden text-ellipsis whitespace-nowrap">

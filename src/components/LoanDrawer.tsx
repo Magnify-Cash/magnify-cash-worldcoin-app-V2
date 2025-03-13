@@ -62,10 +62,10 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className={cn(
         "max-h-[85vh]",
-        "rounded-t-[20px]" // Increased rounded corners at the top
+        "rounded-t-[30px]" // Increased rounded corners at the top even more
       )}>
         <div className="mx-auto w-full max-w-sm">
-          {/* New header layout with Transaction Request on left and X button on right */}
+          {/* Header layout with Transaction Request on left and X button on right */}
           <div className="flex items-center justify-between px-4 pt-6 pb-2">
             <h2 className="text-lg font-semibold">Transaction Request</h2>
             <button 
@@ -75,6 +75,19 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
             >
               <X className="h-4 w-4" />
             </button>
+          </div>
+          
+          {/* Logo and App info section */}
+          <div className="px-4 py-3 flex items-center">
+            <img 
+              src="/lovable-uploads/a58f7265-4f91-4fe4-9870-a88ac9aadba9.jpg" 
+              alt="Magnify Logo"
+              className="w-10 h-10 rounded-full mr-3"
+            />
+            <div>
+              <p className="text-sm font-medium text-black">Demo: Magnify Cash</p>
+              <p className="text-xs text-muted-foreground">https://demo.magnify.cash</p>
+            </div>
           </div>
           
           <div className="px-4 py-2">

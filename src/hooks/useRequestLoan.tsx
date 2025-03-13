@@ -1,9 +1,9 @@
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
+import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 import { useDemoData } from "@/providers/DemoDataProvider";
 
 type LoanDetails = {
@@ -12,9 +12,9 @@ type LoanDetails = {
   transactionId: string;
 };
 
-// ✅ Corrected contract addresses
+// ✅ Correct contract addresses
 const STAGING_CONTRACT_ADDRESS = "0xF3b2F1Bdb5f622CB08171707673252C222734Ca3";
-const WORLDCHAIN_USDC_CONTRACT = "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1"; // Ensure this is correct
+const WORLDCHAIN_USDC_CONTRACT = "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1";
 
 const useRequestLoan = () => {
   const { demoData } = useDemoData();
@@ -56,53 +56,48 @@ const useRequestLoan = () => {
     setLoanDetails(null);
 
     try {
-      // Get user's wallet address from localStorage
       const ls_wallet = localStorage.getItem("ls_wallet_address");
-      if (!ls_wallet) {
-        throw new Error("No wallet address found.");
-      }
+      if (!ls_wallet) throw new Error("No wallet address found.");
 
-      // Determine loan amount and duration based on verification level
-      let loanAmount = "1000000"; // Default: 0.000001 USDC (scaled to 6 decimals)
+      // Define loan parameters based on verification level
+      let loanAmount = "1000000"; // Default: 0.000001 USDC (6 decimals)
       let loanDuration = "30"; // Default: 30 days
 
       if (demoData.isOrbVerified) {
-        loanAmount = "10000000"; // Orb Verified gets 0.00001 USDC (scaled to 6 decimals)
-        loanDuration = "90"; // 90-day loan for Orb Verified
+        loanAmount = "10000000"; // Orb Verified: 0.00001 USDC
+        loanDuration = "90"; // 90-day loan
       }
 
-      const deadline = (Math.floor(Date.now() / 1000) + 1800).toString(); // 30-minute validity
+      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 minutes validity
 
-      // ✅ Corrected Permit2 structure
       const permitTransfer = {
         permitted: {
           token: WORLDCHAIN_USDC_CONTRACT,
-          amount: loanAmount, // Correct format
+          amount: loanAmount,
         },
-        spender: STAGING_CONTRACT_ADDRESS,
         nonce: Date.now().toString(),
         deadline,
       };
-
-      const permitTransferArgs = [
-        permitTransfer.permitted.token,
-        permitTransfer.permitted.amount,
-        permitTransfer.nonce,
-        permitTransfer.deadline,
-      ];
 
       const transferDetails = {
         to: STAGING_CONTRACT_ADDRESS,
         requestedAmount: loanAmount,
       };
 
-      const transferDetailsArgs = [transferDetails.to, transferDetails.requestedAmount];
+      const permitTransferArgsForm = [
+        [permitTransfer.permitted.token, permitTransfer.permitted.amount],
+        permitTransfer.nonce,
+        permitTransfer.deadline,
+      ];
 
-      // ✅ Properly formatted MiniKit transaction using Permit2
+      const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
+
+      console.log(`Requesting loan from ${STAGING_CONTRACT_ADDRESS}`);
+
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: STAGING_CONTRACT_ADDRESS, // Allowed contract
+            address: STAGING_CONTRACT_ADDRESS,
             abi: [
               {
                 inputs: [
@@ -124,11 +119,7 @@ const useRequestLoan = () => {
               {
                 components: [
                   { internalType: "address", name: "to", type: "address" },
-                  {
-                    internalType: "uint256",
-                    name: "requestedAmount",
-                    type: "uint256",
-                  },
+                  { internalType: "uint256", name: "requestedAmount", type: "uint256" },
                 ],
                 internalType: "struct ISignatureTransfer.SignatureTransferDetails",
                 name: "transferDetails",
@@ -136,32 +127,31 @@ const useRequestLoan = () => {
               },
               { internalType: "bytes", name: "signature", type: "bytes" },
             ],
-            functionName: "signatureTransfer",
-            args: [permitTransferArgs, transferDetailsArgs, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
+            functionName: "requestLoanWithPermit2",
+            args: [permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
           },
         ],
         permit2: [
           {
             ...permitTransfer,
-            spender: STAGING_CONTRACT_ADDRESS, // Allowed contract as spender
+            spender: STAGING_CONTRACT_ADDRESS,
           },
         ],
       });
 
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
-        console.log("Loan transaction sent:", finalPayload.transaction_id);
+        console.log("Loan request transaction sent:", finalPayload.transaction_id);
         setIsConfirming(true);
 
-        // ✅ Update loan details based on verification level
         setLoanDetails({
           amount: parseFloat(loanAmount) / 1e6, // Convert back to normal value
           duration: parseInt(loanDuration),
           transactionId: finalPayload.transaction_id,
         });
       } else {
-        console.error("Error sending transaction", finalPayload);
-        setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
+        console.error("Error sending transaction", finalPayload, commandPayload);
+        setError(finalPayload.error_code === "user_rejected" ? "User rejected transaction" : "Transaction failed");
         setIsConfirming(false);
       }
     } catch (err) {

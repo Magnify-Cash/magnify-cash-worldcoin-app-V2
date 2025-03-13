@@ -62,12 +62,12 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className={cn(
         "max-h-[85vh]",
-        "rounded-t-[30px]" // Increased rounded corners at the top even more
+        "rounded-t-[30px]" // Increased rounded corners at the top
       )}>
         <div className="mx-auto w-full max-w-sm">
           {/* Header layout with Transaction Request on left and X button on right */}
           <div className="flex items-center justify-between px-4 pt-6 pb-2">
-            <h2 className="text-lg font-semibold">Transaction Request</h2>
+            <h2 className="text-xl font-bold">Transaction Request</h2>
             <button 
               onClick={() => onOpenChange(false)}
               className="rounded-full p-2 bg-[#F1F1F1] transition-colors hover:bg-gray-200 focus:outline-none"
@@ -96,7 +96,7 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
             <div className="my-4 space-y-4">
               {!isConfirmed ? (
                 <div className="bg-[#F1F0FB] p-4 rounded-lg space-y-4">
-                  <h3 className="text-lg font-medium">Transaction Preview</h3>
+                  <h3 className="text-sm text-muted-foreground">Transaction Preview</h3>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="bg-green-500 text-white p-2 rounded-full mr-3">
@@ -136,14 +136,14 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
               <Button 
                 onClick={handleConfirm} 
                 disabled={isProcessing}
-                className="w-full h-12 bg-black hover:bg-black/90 text-white"
+                className="w-full h-14 bg-black hover:bg-black/90 text-white text-base"
               >
                 {isProcessing ? "Processing..." : "Confirm"}
               </Button>
             ) : (
               <Button 
                 onClick={handleComplete}
-                className="w-full h-12"
+                className="w-full h-14"
               >
                 View Loan Details <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

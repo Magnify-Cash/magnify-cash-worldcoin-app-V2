@@ -87,7 +87,7 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
               />
             </div>
             <div>
-              <p className="text-sm font-medium text-black">Demo: Magnify Cash</p>
+              <p className="text-sm font-medium text-black font-bold">Demo: Magnify Cash</p>
               <p className="text-xs text-muted-foreground">https://demo.magnify.cash</p>
             </div>
           </div>
@@ -96,11 +96,11 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
             <div className="my-4 space-y-4">
               {!isConfirmed ? (
                 <div className="bg-[#F1F0FB] p-4 rounded-lg space-y-4">
-                  <h3 className="text-sm text-muted-foreground">Transaction Preview</h3>
+                  <h3 className="text-sm text-muted-foreground font-bold">Transaction preview</h3>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="bg-green-500 text-white p-2 rounded-full mr-3">
-                        <ArrowDownLeft className="h-5 w-5" />
+                        <ArrowDownLeft className="h-3 w-3" />
                       </div>
                       <span className="font-medium">Receive</span>
                     </div>

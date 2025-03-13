@@ -26,21 +26,16 @@ const RepayLoan = () => {
   const loanData = data?.loan ? data.loan[1] : undefined;
   const loanVersion = data?.loan ? data.loan[0] : "";
   
-  // Determine if the user has an active loan - handle both string and object types
+  // Determine if the user has an active loan
   const hasLoan = loanData && typeof loanData !== 'string' ? loanData.isActive : false;
-  
 
   console.log("loanData", loanData);
   console.log("hasLoan", hasLoan);
   console.log("data", data);
   
-  if (typeof loanData !== 'string') {
-    console.log(loanData.amount);
-  }
-
-  // Calculate loan amount due with interest (2% of the loan amount)
+  // Calculate loan amount due with interest only if loanData exists and is the right type
   const loanAmountDue = loanData && typeof loanData !== 'string' 
-    ? loanData.amount + (loanData.amount * 2n) / 100n
+    ? loanData.amount + (loanData.amount * loanData.interestRate) / 10000n
     : 0n;
 
   const loanAmountDueReadable = loanAmountDue ? Number(formatUnits(loanAmountDue, 6)) : 0;
@@ -128,7 +123,7 @@ const RepayLoan = () => {
     );
   }
 
-  // Check if user has an active loan
+  // Check if user has an active loan - handle the case when loanData is undefined
   if (!isLoading && (!hasLoan || !loanData)) {
     return (
       <div className="min-h-screen bg-background">
@@ -267,11 +262,21 @@ const RepayLoan = () => {
     );
   }
 
-  // Fallback return for any other case
+  // Fallback return for any other case - simplified to show "No Active Loans" message
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <Header title="Loan Status" />
-      <div className="flex justify-center items-center h-[calc(100vh-80px)]">No loan data available.</div>
+      <div className="container max-w-2xl mx-auto p-6 space-y-6">
+        <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
+          <h3 className="text-lg font-semibold text-center">No Active Loans</h3>
+          <p className="text-center text-muted-foreground">
+            It looks like you don't have any active loans. Would you like to request one?
+          </p>
+          <Button onClick={() => navigate("/loan")} className="w-full mt-4">
+            Request a Loan
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

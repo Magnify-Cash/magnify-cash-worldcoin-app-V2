@@ -1,116 +1,113 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MiniKit } from "@worldcoin/minikit-js";
-import { ArrowRight, Shield } from "lucide-react";
-import { toast } from "sonner";
-import { useDemoData } from "@/providers/DemoDataProvider";
+import { Button } from "@/components/ui/button";
+import { IDKitWidget } from "@worldcoin/minikit-react";
+import { Logo } from "../components/ui/logo";
 
-const Welcome = () => {
+export const Welcome = () => {
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const { resetSession } = useDemoData();
 
-  // Reset session data when component mounts - run only once
   useEffect(() => {
-    resetSession();
-  }, [resetSession]);
-
-  const handleSignIn = async () => {
-    const wallet_address = localStorage.getItem("ls_wallet_address");
-    const username = localStorage.getItem("ls_username");
-    if (username && wallet_address) {
-      navigate("/wallet");
-      return;
+    // Check if the user has a wallet address in local storage
+    const savedWallet = localStorage.getItem("ls_wallet_address");
+    if (savedWallet) {
+      setWalletAddress(savedWallet);
     }
-    try {
-      setLoading(true);
-      console.log("Initiating wallet authentication...");
-      const nonce = crypto.randomUUID().replace(/-/g, "");
-      const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
-        nonce,
-        statement: "Sign in to Magnify Cash to manage your loans.",
-        expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
-        notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
-      });
-      
-      // Log the finalPayload to see its actual structure
-      console.log("Authentication payload:", finalPayload);
-      
-      // Check if finalPayload exists and has an address property
-      if (finalPayload && finalPayload.address) {
-        const user = await MiniKit.getUserByAddress(finalPayload.address);
-        localStorage.setItem("ls_wallet_address", user.walletAddress);
-        localStorage.setItem("ls_username", user.username);
-        toast.success("Successfully signed in!");
-        console.log("ADDRESS:", user.walletAddress);
-        console.log("USERNAME:", user.username);
-        setLoading(false);
-        navigate("/wallet");
-      } else {
-        setLoading(false);
-        toast.error("Failed to retrieve wallet address.");
-      }
-    } catch (error) {
-      setLoading(false);
-      console.error("Authentication failed:", error);
-      toast.error("Failed to sign in. Please try again.");
+    setIsLoading(false);
+  }, []);
+
+  // Handle form submission
+  const handleConnectWallet = (address: string) => {
+    localStorage.setItem("ls_wallet_address", address);
+    setWalletAddress(address);
+    navigate("/wallet");
+  };
+
+  const handleOnboard = () => {
+    if (walletAddress) {
+      navigate("/wallet");
+    } else {
+      // Use a demo wallet address
+      const demoWalletAddress = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
+      localStorage.setItem("ls_wallet_address", demoWalletAddress);
+      navigate("/wallet");
     }
   };
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation - Mobile Optimized */}
-      <nav className="px-3 sm:px-6 py-4 flex justify-between items-center border-b border-gray-100 safe-area-inset-top">
-        <div className="flex items-center gap-2">
-          <img
-            alt="Magnify Cash Logo"
-            className="w-8 h-8 rounded-[20%]"
-            src="/lovable-uploads/a58f7265-4f91-4fe4-9870-a88ac9aadba9.jpg"
-          />
-          <div className="text-gray-900 text-lg sm:text-2xl font-medium truncate">
-            Magnify Cash
-          </div>
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="dot-spinner">
+          <div className="dot bg-[#1A1E8E]"></div>
+          <div className="dot bg-[#4A3A9A]"></div>
+          <div className="dot bg-[#7A2F8A]"></div>
+          <div className="dot bg-[#A11F75]"></div>
         </div>
-      </nav>
+      </div>
+    );
+  }
 
-      {/* Hero Section - Mobile Optimized */}
-      <div className="container mx-auto px-3 sm:px-6 pt-8 sm:pt-20 pb-12 sm:pb-24">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text animate-gradient leading-tight">
-            Get a loan just by being you.
-          </h1>
-
-          <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-12 max-w-[90%] sm:max-w-2xl mx-auto font-medium">
-            Get instant loans backed by your World ID. No collateral needed, just
-            your verified digital presence.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6 sm:mb-16 px-3 sm:px-4">
-            <button
-              disabled={loading}
-              onClick={handleSignIn}
-              className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
-            >
-              {loading ? "Connecting..." : "Start Your Journey"}
-              <ArrowRight className="w-5 h-5" />
-            </button>
-
-            <button
-              disabled
-              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 text-gray-600 cursor-not-allowed opacity-75 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
-            >
-              Become a Lender - Coming Soon
-              <ArrowRight className="w-5 h-5" />
-            </button>
+  return (
+    <div className="flex min-h-screen w-full flex-col items-center">
+      <div className="flex flex-1 flex-col items-center justify-center py-12 sm:px-4 lg:px-6">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="text-center mb-8">
+            <Logo />
+            <h2 className="mt-6 text-3xl font-bold text-gray-900">
+              Welcome to <span className="text-primary-black">Magnify Cash</span>
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Loans Simplified, Interest Minimized
+            </p>
           </div>
+          <div className="bg-white py-8 px-4 shadow-lg rounded-xl sm:px-10">
+            <div className="space-y-6">
+              <div className="flex flex-col items-center space-y-4">
+                <Button
+                  className="w-full justify-center bg-black text-white hover:bg-black/90"
+                  size="lg"
+                  onClick={handleOnboard}
+                >
+                  Demo Connect Wallet
+                </Button>
+                <div className="flex items-center w-full">
+                  <div className="flex-grow h-px bg-gray-200" />
+                  <span className="px-3 text-gray-500 text-sm">or</span>
+                  <div className="flex-grow h-px bg-gray-200" />
+                </div>
 
-          {/* Trust Badge - Mobile Optimized */}
-          <div className="flex items-center justify-center gap-2 text-gray-600 px-3 sm:px-4 text-center">
-            <Shield className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm font-medium">
-              Verified by World ID. Settled on World Chain. Powered by $MAG.
-            </span>
+                <div className="w-full">
+                  <IDKitWidget
+                    app_id="app_staging_5eb6ca12cb11e9c66e61ad471a7ffa30"
+                    action="loan-verify"
+                    onSuccess={(proof) => {
+                      console.log("Proof received", proof);
+                      handleOnboard();
+                    }}
+                    handleVerify={(proof) => {
+                      console.log("Verifying proof", proof);
+                      return Promise.resolve(true);
+                    }}
+                    signal="demo_wallet"
+                    credential_types={["orb", "device"]}
+                  >
+                    {({ open }) => (
+                      <Button
+                        onClick={open}
+                        className="w-full justify-center bg-lime-500 hover:bg-lime-600 text-white"
+                        size="lg"
+                      >
+                        <img src="/lovable-uploads/f590c0ed-415e-4ed0-8f6b-631288f14028.png" alt="WorldID" className="w-5 h-5 mr-2" />
+                        Verify with World ID
+                      </Button>
+                    )}
+                  </IDKitWidget>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

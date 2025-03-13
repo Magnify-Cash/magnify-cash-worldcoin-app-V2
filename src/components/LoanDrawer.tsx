@@ -1,11 +1,12 @@
 
 import React from "react";
 import { X, Check, ArrowRight } from "lucide-react";
-import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { useDemoData } from "@/providers/DemoDataProvider";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface LoanDrawerProps {
   open: boolean;
@@ -59,20 +60,22 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh]">
+      <DrawerContent className={cn(
+        "max-h-[85vh]",
+        "rounded-t-[20px]" // Increased rounded corners at the top
+      )}>
         <div className="mx-auto w-full max-w-sm">
-          <DrawerHeader>
-            <DrawerTitle className="text-center text-xl font-semibold">
-              Loan Application
-            </DrawerTitle>
+          {/* New header layout with Transaction Request on left and X button on right */}
+          <div className="flex items-center justify-between px-4 pt-6 pb-2">
+            <h2 className="text-lg font-semibold">Transaction Request</h2>
             <button 
               onClick={() => onOpenChange(false)}
-              className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none"
+              className="rounded-full p-2 bg-[#F1F1F1] transition-colors hover:bg-gray-200 focus:outline-none"
+              aria-label="Close"
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
             </button>
-          </DrawerHeader>
+          </div>
           
           <div className="px-4 py-2">
             <div className="my-4 space-y-4">

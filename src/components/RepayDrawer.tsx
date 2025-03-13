@@ -3,6 +3,7 @@ import React from "react";
 import { X, ArrowUpRight } from "lucide-react";
 import { Drawer, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
+import { formatUnits } from "viem";
 
 interface RepayDrawerProps {
   open: boolean;
@@ -19,7 +20,7 @@ export function RepayDrawer({ open, onOpenChange, repayAmount, onConfirm }: Repa
 
   // Format the repayment amount for display
   const formattedAmount = typeof repayAmount === 'bigint' 
-    ? Number(repayAmount) / 1000000 
+    ? Number(formatUnits(repayAmount, 6))
     : repayAmount;
 
   return (

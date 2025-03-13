@@ -5,7 +5,7 @@ import type { Announcement } from "@/features/announcements/utils";
 // Ensure the Transaction type supports "loan" and "repayment"
 export type Transaction = {
   id: number;
-  type: "deposit" | "withdrawal" | "transfer" | "loan" | "repayment"; // Added "loan" and "repayment"
+  type: "deposit" | "withdrawal" | "transfer" | "loan" | "repayment";
   currency: string;
   amount: number;
   status: "completed" | "pending" | "failed";
@@ -180,7 +180,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
           metadata: { txHash }
         },
         ...prev.transactions
-      ] as Transaction[] // Ensure type compatibility
+      ]
     }));
 
     return txHash;
@@ -206,7 +206,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
           metadata: { txHash }
         },
         ...prev.transactions
-      ] as Transaction[] // Ensure type compatibility
+      ]
     }));
 
     return txHash;

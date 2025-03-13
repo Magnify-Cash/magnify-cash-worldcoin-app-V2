@@ -1,16 +1,13 @@
-
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Calendar, DollarSign, Clock } from "lucide-react";
-import { Loan } from "@/hooks/useMagnifyWorld";
-import { calculateRemainingTime } from "@/utils/timeinfo";
-import useRepayLoan from "@/hooks/useRepayLoan";
 import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
 import { useDemoMagnifyWorld } from "@/hooks/useDemoMagnifyWorld";
 import { RepayDrawer } from "@/components/RepayDrawer";
+import useRepayLoan from "@/hooks/useRepayLoan";
 
 const RepayLoan = () => {
   // States
@@ -21,28 +18,20 @@ const RepayLoan = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
-  const { data, isLoading, isError, refetch, resetSession } = useDemoMagnifyWorld(ls_wallet as `0x${string}`);
+  const { data, isLoading, isError, refetch } = useDemoMagnifyWorld(ls_wallet as `0x${string}`);
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
   
   // Determine if the user has a loan
-  const hasLoan = data?.loan?.[1]?.isActive || false;
+  const hasLoan = data?.loan ? data.loan[1]?.isActive : false;
   
   // Extract loan data from the demo data
-  const loanData: Loan | undefined = data?.loan?.[1];
-  const loanVersion = useMemo(() => {
-    if (data?.loan) {
-      return data.loan[0];
-    }
-    return ""; // Default value if loanData is not available
-  }, [data?.loan]);
+  const loanData = data?.loan ? data.loan[1] : undefined;
+  const loanVersion = data?.loan ? data.loan[0] : "";
 
   // Calculate loan amount due with interest
-  const loanAmountDue = useMemo(() => {
-    if (loanData) {
-      return loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
-    }
-    return 0n; // Default value if loanData is not available
-  }, [loanData]);
+  const loanAmountDue = loanData && typeof loanData !== 'string' 
+    ? loanData.amount + (loanData.amount * loanData.interestRate) / 10000n
+    : 0n;
 
   const handleOpenDrawer = () => {
     setIsDrawerOpen(true);
@@ -148,12 +137,13 @@ const RepayLoan = () => {
   }
 
   // Active loan
-  if (!isLoading && loanData && hasLoan) {
+  if (!isLoading && loanData && hasLoan && typeof loanData !== 'string') {
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
       loanData.startTime,
       loanData.loanPeriod,
     );
     const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
+    
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -199,7 +189,7 @@ const RepayLoan = () => {
                       timeZoneName: "short", 
                       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     })}
-                  </p>{" "}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -272,6 +262,19 @@ const RepayLoan = () => {
       <div className="flex justify-center items-center h-[calc(100vh-80px)]">No loan data available.</div>
     </div>
   );
+};
+
+// Helper function to calculate the remaining time
+const calculateRemainingTime = (startTime: bigint, loanPeriod: bigint) => {
+  const dueTimestamp = Number(startTime) + Number(loanPeriod);
+  const currentTime = Math.floor(Date.now() / 1000);
+  const remainingSeconds = Math.max(0, dueTimestamp - currentTime);
+  
+  const days = Math.floor(remainingSeconds / 86400);
+  const hours = Math.floor((remainingSeconds % 86400) / 3600);
+  const minutes = Math.floor((remainingSeconds % 3600) / 60);
+  
+  return [days, hours, minutes, dueTimestamp * 1000];
 };
 
 export default RepayLoan;

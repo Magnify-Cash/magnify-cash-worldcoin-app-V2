@@ -4,11 +4,42 @@ import { ReactNode, useEffect } from "react";
 // import { MiniKit } from "@worldcoin/minikit-js";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 
+// Type definitions for global MiniKit object
+declare global {
+  interface Window {
+    miniKit?: {
+      isAuthenticated: () => boolean;
+      authenticate: (callback?: (result: { success: boolean }) => void) => Promise<{ success: boolean }>;
+      getWalletAddress: () => string;
+      commandsAsync: {
+        verify: (payload: any) => Promise<{ 
+          finalPayload: { 
+            status: string; 
+            message: string;
+            error_code?: string;
+          } 
+        }>;
+        walletAuth: (payload: any) => Promise<{
+          finalPayload: {
+            address: string;
+            signature: string;
+          }
+        }>;
+      };
+      isInstalled: () => boolean;
+      getUserByAddress: (address: string) => Promise<{
+        walletAddress: string;
+        username: string;
+      }>;
+    };
+  }
+}
+
 // Check if demo mode is enabled via environment variable
 const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
 
 // Only import MiniKit if not in demo mode
-let MiniKit;
+let MiniKit: any;
 if (!isDemoMode) {
   try {
     // Dynamic import to avoid errors in demo mode
@@ -35,15 +66,24 @@ export const MiniKitProvider = ({ children }: { children: ReactNode }) => {
           },
           getWalletAddress: () => "0xMockWalletAddress123456789",
           commandsAsync: {
-            verify: () => Promise.resolve({ 
+            verify: (payload) => Promise.resolve({ 
               finalPayload: { 
                 status: "success", 
                 message: "Demo verification successful" 
               } 
             }),
+            walletAuth: (payload) => Promise.resolve({
+              finalPayload: {
+                address: "0xMockWalletAddress123456789",
+                signature: "0xMockSignature123456789"
+              }
+            }),
           },
           isInstalled: () => true,
-          // Add other methods as needed based on what's used in the app
+          getUserByAddress: (address) => Promise.resolve({
+            walletAddress: address,
+            username: "DemoUser"
+          }),
         };
       } else {
         // Initialize real MiniKit in non-demo mode

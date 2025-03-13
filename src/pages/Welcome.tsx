@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MiniKit } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useDemoData } from "@/providers/DemoDataProvider";
+
+// Check if demo mode is enabled via environment variable
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -23,11 +25,33 @@ const Welcome = () => {
       navigate("/wallet");
       return;
     }
+    
     try {
       setLoading(true);
       console.log("Initiating wallet authentication...");
+
+      if (isDemoMode) {
+        // Demo mode - use mock authentication
+        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+        localStorage.setItem("ls_wallet_address", "0xMockWalletAddress123456789");
+        localStorage.setItem("ls_username", "DemoUser");
+        toast.success("Successfully signed in!");
+        console.log("ADDRESS: 0xMockWalletAddress123456789");
+        console.log("USERNAME: DemoUser");
+        setLoading(false);
+        navigate("/wallet");
+        return;
+      }
+
+      // Real authentication flow
       const nonce = crypto.randomUUID().replace(/-/g, "");
-      const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
+      if (!window.miniKit) {
+        toast.error("World App not detected. Please open this in World App.");
+        setLoading(false);
+        return;
+      }
+
+      const { finalPayload } = await window.miniKit.commandsAsync.walletAuth({
         nonce,
         statement: "Sign in to Magnify Cash to manage your loans.",
         expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
@@ -39,7 +63,7 @@ const Welcome = () => {
       
       // Check if finalPayload exists and has an address property
       if (finalPayload && finalPayload.address) {
-        const user = await MiniKit.getUserByAddress(finalPayload.address);
+        const user = await window.miniKit.getUserByAddress(finalPayload.address);
         localStorage.setItem("ls_wallet_address", user.walletAddress);
         localStorage.setItem("ls_username", user.username);
         toast.success("Successfully signed in!");

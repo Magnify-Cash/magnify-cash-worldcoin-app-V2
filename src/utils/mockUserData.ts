@@ -16,6 +16,8 @@ export const initializeMockUserData = () => {
       verified: true,
       kycStatus: "verified",
       worldId: "0xMockWorldId123456789",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }));
   }
 
@@ -26,8 +28,31 @@ export const initializeMockUserData = () => {
 
   // Set mock username if not already present
   if (!localStorage.getItem("ls_username")) {
-    localStorage.getItem("ls_username") || localStorage.setItem("ls_username", "DemoUser");
+    localStorage.setItem("ls_username", "DemoUser");
+  }
+
+  // Set mock wallet balance if not already present
+  if (!localStorage.getItem("wallet_balance")) {
+    localStorage.setItem("wallet_balance", JSON.stringify({
+      usdc: 100,
+      mag: 500,
+      eth: 0.5
+    }));
   }
 
   console.log("Mock user data initialized successfully");
+};
+
+/**
+ * Clears mock user data from localStorage
+ */
+export const clearMockUserData = () => {
+  localStorage.removeItem("user_profile");
+  localStorage.removeItem("ls_wallet_address");
+  localStorage.removeItem("ls_username");
+  localStorage.removeItem("wallet_balance");
+  localStorage.removeItem("active_loans");
+  localStorage.removeItem("transaction_history");
+  
+  console.log("Mock user data cleared successfully");
 };

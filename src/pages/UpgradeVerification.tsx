@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, Globe } from "lucide-react";
@@ -67,7 +68,7 @@ const UpgradeVerification = () => {
         setTimeout(() => navigate("/loan"), 1500);
       } else {
         // Original World ID verification code (this will never run in demo mode)
-        if (!MiniKit.isInstalled()) {
+        if (!window.miniKit?.isInstalled()) {
           toast({
             title: "Verification Failed",
             description: "Please install World App to verify.",
@@ -83,7 +84,7 @@ const UpgradeVerification = () => {
         };
     
         try {
-          const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+          const { finalPayload } = await window.miniKit.commandsAsync.verify(verifyPayload);
     
           if (finalPayload.status === "error") {
             console.error("Verification failed:", finalPayload);

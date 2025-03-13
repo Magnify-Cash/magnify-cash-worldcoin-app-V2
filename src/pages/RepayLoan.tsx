@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -92,7 +91,10 @@ const RepayLoan = () => {
   }, []);
 
   const handleConfirmRepay = useCallback(() => {
-    handleRepayLoan();
+    setIsClicked(true);
+    setTimeout(() => {
+      handleRepayLoan();
+    }, 2000);
   }, [handleRepayLoan]);
 
   // Call refetch after loan repayment is confirmed
@@ -167,7 +169,7 @@ const RepayLoan = () => {
       loan.loanPeriod
     );
     
-    const amountDue = loan.amount + (loan.amount * loan.interestRate) / 10000n;
+    const amountDue = loan.amount + (loan.amount * BigInt(loan.interestRate)) / 10000n;
     
     return (
       <div className="min-h-screen bg-background">
@@ -235,25 +237,8 @@ const RepayLoan = () => {
             >
               {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
             </Button>
-            
-            {transactionId && (
-              <div className="mt-4">
-                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
-                  Transaction ID:{" "}
-                  <span title={transactionId}>
-                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-                  </span>
-                </p>
-                {isConfirmed && (
-                  <p className="text-green-500 font-medium">Transaction confirmed!</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Confirmation overlay */}
-        {isConfirming && (
+            {isClicked && (
           <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
             <div className="flex justify-center">
               <div className="orbit-spinner">
@@ -272,6 +257,22 @@ const RepayLoan = () => {
             )}
           </div>
         )}
+            
+            {transactionId && (
+              <div className="mt-4">
+                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+                  Transaction ID:{" "}
+                  <span title={transactionId}>
+                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+                  </span>
+                </p>
+                {isConfirmed && (
+                  <p className="text-green-500 font-medium">Transaction confirmed!</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Repay Drawer */}
         <RepayDrawer 

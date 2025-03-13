@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -10,14 +11,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { BACKEND_URL } from "@/utils/constants";
 import { Button } from "@/components/ui/button";
+import { useDemoData } from "@/providers/DemoDataProvider";
 
 interface LoanTransaction {
   transactionHash: string;
-  blockNumber: string;
-  from: string;
-  to: string;
+  blockNumber?: string;
+  from?: string;
+  to?: string;
   amount: string;
   timestamp: string;
   status: "received" | "repaid";
@@ -27,45 +28,49 @@ const LoanHistory = () => {
   const [transactions, setTransactions] = useState<LoanTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { demoData } = useDemoData();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTransactionHistory = async () => {
-      const ls_wallet = localStorage.getItem("ls_wallet_address");
-      if (!ls_wallet) {
-        setError("Wallet address not found in localStorage.");
-        setLoading(false);
-        return;
-      }
-
+    // Map the demo transactions to the format expected by the UI
+    const mapDemoTransactions = () => {
+      setLoading(true);
+      
       try {
-        const response = await fetch(
-          `${BACKEND_URL}/getTransactionHistory?wallet=${ls_wallet}`
+        // Filter for only loan and repayment transactions
+        const filteredTransactions = demoData.transactions.filter(
+          tx => tx.type === "loan" || tx.type === "repayment"
         );
-        if (!response.ok) {
-          throw new Error(`API error: ${response.statusText}`);
-        }
-        const result = await response.json();
-        const data: LoanTransaction[] = result.data;
-
-        if (result.status === 200 && data.length === 0) {
+        
+        if (filteredTransactions.length === 0) {
           setError("You don't have any transaction history yet. Would you like to request your first loan?");
+          setTransactions([]);
         } else {
-          const sortedTransactions = data.sort(
+          // Convert to the expected format
+          const mappedTransactions: LoanTransaction[] = filteredTransactions.map(tx => ({
+            transactionHash: tx.metadata?.txHash || `tx-${tx.id}`,
+            amount: tx.amount.toString(),
+            timestamp: tx.created_at,
+            status: tx.type === "loan" ? "received" : "repaid"
+          }));
+          
+          // Sort by timestamp (newest first)
+          const sortedTransactions = mappedTransactions.sort(
             (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
           );
+          
           setTransactions(sortedTransactions);
         }
       } catch (err) {
-        setError("Failed to fetch transactions.");
-        console.error("Error fetching transactions:", err);
+        console.error("Error processing demo transactions:", err);
+        setError("Failed to process transactions.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTransactionHistory();
-  }, []);
+    mapDemoTransactions();
+  }, [demoData.transactions]);
 
   return (
     <div className="min-h-screen bg-background">

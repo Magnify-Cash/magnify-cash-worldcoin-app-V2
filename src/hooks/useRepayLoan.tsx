@@ -17,17 +17,18 @@ const useRepayLoan = () => {
       setTransactionId(null);
       setIsConfirmed(false);
 
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Process the repayment
-      const txId = await repayLoan(amount);
-      
-      // Set transaction ID
+      // Generate transaction ID immediately so UI can show it
+      const txId = `tx-${Math.random().toString(36).substring(2, 10)}`;
       setTransactionId(txId);
       
-      // Simulate confirmation delay
+      // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Process the repayment
+      await repayLoan(amount);
+      
+      // Simulate confirmation delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Mark as confirmed after the delay
       setIsConfirmed(true);

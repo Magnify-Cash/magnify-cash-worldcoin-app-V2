@@ -31,10 +31,6 @@ const RepayLoan = () => {
   
   // Determine if the user has an active loan
   const hasLoan = loanData && typeof loanData !== 'string' ? loanData.isActive : false;
-
-  console.log("loanData", loanData);
-  console.log("hasLoan", hasLoan);
-  console.log("data", data);
   
   // Calculate loan amount due with interest only if loanData exists and is the right type
   const loanAmountDue = loanData && typeof loanData !== 'string' 
@@ -58,6 +54,7 @@ const RepayLoan = () => {
     async () => {
       setIsClicked(true);
       setIsRepaying(true); // Start repayment process
+      setIsDrawerOpen(false); // Close drawer immediately
   
       try {
         if (data?.nftInfo?.tokenId) {
@@ -89,7 +86,7 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDueReadable, loanVersion, toast]
+    [data, repayLoanWithPermit2, loanAmountDueReadable, toast]
   );
   
   // Handle navigation after repayment
@@ -114,7 +111,7 @@ const RepayLoan = () => {
   }, [isConfirmed, refetch]);
 
   // Loading & error states
-  if (isLoading) {
+  if (isLoading && !isRepaying) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -130,7 +127,7 @@ const RepayLoan = () => {
     );
   }
 
-  if (isError) {
+  if (isError && !isRepaying) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -144,7 +141,7 @@ const RepayLoan = () => {
   const showActiveLoan = (hasLoan || isRepaying) && activeLoanData && typeof activeLoanData !== 'string';
 
   // Check if user has an active loan - handle the case when loanData is undefined
-  if (!isLoading && !showActiveLoan) {
+  if (!isLoading && !showActiveLoan && !isRepaying) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -157,6 +154,59 @@ const RepayLoan = () => {
             <Button onClick={() => navigate("/loan")} className="w-full mt-4">
               Request a Loan
             </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show confirmation screen with spinner during repayment
+  if (isConfirming && transactionId) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header title="Loan Status" />
+        <div className="container max-w-2xl mx-auto p-6 space-y-6">
+          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
+            <h3 className="text-lg font-semibold text-center">Processing Repayment</h3>
+            
+            <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+              <div className="flex justify-center">
+                <div className="orbit-spinner">
+                  <div className="orbit"></div>
+                  <div className="orbit"></div>
+                  <div className="center"></div>
+                </div>
+              </div>
+              <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
+                Confirming transaction, please do not leave this page until confirmation is complete.
+              </p>
+              <p className="text-white text-center text-sm mt-2">
+                Transaction ID: {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show confirmation status after transaction is confirmed
+  if (isConfirmed && transactionId) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header title="Loan Status" />
+        <div className="container max-w-2xl mx-auto p-6 space-y-6">
+          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
+            <h3 className="text-lg font-semibold text-center">Repayment Successful</h3>
+            <div className="text-center">
+              <p className="mb-4">Your loan has been successfully repaid!</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Transaction ID: {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+              </p>
+              <Button type="button" onClick={handleNavigateAfterTransaction} className="w-full">
+                View Wallet
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -241,38 +291,6 @@ const RepayLoan = () => {
             >
               {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
             </Button>
-            {transactionId && (
-              <div className="mt-4">
-                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
-                  Transaction ID:{" "}
-                  <span title={transactionId}>
-                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-                  </span>
-                </p>
-                {isConfirming && (
-                  <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-                    <div className="flex justify-center">
-                      <div className="orbit-spinner">
-                        <div className="orbit"></div>
-                        <div className="orbit"></div>
-                        <div className="center"></div>
-                      </div>
-                    </div>
-                    <p className="text-white text-center max-w-md px-4 text-lg font-medium">
-                      Confirming transaction, please do not leave this page until confirmation is complete.
-                    </p>
-                  </div>
-                )}
-                {isConfirmed && (
-                  <>
-                    <p>Transaction confirmed!</p>
-                    <Button type="button" onClick={handleNavigateAfterTransaction} className="mt-2 w-full">
-                      View Wallet
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { WalletCard } from "@/components/WalletCard";
 import { Header } from "@/components/Header";
@@ -14,11 +15,16 @@ const Wallet = () => {
 
   useEffect(() => {
     if (ls_wallet) {
-      // Simulated token balances (frontend-only) - using the stored USDC.e balance
+      // Format the USDC balance with a maximum of 3 decimal places
+      const formattedBalance = parseFloat(demoData.usdcBalance.toString()).toFixed(3);
+      // Remove trailing zeros after decimal point (e.g., 30.000 -> 30, 30.100 -> 30.1)
+      const cleanedBalance = formattedBalance.replace(/\.?0+$/, "");
+      
+      // Simulated token balances (frontend-only) - using the formatted USDC.e balance
       const dummyTokens = [
         {
           contractAddress: "0x1234567890123456789012345678901234567890", // USDC.e
-          balance: demoData.usdcBalance.toString(), // Use the stored balance
+          balance: cleanedBalance,
           symbol: "USDC.e",
           decimals: 6,
           name: "Bridged USDC (world-chain-mainnet)",

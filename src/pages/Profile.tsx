@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
@@ -175,6 +174,8 @@ const Dashboard = () => {
               <p className="text-muted-foreground text-center text-lg">
                 {nftInfo?.tier.verificationStatus.level} Verified User
               </p>
+            ) : isDeviceVerified ? (
+              <p className="text-muted-foreground text-center text-lg">Not Orb Verified</p>
             ) : (
               <p className="text-muted-foreground text-center text-lg">Unverified</p>
             )}
@@ -232,11 +233,28 @@ const Dashboard = () => {
                   </motion.div>
                 );
               })}
+
+              {/* Device Verification Option for users who have never claimed an NFT */}
+              {nftInfo.tokenId === null && !isDeviceVerified && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="glass-card p-6"
+                >
+                  <Shield className="w-12 h-12 mx-auto mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2 text-center">Device Verification</h3>
+
+                  <Button className="w-full" variant="default" disabled>
+                    No longer supported
+                  </Button>
+                </motion.div>
+              )}
             </div>
           </motion.div>
 
           {/* Collateral section */}
-          {isOrbVerified ? (
+          {isOrbVerified || isDeviceVerified ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -262,17 +280,19 @@ const Dashboard = () => {
                         <FileText className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-lg">{nftInfo?.tier.verificationStatus.level} Verified</h4>
+                        <h4 className="font-medium text-lg">
+                          {isOrbVerified ? nftInfo?.tier.verificationStatus.level : "Not Orb Verified"}
+                        </h4>
                       </div>
                     </div>
                     <div
                       className={`px-4 py-2 rounded-full text-sm my-3 font-medium text-center ${
-                        hasActiveLoan 
-                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" 
+                        hasActiveLoan || isDeviceVerified
+                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                           : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       }`}
                     >
-                      {hasActiveLoan ? "Used for Collateral" : "Available for Collateral"}
+                      {hasActiveLoan || isDeviceVerified ? "Unavailable for Collateral" : "Available for Collateral"}
                     </div>
                   </Card>
                 </motion.div>

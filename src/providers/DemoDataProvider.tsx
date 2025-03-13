@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import type { WalletBalance } from "@/types/wallet";
 import type { Announcement } from "@/features/announcements/utils";
@@ -190,11 +191,13 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
     const amountNum = parseFloat(amount);
 
+    // Update user's USDC balance by deducting the repayment amount
     updateUSDCBalance(demoData.usdcBalance - amountNum);
 
+    // Mark the loan as repaid and add a repayment transaction
     setDemoData(prev => ({
       ...prev,
-      hasLoan: false,
+      hasLoan: false, // Mark loan as repaid
       transactions: [
         {
           id: Date.now(),

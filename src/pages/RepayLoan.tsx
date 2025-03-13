@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -21,13 +22,13 @@ const RepayLoan = () => {
   const { data, isLoading, isError, refetch } = useDemoMagnifyWorld(ls_wallet as `0x${string}`);
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
   
-  // Determine if the user has a loan
-  const hasLoan = data?.loan ? data.loan[1]?.isActive : false;
-  
-  // Extract loan data from the demo data
+  // Safely extract loan data
   const loanData = data?.loan ? data.loan[1] : undefined;
   const loanVersion = data?.loan ? data.loan[0] : "";
-
+  
+  // Determine if the user has an active loan - handle both string and object types
+  const hasLoan = loanData && typeof loanData !== 'string' ? loanData.isActive : false;
+  
   // Calculate loan amount due with interest
   const loanAmountDue = loanData && typeof loanData !== 'string' 
     ? loanData.amount + (loanData.amount * loanData.interestRate) / 10000n

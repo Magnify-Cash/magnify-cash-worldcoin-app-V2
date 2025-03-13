@@ -89,7 +89,7 @@ const UpgradeVerification = () => {
         });
       }
 
-      setTimeout(() => navigate("/profile"), 1500);
+      setTimeout(() => navigate("/loan"), 1500);
     } catch (error) {
       console.error("Error during verification:", error);
 

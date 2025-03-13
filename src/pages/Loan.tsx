@@ -18,11 +18,12 @@ const Loan = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { demoData, requestLoan } = useDemoData();
+  const { demoData, requestLoan, originationFee } = useDemoData();
 
   // Extract user data
   const { isDeviceVerified, isOrbVerified, hasLoan } = demoData;
   const isVerified = isDeviceVerified || isOrbVerified;
+  const isOrbTier = isOrbVerified && !isDeviceVerified;
 
   // Determine loan amount and duration based on verification level
   const loanAmount = isOrbVerified ? 10 : 1;
@@ -49,6 +50,12 @@ const Loan = () => {
       setIsConfirmed(true);
       setIsProcessing(false);
       setJustRequestedLoan(true);
+
+      if(isOrbTier) {
+        originationFee(false)
+      } else {
+        originationFee(true)
+      }
 
       toast({
         title: "Loan Approved!",

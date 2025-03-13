@@ -61,7 +61,7 @@ const RepayLoan = () => {
           setTimeout(() => {
             setIsProcessing(false);
             setIsSuccess(true);
-          }, 1500);
+          }, 1000);
         } else {
           toast({
             title: "Error",

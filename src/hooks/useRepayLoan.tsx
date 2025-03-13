@@ -35,7 +35,7 @@ const useRepayLoan = () => {
       setTransactionId(txId);
       
       // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Process the repayment
       await repayLoan(amount);

@@ -138,6 +138,11 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
               >
                 Help Center
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white font-bold"
+                onClick={() => window.open("https://pitch.magnify.cash/", "_blank")} >
+                INVEST NOW
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

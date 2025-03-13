@@ -48,7 +48,8 @@ interface DemoContextType {
   repayLoan: (amount: string) => Promise<string>;
   refreshBalance: () => void;
   resetSession: () => void;
-  finalizeLoanRepayment: () => void; // Make this function available in the context
+  finalizeLoanRepayment: () => void;
+  originationFee: (tier: boolean) => void;
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
@@ -237,6 +238,27 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     }));
   };
 
+  const originationFee = (tier: boolean) => {
+    if(tier){
+      setDemoData(prev => ({
+        ...prev,
+        usdcBalance: prev.usdcBalance - 0.1,
+        walletBalances: prev.walletBalances.map(balance =>
+          balance.symbol === "USDC" ? { ...balance, balance: (parseFloat(balance.balance) - 0.1).toFixed(2) } : balance
+        )
+      }));
+    } else {
+      setDemoData(prev => ({
+      ...prev,
+      usdcBalance: prev.usdcBalance - 3,
+      walletBalances: prev.walletBalances.map(balance =>
+        balance.symbol === "USDC" ? { ...balance, balance: (parseFloat(balance.balance) - 3).toFixed(2) } : balance
+      )
+      }));
+    }
+
+  }
+
   const refreshBalance = useCallback(() => {
     console.log("Refreshing balance...");
   }, []);
@@ -263,7 +285,8 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         repayLoan,
         refreshBalance,
         resetSession,
-        finalizeLoanRepayment // Export this function to be used by RepayLoan component
+        finalizeLoanRepayment,
+        originationFee,
       }}
     >
       {children}

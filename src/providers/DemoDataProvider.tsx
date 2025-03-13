@@ -191,8 +191,15 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
     const amountNum = parseFloat(amount);
 
+
+    console.log(amount)
+    console.log("---")
+    console.log(amountNum)
+
     // Update user's USDC balance by deducting the repayment amount
     updateUSDCBalance(demoData.usdcBalance - amountNum);
+    console.log("---")
+    console.log(demoData.usdcBalance)
 
     // Mark the loan as repaid and add a repayment transaction
     setDemoData(prev => ({

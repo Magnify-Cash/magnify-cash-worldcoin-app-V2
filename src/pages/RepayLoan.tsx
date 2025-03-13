@@ -44,7 +44,7 @@ const RepayLoan = () => {
   
       try {
         if (data?.nftInfo?.tokenId) {
-          await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
+          await repayLoanWithPermit2(loanAmountDue.toString());
         } else {
           toast.toast({
             title: "Error",

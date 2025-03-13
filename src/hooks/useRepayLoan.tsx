@@ -10,7 +10,7 @@ const useRepayLoan = () => {
   const [error, setError] = useState<Error | null>(null);
   const { repayLoan } = useDemoData();
 
-  const repayLoanWithPermit2 = async (amount: string, loanVersion: string) => {
+  const repayLoanWithPermit2 = async (amount: string) => {
     try {
       setIsConfirming(true);
       setError(null);

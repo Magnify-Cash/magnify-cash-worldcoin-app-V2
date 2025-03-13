@@ -96,18 +96,6 @@ const Loan = () => {
             <div className="dot bg-[#A11F75]"></div>
           </div>
         </div>
-      ) : !data || data?.nftInfo.tokenId === null ? (
-        <div className="p-6 space-y-6">
-          <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
-            <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
-            <p className="mb-4">
-              To be eligible for a loan, you need to own a specific NFT. Please upgrade your account.
-            </p>
-            <Button onClick={() => navigate("/upgrade-verification")} className="glass-button w-full">
-              Upgrade Now
-            </Button>
-          </div>
-        </div>
       ) : hasActiveLoan ? (
         <div className="p-6 space-y-6">
           <div className="text-center">
@@ -118,12 +106,24 @@ const Loan = () => {
             </Button>
           </div>
         </div>
-      ) : (
+      ) : !data || data?.nftInfo.tokenId === null || data?.nftInfo?.tier?.verificationStatus?.verification_level === "device" ? (
+        <div className="p-6 space-y-6">
+          <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
+            <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
+            <p className="mb-4">
+              To be eligible for a loan, you need to own a specific NFT. Please upgrade your account.
+            </p>
+            <Button onClick={() => navigate("/upgrade-verification")} className="glass-button w-full">
+              Upgrade Now
+            </Button>
+          </div>
+        </div> 
+        ) : (
         <div className="p-6 space-y-6">
           <div className="glass-card p-6">
             <h2 className="text-lg font-semibold text-center">Current Loan Eligibility</h2>
             {Object.entries(data?.allTiers || {}).map(([index, tier]) => {
-              if (tier.verificationStatus.level !== "NONE" && data?.nftInfo.tier.tierId >= tier.tierId) {
+              if (tier.verificationStatus.level !== "NONE" && tier.verificationStatus.level !== "DEVICE" && data?.nftInfo.tier.tierId >= tier.tierId) {
                 return (
                   <div key={index} className="mt-10">
                     <div className="flex items-center">

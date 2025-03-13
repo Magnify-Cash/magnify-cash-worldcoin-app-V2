@@ -182,9 +182,15 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   const requestLoan = async (tierId: number): Promise<string> => {
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
     
+    const loanAmount = tierId === 2 ? 10 : 1; // Determine loan amount based on tierId
+
     setDemoData(prev => ({
       ...prev,
-      hasLoan: true
+      hasLoan: true,
+      usdcBalance: prev.usdcBalance + loanAmount,
+      walletBalances: prev.walletBalances.map(balance =>
+        balance.symbol === "USDC" ? { ...balance, balance: (parseFloat(balance.balance) + loanAmount).toFixed(2) } : balance
+      )
     }));
     
     return txHash;

@@ -101,7 +101,7 @@ export function useDemoRepayLoan() {
       setIsConfirmed(true);
       
       const amount = parseFloat(loanAmount);
-      const interest = amount * 0.05; // 5% interest for demo
+      const interest = amount * 0.025; // 5% interest for demo
       
       setLoanDetails({
         amount,

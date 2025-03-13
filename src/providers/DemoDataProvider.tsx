@@ -48,6 +48,7 @@ interface DemoContextType {
   repayLoan: (amount: string) => Promise<string>;
   refreshBalance: () => void;
   resetSession: () => void;
+  finalizeLoanRepayment: () => void; // Make this function available in the context
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
@@ -229,6 +230,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   
   // Function to actually mark the loan as repaid - called after UI confirmation
   const finalizeLoanRepayment = () => {
+    console.log("Finalizing loan repayment - setting hasLoan to false");
     setDemoData(prev => ({
       ...prev,
       hasLoan: false
@@ -260,7 +262,8 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         requestLoan,
         repayLoan,
         refreshBalance,
-        resetSession
+        resetSession,
+        finalizeLoanRepayment // Export this function to be used by RepayLoan component
       }}
     >
       {children}

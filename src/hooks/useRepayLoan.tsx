@@ -8,7 +8,7 @@ const useRepayLoan = () => {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { repayLoan } = useDemoData();
+  const { repayLoan, finalizeLoanRepayment } = useDemoData();
 
   const repayLoanWithPermit2 = async (amount: string) => {
     try {
@@ -29,8 +29,13 @@ const useRepayLoan = () => {
       // Simulate confirmation delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Only mark as confirmed after the delay
+      // Mark as confirmed after the delay
       setIsConfirmed(true);
+      
+      // Update the loan status to inactive after confirmation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      finalizeLoanRepayment();
+      
       setIsConfirming(false);
       return txId;
     } catch (err: any) {

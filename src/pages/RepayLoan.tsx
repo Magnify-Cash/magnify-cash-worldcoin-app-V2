@@ -9,6 +9,7 @@ import { formatUnits } from "viem";
 import { useDemoMagnifyWorld } from "@/hooks/useDemoMagnifyWorld";
 import { RepayDrawer } from "@/components/RepayDrawer";
 import useRepayLoan from "@/hooks/useRepayLoan";
+import { calculateRemainingTime } from "@/utils/timeinfo";
 
 const RepayLoan = () => {
   // States
@@ -18,7 +19,7 @@ const RepayLoan = () => {
   const [localLoanData, setLocalLoanData] = useState<any>(null); // Local loan data to persist during repayment
 
   // hooks
-  const toast = useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { data, isLoading, isError, refetch } = useDemoMagnifyWorld(ls_wallet as `0x${string}`);
@@ -62,7 +63,7 @@ const RepayLoan = () => {
         if (data?.nftInfo?.tokenId) {
           await repayLoanWithPermit2(loanAmountDueReadable.toString());
         } else {
-          toast.toast({
+          toast({
             title: "Error",
             description: "Unable to pay back loan.",
             variant: "destructive",
@@ -71,13 +72,13 @@ const RepayLoan = () => {
       } catch (error: any) {
         console.error("Loan repayment error:", error);
         if (error?.message?.includes("user rejected transaction")) {
-          toast.toast({
+          toast({
             title: "Error",
             description: "Transaction rejected by user.",
             variant: "destructive",
           });
         } else {
-          toast.toast({
+          toast({
             title: "Error",
             description: error?.message || "Unable to pay back loan.",
             variant: "destructive",
@@ -167,9 +168,10 @@ const RepayLoan = () => {
     // Use the active loan data (either real or kept during repayment)
     const loan = activeLoanData;
     
+    // Calculate time remaining using the utility function
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
       loan.startTime,
-      loan.loanPeriod,
+      loan.loanPeriod
     );
     
     const amountDue = loan.amount + (loan.amount * loan.interestRate) / 10000n;
@@ -302,19 +304,6 @@ const RepayLoan = () => {
       </div>
     </div>
   );
-};
-
-// Helper function to calculate the remaining time
-const calculateRemainingTime = (startTime: bigint, loanPeriod: bigint) => {
-  const dueTimestamp = Number(startTime) + Number(loanPeriod);
-  const currentTime = Math.floor(Date.now() / 1000);
-  const remainingSeconds = Math.max(0, dueTimestamp - currentTime);
-  
-  const days = Math.floor(remainingSeconds / 86400);
-  const hours = Math.floor((remainingSeconds % 86400) / 3600);
-  const minutes = Math.floor((remainingSeconds % 3600) / 60);
-  
-  return [days, hours, minutes, dueTimestamp * 1000];
 };
 
 export default RepayLoan;

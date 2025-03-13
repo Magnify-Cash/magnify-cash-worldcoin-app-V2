@@ -7,15 +7,12 @@ import { Calendar, DollarSign, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
 import { useDemoMagnifyWorld } from "@/hooks/useDemoMagnifyWorld";
-import { RepayDrawer } from "@/components/RepayDrawer";
 import useRepayLoan from "@/hooks/useRepayLoan";
 import { calculateRemainingTime } from "@/utils/timeinfo";
 
 const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isRepaying, setIsRepaying] = useState(false); // Added to track repayment process
   const [localLoanData, setLocalLoanData] = useState<any>(null); // Local loan data to persist during repayment
 
   // hooks
@@ -41,20 +38,14 @@ const RepayLoan = () => {
 
   // When loan data changes and not in repayment process, update local loan data
   useEffect(() => {
-    if (loanData && !isRepaying) {
+    if (loanData && !isConfirming && !isConfirmed) {
       setLocalLoanData(loanData);
     }
-  }, [loanData, isRepaying]);
+  }, [loanData, isConfirming, isConfirmed]);
 
-  const handleOpenDrawer = () => {
-    setIsDrawerOpen(true);
-  };
-
-  const handleRepayConfirm = useCallback(
+  const handleRepayLoan = useCallback(
     async () => {
       setIsClicked(true);
-      setIsRepaying(true); // Start repayment process
-      setIsDrawerOpen(false); // Close drawer immediately
   
       try {
         if (data?.nftInfo?.tokenId) {
@@ -62,7 +53,6 @@ const RepayLoan = () => {
           
           // After successful repayment, update UI and navigate
           setTimeout(() => {
-            setIsRepaying(false);
             refetch();
             navigate("/wallet");
           }, 3000);
@@ -72,7 +62,6 @@ const RepayLoan = () => {
             description: "Unable to pay back loan.",
             variant: "destructive",
           });
-          setIsRepaying(false);
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
@@ -89,7 +78,6 @@ const RepayLoan = () => {
             variant: "destructive",
           });
         }
-        setIsRepaying(false); // Reset repayment process on error
       } finally {
         setIsClicked(false);
       }
@@ -109,7 +97,7 @@ const RepayLoan = () => {
   }, [isConfirmed, refetch]);
 
   // Loading & error states
-  if (isLoading && !isRepaying) {
+  if (isLoading && !isConfirming && !isConfirmed) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -125,7 +113,7 @@ const RepayLoan = () => {
     );
   }
 
-  if (isError && !isRepaying) {
+  if (isError && !isConfirming && !isConfirmed) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -134,12 +122,12 @@ const RepayLoan = () => {
     );
   }
 
-  // If in repayment process, use local loan data
-  const activeLoanData = isRepaying ? localLoanData : loanData;
-  const showActiveLoan = (hasLoan || isRepaying) && activeLoanData && typeof activeLoanData !== 'string';
+  // Use local loan data during the repayment process to maintain UI consistency
+  const activeLoanData = isConfirming || isConfirmed ? localLoanData : loanData;
+  const showActiveLoan = (hasLoan || isConfirming || isConfirmed) && activeLoanData && typeof activeLoanData !== 'string';
 
   // Check if user has an active loan - handle the case when loanData is undefined
-  if (!isLoading && !showActiveLoan && !isRepaying) {
+  if (!isLoading && !showActiveLoan && !isConfirming && !isConfirmed) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -208,7 +196,7 @@ const RepayLoan = () => {
                 <div>
                   <p className="text-sm text-muted-foreground text-start">Due Date</p>
                   <p className="text-start font-semibold">
-                    {new Date(dueDate).toLocaleDateString("en-US", {
+                    {new Date(Number(dueDate)).toLocaleDateString("en-US", {
                       day: "2-digit",
                       month: "short",
                       hour: "2-digit",
@@ -230,43 +218,50 @@ const RepayLoan = () => {
               </div>
             </div>
 
-            {isConfirming && (
-              <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-                <div className="flex justify-center">
-                  <div className="orbit-spinner">
-                    <div className="orbit"></div>
-                    <div className="orbit"></div>
-                    <div className="center"></div>
-                  </div>
-                </div>
-                <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
-                  Confirming transaction, please do not leave this page until confirmation is complete.
+            <Button
+              onClick={handleRepayLoan}
+              className="w-full primary-button"
+              disabled={isClicked || isConfirming || isConfirmed}
+            >
+              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
+            </Button>
+            
+            {transactionId && (
+              <div className="mt-4">
+                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+                  Transaction ID:{" "}
+                  <span title={transactionId}>
+                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+                  </span>
                 </p>
-                {transactionId && (
-                  <p className="text-white text-center text-sm mt-2">
-                    Transaction ID: {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-                  </p>
+                {isConfirmed && (
+                  <p className="text-green-500 font-medium">Transaction confirmed!</p>
                 )}
               </div>
             )}
-
-            <Button
-              onClick={handleOpenDrawer}
-              className="w-full primary-button"
-              disabled={isClicked || isConfirming}
-            >
-              {isConfirming ? "Confirming..." : "Repay Loan"}
-            </Button>
           </div>
         </div>
 
-        {/* Repay Drawer */}
-        <RepayDrawer
-          open={isDrawerOpen} 
-          onOpenChange={setIsDrawerOpen}
-          repayAmount={amountDue}
-          onConfirm={handleRepayConfirm}
-        />
+        {/* Confirmation overlay */}
+        {isConfirming && (
+          <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+            <div className="flex justify-center">
+              <div className="orbit-spinner">
+                <div className="orbit"></div>
+                <div className="orbit"></div>
+                <div className="center"></div>
+              </div>
+            </div>
+            <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
+              Confirming transaction, please do not leave this page until confirmation is complete.
+            </p>
+            {transactionId && (
+              <p className="text-white text-center text-sm mt-2">
+                Transaction ID: {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     );
   }

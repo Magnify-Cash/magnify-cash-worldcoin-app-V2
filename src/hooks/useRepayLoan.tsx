@@ -10,6 +10,19 @@ const useRepayLoan = () => {
   const [error, setError] = useState<Error | null>(null);
   const { repayLoan, finalizeLoanRepayment } = useDemoData();
 
+  // Helper function to generate Ethereum-style transaction hash
+  const generateEthereumTxHash = (): string => {
+    const characters = '0123456789abcdef';
+    let hash = '0x';
+    
+    // Generate 64 character hex string
+    for (let i = 0; i < 64; i++) {
+      hash += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    
+    return hash;
+  };
+
   const repayLoanWithPermit2 = async (amount: string) => {
     try {
       setIsConfirming(true);
@@ -17,8 +30,8 @@ const useRepayLoan = () => {
       setTransactionId(null);
       setIsConfirmed(false);
 
-      // Generate transaction ID immediately so UI can show it
-      const txId = `tx-${Math.random().toString(36).substring(2, 10)}`;
+      // Generate Ethereum-style transaction hash
+      const txId = generateEthereumTxHash();
       setTransactionId(txId);
       
       // Simulate network delay

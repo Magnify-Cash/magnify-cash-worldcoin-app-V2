@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Calendar, DollarSign, Clock, ArrowRight } from "lucide-react";
+import { Calendar, DollarSign, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
 import { useDemoMagnifyWorld } from "@/hooks/useDemoMagnifyWorld";
@@ -13,18 +13,16 @@ import { RepayDrawer } from "@/components/RepayDrawer";
 
 const RepayLoan = () => {
   // States
+  const [isClicked, setIsClicked] = useState(false);
+  const [localLoanData, setLocalLoanData] = useState<any>(null); // Local loan data to persist during repayment
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
-  const [txId, setTxId] = useState<string | null>(null);
-  const [localLoanData, setLocalLoanData] = useState<any>(null);
-  
+
   // hooks
   const { toast } = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { data, isLoading, isError, refetch } = useDemoMagnifyWorld(ls_wallet as `0x${string}`);
-  const { repayLoanWithPermit2 } = useRepayLoan();
+  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
   
   // Safely extract loan data
   const loanData = data?.loan ? data.loan[1] : undefined;
@@ -40,59 +38,62 @@ const RepayLoan = () => {
 
   const loanAmountDueReadable = loanAmountDue ? Number(formatUnits(loanAmountDue, 6)) : 0;
 
-  // When loan data changes and not in processing process, update local loan data
+  // When loan data changes and not in repayment process, update local loan data
   useEffect(() => {
-    if (loanData && !isProcessing && !isConfirmed) {
+    if (loanData && !isConfirming && !isConfirmed) {
       setLocalLoanData(loanData);
     }
-  }, [loanData, isProcessing, isConfirmed]);
+  }, [loanData, isConfirming, isConfirmed]);
 
-  // Handle opening the drawer for repayment confirmation
+  const handleRepayLoan = useCallback(
+    async () => {
+      setIsClicked(true);
+  
+      try {
+        if (data?.nftInfo?.tokenId) {
+          await repayLoanWithPermit2(loanAmountDueReadable.toString());
+          
+          // After successful repayment, update UI and navigate
+          setTimeout(() => {
+            refetch();
+            navigate("/wallet");
+          }, 3000);
+        } else {
+          toast({
+            title: "Error",
+            description: "Unable to pay back loan.",
+            variant: "destructive",
+          });
+        }
+      } catch (error: any) {
+        console.error("Loan repayment error:", error);
+        if (error?.message?.includes("user rejected transaction")) {
+          toast({
+            title: "Error",
+            description: "Transaction rejected by user.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: error?.message || "Unable to pay back loan.",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setIsClicked(false);
+      }
+    },
+    [data, repayLoanWithPermit2, loanAmountDueReadable, toast, navigate, refetch]
+  );
+
   const handleOpenDrawer = useCallback(() => {
     setIsDrawerOpen(true);
   }, []);
 
-  // Handle the confirmation from the drawer
-  const handleConfirmRepay = useCallback(async () => {
-    try {
-      setIsProcessing(true);
-      
-      // Process the repayment
-      const transactionId = await repayLoanWithPermit2(loanAmountDueReadable.toString());
-      
-      setTxId(transactionId);
-      setIsConfirmed(true);
-      setIsProcessing(false);
-      
-      toast({
-        title: "Loan Repaid!",
-        description: "Your loan has been successfully repaid.",
-      });
-      
-      // After successful repayment, navigation happens when user clicks the button
-    } catch (error: any) {
-      console.error("Loan repayment error:", error);
-      if (error?.message?.includes("user rejected transaction")) {
-        toast({
-          title: "Error",
-          description: "Transaction rejected by user.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: error?.message || "Unable to pay back loan.",
-          variant: "destructive",
-        });
-      }
-      setIsProcessing(false);
-    }
-  }, [repayLoanWithPermit2, loanAmountDueReadable, toast]);
-
-  // Handle navigation after claiming loan
-  const handleNavigateAfterTransaction = useCallback(() => {
-    navigate("/wallet");
-  }, [navigate]);
+  const handleConfirmRepay = useCallback(() => {
+    handleRepayLoan();
+  }, [handleRepayLoan]);
 
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
@@ -106,7 +107,7 @@ const RepayLoan = () => {
   }, [isConfirmed, refetch]);
 
   // Loading & error states
-  if (isLoading && !isProcessing && !isConfirmed) {
+  if (isLoading && !isConfirming && !isConfirmed) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -122,7 +123,7 @@ const RepayLoan = () => {
     );
   }
 
-  if (isError && !isProcessing && !isConfirmed) {
+  if (isError && !isConfirming && !isConfirmed) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -132,11 +133,11 @@ const RepayLoan = () => {
   }
 
   // Use local loan data during the repayment process to maintain UI consistency
-  const activeLoanData = isProcessing || isConfirmed ? localLoanData : loanData;
-  const showActiveLoan = (hasLoan || isProcessing || isConfirmed) && activeLoanData && typeof activeLoanData !== 'string';
+  const activeLoanData = isConfirming || isConfirmed ? localLoanData : loanData;
+  const showActiveLoan = (hasLoan || isConfirming || isConfirmed) && activeLoanData && typeof activeLoanData !== 'string';
 
   // Check if user has an active loan - handle the case when loanData is undefined
-  if (!isLoading && !showActiveLoan && !isProcessing && !isConfirmed) {
+  if (!isLoading && !showActiveLoan && !isConfirming && !isConfirmed) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -227,49 +228,32 @@ const RepayLoan = () => {
               </div>
             </div>
 
-            {isConfirmed ? (
-              <div className="mt-4">
-                <div className="flex justify-center mb-4">
-                  <div className="rounded-full bg-green-100 p-3">
-                    <div className="rounded-full bg-green-200 p-2">
-                      <Check className="h-6 w-6 text-green-600" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-center text-green-600 font-medium">Loan successfully repaid!</p>
-                <Button 
-                  type="button" 
-                  onClick={handleNavigateAfterTransaction} 
-                  className="w-full mt-4"
-                >
-                  Go to Wallet <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                onClick={handleOpenDrawer}
-                className="w-full primary-button"
-                disabled={isProcessing}
-              >
-                {isProcessing ? "Processing..." : "Repay Loan"}
-              </Button>
-            )}
+            <Button
+              onClick={handleOpenDrawer}
+              className="w-full primary-button"
+              disabled={isClicked || isConfirming || isConfirmed}
+            >
+              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
+            </Button>
             
-            {txId && !isConfirmed && (
+            {transactionId && (
               <div className="mt-4">
                 <p className="overflow-hidden text-ellipsis whitespace-nowrap">
                   Transaction ID:{" "}
-                  <span title={txId}>
-                    {txId.slice(0, 10)}...{txId.slice(-10)}
+                  <span title={transactionId}>
+                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
                   </span>
                 </p>
+                {isConfirmed && (
+                  <p className="text-green-500 font-medium">Transaction confirmed!</p>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Processing overlay */}
-        {isProcessing && (
+        {/* Confirmation overlay */}
+        {isConfirming && (
           <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
             <div className="flex justify-center">
               <div className="orbit-spinner">
@@ -281,9 +265,9 @@ const RepayLoan = () => {
             <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
               Confirming transaction, please do not leave this page until confirmation is complete.
             </p>
-            {txId && (
+            {transactionId && (
               <p className="text-white text-center text-sm mt-2">
-                Transaction ID: {txId.slice(0, 10)}...{txId.slice(-10)}
+                Transaction ID: {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
               </p>
             )}
           </div>

@@ -59,12 +59,20 @@ const RepayLoan = () => {
       try {
         if (data?.nftInfo?.tokenId) {
           await repayLoanWithPermit2(loanAmountDueReadable.toString());
+          
+          // After successful repayment, update UI and navigate
+          setTimeout(() => {
+            setIsRepaying(false);
+            refetch();
+            navigate("/wallet");
+          }, 3000);
         } else {
           toast({
             title: "Error",
             description: "Unable to pay back loan.",
             variant: "destructive",
           });
+          setIsRepaying(false);
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
@@ -86,18 +94,8 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDueReadable, toast]
+    [data, repayLoanWithPermit2, loanAmountDueReadable, toast, navigate, refetch]
   );
-  
-  // Handle navigation after repayment
-  const handleNavigateAfterTransaction = () => {
-    // Wait for the local state to update before navigating
-    setTimeout(() => {
-      setIsRepaying(false); // End repayment process
-      refetch();
-      navigate("/wallet");
-    }, 1000);
-  };
 
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
@@ -154,59 +152,6 @@ const RepayLoan = () => {
             <Button onClick={() => navigate("/loan")} className="w-full mt-4">
               Request a Loan
             </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show confirmation screen with spinner during repayment
-  if (isConfirming && transactionId) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header title="Loan Status" />
-        <div className="container max-w-2xl mx-auto p-6 space-y-6">
-          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-            <h3 className="text-lg font-semibold text-center">Processing Repayment</h3>
-            
-            <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-              <div className="flex justify-center">
-                <div className="orbit-spinner">
-                  <div className="orbit"></div>
-                  <div className="orbit"></div>
-                  <div className="center"></div>
-                </div>
-              </div>
-              <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
-                Confirming transaction, please do not leave this page until confirmation is complete.
-              </p>
-              <p className="text-white text-center text-sm mt-2">
-                Transaction ID: {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  // Show confirmation status after transaction is confirmed
-  if (isConfirmed && transactionId) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header title="Loan Status" />
-        <div className="container max-w-2xl mx-auto p-6 space-y-6">
-          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-            <h3 className="text-lg font-semibold text-center">Repayment Successful</h3>
-            <div className="text-center">
-              <p className="mb-4">Your loan has been successfully repaid!</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Transaction ID: {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-              </p>
-              <Button type="button" onClick={handleNavigateAfterTransaction} className="w-full">
-                View Wallet
-              </Button>
-            </div>
           </div>
         </div>
       </div>
@@ -284,12 +229,33 @@ const RepayLoan = () => {
                 </div>
               </div>
             </div>
+
+            {isConfirming && (
+              <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+                <div className="flex justify-center">
+                  <div className="orbit-spinner">
+                    <div className="orbit"></div>
+                    <div className="orbit"></div>
+                    <div className="center"></div>
+                  </div>
+                </div>
+                <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
+                  Confirming transaction, please do not leave this page until confirmation is complete.
+                </p>
+                {transactionId && (
+                  <p className="text-white text-center text-sm mt-2">
+                    Transaction ID: {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+                  </p>
+                )}
+              </div>
+            )}
+
             <Button
               onClick={handleOpenDrawer}
               className="w-full primary-button"
-              disabled={isClicked || isConfirming || isConfirmed}
+              disabled={isClicked || isConfirming}
             >
-              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
+              {isConfirming ? "Confirming..." : "Repay Loan"}
             </Button>
           </div>
         </div>
@@ -305,7 +271,7 @@ const RepayLoan = () => {
     );
   }
 
-  // Fallback return for any other case - simplified to show "No Active Loans" message
+  // Fallback return for any other case
   return (
     <div className="min-h-screen bg-background">
       <Header title="Loan Status" />

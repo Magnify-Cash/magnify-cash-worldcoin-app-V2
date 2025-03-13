@@ -29,9 +29,9 @@ const RepayLoan = () => {
   // Determine if the user has an active loan - handle both string and object types
   const hasLoan = loanData && typeof loanData !== 'string' ? loanData.isActive : false;
   
-  // Calculate loan amount due with interest
+  // Calculate loan amount due with interest (2% of the loan amount)
   const loanAmountDue = loanData && typeof loanData !== 'string' 
-    ? loanData.amount + (loanData.amount * loanData.interestRate) / 10000n
+    ? loanData.amount + (loanData.amount * 2n) / 100n
     : 0n;
 
   const handleOpenDrawer = () => {

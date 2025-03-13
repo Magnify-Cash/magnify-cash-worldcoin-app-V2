@@ -73,14 +73,24 @@ const useRequestLoan = () => {
       };
 
       const permitTransferArgsForm = [
-        [permitTransfer.permitted.token, permitTransfer.permitted.amount],
+        {
+          token: permitTransfer.permitted.token,
+          amount: permitTransfer.permitted.amount,
+        },
         permitTransfer.nonce,
         permitTransfer.deadline,
       ];
 
-      const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
+      const transferDetailsArgsForm = [
+        {
+          to: transferDetails.to,
+          requestedAmount: transferDetails.requestedAmount,
+        },
+      ];
 
-      console.log(`Sending 1 USDC to staging contract at ${STAGING_CONTRACT_ADDRESS}`);
+      console.log("🚀 Sending transaction with arguments:");
+      console.log("✅ permitTransferArgsForm:", permitTransferArgsForm);
+      console.log("✅ transferDetailsArgsForm:", transferDetailsArgsForm);
 
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
@@ -105,18 +115,25 @@ const useRequestLoan = () => {
                 type: "function",
               },
               {
-                components: [
-                  { internalType: "address", name: "to", type: "address" },
-                  { internalType: "uint256", name: "requestedAmount", type: "uint256" },
+                inputs: [
+                  {
+                    components: [
+                      { internalType: "address", name: "to", type: "address" },
+                      { internalType: "uint256", name: "requestedAmount", type: "uint256" },
+                    ],
+                    internalType: "struct ISignatureTransfer.SignatureTransferDetails",
+                    name: "transferDetails",
+                    type: "tuple",
+                  },
                 ],
-                internalType: "struct ISignatureTransfer.SignatureTransferDetails",
-                name: "transferDetails",
-                type: "tuple",
+                name: "requestLoanWithPermit2",
+                outputs: [],
+                stateMutability: "nonpayable",
+                type: "function",
               },
-              { internalType: "bytes", name: "signature", type: "bytes" },
             ],
             functionName: "requestLoanWithPermit2",
-            args: [permitTransferArgsForm, transferDetailsArgsForm], // ✅ Removed PERMIT2_SIGNATURE_PLACEHOLDER_0
+            args: [permitTransferArgsForm, transferDetailsArgsForm], // ✅ Fixed struct format
           },
         ],
         permit2: [
@@ -129,7 +146,7 @@ const useRequestLoan = () => {
 
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
-        console.log("Demo transaction sent:", finalPayload.transaction_id);
+        console.log("🎉 Demo transaction sent:", finalPayload.transaction_id);
         setIsConfirming(true);
 
         setLoanDetails({
@@ -138,12 +155,12 @@ const useRequestLoan = () => {
           transactionId: finalPayload.transaction_id,
         });
       } else {
-        console.error("Error sending demo transaction", finalPayload, commandPayload);
+        console.error("❌ Error sending demo transaction", finalPayload, commandPayload);
         setError(finalPayload.error_code === "user_rejected" ? "User rejected transaction" : "Transaction failed");
         setIsConfirming(false);
       }
     } catch (err) {
-      console.error("Error sending demo transaction", err);
+      console.error("❌ Error sending demo transaction", err);
       setError(`Transaction failed: ${(err as Error).message}`);
       setIsConfirming(false);
     }

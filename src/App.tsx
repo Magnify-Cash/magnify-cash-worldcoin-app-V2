@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { RouterProvider, createBrowserRouter, Navigate } from "react-router-dom";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import "./App.css";
 import { ThemeProvider } from "./providers/ThemeProvider";
@@ -33,7 +33,7 @@ const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
 const routes = [
   {
     path: "/",
-    element: <Index />,
+    element: <Navigate to="/welcome" replace />,
   },
   {
     path: "/welcome",

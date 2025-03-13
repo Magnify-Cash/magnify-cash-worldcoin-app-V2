@@ -4,11 +4,12 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Calendar, DollarSign, Clock } from "lucide-react";
-import { Loan, useMagnifyWorld } from "@/hooks/useMagnifyWorld";
+import { Loan } from "@/hooks/useMagnifyWorld";
 import { calculateRemainingTime } from "@/utils/timeinfo";
 import useRepayLoan from "@/hooks/useRepayLoan";
 import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
+import { useDemoMagnifyWorld } from "@/hooks/useDemoMagnifyWorld";
 
 const RepayLoan = () => {
   // States
@@ -18,25 +19,29 @@ const RepayLoan = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
-  const loan = data?.loan;
-  const loanData: Loan = loan && loan[1];
+  const { data, isLoading, isError, refetch, resetSession } = useDemoMagnifyWorld(ls_wallet as `0x${string}`);
+  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
+  
+  // Determine if the user has a loan
+  const hasLoan = data?.loan?.[1]?.isActive || false;
+  
+  // Extract loan data from the demo data
+  const loanData: Loan | undefined = data?.loan?.[1];
+  const loanVersion = useMemo(() => {
+    if (data?.loan) {
+      return data.loan[0];
+    }
+    return ""; // Default value if loanData is not available
+  }, [data?.loan]);
 
-  // loan repayment
+  // Calculate loan amount due with interest
   const loanAmountDue = useMemo(() => {
     if (loanData) {
       return loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
     }
     return 0n; // Default value if loanData is not available
   }, [loanData]);
-  const loanVersion = useMemo(() => {
-    if (loan) {
-      return loan[0];
-    }
-    return ""; // Default value if loanData is not available
-  }, [loan]);
 
-  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
   const handleApplyLoan = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
@@ -76,7 +81,11 @@ const RepayLoan = () => {
     [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast]
   );
   
-  
+  // Handle navigation after repayment
+  const handleNavigateAfterTransaction = () => {
+    refetch();
+    setTimeout(() => navigate("/wallet"), 1000);
+  };
 
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
@@ -90,7 +99,7 @@ const RepayLoan = () => {
   }, [isConfirmed, refetch]);
 
   // Loading & error states
-  if (isLoading || !loan) {
+  if (isLoading) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -116,7 +125,7 @@ const RepayLoan = () => {
   }
 
   // Check if user has an active loan
-  if (!isLoading && (!loan || loanData?.amount === 0n || !loanData?.isActive)) {
+  if (!isLoading && (!hasLoan || !loanData)) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -135,8 +144,8 @@ const RepayLoan = () => {
     );
   }
 
-  // active loan
-  if (!isLoading && loan[0] !== "") {
+  // Active loan
+  if (!isLoading && loanData && hasLoan) {
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
       loanData.startTime,
       loanData.loanPeriod,
@@ -232,6 +241,9 @@ const RepayLoan = () => {
                 {isConfirmed && (
                   <>
                     <p>Transaction confirmed!</p>
+                    <Button type="button" onClick={handleNavigateAfterTransaction} className="mt-2 w-full">
+                      View Wallet
+                    </Button>
                   </>
                 )}
               </div>
@@ -240,6 +252,15 @@ const RepayLoan = () => {
         </div>
     </div>
   );
+  }
+
+  // Fallback return for any other case
+  return (
+    <div className="min-h-screen">
+      <Header title="Loan Status" />
+      <div className="flex justify-center items-center h-[calc(100vh-80px)]">No loan data available.</div>
+    </div>
+  );
 };
-};
+
 export default RepayLoan;

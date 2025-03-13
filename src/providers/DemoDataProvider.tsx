@@ -40,10 +40,8 @@ interface DemoContextType {
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
 
-// Generate a random USDC balance between 30 and 100
 const generateRandomBalance = (): number => Math.floor(Math.random() * 70) + 30;
 
-// Initial demo data
 const getInitialDemoData = (): DemoData => ({
   walletAddress: null,
   walletBalances: [
@@ -190,7 +188,19 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       usdcBalance: prev.usdcBalance + loanAmount,
       walletBalances: prev.walletBalances.map(balance =>
         balance.symbol === "USDC" ? { ...balance, balance: (parseFloat(balance.balance) + loanAmount).toFixed(2) } : balance
-      )
+      ),
+      transactions: [
+        {
+          id: Date.now(),
+          type: "loan",
+          currency: "USDC",
+          amount: loanAmount,
+          status: "completed",
+          created_at: new Date().toISOString(),
+          metadata: { txHash }
+        },
+        ...prev.transactions
+      ]
     }));
     
     return txHash;
@@ -204,7 +214,19 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     
     setDemoData(prev => ({
       ...prev,
-      hasLoan: false
+      hasLoan: false,
+      transactions: [
+        {
+          id: Date.now(),
+          type: "repayment",
+          currency: "USDC",
+          amount: amountNum,
+          status: "completed",
+          created_at: new Date().toISOString(),
+          metadata: { txHash }
+        },
+        ...prev.transactions
+      ]
     }));
     
     return txHash;

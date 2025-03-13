@@ -8,6 +8,41 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
   const { demoData, isLoading, resetSession } = useDemoData();
   const [isError, setIsError] = useState(false);
 
+  // Create loan data based on verification tier
+  const getLoanData = () => {
+    if (!demoData.hasLoan) return null;
+    
+    const tierId = demoData.contractData.nftInfo.tier?.tierId || "0";
+    const tierIdNumber = Number(tierId);
+    
+    // Default values
+    let loanAmount = 1n * 1000000n; // 1 USDC
+    let interestRate = 250n; // 2.5%
+    let loanPeriod = 2592000n; // 30 days
+    
+    // Set loan terms based on tier
+    if (tierIdNumber === 2) {
+      loanAmount = 5n * 1000000n; // 5 USDC
+      interestRate = 200n; // 2.0%
+      loanPeriod = 5184000n; // 60 days
+    } else if (tierIdNumber === 3) {
+      loanAmount = 10n * 1000000n; // 10 USDC
+      interestRate = 150n; // 1.5%
+      loanPeriod = 7776000n; // 90 days
+    }
+
+    return [
+      "v2", // Version of the loan
+      {
+        amount: loanAmount,
+        startTime: BigInt(Math.floor(Date.now() / 1000) - 86400), // Started 1 day ago
+        isActive: true,
+        interestRate: interestRate,
+        loanPeriod: loanPeriod
+      }
+    ];
+  };
+
   useEffect(() => {
     // Reset error state when dependencies change
     setIsError(false);
@@ -18,8 +53,38 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
     setIsError(false);
   };
 
+  // Create a contract data object that mimics the real data structure
+  const contractData = {
+    ...demoData.contractData,
+    loan: getLoanData(),
+    allTiers: {
+      1: {
+        tierId: 1n,
+        loanAmount: 1000000n, // 1 USDC
+        interestRate: 250n, // 2.5%
+        loanPeriod: 2592000n, // 30 days
+        verificationStatus: {
+          level: "DEVICE",
+          verification_level: "device",
+          description: "Device Verified Tier"
+        }
+      },
+      2: {
+        tierId: 2n,
+        loanAmount: 5000000n, // 5 USDC
+        interestRate: 200n, // 2%
+        loanPeriod: 5184000n, // 60 days
+        verificationStatus: {
+          level: "ORB",
+          verification_level: "orb",
+          description: "World ID Verified Tier"
+        }
+      }
+    }
+  };
+
   return {
-    data: demoData.contractData, // Now this property exists
+    data: contractData,
     isLoading,
     isError,
     refetch,

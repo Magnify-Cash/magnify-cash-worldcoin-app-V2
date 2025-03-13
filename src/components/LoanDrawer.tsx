@@ -95,9 +95,9 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
           <div className="px-4 py-2">
             <div className="my-4 space-y-4">
               {!isConfirmed ? (
-                <>
+                <div className="bg-[#F1F0FB] p-4 rounded-lg space-y-4">
                   <h3 className="text-lg font-medium">Transaction Preview</h3>
-                  <div className="bg-[#F1F0FB] p-4 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="bg-green-500 text-white p-2 rounded-full mr-3">
                         <ArrowDownLeft className="h-5 w-5" />
@@ -106,22 +106,7 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
                     </div>
                     <span className="font-medium">{loanAmount} USDC.e</span>
                   </div>
-
-                  <div className="space-y-2 rounded-lg border p-4 mt-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Interest Rate</span>
-                      <span className="font-medium">5%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Duration</span>
-                      <span className="font-medium">{loanDuration} days</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Total Repayment</span>
-                      <span className="font-medium">${(loanAmount * 1.05).toFixed(2)} USDC.e</span>
-                    </div>
-                  </div>
-                </>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center space-y-4 py-6">
                   <div className="rounded-full bg-green-100 p-3">
@@ -146,19 +131,19 @@ export function LoanDrawer({ open, onOpenChange, loanAmount, loanDuration }: Loa
             </div>
           </div>
 
-          <DrawerFooter>
+          <DrawerFooter className="pb-6">
             {!isConfirmed ? (
               <Button 
                 onClick={handleConfirm} 
                 disabled={isProcessing}
-                className="w-full"
+                className="w-full h-12 bg-black hover:bg-black/90 text-white"
               >
-                {isProcessing ? "Processing..." : "Confirm Loan"}
+                {isProcessing ? "Processing..." : "Confirm"}
               </Button>
             ) : (
               <Button 
                 onClick={handleComplete}
-                className="w-full"
+                className="w-full h-12"
               >
                 View Loan Details <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

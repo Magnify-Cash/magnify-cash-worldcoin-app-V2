@@ -9,11 +9,13 @@ import { formatUnits } from "viem";
 import { useDemoMagnifyWorld } from "@/hooks/useDemoMagnifyWorld";
 import useRepayLoan from "@/hooks/useRepayLoan";
 import { calculateRemainingTime } from "@/utils/timeinfo";
+import { RepayDrawer } from "@/components/RepayDrawer";
 
 const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
   const [localLoanData, setLocalLoanData] = useState<any>(null); // Local loan data to persist during repayment
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // hooks
   const { toast } = useToast();
@@ -84,6 +86,14 @@ const RepayLoan = () => {
     },
     [data, repayLoanWithPermit2, loanAmountDueReadable, toast, navigate, refetch]
   );
+
+  const handleOpenDrawer = useCallback(() => {
+    setIsDrawerOpen(true);
+  }, []);
+
+  const handleConfirmRepay = useCallback(() => {
+    handleRepayLoan();
+  }, [handleRepayLoan]);
 
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
@@ -219,7 +229,7 @@ const RepayLoan = () => {
             </div>
 
             <Button
-              onClick={handleRepayLoan}
+              onClick={handleOpenDrawer}
               className="w-full primary-button"
               disabled={isClicked || isConfirming || isConfirmed}
             >
@@ -262,6 +272,14 @@ const RepayLoan = () => {
             )}
           </div>
         )}
+
+        {/* Repay Drawer */}
+        <RepayDrawer 
+          open={isDrawerOpen} 
+          onOpenChange={setIsDrawerOpen} 
+          repayAmount={amountDue}
+          onConfirm={handleConfirmRepay}
+        />
       </div>
     );
   }

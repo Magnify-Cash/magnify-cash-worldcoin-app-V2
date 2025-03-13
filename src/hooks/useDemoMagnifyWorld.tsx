@@ -23,11 +23,11 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
     if (tierIdNumber === 2) {
       loanAmount = 10n * 1000000n; // 10 USDC
       interestRate = 250n; // 2.5%
-      loanPeriod = 2592000n; // 60 days
+      loanPeriod = 2592000n; // 30 days
     } else if (tierIdNumber === 3) {
       loanAmount = 10n * 1000000n; // 10 USDC
       interestRate = 250n; // 2.5%
-      loanPeriod = 2592000n; // 90 days
+      loanPeriod = 2592000n; // 30 days
     }
 
     return [

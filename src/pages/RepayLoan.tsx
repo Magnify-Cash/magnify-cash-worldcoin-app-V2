@@ -228,10 +228,24 @@ const RepayLoan = () => {
               </div>
             </div>
 
+            {isProcessing && (
+          <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+            <div className="flex justify-center">
+              <div className="orbit-spinner">
+                <div className="orbit"></div>
+                <div className="orbit"></div>
+                <div className="center"></div>
+              </div>
+            </div>
+            <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
+              Processing transaction, please do not leave this page.
+            </p>
+          </div>
+        )}
+
             {isSuccess ? (
               <div className="space-y-4">
                 <div className="flex flex-col items-center justify-center py-4">
-                  <CheckCircle2 className="w-16 h-16 text-green-500 mb-2" />
                   <p className="text-xl font-semibold text-center">Loan Successfully Repaid!</p>
                   <p className="text-sm text-muted-foreground text-center mt-1">
                     Your loan has been repaid successfully. Thank you for using Magnify Cash!
@@ -275,21 +289,6 @@ const RepayLoan = () => {
           onConfirm={handleConfirmRepay}
         />
 
-        {/* Loading Overlay */}
-        {isProcessing && (
-          <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-            <div className="flex justify-center">
-              <div className="orbit-spinner">
-                <div className="orbit"></div>
-                <div className="orbit"></div>
-                <div className="center"></div>
-              </div>
-            </div>
-            <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
-              Processing transaction, please do not leave this page.
-            </p>
-          </div>
-        )}
       </div>
     );
   }

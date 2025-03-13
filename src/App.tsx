@@ -17,7 +17,7 @@ import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
 import { DemoDataProvider } from "./providers/DemoDataProvider";
 import { Toaster } from "@/components/ui/toaster";
 
-eruda.init();
+//eruda.init();
 
 function App() {
   return (

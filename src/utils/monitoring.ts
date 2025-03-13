@@ -13,7 +13,7 @@ export const initializeMonitoring = () => {
     });
   }
 
-  eruda.init();
+  //eruda.init();
 }; // Added the missing closing curly brace here
 
 // Custom logger with different log levels

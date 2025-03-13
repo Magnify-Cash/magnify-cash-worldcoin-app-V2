@@ -1,10 +1,11 @@
 
 /**
- * Mock API service to replace actual API calls to World ID or World Wallet services
+ * Mock API service to replace actual API calls to blockchain or verification services
+ * This allows the demo to work without requiring World App or any real blockchain interaction
  */
 
 /**
- * Mock function to simulate verifying a World ID
+ * Mock function to simulate verifying identity
  */
 export const verifyWorldId = async () => {
   // Simulate network delay
@@ -13,7 +14,7 @@ export const verifyWorldId = async () => {
   return {
     success: true,
     verified: true,
-    message: "World ID verified successfully"
+    message: "Demo verification successful"
   };
 };
 
@@ -58,7 +59,7 @@ export const requestLoan = async (amount: number) => {
     success: true,
     loanId: newLoan.id,
     amount: amount,
-    message: "Loan approved successfully"
+    message: "Demo loan approved successfully"
   };
 };
 
@@ -104,6 +105,6 @@ export const repayLoan = async (loanId: string, amount: number) => {
   
   return {
     success: true,
-    message: "Loan repaid successfully"
+    message: "Demo loan repaid successfully"
   };
 }; 

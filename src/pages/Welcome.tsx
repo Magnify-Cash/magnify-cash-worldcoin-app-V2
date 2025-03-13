@@ -102,12 +102,13 @@ const Welcome = () => {
       <div className="container mx-auto px-3 sm:px-6 pt-8 sm:pt-20 pb-12 sm:pb-24">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#4338CA] via-[#7E22CE] to-[#BE185D] text-transparent bg-clip-text animate-gradient leading-tight">
-            Get a loan just by being you.
+            {isDemoMode ? "Demo: Explore Lending Features" : "Get a loan just by being you."}
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-12 max-w-[90%] sm:max-w-2xl mx-auto font-medium">
-            Get instant loans backed by your World ID. No collateral needed, just
-            your verified digital presence.
+            {isDemoMode 
+              ? "This is a demo version with simulated verification and loans. Test loan features with no real transactions."
+              : "Get instant loans backed by your World ID. No collateral needed, just your verified digital presence."}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6 sm:mb-16 px-3 sm:px-4">
@@ -116,7 +117,7 @@ const Welcome = () => {
               onClick={handleSignIn}
               className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
             >
-              {loading ? "Connecting..." : "Start Your Journey"}
+              {loading ? "Connecting..." : isDemoMode ? "Enter Demo" : "Start Your Journey"}
               <ArrowRight className="w-5 h-5" />
             </button>
 
@@ -133,7 +134,9 @@ const Welcome = () => {
           <div className="flex items-center justify-center gap-2 text-gray-600 px-3 sm:px-4 text-center">
             <Shield className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm font-medium">
-              Verified by World ID. Settled on World Chain. Powered by $MAG.
+              {isDemoMode 
+                ? "Simulated verification. No blockchain transactions."
+                : "Verified by World ID. Settled on World Chain. Powered by $MAG."}
             </span>
           </div>
         </div>

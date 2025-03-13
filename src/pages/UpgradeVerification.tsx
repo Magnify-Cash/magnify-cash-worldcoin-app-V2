@@ -21,19 +21,19 @@ const UpgradeVerification = () => {
   const verificationLevels = {
     device: {
       tierId: "1",
-      level: "Device",
+      level: isDemoMode ? "Basic" : "Device",
       icon: Shield,
       action: "mint-device-verified-nft",
       upgradeAction: "upgrade-device-verified-nft",
-      verification_level: "Device",
+      verification_level: isDemoMode ? "basic" : "Device",
     },
     orb: {
       tierId: "2",
-      level: "Orb Scan",
+      level: isDemoMode ? "Advanced" : "Orb Scan",
       icon: Globe,
       action: "mint-orb-verified-nft",
       upgradeAction: "upgrade-orb-verified-nft",
-      verification_level: "Orb",
+      verification_level: isDemoMode ? "advanced" : "Orb",
     },
   };
 
@@ -49,19 +49,19 @@ const UpgradeVerification = () => {
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Apply origination fee
-        if (tier.level === "Device") {
+        if (tier.level === "Basic") {
           originationFee(true);
           updateVerificationStatus("DEVICE");
           toast({
             title: "Verification Successful",
-            description: "You are now Device Verified.",
+            description: "You are now Basic Verified.",
           });
-        } else if (tier.level === "Orb Scan") {
+        } else if (tier.level === "Advanced") {
           originationFee(false);
           updateVerificationStatus("ORB");
           toast({
             title: "Verification Successful",
-            description: "You are now Orb Verified.",
+            description: "You are now Advanced Verified.",
           });
         }
 
@@ -163,7 +163,7 @@ const UpgradeVerification = () => {
           <p className="text-muted-foreground text-center text-lg">
             {!isDeviceVerified && !isOrbVerified
               ? "Unverified"
-              : `Currently: ${isOrbVerified ? "Orb" : "Device"} Verified`}
+              : `Currently: ${isOrbVerified ? (isDemoMode ? "Advanced" : "Orb") : (isDemoMode ? "Basic" : "Device")} Verified`}
           </p>
         </motion.div>
 
@@ -171,7 +171,7 @@ const UpgradeVerification = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {Object.values(verificationLevels).map((tier) => {
             const IconComponent = tier.icon;
-            const isVerified = tier.level === "Device" ? isDeviceVerified : isOrbVerified;
+            const isVerified = tier.level === (isDemoMode ? "Basic" : "Device") ? isDeviceVerified : isOrbVerified;
             const isDisabled = verifying || isVerified;
 
             return (

@@ -2,6 +2,9 @@
 import { useDemoData } from "@/providers/DemoDataProvider";
 import { useEffect, useState } from "react";
 
+// Check if demo mode is enabled via environment variable
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
+
 // This hook replaces the useMagnifyWorld hook with demo data
 export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
   const { demoData, isLoading, resetSession } = useDemoData();
@@ -21,12 +24,12 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
     
     // Set loan terms based on tier
     if (tierIdNumber === 2) {
-      loanAmount = 30n * 1000000n; // 5 USDC
-      interestRate = 1750n; // 1.5%
+      loanAmount = 30n * 1000000n; // 30 USDC
+      interestRate = 1750n; // 1.75%
       loanPeriod = 7776000n; // 90 days
     } else if (tierIdNumber === 3) {
-      loanAmount = 30n * 1000000n; // 5 USDC
-      interestRate = 1750n; // 1.5%
+      loanAmount = 30n * 1000000n; // 30 USDC
+      interestRate = 1750n; // 1.75%
       loanPeriod = 7776000n; // 90 days
     }
 
@@ -60,23 +63,23 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
       1: {
         tierId: 1n,
         loanAmount: 1000000n, // 1 USDC
-        interestRate: 250n, // 2%
+        interestRate: 250n, // 2.5%
         loanPeriod: 2592000n, // 30 days
         verificationStatus: {
-          level: "DEVICE",
-          verification_level: "device",
-          description: "Device Verified Tier"
+          level: isDemoMode ? "BASIC" : "DEVICE",
+          verification_level: isDemoMode ? "basic" : "device",
+          description: isDemoMode ? "Basic Verified Tier" : "Device Verified Tier"
         }
       },
       2: {
         tierId: 2n,
         loanAmount: 30000000n, // 30 USDC
-        interestRate: 1750n, // 1%
-        loanPeriod: 7776000n, // 30 days
+        interestRate: 1750n, // 1.75%
+        loanPeriod: 7776000n, // 90 days
         verificationStatus: {
-          level: "ORB",
-          verification_level: "orb",
-          description: "Orb Verified Tier"
+          level: isDemoMode ? "ADVANCED" : "ORB",
+          verification_level: isDemoMode ? "advanced" : "orb",
+          description: isDemoMode ? "Advanced Verified Tier" : "Orb Verified Tier"
         }
       }
     }
@@ -93,7 +96,7 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
 
 // Demo version of useRequestLoan hook
 export function useDemoRequestLoan() {
-  const { requestLoan, isLoading } = useDemoData(); // requestLoan now exists
+  const { requestLoan, isLoading } = useDemoData();
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -139,7 +142,7 @@ export function useDemoRequestLoan() {
 
 // Demo version of useRepayLoan hook
 export function useDemoRepayLoan() {
-  const { repayLoan, isLoading } = useDemoData(); // repayLoan now exists
+  const { repayLoan, isLoading } = useDemoData();
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -191,7 +194,7 @@ export function useDemoRepayLoan() {
 
 // Demo version of useUSDCBalance hook
 export function useDemoUSDCBalance() {
-  const { demoData, isLoading, refreshBalance } = useDemoData(); // refreshBalance now exists
+  const { demoData, isLoading, refreshBalance } = useDemoData();
   
   return {
     usdcBalance: demoData.usdcBalance,

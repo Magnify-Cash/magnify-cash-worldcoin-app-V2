@@ -115,6 +115,7 @@ function App() {
   useEffect(() => {
     // Initialize mock user data when in demo mode
     if (isDemoMode) {
+      console.log("App: Initializing mock user data for demo mode");
       initializeMockUserData();
     }
   }, []);

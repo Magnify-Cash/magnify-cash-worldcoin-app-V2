@@ -66,9 +66,9 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
         interestRate: 250n, // 2.5%
         loanPeriod: 2592000n, // 30 days
         verificationStatus: {
-          level: isDemoMode ? "BASIC" : "DEVICE",
-          verification_level: isDemoMode ? "basic" : "device",
-          description: isDemoMode ? "Basic Verified Tier" : "Device Verified Tier"
+          level: "BASIC",
+          verification_level: "basic",
+          description: "Basic Verified Tier"
         }
       },
       2: {
@@ -77,9 +77,9 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
         interestRate: 1750n, // 1.75%
         loanPeriod: 7776000n, // 90 days
         verificationStatus: {
-          level: isDemoMode ? "ADVANCED" : "ORB",
-          verification_level: isDemoMode ? "advanced" : "orb",
-          description: isDemoMode ? "Advanced Verified Tier" : "Orb Verified Tier"
+          level: "ADVANCED",
+          verification_level: "advanced",
+          description: "Advanced Verified Tier"
         }
       }
     }

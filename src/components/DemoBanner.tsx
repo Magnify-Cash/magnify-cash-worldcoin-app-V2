@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 /**
  * A banner component that informs users they are using a demo version
- * without actual World ID authentication or World Wallet.
+ * without actual authentication or blockchain transactions.
  */
 const DemoBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
@@ -15,7 +15,7 @@ const DemoBanner: React.FC = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex-1">
           <p className="text-sm font-medium">
-            <span className="font-bold">Demo Mode:</span> You're using a standalone demo with simulated verification and loans. No World App or blockchain transactions required.
+            <span className="font-bold">Demo Mode:</span> You're using a standalone demo with simulated verification and loans. No authentication or blockchain transactions required.
           </p>
         </div>
         <button 

@@ -4,6 +4,9 @@
  * This allows the demo to work without requiring World App or any real blockchain interaction
  */
 
+// Check if demo mode is enabled via environment variable
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
+
 /**
  * Mock function to simulate verifying identity
  */
@@ -14,7 +17,7 @@ export const verifyWorldId = async () => {
   return {
     success: true,
     verified: true,
-    message: "Demo verification successful"
+    message: isDemoMode ? "Demo verification successful" : "World ID verification successful"
   };
 };
 
@@ -59,7 +62,7 @@ export const requestLoan = async (amount: number) => {
     success: true,
     loanId: newLoan.id,
     amount: amount,
-    message: "Demo loan approved successfully"
+    message: isDemoMode ? "Demo loan approved successfully" : "Loan approved successfully"
   };
 };
 
@@ -105,6 +108,6 @@ export const repayLoan = async (loanId: string, amount: number) => {
   
   return {
     success: true,
-    message: "Demo loan repaid successfully"
+    message: isDemoMode ? "Demo loan repaid successfully" : "Loan repaid successfully"
   };
 }; 

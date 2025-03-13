@@ -4,10 +4,16 @@
  * of the application.
  */
 
+// Check if demo mode is enabled via environment variable
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
+
 /**
  * Initializes mock user profile data in localStorage
  */
 export const initializeMockUserData = () => {
+  // Only initialize if in demo mode
+  if (!isDemoMode) return;
+
   // Set mock user profile data if not already present
   if (!localStorage.getItem("user_profile")) {
     localStorage.setItem("user_profile", JSON.stringify({
@@ -53,6 +59,7 @@ export const clearMockUserData = () => {
   localStorage.removeItem("wallet_balance");
   localStorage.removeItem("active_loans");
   localStorage.removeItem("transaction_history");
+  localStorage.removeItem("demoData");
   
   console.log("Mock user data cleared successfully");
 };

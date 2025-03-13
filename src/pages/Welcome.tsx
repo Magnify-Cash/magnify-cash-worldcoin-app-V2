@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useDemoData } from "@/providers/DemoDataProvider";
+import { initializeMockUserData } from "@/utils/mockUserData";
 
 // Check if demo mode is enabled via environment variable
 const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
@@ -11,39 +12,30 @@ const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
 const Welcome = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const { resetSession } = useDemoData();
-
-  // Reset session data when component mounts - run only once
-  useEffect(() => {
-    resetSession();
-  }, [resetSession]);
+  const { login } = useDemoData();
 
   const handleSignIn = async () => {
-    const wallet_address = localStorage.getItem("ls_wallet_address");
-    const username = localStorage.getItem("ls_username");
-    if (username && wallet_address) {
-      navigate("/wallet");
-      return;
-    }
-    
     try {
       setLoading(true);
-      console.log("Initiating wallet authentication...");
+      console.log("Initiating authentication...");
 
       if (isDemoMode) {
         // Demo mode - use mock authentication
         await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
-        localStorage.setItem("ls_wallet_address", "0xMockWalletAddress123456789");
-        localStorage.setItem("ls_username", "DemoUser");
-        toast.success("Successfully signed in!");
-        console.log("ADDRESS: 0xMockWalletAddress123456789");
-        console.log("USERNAME: DemoUser");
+        
+        // Initialize mock user data
+        initializeMockUserData();
+        
+        // Set the demo wallet address in the DemoDataProvider
+        login("0xMockWalletAddress123456789");
+        
+        toast.success("Successfully signed in to demo!");
         setLoading(false);
         navigate("/wallet");
         return;
       }
 
-      // Real authentication flow
+      // Real authentication flow for non-demo mode
       const nonce = crypto.randomUUID().replace(/-/g, "");
       if (!window.miniKit) {
         toast.error("World App not detected. Please open this in World App.");
@@ -58,10 +50,6 @@ const Welcome = () => {
         notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
       
-      // Log the finalPayload to see its actual structure
-      console.log("Authentication payload:", finalPayload);
-      
-      // Check if finalPayload exists and has an address property
       if (finalPayload && finalPayload.address) {
         const user = await window.miniKit.getUserByAddress(finalPayload.address);
         localStorage.setItem("ls_wallet_address", user.walletAddress);
@@ -107,7 +95,7 @@ const Welcome = () => {
 
           <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-12 max-w-[90%] sm:max-w-2xl mx-auto font-medium">
             {isDemoMode 
-              ? "This is a demo version with simulated verification and loans. Test loan features with no real transactions."
+              ? "This is a demo version with simulated verification and loans. Test all features with no real transactions."
               : "Get instant loans backed by your World ID. No collateral needed, just your verified digital presence."}
           </p>
 
@@ -135,7 +123,7 @@ const Welcome = () => {
             <Shield className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm font-medium">
               {isDemoMode 
-                ? "Simulated verification. No blockchain transactions."
+                ? "Demo environment with simulated verification and transactions."
                 : "Verified by World ID. Settled on World Chain. Powered by $MAG."}
             </span>
           </div>

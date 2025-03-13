@@ -1,5 +1,7 @@
 
 import { Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { initializeMockUserData } from "@/utils/mockUserData";
 
 // Check if demo mode is enabled via environment variable
 const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
@@ -9,20 +11,22 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  if (isDemoMode) {
-    // In demo mode, always set a mock wallet address and allow access
-    if (!localStorage.getItem("ls_wallet_address")) {
-      localStorage.setItem("ls_wallet_address", "0xMockWalletAddress123456789");
+  useEffect(() => {
+    if (isDemoMode) {
+      // In demo mode, ensure mock data is initialized
+      initializeMockUserData();
     }
-    return <>{children}</>;
-  } else {
-    // In normal mode, check for authorization
-    const isAuthorized = localStorage.getItem("ls_wallet_address");
-    if (!isAuthorized) {
-      return <Navigate to="/" replace />;
-    }
-    return <>{children}</>;
+  }, []);
+
+  // Check for authorization
+  const isAuthorized = localStorage.getItem("ls_wallet_address");
+  
+  if (!isAuthorized) {
+    return <Navigate to="/welcome" replace />;
   }
+  
+  // User is authorized, return children
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

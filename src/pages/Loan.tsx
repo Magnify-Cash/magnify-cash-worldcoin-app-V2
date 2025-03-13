@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield, Check, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -13,6 +13,8 @@ const Loan = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  // Track if user just completed a loan request in this session
+  const [justRequestedLoan, setJustRequestedLoan] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -46,6 +48,7 @@ const Loan = () => {
       setTransactionId(txId);
       setIsConfirmed(true);
       setIsProcessing(false);
+      setJustRequestedLoan(true);
 
       toast({
         title: "Loan Approved!",
@@ -79,7 +82,7 @@ const Loan = () => {
             Upgrade Now
           </Button>
         </div>
-      ) : hasLoan ? (
+      ) : hasLoan && !justRequestedLoan ? (
         <div className="p-6 space-y-6 text-center">
           <h2 className="text-2xl font-semibold">You already have an active loan</h2>
           <p>You currently have an active loan. Please repay it first.</p>
@@ -123,20 +126,20 @@ const Loan = () => {
               </div>
             )}
 
-          {isProcessing && (
-                  <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-                    <div className="flex justify-center">
-                      <div className="orbit-spinner">
-                        <div className="orbit"></div>
-                        <div className="orbit"></div>
-                        <div className="center"></div>
-                      </div>
-                    </div>
-                    <p className="text-white text-center max-w-md px-4 text-lg font-medium">
-                      Confirming transaction, please do not leave this page until confirmation is complete.
-                    </p>
+            {isProcessing && (
+              <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+                <div className="flex justify-center">
+                  <div className="orbit-spinner">
+                    <div className="orbit"></div>
+                    <div className="orbit"></div>
+                    <div className="center"></div>
                   </div>
-                )}
+                </div>
+                <p className="text-white text-center max-w-md px-4 text-lg font-medium">
+                  Confirming transaction, please do not leave this page until confirmation is complete.
+                </p>
+              </div>
+            )}
             
             {isConfirmed && (
               <div className="mt-4">
@@ -158,22 +161,6 @@ const Loan = () => {
           </div>
         </div>
       )}
-      
-      
-      {/* {isProcessing && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-          <div className="flex justify-center">
-            <div className="orbit-spinner">
-              <div className="orbit"></div>
-              <div className="orbit"></div>
-              <div className="center"></div>
-            </div>
-          </div>
-          <p className="text-white text-center max-w-md px-4 text-lg font-medium">
-            Confirming transaction, please do not leave this page until confirmation is complete.
-          </p>
-        </div>
-      )} */}
 
       <LoanDrawer 
         open={isDrawerOpen}

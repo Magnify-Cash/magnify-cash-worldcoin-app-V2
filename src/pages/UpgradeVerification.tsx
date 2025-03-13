@@ -17,7 +17,7 @@ const UpgradeVerification = () => {
 
   const verificationLevels = {
     device: {
-      tierId: "3",
+      tierId: "1",
       level: "Device",
       icon: Shield,
       action: "mint-device-verified-nft",
@@ -25,7 +25,7 @@ const UpgradeVerification = () => {
       verification_level: VerificationLevel.Device,
     },
     orb: {
-      tierId: "3",
+      tierId: "2",
       level: "Orb Scan",
       icon: Globe,
       action: "mint-orb-verified-nft",

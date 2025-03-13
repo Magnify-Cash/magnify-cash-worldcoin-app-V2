@@ -54,8 +54,8 @@ const RepayLoan = () => {
           
           // After successful repayment, update UI and navigate
           setTimeout(() => {
-            refetch();
-            navigate("/wallet");
+            //refetch();
+            //navigate("/wallet");
           }, 3000);
         } else {
           toast({
@@ -238,7 +238,7 @@ const RepayLoan = () => {
               {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
             </Button>
 
-            {isClicked && (
+            {isConfirming && (
           <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
             <div className="flex justify-center">
               <div className="orbit-spinner">
@@ -250,11 +250,6 @@ const RepayLoan = () => {
             <p className="text-white text-center max-w-md px-4 text-lg font-medium mt-4">
               Confirming transaction, please do not leave this page until confirmation is complete.
             </p>
-            {transactionId && (
-              <p className="text-white text-center text-sm mt-2">
-                Transaction ID: {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-              </p>
-            )}
           </div>
         )}
             

@@ -29,6 +29,15 @@ const RepayLoan = () => {
   // Determine if the user has an active loan - handle both string and object types
   const hasLoan = loanData && typeof loanData !== 'string' ? loanData.isActive : false;
   
+
+  console.log("loanData", loanData);
+  console.log("hasLoan", hasLoan);
+  console.log("data", data);
+  
+  if (typeof loanData !== 'string') {
+    console.log(loanData.amount);
+  }
+
   // Calculate loan amount due with interest (2% of the loan amount)
   const loanAmountDue = loanData && typeof loanData !== 'string' 
     ? loanData.amount + (loanData.amount * 2n) / 100n

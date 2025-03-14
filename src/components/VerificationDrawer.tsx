@@ -10,10 +10,11 @@ interface VerificationDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onVerified: () => void;
+  onClose: () => void;  // Add new callback for when drawer closes
   tier: string;
 }
 
-export function VerificationDrawer({ open, onOpenChange, onVerified, tier }: VerificationDrawerProps) {
+export function VerificationDrawer({ open, onOpenChange, onVerified, onClose, tier }: VerificationDrawerProps) {
   const [verificationState, setVerificationState] = useState<VerificationState>('initial');
   
   // Reset state when drawer opens
@@ -41,11 +42,21 @@ export function VerificationDrawer({ open, onOpenChange, onVerified, tier }: Ver
   // Create a wrapper function for close button to ensure state gets reset
   const handleClose = () => {
     setVerificationState('initial');
+    onClose(); // Call the parent's onClose callback
     onOpenChange(false);
   };
 
+  // Create a wrapper for drawer's onOpenChange to catch when it's closed by other means
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setVerificationState('initial');
+      onClose(); // Call the parent's onClose callback
+    }
+    onOpenChange(open);
+  };
+
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerContent className="max-h-[85vh] rounded-t-[30px]">
         <div className="mx-auto w-full max-w-sm">
           {/* Header layout with Transaction Request on left and X button on right */}

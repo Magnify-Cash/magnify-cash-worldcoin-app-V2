@@ -124,6 +124,12 @@ const UpgradeVerification = () => {
     setTimeout(() => navigate("/loan"), 1500);
   };
 
+  // Function to handle drawer close
+  const handleDrawerClose = () => {
+    setVerifying(false);
+    setCurrentTier(null);
+  };
+
   // Use demoData to check verification status
   const isDeviceVerified = demoData.isDeviceVerified;
   const isOrbVerified = demoData.isOrbVerified;
@@ -190,6 +196,7 @@ const UpgradeVerification = () => {
         open={isDrawerOpen} 
         onOpenChange={setIsDrawerOpen} 
         onVerified={handleVerified}
+        onClose={handleDrawerClose}
         tier={selectedTier}
       />
     </div>

@@ -58,6 +58,9 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
+				},
+				greenCustomDemo: {
+					DEFAULT: '#187C19',
 				}
 			},
 			borderRadius: {

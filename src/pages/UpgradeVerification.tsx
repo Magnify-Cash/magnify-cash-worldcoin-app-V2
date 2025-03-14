@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { MiniKit, VerifyCommandInput, VerificationLevel } from "@worldcoin/minikit-js";
 import { useNavigate } from "react-router-dom";
@@ -61,11 +60,13 @@ const UpgradeVerification = () => {
         if (finalPayload.status === "error") {
           console.error("Verification failed:", finalPayload);
 
-          let errorMessage = "Something went wrong. Please try again.";
           if (finalPayload.error_code === "credential_unavailable") {
-            errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
+            setSelectedTier(tier.level as "Device" | "Orb Scan");
+            setIsDrawerOpen(true);
+            return;
           }
 
+          let errorMessage = "Something went wrong. Please try again.";
           toast({
             title: "Verification Failed",
             description: errorMessage,
@@ -73,6 +74,7 @@ const UpgradeVerification = () => {
           });
 
           setVerifying(false);
+          setCurrentTier(null);
           return;
         }
 
@@ -94,13 +96,20 @@ const UpgradeVerification = () => {
       } catch (error) {
         console.error("Error during verification:", error);
 
+        const errorString = String(error);
+        if (errorString.includes("credential_unavailable")) {
+          setSelectedTier(tier.level as "Device" | "Orb Scan");
+          setIsDrawerOpen(true);
+          return;
+        }
+
         toast({
           title: "Verification Failed",
           description: "Something went wrong while verifying. Please try again.",
           variant: "destructive",
         });
-      } finally {
         setVerifying(false);
+        setCurrentTier(null);
       }
     }
   };

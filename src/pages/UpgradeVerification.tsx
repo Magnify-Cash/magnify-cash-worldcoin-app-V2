@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { MiniKit, VerifyCommandInput, VerificationLevel } from "@worldcoin/minikit-js";
 import { useNavigate } from "react-router-dom";
 import { Shield, Globe } from "lucide-react";
 import { motion } from "framer-motion";
@@ -11,6 +11,7 @@ import { VerificationDrawer } from "@/components/VerificationDrawer";
 
 const UpgradeVerification = () => {
   const navigate = useNavigate();
+  const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { demoData, updateVerificationStatus } = useDemoData();
   const [currentTier, setCurrentTier] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
@@ -22,20 +23,95 @@ const UpgradeVerification = () => {
       tierId: "1",
       level: "Device",
       icon: Shield,
+      action: "mint-device-verified-nft",
+      upgradeAction: "upgrade-device-verified-nft",
+      verification_level: VerificationLevel.Device,
     },
     orb: {
       tierId: "2",
       level: "Orb Scan",
       icon: Globe,
+      action: "mint-orb-verified-nft",
+      upgradeAction: "upgrade-orb-verified-nft",
+      verification_level: VerificationLevel.Orb,
     },
   };
 
   // Handle verification process
-  const handleVerify = (tier: typeof verificationLevels.device | typeof verificationLevels.orb) => {
-    setVerifying(true);
-    setCurrentTier(tier.tierId);
-    setSelectedTier(tier.level as "Device" | "Orb Scan");
-    setIsDrawerOpen(true);
+  const handleVerify = async (tier: typeof verificationLevels.device | typeof verificationLevels.orb) => {
+    if (!MiniKit.isInstalled()) {
+      setVerifying(true);
+      setCurrentTier(tier.tierId);
+      setSelectedTier(tier.level as "Device" | "Orb Scan");
+      setIsDrawerOpen(true);
+    } else {
+      setVerifying(true);
+      setCurrentTier(tier.tierId);
+
+      const verifyPayload: VerifyCommandInput = {
+        action: tier.action || tier.upgradeAction,
+        signal: ls_wallet,
+        verification_level: tier.verification_level,
+      };
+
+      try {
+        const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+
+        if (finalPayload.status === "error") {
+          console.error("Verification failed:", finalPayload);
+
+          if (finalPayload.error_code === "credential_unavailable") {
+            setSelectedTier(tier.level as "Device" | "Orb Scan");
+            setIsDrawerOpen(true);
+            return;
+          }
+
+          let errorMessage = "Something went wrong. Please try again.";
+          toast({
+            title: "Verification Failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+
+          setVerifying(false);
+          setCurrentTier(null);
+          return;
+        }
+
+        if (tier.level === "Device") {
+          updateVerificationStatus("DEVICE");
+          toast({
+            title: "Verification Successful",
+            description: "You are now Device Verified.",
+          });
+        } else if (tier.level === "Orb Scan") {
+          updateVerificationStatus("ORB");
+          toast({
+            title: "Verification Successful",
+            description: "You are now Orb Verified.",
+          });
+        }
+
+        setTimeout(() => navigate("/loan"), 1500);
+      } catch (error) {
+        console.error("Error during verification:", error);
+
+        const errorString = String(error);
+        if (errorString.includes("credential_unavailable")) {
+          setSelectedTier(tier.level as "Device" | "Orb Scan");
+          setIsDrawerOpen(true);
+          return;
+        }
+
+        toast({
+          title: "Verification Failed",
+          description: "Something went wrong while verifying. Please try again.",
+          variant: "destructive",
+        });
+        setVerifying(false);
+        setCurrentTier(null);
+      }
+    }
   };
 
   const handleVerified = () => {

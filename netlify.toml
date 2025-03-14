@@ -20,3 +20,9 @@
   VITE_BACKEND_URL = "https://dev-magnify-cash-worldid-backend.kevin8396.workers.dev"
   VITE_ENVIRONMENT = "development"
   VITE_MAGNIFY_WORLD_ADDRESS = "0xF3b2F1Bdb5f622CB08171707673252C222734Ca3"
+
+  [context.jay_test.environment]
+  VITE_WORLDCOIN_CLIENT_ID = "app_92f4dea4413d81cacb42e1bec8e3aac2"
+  VITE_BACKEND_URL = "https://dev-magnify-cash-worldid-backend.kevin8396.workers.dev"
+  VITE_ENVIRONMENT = "jay_test"
+  VITE_MAGNIFY_WORLD_ADDRESS = "0xF3b2F1Bdb5f622CB08171707673252C222734Ca3"

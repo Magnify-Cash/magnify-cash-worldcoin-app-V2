@@ -95,8 +95,8 @@ export function VerificationDrawer({ open, onOpenChange, onVerified, onClose, ti
               className={cn(
                 "w-full h-16 text-lg mb-2",
                 verificationState === 'initial' && 'bg-black hover:bg-black/90 text-white',
-                verificationState === 'verifying' && 'text-black',
-                verificationState === 'verified' && 'text-[#2E7D32]'
+                verificationState === 'verifying' && 'bg-transparent text-black',
+                verificationState === 'verified' && 'bg-transparent text-[#2E7D32]'
               )}
             >
               {verificationState === 'initial' && 'Verify'}

@@ -8,12 +8,14 @@ export const LoanCard = ({
   title,
   amount,
   interest,
+  origination,
   duration,
   icon = "world",
 }: {
   title: string;
   amount: string;
   interest: string;
+  origination: string;
   duration: string;
   icon?: IconType;
 }) => {
@@ -52,6 +54,10 @@ export const LoanCard = ({
         <p className="text-gray-600 flex items-center justify-between">
           <span>Interest Rate:</span>
           <span className="font-medium">{interest}</span>
+        </p>
+        <p className="text-gray-600 flex items-center justify-between">
+          <span>Origination Fee:</span>
+          <span className="font-medium">{origination}</span>
         </p>
         <p className="text-gray-600 flex items-center justify-between">
           <span>Duration:</span>

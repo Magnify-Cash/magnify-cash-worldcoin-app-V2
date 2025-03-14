@@ -164,7 +164,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   const requestLoan = async (tierId: number): Promise<string> => {
     setIsLoading(true);
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
-    const loanAmount = tierId === 2 ? 10 : 1;
+    const loanAmount = tierId === 2 ? 30 : 1;
 
     // Introduce a delay to simulate network request
     await new Promise(resolve => setTimeout(resolve, 1000));

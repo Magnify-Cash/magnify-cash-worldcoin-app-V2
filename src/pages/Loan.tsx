@@ -28,7 +28,7 @@ const Loan = () => {
   const isOrbTier = isOrbVerified && !isDeviceVerified;
 
   // Determine loan amount and duration based on verification level
-  const loanAmount = isOrbVerified ? 10 : 1;
+  const loanAmount = isOrbVerified ? 30 : 1;
   const loanDuration = isOrbVerified ? 90 : 30;
 
   // Handle loan application

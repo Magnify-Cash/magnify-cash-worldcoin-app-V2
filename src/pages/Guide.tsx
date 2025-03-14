@@ -41,21 +41,16 @@ const Guide = () => {
                 <LoanCard
                   title="DEVICE"
                   amount="$1"
-                  interest="2%"
+                  interest="17.5%"
+                  origination="10.0%"
                   duration="30 days"
                   icon="world"
                 />
                 <LoanCard
-                  title="PASSPORT (Coming Soon)"
-                  amount="$5"
-                  interest="2%"
-                  duration="60 days"
-                  icon="passport"
-                />
-                <LoanCard
                   title="ORB"
-                  amount="$10"
-                  interest="1%"
+                  amount="$30"
+                  interest="17.5%"
+                  origination="10.0%"
                   duration="90 days"
                   icon="orb"
                 />

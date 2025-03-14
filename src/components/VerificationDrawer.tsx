@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from "react";
-import { X, Loader, Check } from "lucide-react";
+import { X, LoaderCircle, Check } from "lucide-react";
 import { Drawer, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/utils/tailwind";
 
 type VerificationState = 'initial' | 'verifying' | 'verified';
 
@@ -10,7 +11,7 @@ interface VerificationDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onVerified: () => void;
-  onClose: () => void;  // Add new callback for when drawer closes
+  onClose: () => void;
   tier: string;
 }
 
@@ -27,16 +28,16 @@ export function VerificationDrawer({ open, onOpenChange, onVerified, onClose, ti
   const handleVerify = () => {
     setVerificationState('verifying');
     
-    // Simulate verification process with a 1 second delay
+    // Updated timing: verifying for 1500ms
     setTimeout(() => {
       setVerificationState('verified');
       
-      // Close the drawer after 500ms when verified
+      // Updated timing: verified for 1200ms
       setTimeout(() => {
         onVerified();
         onOpenChange(false);
-      }, 500);
-    }, 1000);
+      }, 1200);
+    }, 1500);
   };
 
   // Create a wrapper function for close button to ensure state gets reset
@@ -91,23 +92,26 @@ export function VerificationDrawer({ open, onOpenChange, onVerified, onClose, ti
             <Button 
               onClick={handleVerify}
               disabled={verificationState !== 'initial'}
-              className={`w-full h-16 text-lg mb-2 ${
+              className={cn(
+                "w-full h-16 text-lg mb-2",
                 verificationState === 'initial' 
                   ? 'bg-black hover:bg-black/90 text-white' 
-                  : 'bg-transparent hover:bg-transparent text-black'
-              }`}
+                  : 'bg-transparent hover:bg-transparent'
+              )}
             >
               {verificationState === 'initial' && 'Verify'}
               {verificationState === 'verifying' && (
                 <>
-                  <Loader className="h-5 w-5 mr-2 animate-spin" />
+                  <LoaderCircle className="h-5 w-5 mr-2 animate-spin" />
                   Verifying
                 </>
               )}
               {verificationState === 'verified' && (
                 <>
-                  <Check className="h-5 w-5 mr-2 text-green-500" />
-                  Verified
+                  <div className="h-5 w-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
+                    <Check className="h-4 w-4 text-white" />
+                  </div>
+                  <span className="text-green-500 font-medium">Verified</span>
                 </>
               )}
             </Button>

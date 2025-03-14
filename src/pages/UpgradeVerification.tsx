@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MiniKit, VerifyCommandInput, VerificationLevel } from "@worldcoin/minikit-js";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { toast } from "@/hooks/use-toast";
 import { useDemoData } from "@/providers/DemoDataProvider";
+import { VerificationDrawer } from "@/components/VerificationDrawer";
 
 const UpgradeVerification = () => {
   const navigate = useNavigate();
@@ -14,6 +16,8 @@ const UpgradeVerification = () => {
   const { demoData, updateVerificationStatus } = useDemoData();
   const [currentTier, setCurrentTier] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<"Device" | "Orb Scan">("Device");
 
   const verificationLevels = {
     device: {
@@ -37,13 +41,11 @@ const UpgradeVerification = () => {
   // Handle verification process
   const handleVerify = async (tier: typeof verificationLevels.device | typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {
-      setVerifying(true)
+      setVerifying(true);
       setCurrentTier(tier.tierId);
-
-      //open a demo verification drawer
-      
+      setSelectedTier(tier.level as "Device" | "Orb Scan");
+      setIsDrawerOpen(true);
     } else {
-
       setVerifying(true);
       setCurrentTier(tier.tierId);
 
@@ -101,6 +103,25 @@ const UpgradeVerification = () => {
         setVerifying(false);
       }
     }
+  };
+
+  const handleVerified = () => {
+    if (selectedTier === "Device") {
+      updateVerificationStatus("DEVICE");
+      toast({
+        title: "Verification Successful",
+        description: "You are now Device Verified.",
+      });
+    } else if (selectedTier === "Orb Scan") {
+      updateVerificationStatus("ORB");
+      toast({
+        title: "Verification Successful",
+        description: "You are now Orb Verified.",
+      });
+    }
+    
+    setVerifying(false);
+    setTimeout(() => navigate("/loan"), 1500);
   };
 
   // Use demoData to check verification status
@@ -163,6 +184,14 @@ const UpgradeVerification = () => {
           })}
         </div>
       </div>
+
+      {/* Verification Drawer */}
+      <VerificationDrawer 
+        open={isDrawerOpen} 
+        onOpenChange={setIsDrawerOpen} 
+        onVerified={handleVerified}
+        tier={selectedTier}
+      />
     </div>
   );
 };

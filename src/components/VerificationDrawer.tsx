@@ -38,6 +38,12 @@ export function VerificationDrawer({ open, onOpenChange, onVerified, tier }: Ver
     }, 1000);
   };
 
+  // Create a wrapper function for close button to ensure state gets reset
+  const handleClose = () => {
+    setVerificationState('initial');
+    onOpenChange(false);
+  };
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[85vh] rounded-t-[30px]">
@@ -46,7 +52,7 @@ export function VerificationDrawer({ open, onOpenChange, onVerified, tier }: Ver
           <div className="flex items-center justify-between px-4 pt-6 pb-2">
             <h2 className="text-2xl font-bold">Verification Request</h2>
             <button 
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
               className="rounded-full p-2 bg-[#F1F1F1] transition-colors hover:bg-gray-200 focus:outline-none"
               aria-label="Close"
             >

@@ -94,15 +94,15 @@ export function VerificationDrawer({ open, onOpenChange, onVerified, onClose, ti
               disabled={verificationState !== 'initial'}
               className={cn(
                 "w-full h-16 text-lg mb-2",
-                verificationState === 'initial' 
-                  ? 'bg-black hover:bg-black/90 text-white' 
-                  : 'bg-transparent hover:bg-transparent'
+                verificationState === 'initial' && 'bg-black hover:bg-black/90 text-white',
+                verificationState === 'verifying' && 'bg-[#F1F1F1] text-black hover:bg-[#F1F1F1]',
+                verificationState === 'verified' && 'bg-[#F2FCE2] text-green-500 hover:bg-[#F2FCE2]'
               )}
             >
               {verificationState === 'initial' && 'Verify'}
               {verificationState === 'verifying' && (
                 <>
-                  <LoaderCircle className="h-5 w-5 mr-2 animate-spin" />
+                  <LoaderCircle className="h-5 w-5 mr-2 animate-spin text-black" />
                   Verifying
                 </>
               )}
@@ -111,7 +111,7 @@ export function VerificationDrawer({ open, onOpenChange, onVerified, onClose, ti
                   <div className="h-5 w-5 mr-2 bg-green-500 rounded-full flex items-center justify-center">
                     <Check className="h-4 w-4 text-white" />
                   </div>
-                  <span className="text-green-500 font-medium">Verified</span>
+                  <span className="font-medium">Verified</span>
                 </>
               )}
             </Button>

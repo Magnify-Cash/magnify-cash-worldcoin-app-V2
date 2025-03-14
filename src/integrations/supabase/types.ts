@@ -140,6 +140,7 @@ export type Database = {
           message: string
           number_of_recipients: number
           path: string
+          sender: string | null
           title: string
         }
         Insert: {
@@ -149,6 +150,7 @@ export type Database = {
           message: string
           number_of_recipients: number
           path: string
+          sender?: string | null
           title: string
         }
         Update: {
@@ -158,6 +160,7 @@ export type Database = {
           message?: string
           number_of_recipients?: number
           path?: string
+          sender?: string | null
           title?: string
         }
         Relationships: []
@@ -243,6 +246,13 @@ export type Database = {
           role_to_check: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      insert_user_role: {
+        Args: {
+          user_id: number
+          role_id: number
+        }
+        Returns: string
       }
       is_admin: {
         Args: Record<PropertyKey, never>

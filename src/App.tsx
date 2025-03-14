@@ -6,7 +6,6 @@ import Profile from "@/pages/Profile";
 import Wallet from "@/pages/Wallet";
 import Loan from "@/pages/Loan";
 import RepayLoan from "@/pages/RepayLoan";
-import UpgradeVerification from "@/pages/UpgradeVerification";
 import Announcements from "@/pages/Announcements";
 import LoanHistory from "@/pages/LoanHistory";
 import ProtectedRoute from "@/pages/ProtectedPage";
@@ -87,14 +86,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/upgrade-verification"
-            element={
-              <ProtectedRoute>
-                <UpgradeVerification />
-              </ProtectedRoute>
-            }
-          />
+          {/* Removing UpgradeVerification route as it's now integrated into Profile */}
         </Routes>
       </Router>
       </USDCBalanceProvider>

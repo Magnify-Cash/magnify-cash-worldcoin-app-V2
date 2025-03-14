@@ -1,5 +1,5 @@
 
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Home, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -141,6 +141,7 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
               <DropdownMenuItem
                 className="min-h-[40px] focus:text-white focus-visible:text-white font-bold"
                 onClick={() => window.open("https://pitch.magnify.cash/", "_blank")} >
+                <DollarSign className="mr-2 h-4 w-4" />
                 INVEST NOW
               </DropdownMenuItem>
             </DropdownMenuContent>

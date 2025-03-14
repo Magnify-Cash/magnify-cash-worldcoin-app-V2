@@ -37,69 +37,69 @@ const UpgradeVerification = () => {
   // Handle verification process
   const handleVerify = async (tier: typeof verificationLevels.device | typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {
-      toast({
-        title: "Verification Failed",
-        description: "Please install World App to verify.",
-        variant: "destructive",
-      });
-      return;
-    }
+      setVerifying(true)
+      setCurrentTier(tier.tierId);
 
-    setVerifying(true);
-    setCurrentTier(tier.tierId);
+      //open a demo verification drawer
+      
+    } else {
 
-    const verifyPayload: VerifyCommandInput = {
-      action: tier.action || tier.upgradeAction,
-      signal: ls_wallet,
-      verification_level: tier.verification_level,
-    };
+      setVerifying(true);
+      setCurrentTier(tier.tierId);
 
-    try {
-      const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+      const verifyPayload: VerifyCommandInput = {
+        action: tier.action || tier.upgradeAction,
+        signal: ls_wallet,
+        verification_level: tier.verification_level,
+      };
 
-      if (finalPayload.status === "error") {
-        console.error("Verification failed:", finalPayload);
+      try {
+        const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
 
-        let errorMessage = "Something went wrong. Please try again.";
-        if (finalPayload.error_code === "credential_unavailable") {
-          errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
+        if (finalPayload.status === "error") {
+          console.error("Verification failed:", finalPayload);
+
+          let errorMessage = "Something went wrong. Please try again.";
+          if (finalPayload.error_code === "credential_unavailable") {
+            errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
+          }
+
+          toast({
+            title: "Verification Failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+
+          setVerifying(false);
+          return;
         }
+
+        if (tier.level === "Device") {
+          updateVerificationStatus("DEVICE");
+          toast({
+            title: "Verification Successful",
+            description: "You are now Device Verified.",
+          });
+        } else if (tier.level === "Orb Scan") {
+          updateVerificationStatus("ORB");
+          toast({
+            title: "Verification Successful",
+            description: "You are now Orb Verified.",
+          });
+        }
+
+        setTimeout(() => navigate("/loan"), 1500);
+      } catch (error) {
+        console.error("Error during verification:", error);
 
         toast({
           title: "Verification Failed",
-          description: errorMessage,
+          description: "Something went wrong while verifying. Please try again.",
           variant: "destructive",
         });
-
+      } finally {
         setVerifying(false);
-        return;
       }
-
-      if (tier.level === "Device") {
-        updateVerificationStatus("DEVICE");
-        toast({
-          title: "Verification Successful",
-          description: "You are now Device Verified.",
-        });
-      } else if (tier.level === "Orb Scan") {
-        updateVerificationStatus("ORB");
-        toast({
-          title: "Verification Successful",
-          description: "You are now Orb Verified.",
-        });
-      }
-
-      setTimeout(() => navigate("/loan"), 1500);
-    } catch (error) {
-      console.error("Error during verification:", error);
-
-      toast({
-        title: "Verification Failed",
-        description: "Something went wrong while verifying. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setVerifying(false);
     }
   };
 

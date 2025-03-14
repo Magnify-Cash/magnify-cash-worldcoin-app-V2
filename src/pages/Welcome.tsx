@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { useDemoData } from "@/providers/DemoDataProvider";
 
 const Welcome = () => {
@@ -24,37 +23,69 @@ const Welcome = () => {
       return;
     }
     try {
-      setLoading(true);
-      console.log("Initiating wallet authentication...");
-      const nonce = crypto.randomUUID().replace(/-/g, "");
-      const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
-        nonce,
-        statement: "Sign in to Magnify Cash to manage your loans.",
-        expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
-        notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
-      });
-      
-      // Log the finalPayload to see its actual structure
-      console.log("Authentication payload:", finalPayload);
-      
-      // Check if finalPayload exists and has an address property
-      if (finalPayload && finalPayload.address) {
-        const user = await MiniKit.getUserByAddress(finalPayload.address);
+      if (MiniKit.isInstalled()) {
+        setLoading(true);
+        console.log("Initiating wallet authentication...");
+        const nonce = crypto.randomUUID().replace(/-/g, "");
+        const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
+          nonce,
+          statement: "Sign in to Magnify Cash to manage your loans.",
+          expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
+          notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+        });
+
+        // Log the finalPayload to see its actual structure
+        console.log("Authentication payload:", finalPayload);
+
+        // Check if finalPayload exists and has an address property
+        if (finalPayload && finalPayload.address) {
+          const user = await MiniKit.getUserByAddress(finalPayload.address);
+          localStorage.setItem("ls_wallet_address", user.walletAddress);
+          localStorage.setItem("ls_username", user.username);
+          toast({
+            title: "Successfully signed in!",
+            description: "You are now authenticated.",
+            variant: "default",
+          });
+          console.log("ADDRESS:", user.walletAddress);
+          console.log("USERNAME:", user.username);
+          setLoading(false);
+          navigate("/wallet");
+        } else {
+          setLoading(false);
+          toast({
+            title: "Authentication Failed",
+            description: "Failed to retrieve wallet address.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setLoading(true);
+        console.log("Initiating DEMO wallet authentication...");
+        const user = {
+          walletAddress: `0x${crypto.getRandomValues(new Uint8Array(20)).reduce((acc, byte) => acc + byte.toString(16).padStart(2, "0"), "")}`,
+          username: `Demo_${Math.floor(Math.random() * 1000)}`,
+        };
         localStorage.setItem("ls_wallet_address", user.walletAddress);
         localStorage.setItem("ls_username", user.username);
-        toast.success("Successfully signed in!");
+        toast({
+          title: "Successfully signed in!",
+          description: "You are now authenticated.",
+          variant: "default",
+        });
         console.log("ADDRESS:", user.walletAddress);
         console.log("USERNAME:", user.username);
         setLoading(false);
         navigate("/wallet");
-      } else {
-        setLoading(false);
-        toast.error("Failed to retrieve wallet address.");
       }
     } catch (error) {
       setLoading(false);
       console.error("Authentication failed:", error);
-      toast.error("Failed to sign in. Please try again.");
+      toast({
+        title: "Authentication Failed",
+        description: "Failed to sign in. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

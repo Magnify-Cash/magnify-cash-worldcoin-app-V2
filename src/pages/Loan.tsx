@@ -89,7 +89,7 @@ const Loan = () => {
         <div className="p-6 space-y-6 text-center">
           <h2 className="text-2xl font-semibold">You Don't Have the Required NFT</h2>
           <p>To be eligible for a loan, you need to own a specific NFT. Please upgrade your account.</p>
-          <Button onClick={() => navigate("/profile")} className="w-full">
+          <Button onClick={() => navigate("/upgrade-verification")} className="w-full">
             Upgrade Now
           </Button>
         </div>

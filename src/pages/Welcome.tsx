@@ -1,9 +1,12 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MiniKit } from "@worldcoin/minikit-js";
+import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
+
+type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
+  address: string;
+};
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -27,12 +30,10 @@ const Welcome = () => {
         notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
 
-      console.log("---")
-      console.log(finalPayload)
-      console.log("---")
+      const extendedPayload = finalPayload as ExtendedWalletAuthPayload;
 
-      if (finalPayload && finalPayload.address) {
-        const user = await MiniKit.getUserByAddress(finalPayload.address);
+      if (extendedPayload && extendedPayload.address) {
+        const user = await MiniKit.getUserByAddress(extendedPayload.address);
         localStorage.setItem("ls_wallet_address", user.walletAddress);
         localStorage.setItem("ls_username", user.username);
         toast.success("Successfully signed in!");

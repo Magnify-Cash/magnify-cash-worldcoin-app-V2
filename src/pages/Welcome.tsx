@@ -25,6 +25,17 @@ const Welcome = () => {
         statement: "Sign in to Magnify Cash to manage your loans.",
         expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
         notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+        onClose: () => {
+          // Reset loading state when the drawer is closed
+          setLoading(false);
+          console.log("Wallet authentication drawer was closed by the user");
+        },
+        onError: (error) => {
+          // Handle any errors
+          setLoading(false);
+          console.error("Wallet authentication error:", error);
+          toast.error("Authentication failed. Please try again.");
+        }
       });
 
       console.log("---")

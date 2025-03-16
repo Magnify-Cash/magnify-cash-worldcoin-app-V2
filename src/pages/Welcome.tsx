@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit } from "@worldcoin/minikit-js";
@@ -25,8 +26,8 @@ const Welcome = () => {
         expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
         notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
-      if (finalPayload && finalPayload.address) {
-        const user = await MiniKit.getUserByAddress(finalPayload.address);
+      if (finalPayload && finalPayload.walletAddress) {
+        const user = await MiniKit.getUserByAddress(finalPayload.walletAddress);
         localStorage.setItem("ls_wallet_address", user.walletAddress);
         localStorage.setItem("ls_username", user.username);
         toast.success("Successfully signed in!");
@@ -43,6 +44,10 @@ const Welcome = () => {
       console.error("Authentication failed:", error);
       toast.error("Failed to sign in. Please try again.");
     }
+  };
+
+  const handleLenderSignUp = () => {
+    navigate("/lending");
   };
 
   return (
@@ -79,15 +84,15 @@ const Welcome = () => {
               onClick={handleSignIn}
               className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
             >
-              {loading ? "Connecting..." : "Start Your Journey"}
+              {loading ? "Connecting..." : "Get a Loan"}
               <ArrowRight className="w-5 h-5" />
             </button>
 
             <button
-              disabled
-              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 text-gray-600 cursor-not-allowed opacity-75 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
+              onClick={handleLenderSignUp}
+              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 bg-[#8B5CF6] text-white hover:bg-[#7E69AB] transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
             >
-              Become a Lender - Coming Soon
+              Become a Lender
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

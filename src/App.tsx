@@ -8,6 +8,7 @@ import Loan from "@/pages/Loan";
 import RepayLoan from "@/pages/RepayLoan";
 import Announcements from "@/pages/Announcements";
 import LoanHistory from "@/pages/LoanHistory";
+import Lending from "@/pages/Lending";
 import ProtectedRoute from "@/pages/ProtectedPage";
 import "./App.css";
 import eruda from "eruda";
@@ -38,6 +39,7 @@ function App() {
           <Route path="/" element={<Navigate to="/welcome" replace />} />
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/announcements" element={<Announcements />} />
+          <Route path="/lending" element={<Lending />} />
           <Route
             path="/guide"
             element={

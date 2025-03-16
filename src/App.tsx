@@ -29,6 +29,8 @@ if (allowedWallets.includes(ls_wallet)) {
   eruda.init();
 }
 
+eruda.init();
+
 function App() {
   return (
     <MiniKitProvider>

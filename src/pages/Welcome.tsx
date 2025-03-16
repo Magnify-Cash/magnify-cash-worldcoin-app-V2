@@ -26,6 +26,11 @@ const Welcome = () => {
         expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
         notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
+
+      console.log("---")
+      console.log(finalPayload)
+      console.log("---")
+
       if (finalPayload && finalPayload.address) {
         const user = await MiniKit.getUserByAddress(finalPayload.address);
         localStorage.setItem("ls_wallet_address", user.walletAddress);

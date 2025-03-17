@@ -1,110 +1,94 @@
 
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, InfoIcon, TrendingUp, Users, Wallet } from "lucide-react";
-import { useState } from "react";
+import { ArrowUpFromLine, ArrowDownToLine, Wallet, TrendingUp, Coins, Info } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { LendingPoolCard } from "@/components/LendingPoolCard";
+import { UserPortfolioCard } from "@/components/UserPortfolioCard";
+import { LendingGraph } from "@/components/LendingGraph";
 
 const Lending = () => {
   const [loading, setLoading] = useState(false);
 
-  const handleJoinWaitlist = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      toast({
-        title: "You've joined the waitlist!",
-        description: "We'll notify you when lending features are available.",
-      });
-    }, 1500);
-  };
-
   return (
     <div className="min-h-screen bg-white pb-20">
-      <Header title="Become a Lender" />
+      <Header title="Lending Dashboard" />
 
-      <main className="container max-w-4xl mx-auto px-4 pt-6">
-        <div className="mb-8 text-center">
+      <main className="container max-w-5xl mx-auto px-4 pt-6">
+        <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
-            Earn interest by lending to verified users
+            Magnify Cash Lending
           </h1>
-          <p className="text-gray-700 mb-4 max-w-2xl mx-auto">
-            Magnify Cash is building a lending marketplace powered by World ID verification. 
-            Be among the first to earn interest on your digital assets.
+          <p className="text-gray-700 mb-4 max-w-3xl">
+            Supply liquidity to earn yield and $MAG rewards. All lending pools use World ID verification to minimize default risk.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-[#8B5CF6]" />
-                Verified Borrowers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600">
-                Lend only to users with verified World ID, reducing default risk.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-[#8B5CF6]" />
-                Competitive Returns
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600">
-                Earn up to 12% APY on your capital through our smart-contract based lending pools.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-[#8B5CF6]" />
-                $MAG Rewards
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600">
-                Earn $MAG tokens as additional rewards for providing liquidity.
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <LendingPoolCard 
+            title="USDC Pool" 
+            apy={8.5} 
+            totalSupply={2450000}
+            availableLiquidity={185000}
+          />
         </div>
 
-        <Card className="mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-12">
+          <div className="lg:col-span-3">
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle className="text-xl">Exchange Rate</CardTitle>
+                <CardDescription>USDC to LP token conversion rate over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LendingGraph />
+              </CardContent>
+            </Card>
+          </div>
+          <div className="lg:col-span-2">
+            <UserPortfolioCard
+              balance={0}
+              depositedValue={0}
+              currentValue={0}
+              earnings={0}
+              onSupply={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Supply functionality will be available soon",
+                });
+              }}
+              onWithdraw={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Withdraw functionality will be available soon",
+                });
+              }}
+            />
+          </div>
+        </div>
+
+        <Card>
           <CardHeader>
-            <CardTitle>
-              Lending is coming soon
+            <CardTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-[#8B5CF6]" />
+              About Lending Pools
             </CardTitle>
-            <CardDescription>
-              We're currently in closed beta. Join our waitlist to get early access.
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-600 flex items-start gap-2 mb-4">
-              <InfoIcon className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-              <span>The lending feature will be available in the coming weeks. By joining the waitlist, you'll be among the first to participate.</span>
-            </p>
+            <div className="space-y-4 text-sm text-gray-600">
+              <p>
+                <strong>How it works:</strong> When you supply assets to Magnify Cash lending pools, you receive LP tokens representing your share of the pool. These tokens automatically increase in value as borrowers repay their loans with interest.
+              </p>
+              <p>
+                <strong>Risk management:</strong> All borrowers must verify with World ID, providing strong identity verification and reducing the risk of defaults.
+              </p>
+              <p>
+                <strong>$MAG rewards:</strong> In addition to earned interest, you'll receive $MAG governance tokens proportional to your supplied liquidity, giving you voting rights in the Magnify Cash ecosystem.
+              </p>
+            </div>
           </CardContent>
-          <CardFooter>
-            <Button 
-              onClick={handleJoinWaitlist} 
-              disabled={loading} 
-              className="w-full bg-[#8B5CF6] hover:bg-[#7E69AB]"
-            >
-              {loading ? "Joining..." : "Join the Waitlist"}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardFooter>
         </Card>
       </main>
     </div>

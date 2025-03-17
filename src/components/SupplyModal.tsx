@@ -95,7 +95,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
               <Button
                 type="button"
                 variant="ghost"
-                className="absolute right-1 top-1 h-6 px-2 text-xs"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
                 onClick={() => setAmount(walletBalance.toString())}
               >
                 MAX
@@ -104,7 +104,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
             
             {amount && (
               <div className="text-xs text-gray-500 mt-1">
-                You will receive approximately {calculateLPTokens()} LP tokens
+                You will receive {calculateLPTokens()} LP tokens
               </div>
             )}
             
@@ -134,15 +134,20 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
         </div>
         
         <DialogFooter className={isMobile ? "flex-col space-y-2" : ""}>
-          <Button variant="outline" onClick={onClose} disabled={isLoading} className="w-full sm:w-auto">
-            Cancel
-          </Button>
           <Button 
             onClick={handleSupply} 
             disabled={!amount || !isAmountValid() || isLoading}
             className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full sm:w-auto"
           >
             {isLoading ? "Processing..." : "Supply"}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={onClose} 
+            disabled={isLoading} 
+            className="w-full sm:w-auto mt-2 sm:mt-0"
+          >
+            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>

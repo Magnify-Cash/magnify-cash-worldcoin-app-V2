@@ -26,8 +26,18 @@ const Dashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+          className="glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 relative"
         >
+          {isVerified && (
+            <div className="absolute top-4 right-4">
+              <div className="flex items-center bg-background/50 rounded-full px-3 py-1 shadow-sm">
+                <span className="text-sm font-medium mr-1">Credit Score:</span>
+                <span className={`text-sm font-bold ${creditScore <= 3 ? 'text-red-500' : creditScore <= 6 ? 'text-amber-500' : 'text-green-500'}`}>
+                  {creditScore}
+                </span>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-center mb-6">
             <User className="w-16 h-16 text-primary" />
           </div>

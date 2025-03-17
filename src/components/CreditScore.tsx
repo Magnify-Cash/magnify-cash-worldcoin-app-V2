@@ -29,12 +29,15 @@ const CreditScore: React.FC<CreditScoreProps> = ({ score, className }) => {
 
   return (
     <div className={cn("glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300", className)}>
+      <div className="flex items-center justify-center mb-4">
+        <Star className="w-16 h-16 text-primary" />
+      </div>
+      
       <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Credit Score</h2>
       
       <div className="flex items-center justify-center mb-6">
         <div className="relative w-28 h-28 rounded-full flex items-center justify-center bg-background/50">
-          <Star className="w-16 h-16 text-primary" />
-          <span className={cn("absolute text-3xl font-bold", getScoreColor(score))}>
+          <span className={cn("text-3xl font-bold", getScoreColor(score))}>
             {score}
           </span>
         </div>

@@ -64,7 +64,7 @@ export function LendingPoolCard({
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
               <Wallet className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">Total</span>
+              <span className="truncate">Supply</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="inline-flex">
@@ -83,7 +83,7 @@ export function LendingPoolCard({
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
               <Coins className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">Available</span>
+              <span className="truncate">Liquidity</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="inline-flex">

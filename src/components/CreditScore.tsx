@@ -31,8 +31,8 @@ const CreditScore: React.FC<CreditScoreProps> = ({ score, className }) => {
       <div className="space-y-4">
         <Progress 
           value={progressPercentage} 
-          className="h-2 bg-secondary" 
-          indicatorClassName="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75]" 
+          className="h-2 bg-purple-100 dark:bg-purple-950/30" 
+          indicatorClassName="bg-gradient-to-r from-[#9b87f5] via-[#7E69AB] to-[#6E59A5]" 
         />
         <div className="text-center">
           <span className={cn("text-3xl font-bold", getScoreColor(score))}>

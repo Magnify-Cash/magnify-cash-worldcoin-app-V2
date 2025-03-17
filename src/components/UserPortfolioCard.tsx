@@ -59,7 +59,7 @@ export function UserPortfolioCard({
             <div className="pt-2">
               <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-gradient-to-r from-[#8B5CF6] to-[#6E59A5] rounded-full" 
+                  className="h-full bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] rounded-full" 
                   style={{ width: `${(earnings/depositedValue*100).toFixed(1)}%` }}
                 />
               </div>
@@ -78,7 +78,7 @@ export function UserPortfolioCard({
       <CardFooter className={`flex gap-2 ${isMobile ? "px-3 py-3" : ""}`}>
         <Button 
           onClick={onSupply} 
-          className="flex-1 bg-gradient-to-r from-[#8B5CF6] to-[#6E59A5] hover:opacity-90 text-xs sm:text-sm py-1.5 sm:py-2 border-0"
+          className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 text-xs sm:text-sm py-1.5 sm:py-2 border-0"
         >
           <ArrowUpFromLine className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
           Supply

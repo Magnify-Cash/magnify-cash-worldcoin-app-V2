@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpFromLine, ArrowDownToLine, Wallet, TrendingUp, Coins, Info } from "lucide-react";
+import { ArrowUpFromLine, ArrowDownToLine, Wallet, TrendingUp, Coins, Info, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { LendingPoolCard } from "@/components/LendingPoolCard";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const Lending = () => {
   const [loading, setLoading] = useState(false);
+  const [showDummyData, setShowDummyData] = useState(true);
   const isMobile = useIsMobile();
 
   return (
@@ -20,9 +21,20 @@ const Lending = () => {
 
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
-            Magnify Cash Lending
-          </h1>
+          <div className="flex justify-between items-center mb-2 sm:mb-4">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
+              Magnify Cash Lending
+            </h1>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowDummyData(!showDummyData)}
+              className="flex items-center gap-1.5 text-xs"
+            >
+              {showDummyData ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              {showDummyData ? "Hide Demo Data" : "Show Demo Data"}
+            </Button>
+          </div>
           <p className="text-sm sm:text-base text-gray-700 mb-4 max-w-3xl">
             Supply liquidity to earn yield and $MAG rewards. All lending pools use World ID verification to minimize default risk.
           </p>
@@ -37,26 +49,47 @@ const Lending = () => {
           />
         </div>
 
-        {/* User Portfolio Card - Moved above Exchange Rate graph */}
+        {/* User Portfolio Card */}
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <UserPortfolioCard
-            balance={1250.75}
-            depositedValue={1200}
-            currentValue={1250.75}
-            earnings={50.75}
-            onSupply={() => {
-              toast({
-                title: "Coming Soon",
-                description: "Supply functionality will be available soon",
-              });
-            }}
-            onWithdraw={() => {
-              toast({
-                title: "Coming Soon",
-                description: "Withdraw functionality will be available soon",
-              });
-            }}
-          />
+          {showDummyData ? (
+            <UserPortfolioCard
+              balance={1250.75}
+              depositedValue={1200}
+              currentValue={1250.75}
+              earnings={50.75}
+              onSupply={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Supply functionality will be available soon",
+                });
+              }}
+              onWithdraw={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Withdraw functionality will be available soon",
+                });
+              }}
+            />
+          ) : (
+            <UserPortfolioCard
+              balance={0}
+              depositedValue={0}
+              currentValue={0}
+              earnings={0}
+              onSupply={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Supply functionality will be available soon",
+                });
+              }}
+              onWithdraw={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Withdraw functionality will be available soon",
+                });
+              }}
+            />
+          )}
         </div>
 
         {/* Exchange Rate Graph */}

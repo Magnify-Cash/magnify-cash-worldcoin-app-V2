@@ -20,13 +20,6 @@ const CreditScore: React.FC<CreditScoreProps> = ({ score, className }) => {
     return 'text-green-500';
   };
 
-  // Determine the label based on the score
-  const getScoreLabel = (score: number): string => {
-    if (score <= 3) return 'Needs Improvement';
-    if (score <= 6) return 'Good';
-    return 'Excellent';
-  };
-
   return (
     <div className={cn("glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300", className)}>
       <div className="flex items-center justify-center mb-4">
@@ -35,16 +28,10 @@ const CreditScore: React.FC<CreditScoreProps> = ({ score, className }) => {
       
       <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Your Credit Score</h2>
       
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Rating</span>
-          <span className={cn("text-sm font-medium", getScoreColor(score))}>
-            {getScoreLabel(score)}
-          </span>
-        </div>
+      <div className="space-y-4">
         <Progress value={progressPercentage} className="h-2" />
-        <div className="text-center mt-2">
-          <span className={cn("text-lg font-semibold", getScoreColor(score))}>
+        <div className="text-center">
+          <span className={cn("text-3xl font-bold", getScoreColor(score))}>
             {score}
           </span>
         </div>

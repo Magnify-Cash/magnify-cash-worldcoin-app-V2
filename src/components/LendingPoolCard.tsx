@@ -59,8 +59,8 @@ export function LendingPoolCard({
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <div className="font-semibold text-base sm:text-lg text-[#8B5CF6] flex items-start">
-                <span>{apy}%</span>
+              <div className="font-semibold text-base sm:text-lg text-[#8B5CF6] flex items-center">
+                {apy}%
               </div>
             </div>
             <div className="space-y-1">
@@ -78,7 +78,7 @@ export function LendingPoolCard({
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <div className="font-semibold text-base sm:text-lg">
+              <div className="font-semibold text-base sm:text-lg flex items-center">
                 ${formatValue(totalSupply, '')}
               </div>
             </div>
@@ -97,7 +97,7 @@ export function LendingPoolCard({
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <div className="font-semibold text-base sm:text-lg">
+              <div className="font-semibold text-base sm:text-lg flex items-center">
                 ${formatValue(availableLiquidity, '')}
               </div>
             </div>

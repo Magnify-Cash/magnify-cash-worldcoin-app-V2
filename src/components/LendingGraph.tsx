@@ -37,21 +37,19 @@ export function LendingGraph() {
             domain={[1, 1.05]}
             tick={{ fontSize: isMobile ? 10 : 12 }}
             tickFormatter={(value) => {
-              // Ensure value is a number before calling toFixed
-              if (typeof value === 'number') {
-                return isMobile ? value.toFixed(2) : value.toFixed(3);
-              }
-              return value;
+              // Check if value is a number before calling toFixed
+              return typeof value === 'number' 
+                ? (isMobile ? value.toFixed(2) : value.toFixed(3))
+                : value;
             }}
             width={isMobile ? 30 : 40}
           />
           <Tooltip 
             formatter={(value) => {
-              // Ensure value is a number before calling toFixed
-              if (typeof value === 'number') {
-                return [value.toFixed(4), 'Exchange Rate'];
-              }
-              return [value, 'Exchange Rate'];
+              // Check if value is a number before calling toFixed
+              return typeof value === 'number'
+                ? [value.toFixed(4), 'Exchange Rate']
+                : [value, 'Exchange Rate'];
             }}
             labelFormatter={(label) => `${label} 2024`}
           />

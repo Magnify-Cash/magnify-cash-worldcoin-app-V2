@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowUpFromLine, ArrowDownToLine, Wallet, TrendingUp } from "lucide-react";
@@ -25,10 +24,9 @@ export function UserPortfolioCard({
   
   return (
     <Card className="h-full border-[#8B5CF6]/20 overflow-hidden">
-      <CardHeader className={`${isMobile ? "pb-1 pt-3 px-3" : "pb-2"} 
-        bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5`}>
-        <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-          <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-[#8B5CF6]" />
+      <CardHeader className={`pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5`}>
+        <CardTitle className="text-xl flex items-center gap-2">
+          <Wallet className="h-5 w-5 text-[#8B5CF6]" />
           Your Portfolio
         </CardTitle>
       </CardHeader>

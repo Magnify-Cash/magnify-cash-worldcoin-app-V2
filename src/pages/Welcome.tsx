@@ -10,7 +10,6 @@ const Welcome = () => {
   const [loading, setLoading] = useState(false);
   const { resetSession } = useDemoData();
 
-  // Reset session data when component mounts - run only once
   useEffect(() => {
     resetSession();
   }, [resetSession]);
@@ -34,12 +33,12 @@ const Welcome = () => {
           notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
         });
 
-        // Log the finalPayload to see its actual structure
         console.log("Authentication payload:", finalPayload);
 
-        // Check if finalPayload exists and has an address property
-        if (finalPayload && finalPayload.address) {
-          const user = await MiniKit.getUserByAddress(finalPayload.address);
+        const address = finalPayload && 'address' in finalPayload ? finalPayload.address : undefined;
+
+        if (address) {
+          const user = await MiniKit.getUserByAddress(address);
           localStorage.setItem("ls_wallet_address", user.walletAddress);
           localStorage.setItem("ls_username", user.username);
           toast({
@@ -91,7 +90,6 @@ const Welcome = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation - Mobile Optimized */}
       <nav className="px-3 sm:px-6 py-4 flex justify-between items-center border-b border-gray-100 safe-area-inset-top">
         <div className="flex items-center gap-2">
           <img
@@ -105,7 +103,6 @@ const Welcome = () => {
         </div>
       </nav>
 
-      {/* Hero Section - Mobile Optimized */}
       <div className="container mx-auto px-3 sm:px-6 pt-8 sm:pt-20 pb-12 sm:pb-24">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text animate-gradient leading-tight">
@@ -136,7 +133,6 @@ const Welcome = () => {
             </button>
           </div>
 
-          {/* Trust Badge - Mobile Optimized */}
           <div className="flex items-center justify-center gap-2 text-gray-600 px-3 sm:px-4 text-center">
             <Shield className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm font-medium">

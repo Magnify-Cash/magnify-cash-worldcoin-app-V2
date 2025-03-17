@@ -33,15 +33,7 @@ const CreditScore: React.FC<CreditScoreProps> = ({ score, className }) => {
         <Star className="w-16 h-16 text-primary" />
       </div>
       
-      <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Credit Score</h2>
-      
-      <div className="flex items-center justify-center mb-6">
-        <div className="relative w-28 h-28 rounded-full flex items-center justify-center bg-background/50">
-          <span className={cn("text-3xl font-bold", getScoreColor(score))}>
-            {score}
-          </span>
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Your Credit Score</h2>
       
       <div className="space-y-2">
         <div className="flex justify-between items-center">
@@ -51,10 +43,11 @@ const CreditScore: React.FC<CreditScoreProps> = ({ score, className }) => {
           </span>
         </div>
         <Progress value={progressPercentage} className="h-2" />
-      </div>
-      
-      <div className="text-sm text-muted-foreground text-center mt-4">
-        Repay more loans to improve your score
+        <div className="text-center mt-2">
+          <span className={cn("text-lg font-semibold", getScoreColor(score))}>
+            {score}
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -62,10 +62,13 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`sm:max-w-[425px] ${isMobile ? 'p-4 mx-4' : ''}`}>
+      <DialogContent 
+        className={`sm:max-w-[425px] mx-auto ${isMobile ? 'p-4 mx-4' : ''}`}
+        style={{ left: "50%", transform: "translate(-50%, -50%)" }}
+      >
         <DialogHeader>
-          <DialogTitle className="text-xl">Supply Assets</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl text-center">Supply Assets</DialogTitle>
+          <DialogDescription className="text-center">
             Provide liquidity to earn yield and $MAG rewards
           </DialogDescription>
         </DialogHeader>
@@ -91,11 +94,13 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
                 type="number"
                 step="0.01"
                 min="0"
+                autoFocus={false}
+                autoComplete="off"
               />
               <Button
                 type="button"
                 variant="ghost"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 px-2 text-xs"
                 onClick={() => setAmount(walletBalance.toString())}
               >
                 MAX

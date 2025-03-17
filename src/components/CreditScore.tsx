@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Star, Info } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
@@ -28,19 +28,13 @@ const CreditScore: React.FC<CreditScoreProps> = ({ score, className }) => {
   };
 
   return (
-    <div className={cn("p-6 space-y-4 rounded-2xl bg-white/80 shadow-md", className)}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Credit Score</h3>
-        <div className="text-xs text-muted-foreground cursor-pointer hover:text-primary transition-colors">
-          <Info size={16} className="inline mr-1" />
-          <span>How it works</span>
-        </div>
-      </div>
+    <div className={cn("glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300", className)}>
+      <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Credit Score</h2>
       
-      <div className="flex items-center justify-center">
-        <div className="relative w-28 h-28 rounded-full flex items-center justify-center bg-gray-100">
-          <Star className="absolute w-full h-full text-primary opacity-5" />
-          <span className={cn("text-3xl font-bold", getScoreColor(score))}>
+      <div className="flex items-center justify-center mb-6">
+        <div className="relative w-28 h-28 rounded-full flex items-center justify-center bg-background/50">
+          <Star className="w-16 h-16 text-primary" />
+          <span className={cn("absolute text-3xl font-bold", getScoreColor(score))}>
             {score}
           </span>
         </div>

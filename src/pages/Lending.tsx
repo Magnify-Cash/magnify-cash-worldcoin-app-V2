@@ -25,7 +25,13 @@ const Lending = () => {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
               Magnify Cash Lending
             </h1>
-            <Button 
+          </div>
+          <p className="text-sm sm:text-base text-gray-700 mb-4 max-w-3xl">
+            Supply liquidity to earn yield and $MAG rewards. All lending pools use World ID verification to minimize default risk.
+          </p>
+        </div>
+
+        <Button 
               variant="outline" 
               size="sm"
               onClick={() => setShowDummyData(!showDummyData)}
@@ -33,12 +39,7 @@ const Lending = () => {
             >
               {showDummyData ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               {showDummyData ? "Hide Demo Data" : "Show Demo Data"}
-            </Button>
-          </div>
-          <p className="text-sm sm:text-base text-gray-700 mb-4 max-w-3xl">
-            Supply liquidity to earn yield and $MAG rewards. All lending pools use World ID verification to minimize default risk.
-          </p>
-        </div>
+        </Button>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <LendingPoolCard 

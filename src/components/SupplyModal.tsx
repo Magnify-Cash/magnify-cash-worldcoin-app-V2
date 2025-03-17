@@ -63,17 +63,22 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className={`sm:max-w-[425px] mx-auto ${isMobile ? 'p-4 mx-4' : ''}`}
-        style={{ left: "50%", transform: "translate(-50%, -50%)" }}
+        className={`sm:max-w-[425px] mx-auto ${isMobile ? 'p-3 px-4' : ''}`}
+        style={{ 
+          left: "50%", 
+          transform: "translate(-50%, -50%)",
+          maxHeight: isMobile ? "90vh" : "auto",
+          overflowY: "auto"
+        }}
       >
-        <DialogHeader>
+        <DialogHeader className={isMobile ? "pb-2" : ""}>
           <DialogTitle className="text-xl text-center">Supply Assets</DialogTitle>
           <DialogDescription className="text-center">
             Provide liquidity to earn yield and $MAG rewards
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
+        <div className={`grid gap-3 py-2 ${isMobile ? 'py-2' : 'py-4'}`}>
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <label htmlFor="amount" className="text-sm font-medium">
@@ -122,9 +127,9 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
             )}
           </div>
           
-          <div className="rounded-md bg-amber-50 p-3 mt-2">
+          <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? 'p-2 my-1' : 'mt-2'}`}>
             <div className="flex items-start">
-              <AlertTriangle className="mr-2 h-4 w-4 text-amber-600 mt-0.5" />
+              <AlertTriangle className={`mr-2 h-4 w-4 text-amber-600 ${isMobile ? 'mt-0' : 'mt-0.5'}`} />
               <div className="text-xs text-amber-800">
                 <p className="font-medium mb-1">Risk Warning:</p>
                 <p>
@@ -138,7 +143,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
           </div>
         </div>
         
-        <DialogFooter className={isMobile ? "flex-col space-y-2" : ""}>
+        <DialogFooter className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between">
           <Button 
             onClick={handleSupply} 
             disabled={!amount || !isAmountValid() || isLoading}
@@ -150,7 +155,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
             variant="outline" 
             onClick={onClose} 
             disabled={isLoading} 
-            className="w-full sm:w-auto mt-2 sm:mt-0"
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>

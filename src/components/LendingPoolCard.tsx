@@ -35,8 +35,8 @@ export function LendingPoolCard({
 
   return (
     <TooltipProvider>
-      <Card className="overflow-hidden border bg-white">
-        <CardHeader className="pb-2 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
+      <Card className="overflow-hidden border border-[#8B5CF6]/20">
+        <CardHeader className="pb-2 bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5">
           <CardTitle className="text-xl flex items-center gap-2">
             <Coins className="h-5 w-5 text-[#8B5CF6]" />
             {title}

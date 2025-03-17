@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { MAGNIFY_WORLD_ADDRESS, WORLDCOIN_CLIENT_ID } from "@/utils/constants";
@@ -11,7 +12,16 @@ type LoanDetails = {
   transactionId: string;
 };
 
-const useRequestLoan = () => {
+type RequestLoanResponse = {
+  requestNewLoan: (requestedTierId: bigint) => Promise<void>;
+  error: string | null;
+  transactionId: string | null;
+  isConfirming: boolean;
+  isConfirmed: boolean;
+  loanDetails: LoanDetails | null;
+};
+
+const useRequestLoan = (): RequestLoanResponse => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
@@ -25,11 +35,9 @@ const useRequestLoan = () => {
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      client: client,
-      transactionId: transactionId || "",
-      appConfig: {
-        app_id: WORLDCOIN_CLIENT_ID,
-      },
+      client,
+      hash: transactionId as `0x${string}` || "0x",
+      enabled: !!transactionId,
     });
 
   // Sync `isConfirming` and `isConfirmed`
@@ -50,7 +58,7 @@ const useRequestLoan = () => {
     setLoanDetails(null);
 
     try {
-      const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+      const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
             address: MAGNIFY_WORLD_ADDRESS,

@@ -37,41 +37,42 @@ const Lending = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 mb-8 sm:mb-12">
-          <div className="lg:col-span-3">
-            <Card className="h-full">
-              <CardHeader className={isMobile ? "pb-1 pt-3 px-3" : "pb-2"}>
-                <CardTitle className="text-lg sm:text-xl">Exchange Rate</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">USDC to LP token conversion rate over time</CardDescription>
-              </CardHeader>
-              <CardContent className={isMobile ? "p-2" : ""}>
-                <LendingGraph />
-              </CardContent>
-            </Card>
-          </div>
-          <div className="lg:col-span-2">
-            <UserPortfolioCard
-              balance={0}
-              depositedValue={0}
-              currentValue={0}
-              earnings={0}
-              onSupply={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Supply functionality will be available soon",
-                });
-              }}
-              onWithdraw={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Withdraw functionality will be available soon",
-                });
-              }}
-            />
-          </div>
+        {/* User Portfolio Card - Moved above Exchange Rate graph */}
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <UserPortfolioCard
+            balance={1250.75}
+            depositedValue={1200}
+            currentValue={1250.75}
+            earnings={50.75}
+            onSupply={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Supply functionality will be available soon",
+              });
+            }}
+            onWithdraw={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Withdraw functionality will be available soon",
+              });
+            }}
+          />
         </div>
 
-        <Card>
+        {/* Exchange Rate Graph */}
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-8 sm:mb-12">
+          <Card className="h-full overflow-hidden">
+            <CardHeader className={isMobile ? "pb-1 pt-3 px-3" : "pb-2"}>
+              <CardTitle className="text-lg sm:text-xl">Exchange Rate</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">USDC to LP token conversion rate over time</CardDescription>
+            </CardHeader>
+            <CardContent className={isMobile ? "p-2" : ""}>
+              <LendingGraph />
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="bg-gradient-to-r from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20">
           <CardHeader className={isMobile ? "py-3 px-3" : ""}>
             <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Info className="h-4 w-4 sm:h-5 sm:w-5 text-[#8B5CF6]" />

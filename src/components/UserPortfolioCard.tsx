@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowUpFromLine, ArrowDownToLine, Wallet, TrendingUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SupplyModal } from "@/components/SupplyModal";
 
 interface UserPortfolioCardProps {
   balance: number;
@@ -21,6 +23,7 @@ export function UserPortfolioCard({
   onWithdraw 
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
+  const [isSupplyModalOpen, setIsSupplyModalOpen] = useState(false);
   
   return (
     <Card className="h-full border-[#8B5CF6]/20 overflow-hidden">
@@ -75,7 +78,7 @@ export function UserPortfolioCard({
       </CardContent>
       <CardFooter className={`flex gap-2 ${isMobile ? "px-3 py-3" : ""}`}>
         <Button 
-          onClick={onSupply} 
+          onClick={() => setIsSupplyModalOpen(true)} 
           className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 text-xs sm:text-sm py-1.5 sm:py-2 border-0"
         >
           <ArrowUpFromLine className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
@@ -91,6 +94,11 @@ export function UserPortfolioCard({
           Withdraw
         </Button>
       </CardFooter>
+      
+      <SupplyModal 
+        isOpen={isSupplyModalOpen} 
+        onClose={() => setIsSupplyModalOpen(false)} 
+      />
     </Card>
   );
 }

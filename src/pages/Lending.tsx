@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -14,6 +13,20 @@ const Lending = () => {
   const [loading, setLoading] = useState(false);
   const [showDummyData, setShowDummyData] = useState(true);
   const isMobile = useIsMobile();
+
+  const handleSupply = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Supply functionality will be available soon",
+    });
+  };
+
+  const handleWithdraw = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Withdraw functionality will be available soon",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -58,18 +71,8 @@ const Lending = () => {
               depositedValue={1200}
               currentValue={1250.75}
               earnings={50.75}
-              onSupply={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Supply functionality will be available soon",
-                });
-              }}
-              onWithdraw={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Withdraw functionality will be available soon",
-                });
-              }}
+              onSupply={handleSupply}
+              onWithdraw={handleWithdraw}
             />
           ) : (
             <UserPortfolioCard
@@ -77,18 +80,8 @@ const Lending = () => {
               depositedValue={0}
               currentValue={0}
               earnings={0}
-              onSupply={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Supply functionality will be available soon",
-                });
-              }}
-              onWithdraw={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Withdraw functionality will be available soon",
-                });
-              }}
+              onSupply={handleSupply}
+              onWithdraw={handleWithdraw}
             />
           )}
         </div>

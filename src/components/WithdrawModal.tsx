@@ -39,21 +39,21 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
   
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
-    return !isNaN(numAmount) && numAmount > 0 && numAmount <= lpBalance;
+    return !isNaN(numAmount) && numAmount > 0 && numAmount <= lpValue;
   };
   
-  const calculateRemainingBalance = () => {
+  const calculateRemainingUsdcBalance = () => {
     const numAmount = parseFloat(amount);
     if (!isNaN(numAmount) && numAmount > 0) {
-      return Math.max(0, lpBalance - numAmount).toFixed(2);
+      return Math.max(0, lpValue - numAmount).toFixed(2);
     }
-    return lpBalance.toFixed(2);
+    return lpValue.toFixed(2);
   };
   
-  const calculateUsdcAmount = () => {
+  const calculateLpTokenAmount = () => {
     const numAmount = parseFloat(amount);
-    if (!isNaN(numAmount) && numAmount > 0) {
-      return (numAmount * exchangeRate).toFixed(2);
+    if (!isNaN(numAmount) && numAmount > 0 && exchangeRate > 0) {
+      return (numAmount / exchangeRate).toFixed(4);
     }
     return "0.00";
   };
@@ -66,7 +66,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
     setTimeout(() => {
       toast({
         title: "Withdrawal initiated",
-        description: `You have successfully withdrawn ${amount} LP tokens (${calculateUsdcAmount()} USDC)`,
+        description: `You have successfully withdrawn ${amount} USDC (${calculateLpTokenAmount()} LP tokens)`,
       });
       setIsLoading(false);
       onClose();
@@ -88,7 +88,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
         <DialogHeader className={isMobile ? "pb-2" : ""}>
           <DialogTitle className="text-xl text-center">Withdraw Assets</DialogTitle>
           <DialogDescription className="text-center">
-            Withdraw your LP tokens and receive USDC
+            Withdraw USDC from your LP position
           </DialogDescription>
         </DialogHeader>
         
@@ -96,13 +96,16 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <label htmlFor="amount" className="text-sm font-medium">
-                Amount (LP Tokens)
+                Amount (USDC)
               </label>
               <span className="text-xs text-gray-500">
-                Balance: {lpBalance.toFixed(2)} LP
+                Available: ${lpValue.toFixed(2)}
               </span>
             </div>
             <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <DollarSign className="h-4 w-4" />
+              </div>
               <Input
                 id="amount"
                 placeholder="0.00"
@@ -119,7 +122,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
                 type="button"
                 variant="ghost"
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
-                onClick={() => setAmount(lpBalance.toString())}
+                onClick={() => setAmount(lpValue.toString())}
               >
                 MAX
               </Button>
@@ -127,14 +130,14 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
             
             {amount && (
               <div className="text-xs text-gray-500 mt-1">
-                You will receive approximately {calculateUsdcAmount()} USDC
+                You will withdraw approximately {calculateLpTokenAmount()} LP tokens
               </div>
             )}
             
             {amount && !isAmountValid() && (
               <p className="text-xs text-red-500">
-                {parseFloat(amount) > lpBalance
-                  ? "Insufficient LP token balance"
+                {parseFloat(amount) > lpValue
+                  ? "Insufficient USDC balance"
                   : "Please enter a valid amount"}
               </p>
             )}
@@ -144,21 +147,21 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
             <h4 className="text-sm font-medium mb-2">Withdrawal Summary</h4>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between">
-                <span className="text-gray-500">Current LP Balance:</span>
-                <span className="font-medium">{lpBalance.toFixed(2)} LP</span>
+                <span className="text-gray-500">Current USDC Value:</span>
+                <span className="font-medium">${lpValue.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Amount to Withdraw:</span>
-                <span className="font-medium">{amount ? parseFloat(amount).toFixed(2) : "0.00"} LP</span>
+                <span className="font-medium">${amount ? parseFloat(amount).toFixed(2) : "0.00"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Remaining LP Balance:</span>
-                <span className="font-medium">{calculateRemainingBalance()} LP</span>
+                <span className="text-gray-500">Remaining USDC Value:</span>
+                <span className="font-medium">${calculateRemainingUsdcBalance()}</span>
               </div>
               <div className="border-t my-1.5 pt-1.5"></div>
               <div className="flex justify-between">
-                <span className="text-gray-500">You Will Receive:</span>
-                <span className="font-medium text-green-600">{calculateUsdcAmount()} USDC</span>
+                <span className="text-gray-500">LP Tokens to be Burned:</span>
+                <span className="font-medium text-amber-600">{calculateLpTokenAmount()} LP</span>
               </div>
             </div>
           </div>

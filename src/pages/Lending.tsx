@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -16,17 +15,11 @@ const Lending = () => {
   const isMobile = useIsMobile();
 
   const handleSupply = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Supply functionality will be available soon",
-    });
+    console.log("Supply button clicked in parent component");
   };
 
   const handleWithdraw = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Withdraw functionality will be available soon",
-    });
+    console.log("Withdraw button clicked in parent component");
   };
 
   return (
@@ -36,7 +29,7 @@ const Lending = () => {
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         <div className="mb-6 sm:mb-8">
           <div className="flex justify-center mb-2 sm:mb-4">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text text-center">
               Magnify Cash Lending
             </h1>
           </div>

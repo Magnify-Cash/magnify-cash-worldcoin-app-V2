@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpFromLine, ArrowDownToLine, Wallet, TrendingUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SupplyModal } from "@/components/SupplyModal";
+import { WithdrawModal } from "@/components/WithdrawModal";
 
 interface UserPortfolioCardProps {
   balance: number;
@@ -25,6 +26,7 @@ export function UserPortfolioCard({
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
   const [isSupplyModalOpen, setIsSupplyModalOpen] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   
   return (
     <Card className="h-full border-[#8B5CF6]/20 overflow-hidden">
@@ -86,7 +88,7 @@ export function UserPortfolioCard({
           Supply
         </Button>
         <Button 
-          onClick={onWithdraw} 
+          onClick={() => setIsWithdrawModalOpen(true)} 
           variant="outline" 
           className="flex-1 text-xs sm:text-sm py-1.5 sm:py-2 border-[#8B5CF6]/50 text-[#8B5CF6] hover:text-white hover:bg-[#8B5CF6]"
           disabled={balance <= 0}
@@ -99,6 +101,13 @@ export function UserPortfolioCard({
       <SupplyModal 
         isOpen={isSupplyModalOpen} 
         onClose={() => setIsSupplyModalOpen(false)} 
+      />
+      
+      <WithdrawModal 
+        isOpen={isWithdrawModalOpen} 
+        onClose={() => setIsWithdrawModalOpen(false)}
+        lpBalance={balance}
+        lpValue={currentValue}
       />
     </Card>
   );

@@ -8,25 +8,27 @@ import { toast } from "@/components/ui/use-toast";
 import { LendingPoolCard } from "@/components/LendingPoolCard";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
 import { LendingGraph } from "@/components/LendingGraph";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Lending = () => {
   const [loading, setLoading] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <div className="min-h-screen bg-white pb-20">
       <Header title="Lending Dashboard" />
 
-      <main className="container max-w-5xl mx-auto px-4 pt-6">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
+      <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
             Magnify Cash Lending
           </h1>
-          <p className="text-gray-700 mb-4 max-w-3xl">
+          <p className="text-sm sm:text-base text-gray-700 mb-4 max-w-3xl">
             Supply liquidity to earn yield and $MAG rewards. All lending pools use World ID verification to minimize default risk.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <LendingPoolCard 
             title="USDC Pool" 
             apy={8.5} 
@@ -35,14 +37,14 @@ const Lending = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 mb-8 sm:mb-12">
           <div className="lg:col-span-3">
             <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="text-xl">Exchange Rate</CardTitle>
-                <CardDescription>USDC to LP token conversion rate over time</CardDescription>
+              <CardHeader className={isMobile ? "pb-1 pt-3 px-3" : "pb-2"}>
+                <CardTitle className="text-lg sm:text-xl">Exchange Rate</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">USDC to LP token conversion rate over time</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className={isMobile ? "p-2" : ""}>
                 <LendingGraph />
               </CardContent>
             </Card>
@@ -70,14 +72,14 @@ const Lending = () => {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-[#8B5CF6]" />
+          <CardHeader className={isMobile ? "py-3 px-3" : ""}>
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <Info className="h-4 w-4 sm:h-5 sm:w-5 text-[#8B5CF6]" />
               About Lending Pools
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4 text-sm text-gray-600">
+          <CardContent className={`${isMobile ? "px-3 py-2" : ""} text-xs sm:text-sm text-gray-600`}>
+            <div className="space-y-3 sm:space-y-4">
               <p>
                 <strong>How it works:</strong> When you supply assets to Magnify Cash lending pools, you receive LP tokens representing your share of the pool. These tokens automatically increase in value as borrowers repay their loans with interest.
               </p>

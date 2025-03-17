@@ -1,5 +1,6 @@
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const data = [
   { date: "Jan", rate: 1.000 },
@@ -12,28 +13,43 @@ const data = [
 ];
 
 export function LendingGraph() {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="w-full h-[300px]">
+    <div className="w-full h-[250px] sm:h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
           margin={{
             top: 10,
-            right: 10,
-            left: 0,
+            right: isMobile ? 0 : 10,
+            left: isMobile ? -20 : 0,
             bottom: 0,
           }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fontSize: isMobile ? 10 : 12 }}
+            tickMargin={isMobile ? 5 : 10}
+          />
           <YAxis 
             domain={[1, 1.05]}
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => typeof value === 'number' ? value.toFixed(3) : value}
+            tick={{ fontSize: isMobile ? 10 : 12 }}
+            tickFormatter={(value) => {
+              if (typeof value === 'number') {
+                return isMobile ? value.toFixed(2) : value.toFixed(3);
+              }
+              return value;
+            }}
+            width={isMobile ? 30 : 40}
           />
           <Tooltip 
             formatter={(value) => {
-              return [typeof value === 'number' ? value.toFixed(4) : value, 'Exchange Rate'];
+              if (typeof value === 'number') {
+                return [value.toFixed(4), 'Exchange Rate'];
+              }
+              return [value, 'Exchange Rate'];
             }}
             labelFormatter={(label) => `${label} 2024`}
           />

@@ -1,3 +1,4 @@
+
 export interface WalletBalance {
   id: number;
   currency: string;
@@ -9,7 +10,7 @@ export interface WalletBalance {
 
 export interface Transaction {
   id: number;
-  type: 'deposit' | 'withdrawal' | 'transfer';
+  type: 'deposit' | 'withdrawal' | 'transfer' | 'loan' | 'repayment';
   currency: string;
   amount: number;
   status: 'pending' | 'completed' | 'failed';

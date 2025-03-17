@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import type { WalletBalance } from "@/types/wallet";
 import type { Announcement } from "@/features/announcements/utils";
@@ -35,6 +34,8 @@ interface DemoData {
   isDeviceVerified: boolean;
   isOrbVerified: boolean;
   hasLoan: boolean;
+  creditScore: number;
+  loansRepaid: number;
 }
 
 interface DemoContextType {
@@ -50,6 +51,7 @@ interface DemoContextType {
   resetSession: () => void;
   finalizeLoanRepayment: () => void;
   originationFee: (tier: boolean) => void;
+  getCreditScore: () => number;
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
@@ -78,7 +80,9 @@ const getInitialDemoData = (): DemoData => ({
   },
   isDeviceVerified: false,
   isOrbVerified: false,
-  hasLoan: false
+  hasLoan: false,
+  creditScore: 1,
+  loansRepaid: 0
 });
 
 export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -114,6 +118,20 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       }));
     }
   }, []);
+
+  const getCreditScore = useCallback(() => {
+    const baseScore = 2;
+    const maxScoreFromRepayments = 8;
+    const repaymentScore = Math.min(demoData.loansRepaid, maxScoreFromRepayments);
+    return baseScore + repaymentScore;
+  }, [demoData.loansRepaid]);
+
+  useEffect(() => {
+    setDemoData(prev => ({
+      ...prev,
+      creditScore: getCreditScore()
+    }));
+  }, [demoData.loansRepaid, getCreditScore]);
 
   const login = (address: string) => {
     setDemoData(prev => ({
@@ -234,7 +252,8 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     console.log("Finalizing loan repayment - setting hasLoan to false");
     setDemoData(prev => ({
       ...prev,
-      hasLoan: false
+      hasLoan: false,
+      loansRepaid: prev.loansRepaid + 1
     }));
   };
 
@@ -256,7 +275,6 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       )
       }));
     }
-
   }
 
   const refreshBalance = useCallback(() => {
@@ -287,6 +305,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         resetSession,
         finalizeLoanRepayment,
         originationFee,
+        getCreditScore,
       }}
     >
       {children}

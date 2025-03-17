@@ -29,12 +29,10 @@ export function LendingGraph() {
           <YAxis 
             domain={[1, 1.05]}
             tick={{ fontSize: 12 }}
-            tickFormatter={(value) => typeof value === 'number' ? value.toFixed(3) : value}
+            tickFormatter={(value) => value.toFixed(3)}
           />
           <Tooltip 
-            formatter={(value) => {
-              return [typeof value === 'number' ? value.toFixed(4) : value, 'Exchange Rate'];
-            }}
+            formatter={(value) => [`${value.toFixed(4)}`, 'Exchange Rate']}
             labelFormatter={(label) => `${label} 2024`}
           />
           <defs>

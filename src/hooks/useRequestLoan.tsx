@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { MAGNIFY_WORLD_ADDRESS, WORLDCOIN_CLIENT_ID } from "@/utils/constants";
@@ -24,18 +23,14 @@ const useRequestLoan = () => {
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
   });
 
-  // Use explicit type for transaction receipt hook to avoid recursive type issue
-  const { 
-    isLoading: isConfirmingTransaction, 
-    isSuccess: isTransactionConfirmed 
-  } = useWaitForTransactionReceipt({
-    client,
-    transactionId: transactionId ?? "",
-    appConfig: {
-      app_id: WORLDCOIN_CLIENT_ID,
-    },
-    enabled: !!transactionId,
-  });
+  const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
+    useWaitForTransactionReceipt({
+      client: client,
+      transactionId: transactionId || "",
+      appConfig: {
+        app_id: WORLDCOIN_CLIENT_ID,
+      },
+    });
 
   // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -21,9 +22,13 @@ interface SupplyModalProps {
 export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useIsMobile();
   
   // Mock wallet balance - in a real app, this would come from a wallet hook
   const walletBalance = 1000; // Example balance in USDC
+  
+  // Mock exchange rate - in a real app, this would come from a contract or API
+  const exchangeRate = 0.95; // 1 USDC = 0.95 LP tokens
   
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
@@ -46,9 +51,18 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
     }, 1500);
   };
   
+  // Calculate LP tokens based on input amount
+  const calculateLPTokens = () => {
+    const numAmount = parseFloat(amount);
+    if (!isNaN(numAmount) && numAmount > 0) {
+      return (numAmount * exchangeRate).toFixed(4);
+    }
+    return "0.0000";
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className={`sm:max-w-[425px] ${isMobile ? 'p-4 mx-4' : ''}`}>
         <DialogHeader>
           <DialogTitle className="text-xl">Supply Assets</DialogTitle>
           <DialogDescription>
@@ -71,7 +85,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
               <Input
                 id="amount"
                 placeholder="0.00"
-                className="pl-9"
+                className="pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 type="number"
@@ -87,6 +101,12 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
                 MAX
               </Button>
             </div>
+            
+            {amount && (
+              <div className="text-xs text-gray-500 mt-1">
+                You will receive approximately {calculateLPTokens()} LP tokens
+              </div>
+            )}
             
             {amount && !isAmountValid() && (
               <p className="text-xs text-red-500">
@@ -113,14 +133,14 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
           </div>
         </div>
         
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+        <DialogFooter className={isMobile ? "flex-col space-y-2" : ""}>
+          <Button variant="outline" onClick={onClose} disabled={isLoading} className="w-full sm:w-auto">
             Cancel
           </Button>
           <Button 
             onClick={handleSupply} 
             disabled={!amount || !isAmountValid() || isLoading}
-            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0"
+            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full sm:w-auto"
           >
             {isLoading ? "Processing..." : "Supply"}
           </Button>

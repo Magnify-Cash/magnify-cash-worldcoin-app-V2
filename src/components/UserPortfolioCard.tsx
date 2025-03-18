@@ -63,10 +63,10 @@ export function UserPortfolioCard({
   const displayAPY = calculatePersonalizedAPY();
   
   return (
-    <Card className="h-full border-[#8B5CF6]/20 overflow-hidden">
-      <CardHeader className={`pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5`}>
+    <Card className="h-full border-[#D946EF]/20 overflow-hidden">
+      <CardHeader className={`pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 via-[#A855F7]/10 to-[#D946EF]/5`}>
         <CardTitle className="text-xl flex items-center gap-2">
-          <Wallet className="h-5 w-5 text-[#8B5CF6]" />
+          <Wallet className="h-5 w-5 text-[#A855F7]" />
           Your Portfolio
         </CardTitle>
       </CardHeader>
@@ -114,7 +114,7 @@ export function UserPortfolioCard({
                     </PopoverContent>
                   </Popover>
                 </span>
-                <span className="font-semibold text-sm sm:text-base text-[#8B5CF6]">{displayAPY.toFixed(2)}%</span>
+                <span className="font-semibold text-sm sm:text-base text-[#A855F7]">{displayAPY.toFixed(2)}%</span>
               </div>
             </div>
           </>
@@ -128,7 +128,7 @@ export function UserPortfolioCard({
       <CardFooter className={`flex gap-2 ${isMobile ? "px-3 py-3" : ""}`}>
         <Button 
           onClick={() => setIsSupplyModalOpen(true)} 
-          className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 text-white text-xs sm:text-sm py-1.5 sm:py-2 border-0"
+          className="flex-1 bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF] hover:opacity-90 text-white text-xs sm:text-sm py-1.5 sm:py-2 border-0"
         >
           <ArrowUpFromLine className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
           Supply
@@ -136,7 +136,7 @@ export function UserPortfolioCard({
         <Button 
           onClick={() => setIsWithdrawModalOpen(true)} 
           variant="outline" 
-          className="flex-1 text-xs sm:text-sm py-1.5 sm:py-2 border-[#8B5CF6]/50 text-[#8B5CF6] hover:text-white hover:bg-[#8B5CF6]"
+          className="flex-1 text-xs sm:text-sm py-1.5 sm:py-2 border-[#A855F7]/50 text-[#A855F7] hover:text-white hover:bg-[#A855F7]"
           disabled={balance <= 0}
         >
           <ArrowDownToLine className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />

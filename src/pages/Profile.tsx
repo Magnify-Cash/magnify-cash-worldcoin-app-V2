@@ -12,6 +12,11 @@ import { BACKEND_URL } from "@/utils/constants";
 import { toast } from "@/components/ui/use-toast";
 import CreditScore from "@/components/CreditScore";
 
+interface Transaction {
+  status: "received" | "repaid";
+  timestamp: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const ls_username = localStorage.getItem("ls_username");
@@ -19,6 +24,7 @@ const Dashboard = () => {
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const [verifying, setVerifying] = useState(false);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
+  const [creditScore, setCreditScore] = useState(2);
 
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
   const hasActiveLoan = data?.loan?.[1]?.isActive === true;
@@ -36,6 +42,41 @@ const Dashboard = () => {
       verification_level: VerificationLevel.Orb,
     },
   };
+
+  useEffect(() => {
+    const calculateCreditScore = async () => {
+      try {
+        const response = await fetch(
+          `${BACKEND_URL}/getTransactionHistory?wallet=${ls_wallet}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch transaction history");
+        
+        const result = await response.json();
+        if (result.status === 200) {
+          const transactions: Transaction[] = result.data;
+          
+          const hasDefaultedLoan = transactions.length > 0 && 
+            transactions[transactions.length - 1].status === "received";
+          
+          if (hasDefaultedLoan) {
+            setCreditScore(-1);
+            return;
+          }
+          
+          const repaidLoans = transactions.filter(tx => tx.status === "repaid").length;
+          const score = 2 + Math.min(repaidLoans, 8);
+          setCreditScore(score);
+        }
+      } catch (error) {
+        console.error("Error calculating credit score:", error);
+        setCreditScore(2);
+      }
+    };
+
+    if (ls_wallet) {
+      calculateCreditScore();
+    }
+  }, [ls_wallet]);
 
   const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {
@@ -295,7 +336,7 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <CreditScore score={7} className="w-full" />
+            <CreditScore score={creditScore} className="w-full" />
           </motion.div>
         </div>
       </div>

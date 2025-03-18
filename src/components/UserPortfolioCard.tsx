@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,6 +63,7 @@ export function UserPortfolioCard({
   // Get the APY to display
   const displayAPY = calculatePersonalizedAPY();
 
+  // Only modify the header gradient, not the card background
   const headerGradient = useCustomGradient
     ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF]/80"
     : "bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5";

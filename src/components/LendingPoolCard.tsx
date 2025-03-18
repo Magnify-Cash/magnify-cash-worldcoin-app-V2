@@ -34,8 +34,9 @@ export function LendingPoolCard({
     return `${value.toFixed(0)}${suffix}`;
   };
 
+  // Only change the header gradient, not the card background
   const headerGradient = useCustomGradient 
-    ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF]/80"
+    ? "bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5" //bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF]/80
     : "bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5";
 
   const iconColor = useCustomGradient ? "text-white" : "text-[#8B5CF6]";

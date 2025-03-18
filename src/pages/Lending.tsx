@@ -9,11 +9,13 @@ import { LendingPoolCard } from "@/components/LendingPoolCard";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
 import { LendingGraph } from "@/components/LendingGraph";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TestInputModal } from "@/components/TestInputModal";
 
 const Lending = () => {
   const [loading, setLoading] = useState(false);
   const [showDummyData, setShowDummyData] = useState(true);
   const [useCustomGradient, setUseCustomGradient] = useState(false);
+  const [testModalOpen, setTestModalOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const handleSupply = () => {
@@ -71,6 +73,16 @@ const Lending = () => {
           >
             <Palette className={`h-3.5 w-3.5 ${useCustomGradient ? 'text-[#A855F7]' : ''}`} />
             {useCustomGradient ? "Standard Theme" : "Purple Theme"}
+          </Button>
+          
+          {/* Test Button */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setTestModalOpen(true)}
+            className="flex items-center gap-1.5 text-xs"
+          >
+            Test Input
           </Button>
         </div>
 
@@ -147,6 +159,12 @@ const Lending = () => {
             </div>
           </CardContent>
         </Card>
+        
+        {/* Test Modal */}
+        <TestInputModal
+          isOpen={testModalOpen}
+          onClose={() => setTestModalOpen(false)}
+        />
       </main>
     </div>
   );

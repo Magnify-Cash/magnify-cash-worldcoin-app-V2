@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import hyperOptimizedRequest from "@/lib/request";
+import backendRequest from "@/lib/request";
 import { MAGNIFY_WORLD_ADDRESS } from "@/utils/constants";
 
 type USDCBalanceContextType = {
@@ -28,7 +28,7 @@ export const USDCBalanceProvider = ({ children }: { children: React.ReactNode })
         balance: number;
       }
 
-      const response = await hyperOptimizedRequest<BalanceResponse>("GET", "getUSDCBalance", { wallet: MAGNIFY_WORLD_ADDRESS });
+      const response = await backendRequest<BalanceResponse>("GET", "getUSDCBalance", { wallet: MAGNIFY_WORLD_ADDRESS });
 
       if (response?.balance !== undefined) {
         const formattedBalance = Number(response.balance);

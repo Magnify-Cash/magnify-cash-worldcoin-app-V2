@@ -13,13 +13,15 @@ interface LendingPoolCardProps {
   apy: number;
   totalSupply: number;
   availableLiquidity: number;
+  useNewGradient?: boolean;
 }
 
 export function LendingPoolCard({ 
   title, 
   apy, 
   totalSupply, 
-  availableLiquidity 
+  availableLiquidity,
+  useNewGradient = true
 }: LendingPoolCardProps) {
   const isMobile = useIsMobile();
 
@@ -32,11 +34,17 @@ export function LendingPoolCard({
     return `${value.toFixed(0)}${suffix}`;
   };
 
+  const gradientClasses = useNewGradient
+    ? "border-[#D946EF]/20 bg-gradient-to-r from-[#8B5CF6]/10 via-[#A855F7]/10 to-[#D946EF]/5"
+    : "border-[#A11F75]/20 bg-gradient-to-r from-[#1A1E8F]/10 via-[#5A1A8F]/10 to-[#A11F75]/5";
+
+  const accentColor = useNewGradient ? "text-[#8B5CF6]" : "text-[#1A1E8F]";
+
   return (
-    <Card className="overflow-hidden border border-[#D946EF]/20">
-      <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 via-[#A855F7]/10 to-[#D946EF]/5">
+    <Card className={`overflow-hidden border ${useNewGradient ? "border-[#D946EF]/20" : "border-[#A11F75]/20"}`}>
+      <CardHeader className={`pb-2 pt-4 ${gradientClasses}`}>
         <CardTitle className="text-xl flex items-center gap-2">
-          <Landmark className="h-5 w-5 text-[#8B5CF6]" />
+          <Landmark className={`h-5 w-5 ${accentColor}`} />
           {title}
         </CardTitle>
       </CardHeader>
@@ -95,7 +103,7 @@ export function LendingPoolCard({
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="font-semibold text-base sm:text-lg text-[#8B5CF6] flex items-center">
+            <div className={`font-semibold text-base sm:text-lg flex items-center ${useNewGradient ? "text-[#8B5CF6]" : "text-[#1A1E8F]"}`}>
               {apy}%
             </div>
           </div>

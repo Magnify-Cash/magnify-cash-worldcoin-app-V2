@@ -11,10 +11,12 @@ import { Button } from "@/components/ui/button";
 import { BACKEND_URL } from "@/utils/constants";
 import { toast } from "@/components/ui/use-toast";
 import CreditScore from "@/components/CreditScore";
+import { calculateRemainingTime } from "@/utils/timeinfo";
 
 interface Transaction {
   status: "received" | "repaid";
   timestamp: string;
+  amount: string;
 }
 
 const Dashboard = () => {
@@ -55,12 +57,37 @@ const Dashboard = () => {
         if (result.status === 200) {
           const transactions: Transaction[] = result.data;
           
-          const hasDefaultedLoan = transactions.length > 0 && 
-            transactions[transactions.length - 1].status === "received";
-          
-          if (hasDefaultedLoan) {
-            setCreditScore(-1);
+          if (transactions.length === 0) {
+            setCreditScore(2);
             return;
+          }
+          
+          if (hasActiveLoan && loan) {
+            const receivedLoans = transactions.filter(tx => tx.status === "received");
+            
+            if (receivedLoans.length > 0) {
+              const lastReceivedLoan = receivedLoans[receivedLoans.length - 1];
+              const loanAmount = parseFloat(lastReceivedLoan.amount);
+              
+              const loanTimestamp = new Date(lastReceivedLoan.timestamp).getTime();
+              const currentTime = Date.now();
+              
+              let loanPeriodDays;
+              if (loanAmount <= 1) {
+                loanPeriodDays = 30;
+              } else if (loanAmount <= 5) {
+                loanPeriodDays = 60;
+              } else {
+                loanPeriodDays = 90;
+              }
+              
+              const loanPeriodMs = loanPeriodDays * 24 * 60 * 60 * 1000;
+              
+              if (currentTime > loanTimestamp + loanPeriodMs) {
+                setCreditScore(-1);
+                return;
+              }
+            }
           }
           
           const repaidLoans = transactions.filter(tx => tx.status === "repaid").length;
@@ -76,7 +103,7 @@ const Dashboard = () => {
     if (ls_wallet) {
       calculateCreditScore();
     }
-  }, [ls_wallet]);
+  }, [ls_wallet, hasActiveLoan, loan]);
 
   const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -34,7 +35,7 @@ const Lending = () => {
             </h1>
           </div>
           <p className="text-sm sm:text-base text-gray-700 mb-4 max-w-3xl mx-auto text-center">
-            Supply liquidity to earn yield and $MAG rewards. All lending pools use World ID verification to minimize default risk.
+            Supply liquidity to earn yield. Your returns grow as borrowers repay loans, with rates influenced by borrowing demand and repayment performance.
           </p>
         </div>
 

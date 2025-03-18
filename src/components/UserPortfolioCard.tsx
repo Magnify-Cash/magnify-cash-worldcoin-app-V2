@@ -28,6 +28,10 @@ export function UserPortfolioCard({
   const [isSupplyModalOpen, setIsSupplyModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   
+  // Calculate percentage growth/loss
+  const percentageChange = depositedValue > 0 ? (earnings / depositedValue * 100) : 0;
+  const isPositive = percentageChange >= 0;
+  
   return (
     <Card className="h-full border-[#8B5CF6]/20 overflow-hidden">
       <CardHeader className={`pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5`}>
@@ -57,25 +61,23 @@ export function UserPortfolioCard({
               </div>
               <div className="flex justify-between">
                 <span className="text-xs sm:text-sm text-gray-500">Earnings</span>
-                <span className="font-semibold text-sm sm:text-base text-green-600 flex items-center">+${earnings.toFixed(2)}</span>
+                <span className={`font-semibold text-sm sm:text-base ${isPositive ? 'text-green-600' : 'text-red-600'} flex items-center`}>
+                  {isPositive ? '+' : ''}{earnings.toFixed(2)}
+                </span>
               </div>
             </div>
+            
+            {/* Display percentage change as text only */}
             <div className="pt-2">
-              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] rounded-full" 
-                  style={{ width: `${(earnings/depositedValue*100).toFixed(1)}%` }}
-                />
-              </div>
-              <p className="text-xs text-gray-500 text-right mt-1">
-                {(earnings/depositedValue*100).toFixed(1)}% growth
+              <p className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'} text-right mt-1`}>
+                {isPositive ? '+' : ''}{percentageChange.toFixed(1)}% {isPositive ? 'growth' : 'loss'}
               </p>
             </div>
           </>
         ) : (
           <div className="text-center py-4 sm:py-6">
             <p className="text-xs sm:text-sm text-gray-500 mb-2">You haven't supplied any assets yet</p>
-            <p className="text-xs text-gray-400">Supply assets to start earning interest and $MAG rewards</p>
+            <p className="text-xs text-gray-400">Supply assets to start earning interest</p>
           </div>
         )}
       </CardContent>

@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coins, Wallet, TrendingUp, Info } from "lucide-react";
+import { Coins, Bank, Droplet, TrendingUp, Info } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   Popover,
@@ -44,7 +44,7 @@ export function LendingPoolCard({
         <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <Wallet className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <Bank className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span className="truncate">Supply</span>
               <Popover>
                 <PopoverTrigger asChild>
@@ -63,7 +63,7 @@ export function LendingPoolCard({
           </div>
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <Coins className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <Droplet className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span className="truncate">Liquidity</span>
               <Popover>
                 <PopoverTrigger asChild>

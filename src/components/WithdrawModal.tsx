@@ -24,7 +24,6 @@ interface WithdrawModalProps {
 export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isInputReady, setIsInputReady] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   
@@ -36,21 +35,11 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
     if (isOpen) {
       setAmount("");
       setIsLoading(false);
-      setIsInputReady(false);
       
-      // Delay making the input active to prevent keyboard from popping up
-      const timer = setTimeout(() => {
-        setIsInputReady(true);
-        
-        // Small additional delay to ensure DOM has updated
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.focus();
-          }
-        }, 50);
-      }, 300);
-      
-      return () => clearTimeout(timer);
+      // Focus the input when the modal opens
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
     }
   }, [isOpen]);
   
@@ -133,15 +122,9 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
                 step="0.01"
                 min="0"
                 autoComplete="off"
-                readOnly={!isInputReady}
                 inputMode="decimal"
                 ref={inputRef}
                 tabIndex={-1}
-                onClick={() => {
-                  if (isInputReady && inputRef.current) {
-                    inputRef.current.focus();
-                  }
-                }}
               />
               <Button
                 type="button"

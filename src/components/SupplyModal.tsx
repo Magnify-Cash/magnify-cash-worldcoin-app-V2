@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
     if (isOpen) {
       setAmount("");
       setIsLoading(false);
-
+      
       // Focus the input when the modal opens
       setTimeout(() => {
         inputRef.current?.focus();
@@ -78,7 +79,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
         <DialogHeader className={isMobile ? "pb-2" : ""}>
           <DialogTitle className="text-xl text-center">Supply Assets</DialogTitle>
           <DialogDescription className="text-center">
-            Provide liquidity to earn yield and $MAG rewards
+            Provide liquidity to earn yield.
           </DialogDescription>
         </DialogHeader>
 

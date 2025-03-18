@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
@@ -96,7 +97,7 @@ const Welcome = () => {
 
             <button
               onClick={handleLenderSignUp}
-              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 bg-[#8B5CF6] text-white hover:bg-[#7E69AB] transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
+              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF] text-white hover:opacity-90 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
             >
               Become a Lender
               <ArrowRight className="w-5 h-5" />

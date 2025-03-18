@@ -65,7 +65,7 @@ export function UserPortfolioCard({
 
   // Only modify the header gradient, not the card background
   const headerGradient = useCustomGradient
-    ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF]/80"
+    ? "bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5"
     : "bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5";
 
   const iconColor = useCustomGradient ? "text-white" : "text-[#8B5CF6]";
@@ -75,7 +75,7 @@ export function UserPortfolioCard({
   return (
     <Card className={`h-full border-${borderStyle} overflow-hidden`}>
       <CardHeader className={`pb-2 pt-4 ${headerGradient}`}>
-        <CardTitle className={`text-xl flex items-center gap-2 ${useCustomGradient ? "text-white" : ""}`}>
+        <CardTitle className={`text-xl flex items-center gap-2`}>
           <Wallet className={`h-5 w-5 ${iconColor}`} />
           Your Portfolio
         </CardTitle>

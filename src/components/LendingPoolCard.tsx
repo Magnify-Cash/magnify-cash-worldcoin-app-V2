@@ -45,7 +45,7 @@ export function LendingPoolCard({
   return (
     <Card className={`overflow-hidden ${borderStyle}`}>
       <CardHeader className={`pb-2 pt-4 ${headerGradient}`}>
-        <CardTitle className={`text-xl flex items-center gap-2 ${useCustomGradient ? "text-white" : ""}`}>
+        <CardTitle className={`text-xl flex items-center gap-2`}>
           <Coins className={`h-5 w-5 ${iconColor}`} />
           {title}
         </CardTitle>

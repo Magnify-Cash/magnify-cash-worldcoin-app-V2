@@ -115,7 +115,6 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
                 type="number"
                 step="0.01"
                 min="0"
-                autoFocus={false}
                 autoComplete="off"
               />
               <Button

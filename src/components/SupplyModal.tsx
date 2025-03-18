@@ -92,7 +92,6 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
                 type="number"
                 step="0.01"
                 min="0"
-                autoFocus={false}
                 autoComplete="off"
               />
               <Button

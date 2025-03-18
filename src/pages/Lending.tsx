@@ -116,10 +116,6 @@ const Lending = () => {
                   Borrowers must verify their identity with World ID, helping to minimize defaults and ensure a safer lending environment.
                 </p>
               </div>
-              
-              <p>
-                <strong>$MAG rewards:</strong> In addition to earned interest, you'll receive $MAG governance tokens proportional to your supplied liquidity, giving you voting rights in the Magnify Cash ecosystem.
-              </p>
             </div>
           </CardContent>
         </Card>

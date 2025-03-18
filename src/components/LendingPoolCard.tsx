@@ -44,25 +44,6 @@ export function LendingPoolCard({
         <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">APY</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="inline-flex">
-                    <Info className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600 transition-colors" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="max-w-[250px] text-xs p-3">
-                  <p>Annual Percentage Yield. The estimated return on your deposited funds over one year, including compounding interest.</p>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="font-semibold text-base sm:text-lg text-[#8B5CF6] flex items-center">
-              {apy}%
-            </div>
-          </div>
-          <div className="space-y-1">
-            <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
               <Wallet className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span className="truncate">Supply</span>
               <Popover>
@@ -97,6 +78,25 @@ export function LendingPoolCard({
             </div>
             <div className="font-semibold text-base sm:text-lg flex items-center">
               ${formatValue(availableLiquidity, '')}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="truncate">APY</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="inline-flex">
+                    <Info className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600 transition-colors" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="max-w-[250px] text-xs p-3">
+                  <p>Annual Percentage Yield (APY). This is an estimated return on your deposited funds over one year, based on initial projections at the app's launch. It does not update dynamically yet and may not reflect real-time market conditions.</p>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="font-semibold text-base sm:text-lg text-[#8B5CF6] flex items-center">
+              {apy}%
             </div>
           </div>
         </div>

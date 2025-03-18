@@ -34,19 +34,11 @@ export function LendingPoolCard({
     return `${value.toFixed(0)}${suffix}`;
   };
 
-  // Only change the header gradient, not the card background
-  const headerGradient = useCustomGradient 
-    ? "bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5" //bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF]/80
-    : "bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5";
-
-  const iconColor = useCustomGradient ? "text-white" : "text-[#8B5CF6]";
-  const borderStyle = useCustomGradient ? "border border-[#D946EF]/30" : "border border-[#8B5CF6]/20";
-
   return (
-    <Card className={`overflow-hidden ${borderStyle}`}>
-      <CardHeader className={`pb-2 pt-4 ${headerGradient}`}>
+    <Card className={`overflow-hidden border border-[#8B5CF6]/20`}>
+      <CardHeader className={`pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5`}>
         <CardTitle className={`text-xl flex items-center gap-2`}>
-          <Coins className={`h-5 w-5 ${iconColor}`} />
+          <Coins className={`h-5 w-5 text-[#8B5CF6]`} />
           {title}
         </CardTitle>
       </CardHeader>

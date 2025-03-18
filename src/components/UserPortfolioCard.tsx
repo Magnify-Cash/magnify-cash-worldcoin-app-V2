@@ -62,21 +62,13 @@ export function UserPortfolioCard({
   
   // Get the APY to display
   const displayAPY = calculatePersonalizedAPY();
-
-  // Only modify the header gradient, not the card background
-  const headerGradient = useCustomGradient
-    ? "bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5"
-    : "bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5";
-
-  const iconColor = useCustomGradient ? "text-white" : "text-[#8B5CF6]";
-  const borderStyle = useCustomGradient ? "border-[#D946EF]/30" : "border-[#8B5CF6]/20";
   const apyTextColor = useCustomGradient ? "text-[#D946EF]" : "text-[#8B5CF6]";
   
   return (
-    <Card className={`h-full border-${borderStyle} overflow-hidden`}>
-      <CardHeader className={`pb-2 pt-4 ${headerGradient}`}>
+    <Card className={`h-full border border-[#8B5CF6]/20 overflow-hidden`}>
+      <CardHeader className={`pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5`}>
         <CardTitle className={`text-xl flex items-center gap-2`}>
-          <Wallet className={`h-5 w-5 ${iconColor}`} />
+          <Wallet className={`h-5 w-5 text-[#8B5CF6]`} />
           Your Portfolio
         </CardTitle>
       </CardHeader>

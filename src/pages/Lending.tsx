@@ -102,13 +102,21 @@ const Lending = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className={`${isMobile ? "px-3 py-2" : ""} text-xs sm:text-sm text-gray-600`}>
-            <div className="space-y-3 sm:space-y-4">
-              <p>
-                <strong>How it works:</strong> When you supply assets to Magnify Cash lending pools, you receive LP tokens representing your share of the pool. These tokens automatically increase in value as borrowers repay their loans with interest.
-              </p>
-              <p>
-                <strong>Risk management:</strong> All borrowers must verify with World ID, providing strong identity verification and reducing the risk of defaults.
-              </p>
+            <div className="space-y-4 sm:space-y-5">
+              <div>
+                <h4 className="font-semibold text-sm sm:text-base text-gray-800 mb-1">How It Works</h4>
+                <p className="text-xs sm:text-sm">
+                  Deposit assets into Magnify Cash lending pools to receive LP tokens, representing your share of the pool. As borrowers repay loans with interest, your LP tokens increase in value.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-sm sm:text-base text-gray-800 mb-1">Risk Management</h4>
+                <p className="text-xs sm:text-sm">
+                  Borrowers must verify their identity with World ID, helping to minimize defaults and ensure a safer lending environment.
+                </p>
+              </div>
+              
               <p>
                 <strong>$MAG rewards:</strong> In addition to earned interest, you'll receive $MAG governance tokens proportional to your supplied liquidity, giving you voting rights in the Magnify Cash ecosystem.
               </p>

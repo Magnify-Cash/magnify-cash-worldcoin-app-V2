@@ -10,9 +10,9 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { BACKEND_URL } from "@/utils/constants";
 import { toast } from "@/components/ui/use-toast";
+import CreditScore from "@/components/CreditScore";
 
 const Dashboard = () => {
-  // hooks
   const navigate = useNavigate();
   const ls_username = localStorage.getItem("ls_username");
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
@@ -20,15 +20,12 @@ const Dashboard = () => {
   const [verifying, setVerifying] = useState(false);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
 
-  // state
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
   const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
-  // Check if the user is verified by ORB device
   const isOrbVerified = nftInfo?.tier?.verificationStatus?.verification_level === "orb";
-  
-  // Verification levels
+
   const verificationLevels = {
     orb: {
       tierId: BigInt(2),
@@ -40,7 +37,6 @@ const Dashboard = () => {
     },
   };
 
-  // Handle verification process
   const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {
       toast({
@@ -89,7 +85,6 @@ const Dashboard = () => {
         return;
       }
 
-      // Send proof to backend
       const response = await fetch(`${BACKEND_URL}/verify`, {
         method: "POST",
         body: JSON.stringify({
@@ -160,7 +155,6 @@ const Dashboard = () => {
       <div className="min-h-screen bg-background">
         <Header title="Profile" />
         <div className="max-w-4xl mx-auto space-y-8 px-4 py-6">
-          {/* User Profile */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -181,7 +175,6 @@ const Dashboard = () => {
             )}
           </motion.div>
 
-          {/* Verification Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -195,7 +188,6 @@ const Dashboard = () => {
               {isDeviceVerified || nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
             </p>
 
-            {/* Verification Options */}
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               {Object.values(verificationLevels).map((tier) => {
                 const IconComponent = tier.icon;
@@ -234,7 +226,6 @@ const Dashboard = () => {
                 );
               })}
 
-              {/* Device Verification Option for users who have never claimed an NFT */}
               {nftInfo.tokenId === null && !isDeviceVerified && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -253,7 +244,6 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* Collateral section */}
           {isOrbVerified || isDeviceVerified ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -299,6 +289,14 @@ const Dashboard = () => {
               </div>
             </motion.div>
           ) : null}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <CreditScore score={7} className="w-full" />
+          </motion.div>
         </div>
       </div>
     );

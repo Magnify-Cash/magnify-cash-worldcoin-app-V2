@@ -167,7 +167,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
           
           <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? 'p-2 my-1' : 'mt-2'}`}>
             <div className="flex items-start">
-              <AlertTriangle className={`mr-2 h-4 w-4 text-amber-600 ${isMobile ? 'mt-0' : 'mt-0.5'}`} />
+              <AlertTriangle className="mr-2 h-5 w-5 text-amber-600 flex-shrink-0 mt-0" />
               <div className="text-xs text-amber-800">
                 <p className="font-medium mb-1">Important:</p>
                 <p>
@@ -179,11 +179,11 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
           </div>
         </div>
         
-        <DialogFooter className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between">
+        <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
           <Button 
             onClick={handleWithdraw} 
             disabled={!amount || !isAmountValid() || isLoading}
-            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full sm:w-auto"
+            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full"
           >
             {isLoading ? "Processing..." : "Withdraw"}
           </Button>
@@ -191,7 +191,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
             variant="outline" 
             onClick={onClose} 
             disabled={isLoading} 
-            className="w-full sm:w-auto"
+            className="w-full"
           >
             Cancel
           </Button>

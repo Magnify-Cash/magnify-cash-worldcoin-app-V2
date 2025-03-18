@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,44 +21,31 @@ interface SupplyModalProps {
 export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isInputReady, setIsInputReady] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
-  
+
   const walletBalance = 1000;
   const exchangeRate = 0.95;
-  
-  // Reset state when modal opens or closes
+
   useEffect(() => {
     if (isOpen) {
       setAmount("");
       setIsLoading(false);
-      setIsInputReady(false);
-      
-      // Delay making the input active to prevent keyboard from popping up
-      const timer = setTimeout(() => {
-        setIsInputReady(true);
-        
-        // Small additional delay to ensure DOM has updated
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.focus();
-          }
-        }, 50);
-      }, 300);
-      
-      return () => clearTimeout(timer);
+
+      // Focus the input when the modal opens
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
     }
   }, [isOpen]);
-  
+
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
     return !isNaN(numAmount) && numAmount > 0 && numAmount <= walletBalance;
   };
-  
+
   const handleSupply = () => {
     setIsLoading(true);
-    
     setTimeout(() => {
       toast({
         title: "Supply initiated",
@@ -70,24 +56,23 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
       setAmount("");
     }, 1500);
   };
-  
+
   const calculateLPTokens = () => {
     const numAmount = parseFloat(amount);
-    if (!isNaN(numAmount) && numAmount > 0) {
-      return (numAmount * exchangeRate).toFixed(4);
-    }
-    return "0.0000";
+    return !isNaN(numAmount) && numAmount > 0
+      ? (numAmount * exchangeRate).toFixed(4)
+      : "0.0000";
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        className={`sm:max-w-[425px] mx-auto ${isMobile ? 'p-3 px-4' : ''}`}
-        style={{ 
-          left: "50%", 
+      <DialogContent
+        className={`sm:max-w-[425px] mx-auto ${isMobile ? "p-3 px-4" : ""}`}
+        style={{
+          left: "50%",
           transform: "translate(-50%, -50%)",
           maxHeight: isMobile ? "90vh" : "auto",
-          overflowY: "auto"
+          overflowY: "auto",
         }}
       >
         <DialogHeader className={isMobile ? "pb-2" : ""}>
@@ -96,8 +81,8 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
             Provide liquidity to earn yield and $MAG rewards
           </DialogDescription>
         </DialogHeader>
-        
-        <div className={`grid gap-3 py-2 ${isMobile ? 'py-2' : 'py-4'}`}>
+
+        <div className={`grid gap-3 py-2 ${isMobile ? "py-2" : "py-4"}`}>
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <label htmlFor="amount" className="text-sm font-medium">
@@ -121,14 +106,8 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
                 step="0.01"
                 min="0"
                 autoComplete="off"
-                readOnly={!isInputReady}
                 inputMode="decimal"
                 ref={inputRef}
-                onClick={() => {
-                  if (isInputReady && inputRef.current) {
-                    inputRef.current.focus();
-                  }
-                }}
               />
               <Button
                 type="button"
@@ -139,13 +118,13 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
                 MAX
               </Button>
             </div>
-            
+
             {amount && (
               <div className="text-xs text-gray-500 mt-1">
                 You will receive {calculateLPTokens()} LP tokens
               </div>
             )}
-            
+
             {amount && !isAmountValid() && (
               <p className="text-xs text-red-500">
                 {parseFloat(amount) > walletBalance
@@ -154,8 +133,8 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
               </p>
             )}
           </div>
-          
-          <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? 'p-2 my-1' : 'mt-2'}`}>
+
+          <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? "p-2 my-1" : "mt-2"}`}>
             <div className="flex items-start">
               <AlertTriangle className="mr-2 h-5 w-5 text-amber-600 flex-shrink-0 mt-0" />
               <div className="text-xs text-amber-800">
@@ -170,21 +149,16 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
             </div>
           </div>
         </div>
-        
+
         <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
-          <Button 
-            onClick={handleSupply} 
+          <Button
+            onClick={handleSupply}
             disabled={!amount || !isAmountValid() || isLoading}
             className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full py-6"
           >
             {isLoading ? "Processing..." : "Supply"}
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={onClose} 
-            disabled={isLoading} 
-            className="w-full py-6"
-          >
+          <Button variant="outline" onClick={onClose} disabled={isLoading} className="w-full py-6">
             Cancel
           </Button>
         </DialogFooter>

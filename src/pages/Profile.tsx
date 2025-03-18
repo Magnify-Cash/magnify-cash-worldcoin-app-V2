@@ -1,30 +1,202 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { DollarSign, Shield, User, FileText, Pi, AlertTriangle, Bell } from "lucide-react";
+import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
+import { DollarSign, Shield, User, FileText, Pi, AlertTriangle, Bell, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
-import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
+import { useMagnifyWorld, Tier } from "@/hooks/useMagnifyWorld";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { BACKEND_URL } from "@/utils/constants";
 import { toast } from "@/components/ui/use-toast";
+import CreditScore from "@/components/CreditScore";
+import { calculateRemainingTime } from "@/utils/timeinfo";
+
+interface Transaction {
+  status: "received" | "repaid";
+  timestamp: string;
+  amount: string;
+}
 
 const Dashboard = () => {
-  // hooks
   const navigate = useNavigate();
   const ls_username = localStorage.getItem("ls_username");
-  const ls_wallet = localStorage.getItem("ls_wallet_address");
+  const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const [verifying, setVerifying] = useState(false);
+  const [currentTier, setCurrentTier] = useState<Tier | null>(null);
+  const [creditScore, setCreditScore] = useState(2);
 
-  // state
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
   const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
+  const isOrbVerified = nftInfo?.tier?.verificationStatus?.verification_level === "orb";
 
-  if (isLoading ) {
+  const verificationLevels = {
+    orb: {
+      tierId: BigInt(2),
+      level: "Orb Scan",
+      icon: Globe,
+      action: "mint-orb-verified-nft",
+      upgradeAction: "upgrade-orb-verified-nft",
+      verification_level: VerificationLevel.Orb,
+    },
+  };
+
+  useEffect(() => {
+    const calculateCreditScore = async () => {
+      try {
+        const response = await fetch(
+          `${BACKEND_URL}/getTransactionHistory?wallet=${ls_wallet}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch transaction history");
+        
+        const result = await response.json();
+        if (result.status === 200) {
+          const transactions: Transaction[] = result.data;
+          
+          if (transactions.length === 0) {
+            setCreditScore(2);
+            return;
+          }
+          
+          if (hasActiveLoan && loan) {
+            const receivedLoans = transactions.filter(tx => tx.status === "received");
+            
+            if (receivedLoans.length > 0) {
+              const lastReceivedLoan = receivedLoans[receivedLoans.length - 1];
+              const loanAmount = parseFloat(lastReceivedLoan.amount);
+              
+              const loanTimestamp = new Date(lastReceivedLoan.timestamp).getTime();
+              const currentTime = Date.now();
+              
+              let loanPeriodDays;
+              if (loanAmount <= 1) {
+                loanPeriodDays = 30;
+              } else if (loanAmount <= 5) {
+                loanPeriodDays = 60;
+              } else {
+                loanPeriodDays = 90;
+              }
+              
+              const loanPeriodMs = loanPeriodDays * 24 * 60 * 60 * 1000;
+              
+              if (currentTime > loanTimestamp + loanPeriodMs) {
+                setCreditScore(-1);
+                return;
+              }
+            }
+          }
+          
+          const repaidLoans = transactions.filter(tx => tx.status === "repaid").length;
+          const score = 2 + Math.min(repaidLoans, 8);
+          setCreditScore(score);
+        }
+      } catch (error) {
+        console.error("Error calculating credit score:", error);
+        setCreditScore(2);
+      }
+    };
+
+    if (ls_wallet) {
+      calculateCreditScore();
+    }
+  }, [ls_wallet, hasActiveLoan, loan]);
+
+  const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
+    if (!MiniKit.isInstalled()) {
+      toast({
+        title: "Verification Failed",
+        description: "Please install World App to verify.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVerifying(true);
+    setCurrentTier(tier as unknown as Tier);
+
+    const verificationStatus = {
+      claimAction: tier.action,
+      upgradeAction: tier.upgradeAction,
+      verification_level: tier.verification_level,
+      level: tier.level,
+    };
+
+    const verifyPayload: VerifyCommandInput = {
+      action: verificationStatus.claimAction || verificationStatus.upgradeAction,
+      signal: ls_wallet,
+      verification_level: verificationStatus.verification_level as VerificationLevel,
+    };
+
+    try {
+      const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+      if (finalPayload.status === "error") {
+        console.error("Verification failed:", finalPayload);
+
+        if (finalPayload.error_code === "credential_unavailable") {
+          toast({
+            title: "Verification Failed",
+            description: "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Verification Failed",
+            description: "Something went wrong. Please try again.",
+            variant: "destructive",
+          });
+        }
+        setVerifying(false);
+        return;
+      }
+
+      const response = await fetch(`${BACKEND_URL}/verify`, {
+        method: "POST",
+        body: JSON.stringify({
+          payload: finalPayload as ISuccessResult,
+          action: verificationStatus.claimAction || verificationStatus.upgradeAction,
+          signal: ls_wallet,
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        toast({
+          title: "Verification Successful",
+          description: `You are now ${verificationStatus.level} Verified.`,
+        });
+        refetch();
+      } else {
+        toast({
+          title: "Backend Error",
+          description: result.message || "Something went wrong.",
+          variant: "destructive",
+        });
+        console.error("Backend verification failed:", result);
+      }
+    } catch (error: any) {
+      console.error("Error during verification:", error);
+
+      let errorMessage = "Something went wrong while verifying.";
+
+      if (error?.error_code === "credential_unavailable") {
+        errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
+      }
+
+      toast({
+        title: "Verification Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setVerifying(false);
+    }
+  }, [ls_wallet, refetch, toast]);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen">
         <Header title="Profile" />
@@ -43,12 +215,14 @@ const Dashboard = () => {
   }
 
   if (!isLoading && data) {
+    const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
+    const userTierId = nftInfo?.tier?.tierId || BigInt(0);
+    const isDeviceVerified = nftInfo?.tier?.verificationStatus?.verification_level === "device";
+
     return (
       <div className="min-h-screen bg-background">
         <Header title="Profile" />
-        {/* Header */}
         <div className="max-w-4xl mx-auto space-y-8 px-4 py-6">
-          {/* User Profile */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -58,17 +232,87 @@ const Dashboard = () => {
               <User className="w-16 h-16 text-primary" />
             </div>
             <h2 className="text-xl font-bold text-gradient mb-3 text-center break-words">@{ls_username}</h2>
-            {nftInfo.tokenId === null ? (
-              <p className="text-muted-foreground text-center text-lg">Unverified</p>
-            ) : (
+            {isOrbVerified ? (
               <p className="text-muted-foreground text-center text-lg">
                 {nftInfo?.tier.verificationStatus.level} Verified User
               </p>
+            ) : isDeviceVerified ? (
+              <p className="text-muted-foreground text-center text-lg">Not Orb Verified</p>
+            ) : (
+              <p className="text-muted-foreground text-center text-lg">Unverified</p>
             )}
           </motion.div>
 
-          {/* Collateral section */}
-          {nftInfo.tokenId !== null ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card p-6 mb-8"
+          >
+            <div className="flex items-center justify-center mb-4">
+              <Shield className="w-12 h-12 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold text-gradient mb-2 text-center">Verification Level</h2>
+            <p className="text-muted-foreground text-center text-lg mb-6">
+              {isDeviceVerified || nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+              {Object.values(verificationLevels).map((tier) => {
+                const IconComponent = tier.icon;
+
+                return (
+                  <motion.div
+                    key={tier.level}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="glass-card p-6"
+                  >
+                    <IconComponent className="w-12 h-12 mx-auto mb-4 text-primary" />
+                    <h3 className="text-xl font-semibold mb-2 text-center">{tier.level} Verification</h3>
+
+                    <Button
+                      className="w-full"
+                      variant="default"
+                      disabled={
+                        verifying || // Disable while verifying
+                        userTierId > tier.tierId || // User already at a higher tier
+                        tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
+                      }
+                      onClick={() => handleVerify(tier)}
+                    >
+                      {verifying && currentTier?.tierId === tier.tierId
+                        ? "Verifying..."
+                        : nftInfo.tokenId === null || isDeviceVerified
+                        ? "Claim NFT"
+                        : userTierId > tier.tierId ||
+                          tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
+                        ? "Already Claimed"
+                        : `Upgrade to ${tier.level}`}
+                    </Button>
+                  </motion.div>
+                );
+              })}
+
+              {nftInfo.tokenId === null && !isDeviceVerified && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="glass-card p-6"
+                >
+                  <Shield className="w-12 h-12 mx-auto mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2 text-center">Device Verification</h3>
+
+                  <Button className="w-full" variant="default" disabled>
+                    No longer supported
+                  </Button>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+
+          {isOrbVerified || isDeviceVerified ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -94,42 +338,39 @@ const Dashboard = () => {
                         <FileText className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-lg">{nftInfo?.tier.verificationStatus.level} Verified</h4>
+                        <h4 className="font-medium text-lg">
+                          {isOrbVerified ? nftInfo?.tier.verificationStatus.level : "Not Orb Verified"}
+                        </h4>
                       </div>
                     </div>
                     <div
                       className={`px-4 py-2 rounded-full text-sm my-3 font-medium text-center ${
-                        hasActiveLoan 
-                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" 
+                        hasActiveLoan || isDeviceVerified
+                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                           : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       }`}
                     >
-                      {hasActiveLoan ? "Used for Collateral" : "Available for Collateral"}
+                      {hasActiveLoan || isDeviceVerified ? "Unavailable for Collateral" : "Available for Collateral"}
                     </div>
                   </Card>
                 </motion.div>
               </div>
             </motion.div>
-          ) : (
-            <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
-              <h2 className="text-2xl font-semibold mb-4">You are unverified</h2>
-              <p className="mb-4">
-                To be eligible for a loan, you need to own a specific NFT. Please upgrade your account to
-                include this NFT.
-              </p>
-              <button
-                onClick={() => navigate("/upgrade-verification")}
-                className="glass-button w-full"
-                disabled={isLoading}
-              >
-                Upgrade Now
-              </button>
-            </div>
-          )}
+          ) : null}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <CreditScore score={creditScore} className="w-full" />
+          </motion.div>
         </div>
       </div>
     );
   }
+
+  return null;
 };
 
 export default Dashboard;

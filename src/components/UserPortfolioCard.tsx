@@ -6,7 +6,11 @@ import { ArrowUpFromLine, ArrowDownToLine, Wallet, Info } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface UserPortfolioCardProps {
   balance: number;
@@ -69,7 +73,7 @@ export function UserPortfolioCard({
       <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
         {balance > 0 ? (
           <>
-            <div className="space-y-2 sm:space-y-3">
+            <div className="space-y-2 sm:space-y-3 pt-2">
               <div className="flex justify-between">
                 <span className="text-xs sm:text-sm text-gray-500">
                   Your Balance
@@ -91,29 +95,24 @@ export function UserPortfolioCard({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-xs sm:text-sm text-gray-500 flex items-center gap-1.5">
+                <span className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
                   Your APY
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full p-0 text-gray-500 hover:bg-transparent hover:text-gray-500">
-                          <Info className="h-2.5 w-2.5" />
-                          <span className="sr-only">APY Info</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs text-xs">
-                        <div className="space-y-2">
-                          <h4 className="font-semibold">How Your APY is Calculated</h4>
-                          <p>Your personal APY is calculated based on your actual earnings:</p>
-                          <div className="bg-gray-100 p-2 rounded">
-                            APY = (Earnings / Deposited Value) × (365 / Days Since Deposit) × 100%
-                          </div>
-                          <p>For new deposits (less than 7 days old), we show the pool's standard APY of {poolAPY}%.</p>
-                          <p>For this demo, we're assuming your deposit was made 30 days ago.</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="inline-flex">
+                        <Info className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600 transition-colors" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="max-w-[250px] text-xs p-3">
+                      <p>How Your APY is Calculated</p>
+                      <p className="mt-1">Your personal APY is calculated based on your actual earnings:</p>
+                      <div className="bg-gray-100 p-2 rounded mt-1">
+                        APY = (Earnings / Deposited Value) × (365 / Days Since Deposit) × 100%
+                      </div>
+                      <p className="mt-1">For new deposits (less than 7 days old), we show the pool's standard APY of {poolAPY}%.</p>
+                      <p className="mt-1">For this demo, we're assuming your deposit was made 30 days ago.</p>
+                    </PopoverContent>
+                  </Popover>
                 </span>
                 <span className="font-semibold text-sm sm:text-base text-[#8B5CF6]">{displayAPY.toFixed(2)}%</span>
               </div>

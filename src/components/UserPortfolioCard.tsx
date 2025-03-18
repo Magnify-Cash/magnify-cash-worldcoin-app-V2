@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpFromLine, ArrowDownToLine, Wallet, TrendingUp } from "lucide-react";
+import { ArrowUpFromLine, ArrowDownToLine, Wallet } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
@@ -32,8 +32,30 @@ export function UserPortfolioCard({
   const percentageChange = depositedValue > 0 ? (earnings / depositedValue * 100) : 0;
   const isPositive = percentageChange >= 0;
   
-  // Current APY value - using a static value for now that matches the pool APY
-  const currentAPY = 8.5;
+  // Pool's standard APY
+  const poolAPY = 8.5;
+  
+  // Calculate personalized APY based on earnings and deposit time
+  // For demo purposes, we'll assume the deposit was made 30 days ago
+  // In a real app, we would store the deposit timestamp in the database
+  const calculatePersonalizedAPY = () => {
+    if (depositedValue <= 0 || earnings === 0) return poolAPY;
+    
+    // Assuming deposit was made 30 days ago for this demo
+    const daysSinceDeposit = 30;
+    
+    // Annualize the returns: (earnings / depositedValue) * (365 / daysSinceDeposit) * 100
+    // This formula converts the earnings over X days to an annual percentage
+    const annualizedReturn = (earnings / depositedValue) * (365 / daysSinceDeposit) * 100;
+    
+    // For very recent deposits (< 7 days), showing the pool APY might be more accurate
+    if (daysSinceDeposit < 7) return poolAPY;
+    
+    return annualizedReturn;
+  };
+  
+  // Get the APY to display
+  const displayAPY = calculatePersonalizedAPY();
   
   return (
     <Card className="h-full border-[#8B5CF6]/20 overflow-hidden">
@@ -49,7 +71,6 @@ export function UserPortfolioCard({
             <div className="space-y-2 sm:space-y-3">
               <div className="flex justify-between">
                 <span className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-[#8B5CF6] flex-shrink-0" />
                   Your Balance
                 </span>
                 <span className="font-semibold text-sm sm:text-base flex items-center">{balance.toFixed(2)} LP</span>
@@ -70,10 +91,10 @@ export function UserPortfolioCard({
               </div>
             </div>
             
-            {/* Display current APY instead of growth percentage */}
+            {/* Display calculated or pool APY */}
             <div className="pt-2">
               <p className="text-xs text-[#8B5CF6] text-right mt-1">
-                Current APY: {currentAPY}%
+                Your APY: {displayAPY.toFixed(2)}%
               </p>
             </div>
           </>

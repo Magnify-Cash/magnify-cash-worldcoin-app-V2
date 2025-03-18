@@ -81,12 +81,12 @@ const Lending = () => {
           )}
         </div>
 
-        {/* Exchange Rate Graph */}
+        {/* LP Token Price Graph */}
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-8 sm:mb-12">
           <Card className="h-full overflow-hidden">
             <CardHeader className={isMobile ? "pb-1 pt-3 px-3" : "pb-2"}>
-              <CardTitle className="text-lg sm:text-xl">Exchange Rate</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">USDC to LP token conversion rate over time</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">LP Token Price Over Time</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Tracks the value of 1 LP token in USDC. Higher value indicates growth</CardDescription>
             </CardHeader>
             <CardContent className={isMobile ? "p-2" : ""}>
               <LendingGraph />

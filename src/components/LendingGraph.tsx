@@ -28,7 +28,7 @@ export function LendingGraph() {
           margin={{
             top: 10,
             right: isMobile ? 0 : 10,
-            left: isMobile ? -20 : 0,
+            left: isMobile ? -10 : 0,  // Adjusted left margin for mobile
             bottom: 0,
           }}
         >
@@ -44,17 +44,17 @@ export function LendingGraph() {
             tickFormatter={(value) => {
               // Check if value is a number before calling toFixed
               return typeof value === 'number' 
-                ? (isMobile ? value.toFixed(2) : value.toFixed(3))
+                ? (isMobile ? "$" + value.toFixed(2) : "$" + value.toFixed(3))
                 : value;
             }}
-            width={isMobile ? 30 : 40}
+            width={isMobile ? 40 : 50}  // Increased width for better visibility on mobile
           />
           <Tooltip 
             formatter={(value) => {
               // Check if value is a number before calling toFixed
               return typeof value === 'number'
-                ? [value.toFixed(4), 'Exchange Rate']
-                : [value, 'Exchange Rate'];
+                ? ["$" + value.toFixed(4), 'LP Token Price']
+                : [value, 'LP Token Price'];
             }}
             labelFormatter={(label) => `${label} 2024`}
           />

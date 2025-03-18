@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +25,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isInputReady, setIsInputReady] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   
   // Exchange rate - in a real app, this would come from a contract or API
@@ -40,6 +41,13 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
       // Delay making the input active to prevent keyboard from popping up
       const timer = setTimeout(() => {
         setIsInputReady(true);
+        
+        // Small additional delay to ensure DOM has updated
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 50);
       }, 300);
       
       return () => clearTimeout(timer);
@@ -127,6 +135,12 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
                 autoComplete="off"
                 readOnly={!isInputReady}
                 inputMode="decimal"
+                ref={inputRef}
+                onClick={() => {
+                  if (isInputReady && inputRef.current) {
+                    inputRef.current.focus();
+                  }
+                }}
               />
               <Button
                 type="button"

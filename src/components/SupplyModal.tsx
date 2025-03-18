@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isInputReady, setIsInputReady] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   
   const walletBalance = 1000;
@@ -38,6 +39,13 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
       // Delay making the input active to prevent keyboard from popping up
       const timer = setTimeout(() => {
         setIsInputReady(true);
+        
+        // Small additional delay to ensure DOM has updated
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 50);
       }, 300);
       
       return () => clearTimeout(timer);
@@ -115,6 +123,12 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
                 autoComplete="off"
                 readOnly={!isInputReady}
                 inputMode="decimal"
+                ref={inputRef}
+                onClick={() => {
+                  if (isInputReady && inputRef.current) {
+                    inputRef.current.focus();
+                  }
+                }}
               />
               <Button
                 type="button"

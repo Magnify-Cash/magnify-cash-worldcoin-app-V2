@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,7 +93,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
               <Input
                 id="amount"
                 placeholder="0.00"
-                className="pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="pl-9 pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 type="number"
@@ -105,7 +105,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
               <Button
                 type="button"
                 variant="ghost"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 px-2 text-xs"
+                className="absolute right-1 top-[2px] h-8 px-2 text-xs"
                 onClick={() => setAmount(walletBalance.toString())}
               >
                 MAX
@@ -129,7 +129,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
           
           <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? 'p-2 my-1' : 'mt-2'}`}>
             <div className="flex items-start">
-              <AlertTriangle className={`mr-2 h-4 w-4 text-amber-600 ${isMobile ? 'mt-0' : 'mt-0.5'}`} />
+              <AlertTriangle className={`mr-2 h-5 w-5 text-amber-600 flex-shrink-0 ${isMobile ? 'mt-0' : 'mt-0.5'}`} />
               <div className="text-xs text-amber-800">
                 <p className="font-medium mb-1">Risk Warning:</p>
                 <p>
@@ -143,11 +143,11 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
           </div>
         </div>
         
-        <DialogFooter className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between">
+        <DialogFooter className="flex flex-col space-y-3">
           <Button 
             onClick={handleSupply} 
             disabled={!amount || !isAmountValid() || isLoading}
-            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full sm:w-auto"
+            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full"
           >
             {isLoading ? "Processing..." : "Supply"}
           </Button>
@@ -155,7 +155,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
             variant="outline" 
             onClick={onClose} 
             disabled={isLoading} 
-            className="w-full sm:w-auto"
+            className="w-full"
           >
             Cancel
           </Button>

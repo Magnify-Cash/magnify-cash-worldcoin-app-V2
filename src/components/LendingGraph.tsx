@@ -1,7 +1,6 @@
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 const data = [
   { date: "Jan", rate: 1.000 },

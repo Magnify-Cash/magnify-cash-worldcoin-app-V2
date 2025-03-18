@@ -1,5 +1,5 @@
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const data = [
@@ -52,6 +52,18 @@ export function LendingGraph() {
                 : [value, 'Exchange Rate'];
             }}
             labelFormatter={(label) => `${label} 2024`}
+          />
+          {/* Reference line at value 1.0 for negative growth indicator */}
+          <ReferenceLine 
+            y={1} 
+            stroke="#666" 
+            strokeDasharray="3 3" 
+            label={{ 
+              value: "$1", 
+              position: "insideBottomRight",
+              fontSize: 10,
+              fill: "#666" 
+            }} 
           />
           <defs>
             <linearGradient id="rateGradient" x1="0" y1="0" x2="0" y2="1">

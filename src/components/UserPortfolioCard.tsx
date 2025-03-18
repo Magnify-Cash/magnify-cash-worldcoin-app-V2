@@ -104,7 +104,7 @@ export function UserPortfolioCard({
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="max-w-[250px] text-xs p-3">
-                      <p>How Your APY is Calculated</p>
+                      <p className="font-bold">How Your APY is Calculated</p>
                       <p className="mt-1">Your personal APY is calculated based on your actual earnings:</p>
                       <div className="bg-gray-100 p-2 rounded mt-1">
                         APY = (Earnings / Deposited Value) × (365 / Days Since Deposit) × 100%

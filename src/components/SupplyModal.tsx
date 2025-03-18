@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,11 +23,8 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const isMobile = useIsMobile();
   
-  // Mock wallet balance - in a real app, this would come from a wallet hook
-  const walletBalance = 1000; // Example balance in USDC
-  
-  // Mock exchange rate - in a real app, this would come from a contract or API
-  const exchangeRate = 0.95; // 1 USDC = 0.95 LP tokens
+  const walletBalance = 1000;
+  const exchangeRate = 0.95;
   
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
@@ -38,8 +34,6 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
   const handleSupply = () => {
     setIsLoading(true);
     
-    // Here you would integrate with the world app transaction modal
-    // For now, we'll simply mock this with a timeout
     setTimeout(() => {
       toast({
         title: "Supply initiated",
@@ -51,7 +45,6 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
     }, 1500);
   };
   
-  // Calculate LP tokens based on input amount
   const calculateLPTokens = () => {
     const numAmount = parseFloat(amount);
     if (!isNaN(numAmount) && numAmount > 0) {
@@ -143,7 +136,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
           </div>
         </div>
         
-        <DialogFooter className="flex flex-col space-y-3">
+        <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
           <Button 
             onClick={handleSupply} 
             disabled={!amount || !isAmountValid() || isLoading}

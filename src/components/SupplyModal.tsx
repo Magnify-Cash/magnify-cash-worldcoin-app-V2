@@ -108,6 +108,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
                 autoComplete="off"
                 inputMode="decimal"
                 ref={inputRef}
+                tabIndex={-1}
               />
               <Button
                 type="button"

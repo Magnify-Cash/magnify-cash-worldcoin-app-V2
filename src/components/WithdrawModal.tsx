@@ -136,6 +136,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
                 readOnly={!isInputReady}
                 inputMode="decimal"
                 ref={inputRef}
+                tabIndex={-1}
                 onClick={() => {
                   if (isInputReady && inputRef.current) {
                     inputRef.current.focus();

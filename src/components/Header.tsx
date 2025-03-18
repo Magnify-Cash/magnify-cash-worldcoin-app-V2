@@ -20,13 +20,18 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
   const location = useLocation();
   const isLendingPage = location.pathname === "/lending";
 
+  const handleBackClick = () => {
+    // Always navigate to welcome page instead of browser history
+    navigate("/welcome");
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="flex flex-1 items-center justify-between">
           {showBack ? (
             <button
-              onClick={() => navigate(-1)}
+              onClick={handleBackClick}
               className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-white focus:text-white h-10 w-10"              >
               <ArrowLeft className="h-5 w-5" />
             </button>

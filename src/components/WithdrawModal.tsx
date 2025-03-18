@@ -24,6 +24,7 @@ interface WithdrawModalProps {
 export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInputReady, setIsInputReady] = useState(false);
   const isMobile = useIsMobile();
   
   // Exchange rate - in a real app, this would come from a contract or API
@@ -34,6 +35,14 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
     if (isOpen) {
       setAmount("");
       setIsLoading(false);
+      setIsInputReady(false);
+      
+      // Delay making the input active to prevent keyboard from popping up
+      const timer = setTimeout(() => {
+        setIsInputReady(true);
+      }, 300);
+      
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
   
@@ -116,6 +125,8 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
                 step="0.01"
                 min="0"
                 autoComplete="off"
+                readOnly={!isInputReady}
+                inputMode="decimal"
               />
               <Button
                 type="button"

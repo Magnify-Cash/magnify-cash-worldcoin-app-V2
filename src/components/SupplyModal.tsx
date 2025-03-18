@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,10 +22,27 @@ interface SupplyModalProps {
 export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInputReady, setIsInputReady] = useState(false);
   const isMobile = useIsMobile();
   
   const walletBalance = 1000;
   const exchangeRate = 0.95;
+  
+  // Reset state when modal opens or closes
+  useEffect(() => {
+    if (isOpen) {
+      setAmount("");
+      setIsLoading(false);
+      setIsInputReady(false);
+      
+      // Delay making the input active to prevent keyboard from popping up
+      const timer = setTimeout(() => {
+        setIsInputReady(true);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
   
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
@@ -96,6 +113,8 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
                 step="0.01"
                 min="0"
                 autoComplete="off"
+                readOnly={!isInputReady}
+                inputMode="decimal"
               />
               <Button
                 type="button"

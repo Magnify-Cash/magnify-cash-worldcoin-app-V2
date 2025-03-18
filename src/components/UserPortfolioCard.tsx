@@ -66,7 +66,7 @@ export function UserPortfolioCard({
           Your Portfolio
         </CardTitle>
       </CardHeader>
-      <CardContent className={`${isMobile ? "px-3 py-2" : ""} space-y-3 sm:space-y-4`}>
+      <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
         {balance > 0 ? (
           <>
             <div className="space-y-2 sm:space-y-3">

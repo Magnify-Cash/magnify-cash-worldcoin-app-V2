@@ -10,6 +10,11 @@ const data = [
   { date: "May", rate: 1.021 },
   { date: "Jun", rate: 1.028 },
   { date: "Jul", rate: 1.035 },
+  { date: "Aug", rate: 1.032 },  // Start of decline
+  { date: "Sep", rate: 1.020 },  // Continued decline
+  { date: "Oct", rate: 0.998 },  // Below $1 (negative growth)
+  { date: "Nov", rate: 0.992 },  // Further below $1
+  { date: "Dec", rate: 1.005 },  // Recovery
 ];
 
 export function LendingGraph() {
@@ -34,7 +39,7 @@ export function LendingGraph() {
             tickMargin={isMobile ? 5 : 10}
           />
           <YAxis 
-            domain={[1, 1.05]}
+            domain={[0.98, 1.05]}
             tick={{ fontSize: isMobile ? 10 : 12 }}
             tickFormatter={(value) => {
               // Check if value is a number before calling toFixed

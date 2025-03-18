@@ -87,17 +87,11 @@ export function LendingGraph() {
               return null;
             }}
           />
-          {/* Reference line at value 1.0 for negative growth indicator */}
+          {/* Reference line at value 1.0 for negative growth indicator - removed label */}
           <ReferenceLine 
             y={1} 
             stroke="#666" 
             strokeDasharray="3 3" 
-            label={{ 
-              value: "$1.00", 
-              position: isMobile ? "insideLeft" : "insideBottomRight",
-              fontSize: 10,
-              fill: "#666" 
-            }} 
           />
           <defs>
             <linearGradient id="rateGradient" x1="0" y1="0" x2="0" y2="1">

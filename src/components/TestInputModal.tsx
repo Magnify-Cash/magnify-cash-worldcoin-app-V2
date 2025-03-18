@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,25 +17,6 @@ interface TestInputModalProps {
 
 export function TestInputModal({ isOpen, onClose }: TestInputModalProps) {
   const [inputValue, setInputValue] = useState<string>("");
-  const [isInputReady, setIsInputReady] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  
-  useEffect(() => {
-    if (isOpen) {
-      setInputValue("");
-      setIsInputReady(false);
-      
-      // Delay enabling the input to prevent keyboard pop-up on mobile
-      const timer = setTimeout(() => {
-        setIsInputReady(true);
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -54,8 +35,7 @@ export function TestInputModal({ isOpen, onClose }: TestInputModalProps) {
               placeholder="Type something..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              readOnly={!isInputReady}
-              ref={inputRef}
+              autoFocus
             />
           </div>
         </div>

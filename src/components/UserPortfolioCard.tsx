@@ -32,6 +32,9 @@ export function UserPortfolioCard({
   const percentageChange = depositedValue > 0 ? (earnings / depositedValue * 100) : 0;
   const isPositive = percentageChange >= 0;
   
+  // Current APY value - using a static value for now that matches the pool APY
+  const currentAPY = 8.5;
+  
   return (
     <Card className="h-full border-[#8B5CF6]/20 overflow-hidden">
       <CardHeader className={`pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5`}>
@@ -67,10 +70,10 @@ export function UserPortfolioCard({
               </div>
             </div>
             
-            {/* Display percentage change as text only */}
+            {/* Display current APY instead of growth percentage */}
             <div className="pt-2">
-              <p className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'} text-right mt-1`}>
-                {isPositive ? '+' : ''}{percentageChange.toFixed(1)}% {isPositive ? 'growth' : 'loss'}
+              <p className="text-xs text-[#8B5CF6] text-right mt-1">
+                Current APY: {currentAPY}%
               </p>
             </div>
           </>

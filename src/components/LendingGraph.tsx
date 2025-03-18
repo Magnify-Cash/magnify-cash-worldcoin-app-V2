@@ -1,6 +1,7 @@
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 const data = [
   { date: "Jan", rate: 1.000 },
@@ -20,43 +21,71 @@ const data = [
 export function LendingGraph() {
   const isMobile = useIsMobile();
   
+  // Calculate which ticks to show based on mobile/desktop
+  const getTickInterval = () => {
+    return isMobile ? 2 : 1; // Show every other month on mobile
+  };
+
+  // Custom tick formatter for X axis
+  const formatXAxisTick = (tick: string) => {
+    return tick;
+  };
+
   return (
-    <div className="w-full h-[250px] sm:h-[300px]">
+    <div className="w-full h-[280px] sm:h-[300px]"> {/* Increased height for mobile */}
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
           margin={{
             top: 10,
-            right: isMobile ? 0 : 10,
-            left: isMobile ? -10 : 0,  // Adjusted left margin for mobile
-            bottom: 0,
+            right: isMobile ? 5 : 10,
+            left: isMobile ? 0 : 0,
+            bottom: isMobile ? 10 : 0, // Increased bottom margin for mobile
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={!isMobile} />
           <XAxis 
             dataKey="date" 
-            tick={{ fontSize: isMobile ? 10 : 12 }}
-            tickMargin={isMobile ? 5 : 10}
+            tick={{ fontSize: isMobile ? 11 : 12 }}
+            tickMargin={isMobile ? 8 : 10}
+            interval={getTickInterval()}
+            tickFormatter={formatXAxisTick}
+            padding={{ left: 10, right: 10 }}
           />
           <YAxis 
             domain={[0.98, 1.05]}
-            tick={{ fontSize: isMobile ? 10 : 12 }}
+            tick={{ fontSize: isMobile ? 11 : 12 }}
             tickFormatter={(value) => {
               // Check if value is a number before calling toFixed
-              return typeof value === 'number' 
-                ? (isMobile ? "$" + value.toFixed(2) : "$" + value.toFixed(3))
-                : value;
+              if (typeof value !== 'number') return value;
+              
+              // For mobile, simplify display but ensure $ is visible
+              if (isMobile) {
+                if (value === 1) return "$1.00";
+                return "$" + value.toFixed(2);
+              } 
+              
+              return "$" + value.toFixed(3);
             }}
-            width={isMobile ? 40 : 50}  // Increased width for better visibility on mobile
+            width={isMobile ? 45 : 50}  // Slightly increased width for mobile
+            tickCount={isMobile ? 5 : 6} // Fewer ticks on mobile
+            padding={{ top: 10, bottom: 10 }}
           />
           <Tooltip 
-            formatter={(value) => {
-              // Check if value is a number before calling toFixed
-              return typeof value === 'number'
-                ? ["$" + value.toFixed(4), 'LP Token Price']
-                : [value, 'LP Token Price'];
+            content={({ active, payload, label }) => {
+              if (active && payload && payload.length) {
+                const value = payload[0].value as number;
+                return (
+                  <div className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-md rounded-md p-2 text-xs">
+                    <p className="font-medium">{label} 2024</p>
+                    <p className="text-[#8B5CF6] font-semibold pt-1">
+                      LP Token: ${value.toFixed(4)}
+                    </p>
+                  </div>
+                );
+              }
+              return null;
             }}
-            labelFormatter={(label) => `${label} 2024`}
           />
           {/* Reference line at value 1.0 for negative growth indicator */}
           <ReferenceLine 
@@ -64,8 +93,8 @@ export function LendingGraph() {
             stroke="#666" 
             strokeDasharray="3 3" 
             label={{ 
-              value: "$1", 
-              position: "insideBottomRight",
+              value: "$1.00", 
+              position: isMobile ? "insideLeft" : "insideBottomRight",
               fontSize: 10,
               fill: "#666" 
             }} 
@@ -82,6 +111,7 @@ export function LendingGraph() {
             stroke="#8B5CF6" 
             strokeWidth={2}
             fill="url(#rateGradient)" 
+            activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
           />
         </AreaChart>
       </ResponsiveContainer>

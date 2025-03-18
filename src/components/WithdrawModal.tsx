@@ -183,7 +183,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
           <Button 
             onClick={handleWithdraw} 
             disabled={!amount || !isAmountValid() || isLoading}
-            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full"
+            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full py-6"
           >
             {isLoading ? "Processing..." : "Withdraw"}
           </Button>
@@ -191,7 +191,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
             variant="outline" 
             onClick={onClose} 
             disabled={isLoading} 
-            className="w-full"
+            className="w-full py-6"
           >
             Cancel
           </Button>

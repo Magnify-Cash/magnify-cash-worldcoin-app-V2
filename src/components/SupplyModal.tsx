@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -82,11 +83,13 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
               </span>
             </div>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <DollarSign className="h-4 w-4" />
+              </div>
               <Input
                 id="amount"
                 placeholder="0.00"
-                className="pl-9 pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 type="number"
@@ -97,7 +100,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
               <Button
                 type="button"
                 variant="ghost"
-                className="absolute right-1 top-[2px] h-8 px-2 text-xs"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
                 onClick={() => setAmount(walletBalance.toString())}
               >
                 MAX
@@ -121,7 +124,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
           
           <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? 'p-2 my-1' : 'mt-2'}`}>
             <div className="flex items-start">
-              <AlertTriangle className={`mr-2 h-5 w-5 text-amber-600 flex-shrink-0 ${isMobile ? 'mt-0' : 'mt-0.5'}`} />
+              <AlertTriangle className="mr-2 h-5 w-5 text-amber-600 flex-shrink-0 mt-0" />
               <div className="text-xs text-amber-800">
                 <p className="font-medium mb-1">Risk Warning:</p>
                 <p>
@@ -139,7 +142,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
           <Button 
             onClick={handleSupply} 
             disabled={!amount || !isAmountValid() || isLoading}
-            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full"
+            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full py-6"
           >
             {isLoading ? "Processing..." : "Supply"}
           </Button>
@@ -147,7 +150,7 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
             variant="outline" 
             onClick={onClose} 
             disabled={isLoading} 
-            className="w-full"
+            className="w-full py-6"
           >
             Cancel
           </Button>

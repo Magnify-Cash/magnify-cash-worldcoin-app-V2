@@ -13,13 +13,15 @@ interface LendingPoolCardProps {
   apy: number;
   totalSupply: number;
   availableLiquidity: number;
+  useCustomGradient?: boolean;
 }
 
 export function LendingPoolCard({ 
   title, 
   apy, 
   totalSupply, 
-  availableLiquidity 
+  availableLiquidity,
+  useCustomGradient = false 
 }: LendingPoolCardProps) {
   const isMobile = useIsMobile();
 
@@ -32,11 +34,18 @@ export function LendingPoolCard({
     return `${value.toFixed(0)}${suffix}`;
   };
 
+  const headerGradient = useCustomGradient 
+    ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF]/80"
+    : "bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5";
+
+  const iconColor = useCustomGradient ? "text-white" : "text-[#8B5CF6]";
+  const borderStyle = useCustomGradient ? "border border-[#D946EF]/30" : "border border-[#8B5CF6]/20";
+
   return (
-    <Card className="overflow-hidden border border-[#8B5CF6]/20">
-      <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5">
-        <CardTitle className="text-xl flex items-center gap-2">
-          <Coins className="h-5 w-5 text-[#8B5CF6]" />
+    <Card className={`overflow-hidden ${borderStyle}`}>
+      <CardHeader className={`pb-2 pt-4 ${headerGradient}`}>
+        <CardTitle className={`text-xl flex items-center gap-2 ${useCustomGradient ? "text-white" : ""}`}>
+          <Coins className={`h-5 w-5 ${iconColor}`} />
           {title}
         </CardTitle>
       </CardHeader>
@@ -95,7 +104,7 @@ export function LendingPoolCard({
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="font-semibold text-base sm:text-lg text-[#8B5CF6] flex items-center">
+            <div className={`font-semibold text-base sm:text-lg flex items-center ${useCustomGradient ? "text-[#D946EF]" : "text-[#8B5CF6]"}`}>
               {apy}%
             </div>
           </div>

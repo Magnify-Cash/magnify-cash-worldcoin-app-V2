@@ -3,7 +3,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
+
+
+type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
+  address: string;
+};
 
 type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
   address: string;
@@ -11,6 +16,8 @@ type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const toast = useToast();
+  
   const [loading, setLoading] = useState(false);
 
   const handleSignIn = async () => {
@@ -22,7 +29,6 @@ const Welcome = () => {
     }
     try {
       setLoading(true);
-      console.log("Initiating wallet authentication...");
       const nonce = crypto.randomUUID().replace(/-/g, "");
       const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
         nonce,
@@ -37,19 +43,29 @@ const Welcome = () => {
         const user = await MiniKit.getUserByAddress(extendedPayload.address);
         localStorage.setItem("ls_wallet_address", user.walletAddress);
         localStorage.setItem("ls_username", user.username);
-        toast.success("Successfully signed in!");
-        console.log("ADDRESS:", user.walletAddress);
-        console.log("USERNAME:", user.username);
+
+        toast.toast({
+          title: "Successfully signed in!",
+          description: `Welcome back, ${user.username}!`,
+        });
         setLoading(false);
         navigate("/wallet");
       } else {
         setLoading(false);
-        toast.error("Failed to retrieve wallet address.");
+        toast.toast({
+          title: "Error",
+          description: "Failed to retrieve wallet address.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       setLoading(false);
       console.error("Authentication failed:", error);
-      toast.error("Failed to sign in. Please try again.");
+      toast.toast({
+        title: "Error",
+        description: "Failed to sign in. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

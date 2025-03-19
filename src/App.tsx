@@ -15,6 +15,7 @@ import eruda from "eruda";
 import { MiniKitProvider } from "./providers/MiniKitProvider";
 import { USDCBalanceProvider } from "./providers/USDCBalanceProvider";
 import { Toaster } from "@/components/ui/toaster";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const allowedWallets = [
   "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c",
@@ -37,6 +38,7 @@ function App() {
       <USDCBalanceProvider>
       <Toaster />
       <Router>
+      <ScrollToTop />
         <Routes>
           <Route path="/" element={<Navigate to="/welcome" replace />} />
           <Route path="/welcome" element={<Welcome />} />
@@ -90,7 +92,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Removing UpgradeVerification route as it's now integrated into Profile */}
         </Routes>
       </Router>
       </USDCBalanceProvider>

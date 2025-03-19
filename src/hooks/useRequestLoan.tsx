@@ -85,7 +85,6 @@ const useRequestLoan = (): RequestLoanResponse => {
 
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
-        console.log("Loan initialization transaction sent:", finalPayload.transaction_id);
         setIsConfirming(true);
         
         setLoanDetails({

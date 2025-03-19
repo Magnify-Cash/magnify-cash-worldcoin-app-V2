@@ -12,6 +12,14 @@ export interface TokenMetadata {
   };
 }
 
+export interface WalletTokens {
+  tokenAddress: string;
+  tokenName: string;
+  tokenSymbol: string;
+  tokenDecimals: number;
+  tokenBalance: number;
+}
+
 export interface WalletData {
   id: string;
   wallet: string;
@@ -28,3 +36,9 @@ export interface TransactionData {
   timestamp: string;
   status: string;
 }
+
+export interface RequestParams {
+  [key: string]: string | number | boolean;
+}
+
+export type HttpMethod = "GET" | "POST";

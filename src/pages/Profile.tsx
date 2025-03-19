@@ -100,7 +100,7 @@ const Dashboard = () => {
       });
 
       const result = await response.json();
-      if (response.ok) {
+      if (response.status === 200) {
         toast({
           title: "Verification Successful",
           description: `You are now ${verificationStatus.level} Verified.`,

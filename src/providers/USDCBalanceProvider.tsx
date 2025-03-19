@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import backendRequest from "@/lib/request";
+import { getUSDCBalance } from "@/lib/backendRequests";
 import { MAGNIFY_WORLD_ADDRESS } from "@/utils/constants";
 
 type USDCBalanceContextType = {
@@ -24,22 +24,15 @@ export const USDCBalanceProvider = ({ children }: { children: React.ReactNode })
     setError(null);
 
     try {
-      interface BalanceResponse {
-        balance: number;
-      }
+      const balance = await getUSDCBalance(MAGNIFY_WORLD_ADDRESS);
 
-      const response = await backendRequest<BalanceResponse>("GET", "getUSDCBalance", { wallet: MAGNIFY_WORLD_ADDRESS });
-
-      if (response?.balance !== undefined) {
-        const formattedBalance = Number(response.balance);
-        setUsdcBalance(formattedBalance);
-        setHasMoreThanOne(formattedBalance > 1);
-      } else {
-        throw new Error("Invalid balance response");
-      }
+      setUsdcBalance(balance);
+      setHasMoreThanOne(balance > 1);
     } catch (err) {
       console.error("Error fetching USDC balance:", err);
       setError("Failed to fetch USDC balance.");
+      setUsdcBalance(null);
+      setHasMoreThanOne(null);
     } finally {
       setLoading(false);
     }
@@ -50,7 +43,7 @@ export const USDCBalanceProvider = ({ children }: { children: React.ReactNode })
   }, [fetchBalance]);
 
   const refreshBalance = async () => {
-    return fetchBalance();
+    await fetchBalance();
   };
 
   return (

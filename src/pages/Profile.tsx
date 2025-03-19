@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
-import { DollarSign, Shield, User, FileText, Pi, AlertTriangle, Bell, Globe } from "lucide-react";
+import { Shield, User, FileText, Pi, AlertTriangle, Bell, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
 import { useMagnifyWorld, Tier } from "@/hooks/useMagnifyWorld";
 import { Card } from "@/components/ui/card";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { BACKEND_URL } from "@/utils/constants";
 import { toast } from "@/components/ui/use-toast";
 import CreditScore from "@/components/CreditScore";
-import { calculateRemainingTime } from "@/utils/timeinfo";
+import { getTransactionHistory, verify } from "@/lib/backendRequests";
+
 
 interface Transaction {
   status: "received" | "repaid";
@@ -23,6 +22,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const ls_username = localStorage.getItem("ls_username");
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
+
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const [verifying, setVerifying] = useState(false);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
@@ -48,58 +48,43 @@ const Dashboard = () => {
   useEffect(() => {
     const calculateCreditScore = async () => {
       try {
-        const response = await fetch(
-          `${BACKEND_URL}/getTransactionHistory?wallet=${ls_wallet}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch transaction history");
-        
-        const result = await response.json();
-        if (result.status === 200) {
-          const transactions: Transaction[] = result.data;
-          
-          if (transactions.length === 0) {
-            setCreditScore(2);
-            return;
-          }
-          
-          if (hasActiveLoan && loan) {
-            const receivedLoans = transactions.filter(tx => tx.status === "received");
-            
-            if (receivedLoans.length > 0) {
-              const lastReceivedLoan = receivedLoans[receivedLoans.length - 1];
-              const loanAmount = parseFloat(lastReceivedLoan.amount);
-              
-              const loanTimestamp = new Date(lastReceivedLoan.timestamp).getTime();
-              const currentTime = Date.now();
-              
-              let loanPeriodDays;
-              if (loanAmount <= 1) {
-                loanPeriodDays = 30;
-              } else if (loanAmount <= 5) {
-                loanPeriodDays = 60;
-              } else {
-                loanPeriodDays = 90;
-              }
-              
-              const loanPeriodMs = loanPeriodDays * 24 * 60 * 60 * 1000;
-              
-              if (currentTime > loanTimestamp + loanPeriodMs) {
-                setCreditScore(-1);
-                return;
-              }
+        const transactions = await getTransactionHistory(ls_wallet);
+  
+        if (transactions.length === 0) {
+          setCreditScore(2);
+          return;
+        }
+  
+        if (hasActiveLoan && loan) {
+          const receivedLoans = transactions.filter((tx) => tx.status === "received");
+  
+          if (receivedLoans.length > 0) {
+            const lastReceivedLoan = receivedLoans[receivedLoans.length - 1];
+            const loanAmount = parseFloat(lastReceivedLoan.amount);
+  
+            const loanTimestamp = new Date(lastReceivedLoan.timestamp).getTime();
+            const currentTime = Date.now();
+  
+            const loanPeriodDays =
+              loanAmount <= 1 ? 30 : loanAmount <= 5 ? 60 : 90;
+  
+            const loanPeriodMs = loanPeriodDays * 24 * 60 * 60 * 1000;
+  
+            if (currentTime > loanTimestamp + loanPeriodMs) {
+              setCreditScore(-1);
+              return;
             }
           }
-          
-          const repaidLoans = transactions.filter(tx => tx.status === "repaid").length;
-          const score = 2 + Math.min(repaidLoans, 8);
-          setCreditScore(score);
         }
+  
+        const repaidLoans = transactions.filter((tx) => tx.status === "repaid").length;
+        setCreditScore(2 + Math.min(repaidLoans, 8));
       } catch (error) {
         console.error("Error calculating credit score:", error);
         setCreditScore(2);
       }
     };
-
+  
     if (ls_wallet) {
       calculateCreditScore();
     }
@@ -114,78 +99,58 @@ const Dashboard = () => {
       });
       return;
     }
-
+  
     setVerifying(true);
     setCurrentTier(tier as unknown as Tier);
-
+  
     const verificationStatus = {
       claimAction: tier.action,
       upgradeAction: tier.upgradeAction,
       verification_level: tier.verification_level,
       level: tier.level,
     };
-
+  
     const verifyPayload: VerifyCommandInput = {
       action: verificationStatus.claimAction || verificationStatus.upgradeAction,
       signal: ls_wallet,
       verification_level: verificationStatus.verification_level as VerificationLevel,
     };
-
+  
     try {
       const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
       if (finalPayload.status === "error") {
         console.error("Verification failed:", finalPayload);
-
-        if (finalPayload.error_code === "credential_unavailable") {
-          toast({
-            title: "Verification Failed",
-            description: "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Verification Failed",
-            description: "Something went wrong. Please try again.",
-            variant: "destructive",
-          });
-        }
-        setVerifying(false);
+  
+        const errorMessage =
+          finalPayload.error_code === "credential_unavailable"
+            ? "You are not Orb Verified in the WorldChain App. Please complete Orb verification first."
+            : "Something went wrong. Please try again.";
+  
+        toast({
+          title: "Verification Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
         return;
       }
-
-      const response = await fetch(`${BACKEND_URL}/verify`, {
-        method: "POST",
-        body: JSON.stringify({
-          payload: finalPayload as ISuccessResult,
-          action: verificationStatus.claimAction || verificationStatus.upgradeAction,
-          signal: ls_wallet,
-        }),
-      });
-
-      const result = await response.json();
-      if (result.status === 200) { 
+  
+      // Backend verification call
+      const isVerified = await verify(finalPayload, verificationStatus, ls_wallet);
+      if (isVerified) {
         toast({
           title: "Verification Successful",
           description: `You are now ${verificationStatus.level} Verified.`,
         });
         refetch();
-      } else {
-        toast({
-          title: "Backend Error",
-          description: result.message || "Something went wrong.",
-          variant: "destructive",
-        });
-        console.error("Backend verification failed:", result);
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
-
+      
       let errorMessage = "Something went wrong while verifying.";
-
-      if (error?.error_code === "credential_unavailable") {
+      if (error?.message?.includes("credential_unavailable")) {
         errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
       }
-
+  
       toast({
         title: "Verification Failed",
         description: errorMessage,

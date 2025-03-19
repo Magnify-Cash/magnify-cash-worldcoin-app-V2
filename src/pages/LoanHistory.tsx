@@ -10,8 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { BACKEND_URL } from "@/utils/constants";
 import { Button } from "@/components/ui/button";
+import { getTransactionHistory } from "@/lib/backendRequests";
 
 interface LoanTransaction {
   transactionHash: string;
@@ -37,24 +37,21 @@ const LoanHistory = () => {
         setLoading(false);
         return;
       }
-
+  
       try {
-        const response = await fetch(
-          `${BACKEND_URL}/getTransactionHistory?wallet=${ls_wallet}`
-        );
-        if (!response.ok) {
-          throw new Error(`API error: ${response.statusText}`);
-        }
-        const result = await response.json();
-        const data: LoanTransaction[] = result.data;
-
-        if (result.status === 200 && data.length === 0) {
+        const data = await getTransactionHistory(ls_wallet);
+  
+        if (data.length === 0) {
           setError("You don't have any transaction history yet. Would you like to request your first loan?");
         } else {
-          const sortedTransactions = data.sort(
-            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          setTransactions(
+            data
+              .map((transaction) => ({
+                ...transaction,
+                status: transaction.status as "received" | "repaid",
+              }))
+              .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
           );
-          setTransactions(sortedTransactions);
         }
       } catch (err) {
         setError("Failed to fetch transactions.");
@@ -63,7 +60,7 @@ const LoanHistory = () => {
         setLoading(false);
       }
     };
-
+  
     fetchTransactionHistory();
   }, []);
 

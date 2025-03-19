@@ -10,6 +10,7 @@ import Announcements from "@/pages/Announcements";
 import LoanHistory from "@/pages/LoanHistory";
 import Lending from "@/pages/Lending";
 import ProtectedRoute from "@/pages/ProtectedPage";
+import NotFound from "@/pages/NotFound";
 import "./App.css";
 import eruda from "eruda";
 import { MiniKitProvider } from "./providers/MiniKitProvider";
@@ -92,6 +93,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
       </USDCBalanceProvider>

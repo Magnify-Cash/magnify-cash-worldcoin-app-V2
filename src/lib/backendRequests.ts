@@ -3,23 +3,26 @@ import { BackendResponse, TokenMetadata, WalletData, TransactionData, WalletToke
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
 export const getETHBalance = async (wallet: string): Promise<number> => {
-  const response = await backendRequest<{ balance: string }>("GET", "getEthBalance", { wallet });
+  const response = await backendRequest<{ ethBalance: number }>("GET", "getEthBalance", { wallet });
 
-  if (!response.data || typeof response.data.balance === "undefined") {
-    throw new Error(`Failed to fetch ETH balance. Status: ${response.status}, Message: ${response.message}`);
+  if (!response.data || typeof response.data.ethBalance !== "number") {
+    console.error(`Invalid ETH balance response:`, response);
+    return 0;
   }
 
-  return Number(response.data.balance);
+  return response.data.ethBalance;
 };
 
-export const getUSDCBalance = async (wallet: string): Promise<number> => { 
-  const response = await backendRequest<{ balance: number }>("GET", "getUSDCBalance", { wallet });
 
-  if (!response.data || typeof response.data.balance === "undefined") {
-    throw new Error(`Failed to fetch USDC balance. Status: ${response.status}, Message: ${response.message}`);
+export const getUSDCBalance = async (wallet: string): Promise<number> => {
+  const response = await backendRequest<{ usdcBalance: number }>("GET", "getUSDCBalance", { wallet });
+
+  if (!response.data || typeof response.data.usdcBalance !== "number") {
+    console.error(`Failed to fetch USDC balance. Status: ${response.status}, Message: ${response.message}`);
+    return 0;
   }
 
-  return response.data.balance;
+  return response.data.usdcBalance;
 };
 
 export const getWalletTokens = async (wallet: string): Promise<WalletTokens[]> => {

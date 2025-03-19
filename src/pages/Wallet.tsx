@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { WalletCard } from "@/components/WalletCard";
 import { Header } from "@/components/Header";
@@ -23,7 +22,6 @@ const Wallet = () => {
   const [loadingTokens, setLoadingTokens] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Function to check if the wallet already exists in the database
   const checkWalletExists = useCallback(async (wallet: string) => {
     try {
       return await checkWallet(wallet);
@@ -32,7 +30,6 @@ const Wallet = () => {
     }
   }, []);  
   
-  // Function to request notification permissions
   const requestPermission = useCallback(async () => {
     if (!MiniKit.isInstalled()) {
       console.warn("MiniKit is not installed");
@@ -43,7 +40,6 @@ const Wallet = () => {
       return;
     }
   
-    // Check if wallet already exists before saving
     const walletExists = await checkWalletExists(ls_wallet);
     if (walletExists) {
       return;
@@ -68,9 +64,7 @@ const Wallet = () => {
       console.warn("Error saving wallet:", error);
     }
   }, [checkWalletExists]);
-  
 
-  // Request permission on mount if not already granted
   useEffect(() => {
     const checkAndSaveWallet = async () => {
       if (!ls_wallet) return;
@@ -98,8 +92,6 @@ const Wallet = () => {
     checkAndSaveWallet();
   }, [requestPermission, checkWalletExists]);
 
-
-  // Function to load cached balances if they are still fresh
   const loadCachedBalances = () => {
     const cachedUSDC = sessionStorage.getItem("usdcBalance");
     const cachedTokens = sessionStorage.getItem("walletTokens");
@@ -117,7 +109,6 @@ const Wallet = () => {
     }
   };
 
-  // Function to fetch fresh balances
   const fetchBalances = async () => {
     try {
       setIsRefreshing(true);
@@ -156,9 +147,8 @@ const Wallet = () => {
           setLoadingTokens(false);
         });
 
-      // Update cache timestamp
       sessionStorage.setItem("walletCacheTimestamp", String(Date.now()));
-      setTimeout(() => setIsRefreshing(false), 600); // Add small delay for better UX
+      setTimeout(() => setIsRefreshing(false), 600);
     } catch (error) {
       console.error("Unexpected error fetching balances:", error);
       setError("Unexpected error fetching balances");
@@ -167,7 +157,6 @@ const Wallet = () => {
       setIsRefreshing(false);
     }
   };
-
 
   useEffect(() => {
     if (!ls_wallet) return;
@@ -212,14 +201,13 @@ const Wallet = () => {
           </div>
         </div>
 
-        {/* Wallet Balances with Refresh Button */}
-        <div className="relative mb-8">
-          <div className="absolute top-0 right-0 z-10">
+        <div className="mb-8">
+          <div className="flex justify-end mb-2">
             <Button 
               onClick={fetchBalances} 
               variant="ghost" 
               size="icon" 
-              className="text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 h-8 w-8"
               disabled={isRefreshing}
             >
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />

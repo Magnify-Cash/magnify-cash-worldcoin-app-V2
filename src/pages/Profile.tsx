@@ -50,8 +50,13 @@ const Dashboard = () => {
       try {
         const transactions = await getTransactionHistory(ls_wallet);
   
+        if (!isOrbVerified) {
+          setCreditScore(1); // Credit score is 1 if not orb verified
+          return;
+        }
+  
         if (transactions.length === 0) {
-          setCreditScore(2);
+          setCreditScore(2); // Default credit score for orb-verified users with no transactions
           return;
         }
   
@@ -71,24 +76,24 @@ const Dashboard = () => {
             const loanPeriodMs = loanPeriodDays * 24 * 60 * 60 * 1000;
   
             if (currentTime > loanTimestamp + loanPeriodMs) {
-              setCreditScore(-1);
+              setCreditScore(-1); // Penalize for overdue loans
               return;
             }
           }
         }
   
         const repaidLoans = transactions.filter((tx) => tx.status === "repaid").length;
-        setCreditScore(2 + Math.min(repaidLoans, 8));
+        setCreditScore(2 + Math.min(repaidLoans, 8)); // Formula for orb-verified users
       } catch (error) {
         console.error("Error calculating credit score:", error);
-        setCreditScore(2);
+        setCreditScore(2); // Default score in case of error
       }
     };
   
     if (ls_wallet) {
       calculateCreditScore();
     }
-  }, [ls_wallet, hasActiveLoan, loan]);
+  }, [ls_wallet, hasActiveLoan, loan, isOrbVerified]);
 
   const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {

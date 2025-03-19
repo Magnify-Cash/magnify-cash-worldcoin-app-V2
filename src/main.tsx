@@ -8,7 +8,10 @@ import { ENVIRONMENT } from "@/utils/constants";
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: ENVIRONMENT || "development",
-  integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
+  integrations: [
+    Sentry.browserTracingIntegration(), 
+    Sentry.replayIntegration()]
+    ,
   tracesSampleRate: 1.0, // Capture 100% of transactions (adjust as needed)
   replaysSessionSampleRate: 0.1, // Record 10% of sessions
   replaysOnErrorSampleRate: 1.0, // Always record a replay on error
@@ -53,6 +56,11 @@ Sentry.setUser({
   id: walletAddress,
   username: userName,
   wallet: walletAddress,
+});
+
+Sentry.replayIntegration({
+  maskAllText: false,
+  blockAllMedia: false,
 });
 
 

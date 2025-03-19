@@ -96,28 +96,6 @@ export function UserPortfolioCard({
                   {isPositive ? '+' : ''}{earnings.toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-                  Your APY
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className="inline-flex">
-                        <Info className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600 transition-colors" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="max-w-[250px] text-xs p-3">
-                      <p className="font-bold">How Your APY is Calculated</p>
-                      <p className="mt-1">Your personal APY is calculated based on your actual earnings:</p>
-                      <div className="bg-gray-100 p-2 rounded mt-1">
-                        APY = (Earnings / Deposited Value) × (365 / Days Since Deposit) × 100%
-                      </div>
-                      <p className="mt-1">For new deposits (less than 7 days old), we show the pool's standard APY of {poolAPY}%.</p>
-                      <p className="mt-1">For this demo, we're assuming your deposit was made 30 days ago.</p>
-                    </PopoverContent>
-                  </Popover>
-                </span>
-                <span className={`font-semibold text-sm sm:text-base ${apyTextColor}`}>{displayAPY.toFixed(2)}%</span>
-              </div>
             </div>
           </>
         ) : (

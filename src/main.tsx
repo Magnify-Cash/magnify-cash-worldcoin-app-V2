@@ -8,13 +8,16 @@ import { ENVIRONMENT } from "@/utils/constants";
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: ENVIRONMENT || "development",
-  integrations: [
-    Sentry.browserTracingIntegration(), 
-    Sentry.replayIntegration()]
-    ,
+  integrations: [ Sentry.browserTracingIntegration()],
   tracesSampleRate: 1.0, // Capture 100% of transactions (adjust as needed)
   replaysSessionSampleRate: 0.1, // Record 10% of sessions
   replaysOnErrorSampleRate: 1.0, // Always record a replay on error
+  beforeSend(event) {
+    if (event.exception?.values?.some((e) => e.value?.includes("MiniKit is not installed"))) {
+      return null; // Prevent this error from being sent to Sentry
+    }
+    return event;
+  }
 });
 
 const formatError = (message: string | Error) => {

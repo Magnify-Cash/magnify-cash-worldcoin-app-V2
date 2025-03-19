@@ -35,7 +35,7 @@ const Loan = () => {
       try {
         await refreshBalance();
         const latestBalance = usdcBalance ?? 0;
-        if (latestBalance < 1) {
+        if (latestBalance < 10) {
           setLiquidityError("Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.");
           toast({
             title: "Error",

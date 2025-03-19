@@ -13,7 +13,7 @@ Sentry.init({
   replaysSessionSampleRate: 0.1, // Record 10% of sessions
   replaysOnErrorSampleRate: 1.0, // Always record a replay on error
   beforeSend(event) {
-    if (event.exception?.values?.some((e) => e.value?.includes("MiniKit is not installed"))) {
+    if (event.exception?.values?.some((e) => e.value?.includes("MiniKit is not installed")) || event.exception?.values?.some((e) => e.value?.includes("MiniKit.install"))) {
       return null; // Prevent this error from being sent to Sentry
     }
     return event;

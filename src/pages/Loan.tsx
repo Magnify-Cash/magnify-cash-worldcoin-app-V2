@@ -46,6 +46,11 @@ const Loan = () => {
   
         if (data?.nftInfo?.tokenId) {
           await requestNewLoan(requestedTierId);
+  
+          sessionStorage.removeItem("usdcBalance");
+          sessionStorage.removeItem("walletTokens");
+          sessionStorage.removeItem("walletCacheTimestamp");
+  
         } else {
           toast({
             title: "Error",

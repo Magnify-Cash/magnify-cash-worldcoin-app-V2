@@ -3,110 +3,75 @@ import { WalletCard } from "@/components/WalletCard";
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MiniKit, RequestPermissionPayload, Permission } from "@worldcoin/minikit-js";
-import { BACKEND_URL } from "@/utils/constants";
+import { checkWallet, saveWallet, getUSDCBalance, getWalletTokens } from "@/lib/backendRequests";
+
+const CACHE_EXPIRATION_MS = 60 * 1000; // 1 minute cache expiration
 
 const Wallet = () => {
   const navigate = useNavigate();
-  const ls_wallet = localStorage.getItem("ls_wallet_address");
-  const [tokens, setBalances] = useState([]);
-  const [isLoading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  // Function to check if the wallet already exists in the database
+  const ls_wallet = localStorage.getItem("ls_wallet_address");
+
+  const [tokens, setTokens] = useState([]);
+  const [error, setError] = useState(null);
+  const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
+  const [loadingUSDC, setLoadingUSDC] = useState(true);
+  const [loadingTokens, setLoadingTokens] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
   const checkWalletExists = useCallback(async (wallet: string) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/checkWallet?wallet=${encodeURIComponent(wallet)}`, {
-        method: "GET"
-      });
-  
-      if (response.status === 200) {
-        return true;
-      } else if (response.status === 400) {
-        return false;
-      } else {
-        throw new Error(`Unexpected status code: ${response.status}`);
-      }
-      } catch (error) {
-      console.error("Error checking wallet existence:", error);
+      return await checkWallet(wallet);
+    } catch (error) {
       return false;
     }
-  }, []);
+  }, []);  
   
-
-  // Function to request notification permissions
   const requestPermission = useCallback(async () => {
     if (!MiniKit.isInstalled()) {
-      console.error("MiniKit is not installed");
+      console.warn("MiniKit is not installed");
       return;
     }
-  
-    const ls_wallet = localStorage.getItem("ls_wallet_address");
   
     if (!ls_wallet) {
-      console.error("No wallet found in localStorage");
       return;
     }
   
-    // Check if wallet already exists before saving
     const walletExists = await checkWalletExists(ls_wallet);
     if (walletExists) {
-      console.log("Wallet already exists. Skipping saveWallet request.");
       return;
     }
   
     const requestPermissionPayload: RequestPermissionPayload = {
       permission: Permission.Notifications,
     };
-  
-    console.log("Requesting permission...");
-  
+    
     let notificationEnabled = false;
   
     try {
       const payload = await MiniKit.commandsAsync.requestPermission(requestPermissionPayload);
       notificationEnabled = payload.finalPayload.status === "success";
-  
-      if (!notificationEnabled) {
-        console.warn("Notification permission request was unsuccessful:", payload);
-      } else {
-        console.log("Notifications enabled:", payload.finalPayload);
-      }
     } catch (error) {
       console.error("Error requesting notification permission:", error);
     }
   
     try {
-      const saveResponse = await fetch(`${BACKEND_URL}/saveWallet`, {
-        method: "POST",
-        body: JSON.stringify({
-          wallet: ls_wallet,
-          notification: notificationEnabled,
-        }),
-      });
-  
-      if (saveResponse.status === 200) {
-        console.log("User wallet saved successfully, notification status:", notificationEnabled);
-      } else {
-        throw new Error(`Failed to save wallet. Status: ${saveResponse.status}`);
-      }
+      await saveWallet(ls_wallet);
     } catch (error) {
-      console.error("Error saving wallet:", error);
+      console.warn("Error saving wallet:", error);
     }
   }, [checkWalletExists]);
-  
 
-  // Request permission on mount if not already granted
   useEffect(() => {
     const checkAndSaveWallet = async () => {
-      const ls_wallet = localStorage.getItem("ls_wallet_address");
       if (!ls_wallet) return;
   
       const walletExists = await checkWalletExists(ls_wallet);
       if (!walletExists) {
-        console.log("Wallet not found in backend. Saving now...");
         if (MiniKit.isInstalled()) {
           requestPermission();
         }
@@ -115,12 +80,8 @@ const Wallet = () => {
   
       if (MiniKit.isInstalled()) {
         try {
-          const result = await MiniKit.commandsAsync.requestPermission({ permission: Permission.Notifications });
-  
-          console.log("Permission status:", result);
-  
+          const result = await MiniKit.commandsAsync.requestPermission({ permission: Permission.Notifications });  
           if (result.finalPayload.status === "error" && result.finalPayload.error_code !== "already_granted") {
-            console.log("Requesting permission...");
             requestPermission();
           }
         } catch (error) {
@@ -131,114 +92,106 @@ const Wallet = () => {
   
     checkAndSaveWallet();
   }, [requestPermission, checkWalletExists]);
-  
+
+  const loadCachedBalances = () => {
+    const cachedUSDC = sessionStorage.getItem("usdcBalance");
+    const cachedTokens = sessionStorage.getItem("walletTokens");
+    const cacheTimestamp = sessionStorage.getItem("walletCacheTimestamp");
+
+    if (cacheTimestamp && Date.now() - Number(cacheTimestamp) < CACHE_EXPIRATION_MS) {
+      if (cachedUSDC) {
+        setUsdcBalance(Number(cachedUSDC));
+        setLoadingUSDC(false);
+      }
+      if (cachedTokens) {
+        setTokens(JSON.parse(cachedTokens));
+        setLoadingTokens(false);
+      }
+      setDataLoaded(true);
+    }
+  };
+
+  const fetchBalances = async () => {
+    try {
+      setIsRefreshing(true);
+      setLoadingUSDC(true);
+      setLoadingTokens(true);
+      setError(null);
+
+      const [usdcPromise, tokensPromise] = [
+        getUSDCBalance(ls_wallet),
+        getWalletTokens(ls_wallet),
+      ];
+
+      usdcPromise
+        .then((balance) => {
+          setUsdcBalance(balance);
+          sessionStorage.setItem("usdcBalance", String(balance));
+        })
+        .catch((error) => {
+          console.error("Failed to fetch USDC balance:", error);
+          // Do not set error for USDC if it fails but we have token data
+          setUsdcBalance(0);
+        })
+        .finally(() => {
+          setLoadingUSDC(false);
+        });
+
+      tokensPromise
+        .then((tokenList) => {
+          setTokens(tokenList);
+          sessionStorage.setItem("walletTokens", JSON.stringify(tokenList));
+        })
+        .catch((error) => {
+          console.error("Failed to fetch wallet tokens:", error);
+          // Only set error if both USDC and tokens fail
+          if (usdcBalance === null) {
+            setError("Failed to fetch wallet tokens");
+          }
+        })
+        .finally(() => {
+          setLoadingTokens(false);
+        });
+
+      sessionStorage.setItem("walletCacheTimestamp", String(Date.now()));
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setDataLoaded(true);
+      }, 600);
+    } catch (error) {
+      console.error("Unexpected error fetching balances:", error);
+      setError("Unexpected error fetching balances");
+      setLoadingUSDC(false);
+      setLoadingTokens(false);
+      setIsRefreshing(false);
+      setDataLoaded(true);
+    }
+  };
 
   useEffect(() => {
-    const url = `https://worldchain-mainnet.g.alchemy.com/v2/j-_GFK85PRHN59YaKb8lmVbV0LHmFGBL`;
-
-    const fetchBalances = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const ethBalanceResponse = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            method: "eth_getBalance",
-            params: [ls_wallet, "latest"],
-            id: 1,
-          }),
-        });
-
-        const ethBalanceResult = await ethBalanceResponse.json();
-        const ethBalance = parseInt(ethBalanceResult.result, 16) / 1e18;
-
-        const tokenBalancesResponse = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            method: "alchemy_getTokenBalances",
-            params: [ls_wallet],
-            id: 2,
-          }),
-        });
-
-        const tokenBalancesResult = await tokenBalancesResponse.json();
-        const tokenBalances = tokenBalancesResult.result.tokenBalances;
-
-        const detailedBalances = await Promise.all(
-          tokenBalances.map(async (token) => {
-            const metadataResponse = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                jsonrpc: "2.0",
-                method: "alchemy_getTokenMetadata",
-                params: [token.contractAddress],
-                id: 1,
-              }),
-            });
-
-            const metadata = await metadataResponse.json();
-            const decimals = metadata.result.decimals || 18;
-            const balanceDecimal = parseInt(token.tokenBalance, 16) / Math.pow(10, decimals);
-
-            if (balanceDecimal > 0) {
-              return {
-                contractAddress: token.contractAddress,
-                balance: balanceDecimal.toFixed(3),
-                symbol: metadata.result.symbol,
-                decimals: decimals,
-                name: metadata.result.name,
-              };
-            }
-            return null;
-          }),
-        );
-
-        const balancesToAdd = [];
-
-        if (ethBalance > 0) {
-          balancesToAdd.push({
-            symbol: "ETH",
-            name: "Ether",
-            balance: ethBalance,
-            decimals: 18,
-            contractAddress: "0x0000000000000000000000000000000000000000",
-          });
-        }
-
-        detailedBalances.forEach((token) => {
-          if (token) balancesToAdd.push(token);
-        });
-
-        setBalances(balancesToAdd);
-      } catch (error) {
-        console.error("Failed to fetch tokens:", error);
-        setError(error.message);
-        setBalances([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (ls_wallet) {
+    if (!ls_wallet) return;
+    loadCachedBalances();
+    if (!sessionStorage.getItem("walletCacheTimestamp") || Date.now() - Number(sessionStorage.getItem("walletCacheTimestamp")) >= CACHE_EXPIRATION_MS) {
       fetchBalances();
     }
   }, [ls_wallet]);
+
+  // Determine if we should show the error message
+  // Only show error if both USDC and tokens failed to load
+  // We're explicitly checking for usdcBalance === null, not 0
+  const shouldShowError = error && loadingUSDC === false && loadingTokens === false && !tokens.length && usdcBalance === null;
 
   return (
     <div className="min-h-screen bg-background">
       <Header title="Wallet" showBack={false} />
 
       <div className="py-6 max-w-2xl mx-auto">
-        {error && (
+        {shouldShowError && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Failed to load wallet data. Please try again later.</AlertDescription>
+            <AlertDescription>
+              Failed to load wallet data. Please try again later.
+            </AlertDescription>
           </Alert>
         )}
 
@@ -262,24 +215,56 @@ const Wallet = () => {
             </Button>
           </div>
         </div>
-        <div className="space-y-4 mb-8">
-          {isLoading ? (
-            <>
-              <WalletCard currency="" symbol="" balance="" isLoading={true} />
-              <WalletCard currency="" symbol="" balance="" isLoading={true} />
-            </>
-          ) : tokens.length > 0 ? (
-            tokens.map((token) => (
-              <WalletCard
-                key={token.contractAddress}
-                currency={token.name}
-                symbol={token.symbol}
-                balance={token.balance}
-              />
-            ))
-          ) : (
-            <div className="text-center py-4">No tokens found. Add some to see your balance!</div>
+
+        <div className="mb-8">
+          {dataLoaded && (
+            <div className="flex justify-end mb-2">
+              <Button 
+                onClick={fetchBalances} 
+                variant="ghost" 
+                size="icon" 
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 h-8 w-8"
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="sr-only">Refresh wallet</span>
+              </Button>
+            </div>
           )}
+          
+          <div className="space-y-4">
+            {loadingUSDC ? (
+              <WalletCard currency="Bridged USDC (world-chain-mainnet)" symbol="USDC.e" balance="" isLoading={true} />
+            ) : (
+              usdcBalance !== 0 && (
+                <WalletCard 
+                  currency="Bridged USDC (world-chain-mainnet)" 
+                  symbol="USDC.e" 
+                  balance={usdcBalance !== null ? usdcBalance.toFixed(3) : "0.00"} 
+                />
+              )
+            )}
+
+            {loadingTokens ? (
+              <>
+                <WalletCard currency="" symbol="" balance="" isLoading={true} />
+                <WalletCard currency="" symbol="" balance="" isLoading={true} />
+              </>
+            ) : tokens.length > 0 ? (
+              tokens
+                .filter((token) => token.tokenSymbol !== "USDC.e")
+                .map((token) => (
+                  <WalletCard
+                    key={token.tokenAddress}
+                    currency={token.tokenName}
+                    symbol={token.tokenSymbol}
+                    balance={token.tokenBalance.toFixed(3)}
+                  />
+                ))
+            ) : (
+              <div className="text-center py-4">No tokens found. Add some to see your balance!</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

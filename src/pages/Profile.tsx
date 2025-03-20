@@ -1,34 +1,39 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
-import { DollarSign, Shield, User, FileText, Pi, AlertTriangle, Bell, Globe } from "lucide-react";
+import { Shield, User, FileText, Pi, AlertTriangle, Bell, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
 import { useMagnifyWorld, Tier } from "@/hooks/useMagnifyWorld";
 import { Card } from "@/components/ui/card";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { BACKEND_URL } from "@/utils/constants";
 import { toast } from "@/components/ui/use-toast";
+import CreditScore from "@/components/CreditScore";
+import { getTransactionHistory, verify } from "@/lib/backendRequests";
+
+
+interface Transaction {
+  status: "received" | "repaid";
+  timestamp: string;
+  amount: string;
+}
 
 const Dashboard = () => {
-  // hooks
   const navigate = useNavigate();
   const ls_username = localStorage.getItem("ls_username");
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
+
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const [verifying, setVerifying] = useState(false);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
+  const [creditScore, setCreditScore] = useState(2);
 
-  // state
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
   const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
-  // Check if the user is verified by ORB device
   const isOrbVerified = nftInfo?.tier?.verificationStatus?.verification_level === "orb";
-  
-  // Verification levels
+
   const verificationLevels = {
     orb: {
       tierId: BigInt(2),
@@ -40,7 +45,56 @@ const Dashboard = () => {
     },
   };
 
-  // Handle verification process
+  useEffect(() => {
+    const calculateCreditScore = async () => {
+      try {
+        const transactions = await getTransactionHistory(ls_wallet);
+  
+        if (!isOrbVerified) {
+          setCreditScore(1); // Credit score is 1 if not orb verified
+          return;
+        }
+  
+        if (transactions.length === 0) {
+          setCreditScore(2); // Default credit score for orb-verified users with no transactions
+          return;
+        }
+  
+        if (hasActiveLoan && loan) {
+          const receivedLoans = transactions.filter((tx) => tx.status === "received");
+  
+          if (receivedLoans.length > 0) {
+            const lastReceivedLoan = receivedLoans[receivedLoans.length - 1];
+            const loanAmount = parseFloat(lastReceivedLoan.amount);
+  
+            const loanTimestamp = new Date(lastReceivedLoan.timestamp).getTime();
+            const currentTime = Date.now();
+  
+            const loanPeriodDays =
+              loanAmount <= 1 ? 30 : loanAmount <= 5 ? 60 : 90;
+  
+            const loanPeriodMs = loanPeriodDays * 24 * 60 * 60 * 1000;
+  
+            if (currentTime > loanTimestamp + loanPeriodMs) {
+              setCreditScore(-1); // Penalize for overdue loans
+              return;
+            }
+          }
+        }
+  
+        const repaidLoans = transactions.filter((tx) => tx.status === "repaid").length;
+        setCreditScore(2 + Math.min(repaidLoans, 8)); // Formula for orb-verified users
+      } catch (error) {
+        console.error("Error calculating credit score:", error);
+        setCreditScore(2); // Default score in case of error
+      }
+    };
+  
+    if (ls_wallet) {
+      calculateCreditScore();
+    }
+  }, [ls_wallet, hasActiveLoan, loan, isOrbVerified]);
+
   const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {
       toast({
@@ -50,79 +104,58 @@ const Dashboard = () => {
       });
       return;
     }
-
+  
     setVerifying(true);
     setCurrentTier(tier as unknown as Tier);
-
+  
     const verificationStatus = {
       claimAction: tier.action,
       upgradeAction: tier.upgradeAction,
       verification_level: tier.verification_level,
       level: tier.level,
     };
-
+  
     const verifyPayload: VerifyCommandInput = {
       action: verificationStatus.claimAction || verificationStatus.upgradeAction,
       signal: ls_wallet,
       verification_level: verificationStatus.verification_level as VerificationLevel,
     };
-
+  
     try {
       const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
       if (finalPayload.status === "error") {
         console.error("Verification failed:", finalPayload);
-
-        if (finalPayload.error_code === "credential_unavailable") {
-          toast({
-            title: "Verification Failed",
-            description: "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Verification Failed",
-            description: "Something went wrong. Please try again.",
-            variant: "destructive",
-          });
-        }
-        setVerifying(false);
+  
+        const errorMessage =
+          finalPayload.error_code === "credential_unavailable"
+            ? "You are not Orb Verified in the WorldChain App. Please complete Orb verification first."
+            : "Something went wrong. Please try again.";
+  
+        toast({
+          title: "Verification Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
         return;
       }
-
-      // Send proof to backend
-      const response = await fetch(`${BACKEND_URL}/verify`, {
-        method: "POST",
-        body: JSON.stringify({
-          payload: finalPayload as ISuccessResult,
-          action: verificationStatus.claimAction || verificationStatus.upgradeAction,
-          signal: ls_wallet,
-        }),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
+  
+      // Backend verification call
+      const isVerified = await verify(finalPayload, verificationStatus, ls_wallet);
+      if (isVerified) {
         toast({
           title: "Verification Successful",
           description: `You are now ${verificationStatus.level} Verified.`,
         });
         refetch();
-      } else {
-        toast({
-          title: "Backend Error",
-          description: result.message || "Something went wrong.",
-          variant: "destructive",
-        });
-        console.error("Backend verification failed:", result);
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
-
+      
       let errorMessage = "Something went wrong while verifying.";
-
-      if (error?.error_code === "credential_unavailable") {
+      if (error?.message?.includes("credential_unavailable")) {
         errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
       }
-
+  
       toast({
         title: "Verification Failed",
         description: errorMessage,
@@ -160,7 +193,6 @@ const Dashboard = () => {
       <div className="min-h-screen bg-background">
         <Header title="Profile" />
         <div className="max-w-4xl mx-auto space-y-8 px-4 py-6">
-          {/* User Profile */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -181,7 +213,6 @@ const Dashboard = () => {
             )}
           </motion.div>
 
-          {/* Verification Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -195,7 +226,6 @@ const Dashboard = () => {
               {isDeviceVerified || nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
             </p>
 
-            {/* Verification Options */}
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               {Object.values(verificationLevels).map((tier) => {
                 const IconComponent = tier.icon;
@@ -234,7 +264,6 @@ const Dashboard = () => {
                 );
               })}
 
-              {/* Device Verification Option for users who have never claimed an NFT */}
               {nftInfo.tokenId === null && !isDeviceVerified && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -253,7 +282,6 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* Collateral section */}
           {isOrbVerified || isDeviceVerified ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -299,6 +327,14 @@ const Dashboard = () => {
               </div>
             </motion.div>
           ) : null}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <CreditScore score={creditScore} className="w-full" />
+          </motion.div>
         </div>
       </div>
     );

@@ -92,7 +92,6 @@ const useRepayLoan = () => {
 
       const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
 
-      console.log(`Interacting with ${V1OrV2} via ${CONTRACT_ADDRESS}`);
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
@@ -177,7 +176,6 @@ const useRepayLoan = () => {
 
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
-        console.log("Loan repayment transaction sent:", finalPayload.transaction_id);
         setIsConfirming(true);
 
         setLoanDetails({

@@ -47,6 +47,11 @@ const RepayLoan = () => {
       try {
         if (data?.nftInfo?.tokenId) {
           await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
+  
+          sessionStorage.removeItem("usdcBalance");
+          sessionStorage.removeItem("walletTokens");
+          sessionStorage.removeItem("walletCacheTimestamp");
+  
         } else {
           toast.toast({
             title: "Error",
@@ -56,19 +61,13 @@ const RepayLoan = () => {
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
-        if (error?.message?.includes("user rejected transaction")) {
-          toast.toast({
-            title: "Error",
-            description: "Transaction rejected by user.",
-            variant: "destructive",
-          });
-        } else {
-          toast.toast({
-            title: "Error",
-            description: error?.message || "Unable to pay back loan.",
-            variant: "destructive",
-          });
-        }
+        toast.toast({
+          title: "Error",
+          description: error?.message?.includes("user rejected transaction")
+            ? "Transaction rejected by user."
+            : error?.message || "Unable to pay back loan.",
+          variant: "destructive",
+        });
       } finally {
         setIsClicked(false);
       }
@@ -76,8 +75,6 @@ const RepayLoan = () => {
     [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast]
   );
   
-  
-
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
     if (isConfirmed) {

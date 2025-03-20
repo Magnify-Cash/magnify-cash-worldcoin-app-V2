@@ -18,10 +18,10 @@ async function backendRequest<T>(
 
   const options: RequestInit = {
     method,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    ...(method === "POST" ? { body: JSON.stringify(paramsOrBody) } : {}),
+    ...(method === "POST" ? { 
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(paramsOrBody) 
+    } : {}),
   };
 
   const response = await fetch(url, options);

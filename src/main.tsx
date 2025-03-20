@@ -8,12 +8,21 @@ import { ENVIRONMENT } from "@/utils/constants";
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: ENVIRONMENT || "development",
-  integrations: [ Sentry.browserTracingIntegration()],
+  integrations: [ 
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration({
+      maskAllText: false,
+      blockAllMedia: false,
+    }),
+  ],
   tracesSampleRate: 1.0, // Capture 100% of transactions (adjust as needed)
   replaysSessionSampleRate: 0.1, // Record 10% of sessions
   replaysOnErrorSampleRate: 1.0, // Always record a replay on error
   beforeSend(event) {
-    if (event.exception?.values?.some((e) => e.value?.includes("MiniKit is not installed")) || event.exception?.values?.some((e) => e.value?.includes("MiniKit.install"))) {
+    if (
+      event.exception?.values?.some((e) => e.value?.includes("MiniKit is not installed")) 
+      || event.exception?.values?.some((e) => e.value?.includes("MiniKit.install"))
+      || event.exception?.values?.some((e) => e.value?.includes("This could be due to syntax errors or importing non-existent modules"))) {
       return null; // Prevent this error from being sent to Sentry
     }
     return event;
@@ -60,12 +69,6 @@ Sentry.setUser({
   username: userName,
   wallet: walletAddress,
 });
-
-Sentry.replayIntegration({
-  maskAllText: false,
-  blockAllMedia: false,
-});
-
 
 const AppWithSentry = () => (
   <Sentry.ErrorBoundary fallback={<h2>Something went wrong</h2>}>

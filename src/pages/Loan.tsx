@@ -23,7 +23,6 @@ const Loan = () => {
   
   const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = loanData?.isActive ?? false;
-  
   // Handle loan application
   const handleApplyLoan = useCallback(
     async (event: React.FormEvent, requestedTierId: bigint) => {
@@ -34,7 +33,7 @@ const Loan = () => {
       try {
         await refreshBalance();
         const latestBalance = usdcBalance ?? 0;
-  
+        
         if (latestBalance < 10) {
           toast({
             title: "Error",

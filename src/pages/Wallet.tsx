@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { WalletCard } from "@/components/WalletCard";
 import { Header } from "@/components/Header";
@@ -237,11 +236,13 @@ const Wallet = () => {
             {loadingUSDC ? (
               <WalletCard currency="Bridged USDC (world-chain-mainnet)" symbol="USDC.e" balance="" isLoading={true} />
             ) : (
-              <WalletCard 
-                currency="Bridged USDC (world-chain-mainnet)" 
-                symbol="USDC.e" 
-                balance={usdcBalance !== null ? usdcBalance.toFixed(3) : "0.00"} 
-              />
+              usdcBalance !== 0 && (
+                <WalletCard 
+                  currency="Bridged USDC (world-chain-mainnet)" 
+                  symbol="USDC.e" 
+                  balance={usdcBalance !== null ? usdcBalance.toFixed(3) : "0.00"} 
+                />
+              )
             )}
 
             {loadingTokens ? (

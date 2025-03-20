@@ -146,7 +146,7 @@ const Wallet = () => {
         .catch((error) => {
           console.error("Failed to fetch wallet tokens:", error);
           // Only set error if both USDC and tokens fail
-          if (!usdcBalance && usdcBalance !== 0) {
+          if (usdcBalance === null) {
             setError("Failed to fetch wallet tokens");
           }
         })
@@ -179,6 +179,7 @@ const Wallet = () => {
 
   // Determine if we should show the error message
   // Only show error if both USDC and tokens failed to load
+  // We're explicitly checking for usdcBalance === null, not 0
   const shouldShowError = error && loadingUSDC === false && loadingTokens === false && !tokens.length && usdcBalance === null;
 
   return (

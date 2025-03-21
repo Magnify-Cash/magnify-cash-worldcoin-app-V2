@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Coins, 
@@ -159,9 +160,7 @@ export function PoolCard({
         </div>
         <Button 
           onClick={() => navigate(`/pool/${id}`)} 
-          className={`w-full flex items-center justify-center gap-2 ${useCustomGradient 
-            ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF] hover:opacity-90" 
-            : "bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"}`}
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
         >
           View Pool <ExternalLink className="h-4 w-4" />
         </Button>

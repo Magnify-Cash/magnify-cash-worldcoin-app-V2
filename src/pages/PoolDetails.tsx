@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coins, TrendingUp, AlertCircle, Info, Wallet } from "lucide-react";
+import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPoolById, getUserPoolPosition } from "@/lib/poolRequests";
@@ -12,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
+import { Progress } from "@/components/ui/progress";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -100,6 +102,20 @@ const PoolDetails = () => {
     }).format(value);
   };
 
+  const calculateProgressPercentage = () => {
+    if (!pool) return 0;
+    
+    // Assuming the goal is 15,000 USDC
+    const goal = 15000;
+    const progress = (pool.total_value_locked / goal) * 100;
+    return Math.min(progress, 100);
+  };
+
+  const getPoolMaturityDate = () => {
+    // For example: 12PM GMT+8, 12th Dec 2025
+    return "12PM GMT+8, 12th Dec 2025";
+  };
+
   const handleSupply = () => {
     if (pool?.status === 'completed') {
       toast({
@@ -165,9 +181,9 @@ const PoolDetails = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
               {/* Pool Stats */}
-              <Card className="md:col-span-2">
+              <Card className="w-full">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg">Pool Statistics</CardTitle>
                 </CardHeader>
@@ -188,11 +204,29 @@ const PoolDetails = () => {
                       </p>
                     </div>
                   </div>
+
+                  <div className="mt-6">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm text-gray-500">Progress to Target</span>
+                      <span className="text-sm font-medium">{formatValue(pool.total_value_locked)} / $15,000</span>
+                    </div>
+                    <Progress 
+                      value={calculateProgressPercentage()} 
+                      className="h-3 bg-gray-100" 
+                    />
+                  </div>
+
+                  <div className="mt-6 flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <p className="text-sm text-gray-500">
+                      <span className="font-medium">Pool Maturity:</span> {getPoolMaturityDate()}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Your Position */}
-              <Card>
+              <Card className="w-full">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Wallet className="h-4 w-4" />
@@ -229,7 +263,7 @@ const PoolDetails = () => {
                     <Button 
                       onClick={handleSupply} 
                       disabled={pool.status === 'completed'}
-                      className="flex-1 bg-[#8B5CF6] hover:bg-[#7C3AED]"
+                      className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
                     >
                       Supply
                     </Button>
@@ -247,7 +281,7 @@ const PoolDetails = () => {
             </div>
 
             {/* About This Pool */}
-            <Card className="bg-gradient-to-r from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20">
+            <Card className="bg-gradient-to-r from-[#1A1E8F]/5 via-[#5A1A8F]/10 to-[#A11F75]/5 border-[#8B5CF6]/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Info className="h-5 w-5 text-[#8B5CF6]" />

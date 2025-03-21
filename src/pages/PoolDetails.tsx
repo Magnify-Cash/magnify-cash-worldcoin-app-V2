@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -248,16 +249,10 @@ const PoolDetails = () => {
             <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
               <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
                 <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl flex items-center gap-2">
-                      <BarChart className="h-5 w-5 text-[#8B5CF6]" />
-                      Pool Statistics
-                    </CardTitle>
-                    <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
-                      {getStatusIcon()}
-                      <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
-                    </Badge>
-                  </div>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <BarChart className="h-5 w-5 text-[#8B5CF6]" />
+                    Pool Statistics
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -296,6 +291,15 @@ const PoolDetails = () => {
                         <p className="text-sm sm:text-lg font-semibold">${getLPTokenPrice().toFixed(2)}</p>
                       </div>
                     )}
+                    
+                    {/* Add status badge here */}
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500">Status</p>
+                      <Badge variant="outline" className={`mt-1 flex items-center ${getStatusColor()}`}>
+                        {getStatusIcon()}
+                        <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+                      </Badge>
+                    </div>
                   </div>
 
                   <div className="mt-4 sm:mt-6">

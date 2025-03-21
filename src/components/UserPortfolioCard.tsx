@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpFromLine, ArrowDownToLine, Wallet, Info } from "lucide-react";
+import { ArrowUpFromLine, ArrowDownToLine, Wallet, Info, ToggleLeft, ToggleRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
@@ -22,6 +23,8 @@ interface UserPortfolioCardProps {
   hideButtons?: boolean;
   showSupplyButton?: boolean;
   showWithdrawButton?: boolean;
+  onToggleDummyData?: () => void;
+  showToggle?: boolean;
 }
 
 export function UserPortfolioCard({
@@ -34,7 +37,9 @@ export function UserPortfolioCard({
   useCustomGradient = false,
   hideButtons = false,
   showSupplyButton = true,
-  showWithdrawButton = true
+  showWithdrawButton = true,
+  onToggleDummyData,
+  showToggle = false
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
   const [isSupplyModalOpen, setIsSupplyModalOpen] = useState(false);
@@ -76,6 +81,21 @@ export function UserPortfolioCard({
         <CardTitle className={`text-xl flex items-center gap-2 justify-center`}>
           <Wallet className={`h-5 w-5 text-[#8B5CF6]`} />
           Your Position
+          {showToggle && onToggleDummyData && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onToggleDummyData} 
+              className="ml-auto p-0 h-auto"
+              title={balance > 0 ? "Remove dummy data" : "Add dummy data"}
+            >
+              {balance > 0 ? (
+                <ToggleRight className="h-5 w-5 text-[#8B5CF6]" />
+              ) : (
+                <ToggleLeft className="h-5 w-5 text-gray-400" />
+              )}
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>

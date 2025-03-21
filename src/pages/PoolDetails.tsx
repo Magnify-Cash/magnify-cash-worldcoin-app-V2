@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -41,6 +42,7 @@ const PoolDetails = () => {
   const [userPosition, setUserPosition] = useState<UserPoolPosition | null>(null);
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [hasDummyData, setHasDummyData] = useState(false);
   
   const poolId = id ? parseInt(id) : 0;
 
@@ -78,7 +80,10 @@ const PoolDetails = () => {
         setPool(poolData);
         
         const position = await getUserPoolPosition(poolId);
-        setUserPosition(position);
+        if (position) {
+          setUserPosition(position);
+          setHasDummyData(true);
+        }
       } catch (error) {
         console.error("Error fetching pool data:", error);
         toast({
@@ -218,6 +223,36 @@ const PoolDetails = () => {
     setShowWithdrawModal(true);
   };
 
+  const toggleDummyData = () => {
+    if (hasDummyData) {
+      // Remove dummy data
+      setUserPosition(null);
+      setHasDummyData(false);
+      toast({
+        title: "Dummy data removed",
+        description: "User position has been cleared.",
+      });
+    } else {
+      // Add dummy data
+      const dummyPosition: UserPoolPosition = {
+        id: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        user_id: "user123",
+        pool_id: poolId,
+        token_a_amount: 1200,
+        token_b_amount: 1200,
+        total_value_locked: 1250.75
+      };
+      setUserPosition(dummyPosition);
+      setHasDummyData(true);
+      toast({
+        title: "Dummy data added",
+        description: "User position has been simulated.",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -313,7 +348,7 @@ const PoolDetails = () => {
                     {pool.status === 'warm-up' && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Liquidity Unlock</p>
-                        <p className="text-sm sm:text-lg font-semibold">10/22/2025</p>
+                        <p className="text-sm sm:text-lg font-semibold">December 12th, 2025</p>
                       </div>
                     )}
                     
@@ -351,7 +386,7 @@ const PoolDetails = () => {
                           <PopoverContent className="max-w-sm p-3">
                             <div className="text-sm">
                               <p className="font-medium mb-1">Unlock on</p>
-                              <p>{formatUnlockDate(getPoolMaturityDate())}</p>
+                              <p>Friday, December 12th, 2025 at 12:00 PM</p>
                             </div>
                           </PopoverContent>
                         </Popover>
@@ -365,7 +400,7 @@ const PoolDetails = () => {
                       <div className="flex items-center justify-center">
                         <Unlock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
                         <p className="text-sm sm:text-base font-medium text-center flex items-center">
-                          Warm-Up ends in {getWarmupDays()} days
+                          Warm-Up for {getWarmupDays()} days
                           <Popover>
                             <PopoverTrigger asChild>
                               <button className="flex-shrink-0 ml-1">
@@ -374,11 +409,21 @@ const PoolDetails = () => {
                             </PopoverTrigger>
                             <PopoverContent className="max-w-sm p-3">
                               <div className="text-sm">
-                                <p className="font-medium mb-1">Warm-Up ends on</p>
-                                <p>{formatUnlockDate(getPoolMaturityDate())}</p>
+                                <p className="font-medium mb-1">Pool Lock</p>
+                                <p>Friday, December 12th, 2025 at 12:00 PM</p>
                               </div>
                             </PopoverContent>
                           </Popover>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {pool.status === 'completed' && (
+                    <div className="mt-4 sm:mt-6">
+                      <div className="flex items-center justify-center">
+                        <p className="text-sm sm:text-base font-medium text-center text-gray-500">
+                          Pool is completed
                         </p>
                       </div>
                     </div>
@@ -396,6 +441,8 @@ const PoolDetails = () => {
                 hideButtons={pool.status === 'active'}
                 showSupplyButton={shouldShowSupplyButton}
                 showWithdrawButton={shouldShowWithdrawButton}
+                onToggleDummyData={toggleDummyData}
+                showToggle={true}
               />
             </div>
 

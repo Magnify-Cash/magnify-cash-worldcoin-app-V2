@@ -313,41 +313,47 @@ const PoolDetails = () => {
 
                   <div className="mt-4 sm:mt-6">
                     {pool.status === 'active' ? (
-                      <div className="flex items-center gap-2 justify-center text-center">
-                        <Lock className="h-4 w-4 text-[#8B5CF6] flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm text-gray-500 whitespace-pre-line font-medium">
-                            Funds locked until:
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-700">
-                            {formatToLocalTime(getPoolMaturityDate(), 'h:mma')}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-700">
-                            {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
-                          </p>
+                      <div className="flex justify-center">
+                        <div className="flex items-start">
+                          <Lock className="h-4 w-4 text-[#8B5CF6] mt-1 flex-shrink-0 mr-2" />
+                          <div className="text-center">
+                            <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                              Funds locked until:
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-700">
+                              {formatToLocalTime(getPoolMaturityDate(), 'h:mma')}
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-700">
+                              {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ) : pool.status === 'warm-up' ? (
-                      <div className="flex items-center gap-2 justify-center text-center">
-                        <Unlock className="h-4 w-4 text-[#8B5CF6] flex-shrink-0" />
-                        <div>
-                          <p className="text-xs sm:text-sm text-gray-500">
-                            Warm-up: {formatDateRange(getWarmupPeriod()[0], getWarmupPeriod()[1])}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-700">
-                            Locks: {formatToLocalTime(getPoolLockDate(), 'd MMM yyyy')}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-700">
-                            Unlocks: {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
-                          </p>
+                      <div className="flex justify-center">
+                        <div className="flex items-start">
+                          <Unlock className="h-4 w-4 text-[#8B5CF6] mt-1 flex-shrink-0 mr-2" />
+                          <div className="text-center">
+                            <p className="text-xs sm:text-sm text-gray-500">
+                              Warm-up: {formatDateRange(getWarmupPeriod()[0], getWarmupPeriod()[1])}
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-700">
+                              Locks: {formatToLocalTime(getPoolLockDate(), 'd MMM yyyy')}
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-700">
+                              Unlocks: {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 justify-center">
-                        <Clock className="h-4 w-4 text-[#8B5CF6] flex-shrink-0" />
-                        <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                          Pool is completed
-                        </p>
+                      <div className="flex justify-center">
+                        <div className="flex items-start">
+                          <Clock className="h-4 w-4 text-[#8B5CF6] mt-1 flex-shrink-0 mr-2" />
+                          <p className="text-xs sm:text-sm text-gray-500 font-medium text-center">
+                            Pool is completed
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>

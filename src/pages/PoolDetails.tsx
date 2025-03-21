@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -14,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { Progress } from "@/components/ui/progress";
+import { UserPortfolioCard } from "@/components/UserPortfolioCard";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -155,6 +155,11 @@ const PoolDetails = () => {
     );
   }
 
+  // Calculate earnings
+  const depositedValue = userPosition?.token_a_amount || 0;
+  const currentValue = userPosition?.total_value_locked || 0;
+  const earnings = currentValue - depositedValue;
+
   return (
     <div className="min-h-screen bg-white pb-20">
       <Header title={`${pool?.name || 'Pool'} Details`} />
@@ -225,59 +230,15 @@ const PoolDetails = () => {
                 </CardContent>
               </Card>
 
-              {/* Your Position */}
-              <Card className="w-full">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Wallet className="h-4 w-4" />
-                    Your Position
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {userPosition ? (
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-sm text-gray-500">Deposited Value</p>
-                        <p className="text-lg font-semibold">{formatValue(userPosition.token_a_amount)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Current Value</p>
-                        <p className="text-lg font-semibold">{formatValue(userPosition.total_value_locked)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Earnings</p>
-                        <p className="text-lg font-semibold text-green-600">
-                          {formatValue(userPosition.total_value_locked - userPosition.token_a_amount)}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-3 text-sm text-gray-500">
-                      You don't have any assets in this pool yet.
-                    </div>
-                  )}
-
-                  <Separator className="my-4" />
-
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={handleSupply} 
-                      disabled={pool.status === 'completed'}
-                      className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
-                    >
-                      Supply
-                    </Button>
-                    <Button 
-                      onClick={handleWithdraw} 
-                      variant="outline" 
-                      disabled={!userPosition || userPosition.total_value_locked <= 0}
-                      className="flex-1"
-                    >
-                      Withdraw
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Your Position - Replace with UserPortfolioCard */}
+              <UserPortfolioCard
+                balance={userPosition?.token_b_amount || 0}
+                depositedValue={depositedValue}
+                currentValue={currentValue}
+                earnings={earnings}
+                onSupply={handleSupply}
+                onWithdraw={handleWithdraw}
+              />
             </div>
 
             {/* About This Pool */}

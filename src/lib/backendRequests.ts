@@ -28,11 +28,11 @@ export const getUSDCBalance = async (wallet: string): Promise<number> => {
 export const getWalletTokens = async (wallet: string): Promise<WalletTokens[]> => {
   const response = await backendRequest<WalletTokens[]>("GET", "getWalletTokens", { wallet });
 
-  if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+  if (!response.data || !Array.isArray(response.data)) {
     throw new Error(`Failed to fetch token balance. Status: ${response.status}, Message: ${response.message}`);
   }
 
-  return response.data;
+  return response.data.length > 0 ? response.data : [];
 };
 
 export const getTokenMetadata = async (tokenAddress: string): Promise<TokenMetadata> => {

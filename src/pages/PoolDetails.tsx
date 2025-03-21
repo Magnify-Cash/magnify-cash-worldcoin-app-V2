@@ -15,7 +15,8 @@ import {
   Unlock, 
   Timer,
   Circle,
-  CircleCheck 
+  CircleCheck,
+  HelpCircle
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -28,7 +29,7 @@ import { WithdrawModal } from "@/components/WithdrawModal";
 import { Progress } from "@/components/ui/progress";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
 import { formatToLocalTime, formatDateRange, getDaysBetween } from "@/utils/dateUtils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -307,31 +308,6 @@ const PoolDetails = () => {
                         <p className="text-sm sm:text-lg font-semibold">${getLPTokenPrice().toFixed(2)}</p>
                       </div>
                     )}
-                    
-                    {pool.status === 'active' && (
-                      <div>
-                        <p className="text-xs sm:text-sm text-gray-500">Lock Information</p>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center mt-1">
-                                <Lock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
-                                <p className="text-sm sm:text-base font-medium">
-                                  Funds locked for: {getLockDaysRemaining()} days
-                                </p>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-sm p-2">
-                              <div className="text-sm">
-                                <p className="font-medium mb-1">Lock Details</p>
-                                <p>Funds will be unlocked on:</p>
-                                <p className="font-medium">{formatToLocalTime(getPoolMaturityDate(), 'PPPP')} at {formatToLocalTime(getPoolMaturityDate(), 'h:mm a')}</p>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    )}
                   </div>
 
                   <div className="mt-4 sm:mt-6">
@@ -344,6 +320,31 @@ const PoolDetails = () => {
                       className="h-3 bg-gray-100" 
                     />
                   </div>
+
+                  {pool.status === 'active' && (
+                    <div className="mt-4 sm:mt-6">
+                      <div className="flex items-center">
+                        <Lock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
+                        <p className="text-sm sm:text-base font-medium mr-2">
+                          Funds locked for: {getLockDaysRemaining()} days
+                        </p>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="flex-shrink-0">
+                              <HelpCircle className="h-4 w-4 text-gray-400" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="max-w-sm p-3">
+                            <div className="text-sm">
+                              <p className="font-medium mb-1">Lock Details</p>
+                              <p>Funds will be unlocked on:</p>
+                              <p className="font-medium">{formatToLocalTime(getPoolMaturityDate(), 'PPPP')} at {formatToLocalTime(getPoolMaturityDate(), 'h:mm a')}</p>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                  )}
 
                   {pool.status !== 'active' && pool.status !== 'completed' && (
                     <div className="mt-4 sm:mt-6">

@@ -1,3 +1,4 @@
+
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Sentry from "@sentry/react";
@@ -69,6 +70,13 @@ Sentry.setUser({
   username: userName,
   wallet: walletAddress,
 });
+
+// Add pool details route to App.tsx
+if (import.meta.hot) {
+  import.meta.hot.accept('./App.tsx', () => {
+    console.log('App.tsx updated');
+  });
+}
 
 const AppWithSentry = () => (
   <Sentry.ErrorBoundary fallback={<h2>Something went wrong</h2>}>

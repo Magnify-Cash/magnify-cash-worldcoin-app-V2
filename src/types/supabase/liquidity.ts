@@ -1,3 +1,4 @@
+
 export interface LiquidityPool {
   id: number;
   created_at: string;
@@ -9,6 +10,8 @@ export interface LiquidityPool {
   token_b_amount: number;
   apy: number;
   total_value_locked: number;
+  available_liquidity: number;
+  status: 'warm-up' | 'active' | 'completed';
   metadata?: Record<string, any>;
 }
 

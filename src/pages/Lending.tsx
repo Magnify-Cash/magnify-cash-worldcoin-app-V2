@@ -1,28 +1,42 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Info, Eye, EyeOff, Palette } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { LendingPoolCard } from "@/components/LendingPoolCard";
-import { UserPortfolioCard } from "@/components/UserPortfolioCard";
+import { PoolCard } from "@/components/PoolCard";
 import { LendingGraph } from "@/components/LendingGraph";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getPools } from "@/lib/poolRequests";
+import { LiquidityPool } from "@/types/supabase/liquidity";
 
 const Lending = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [pools, setPools] = useState<LiquidityPool[]>([]);
   const [showDummyData, setShowDummyData] = useState(true);
   const [useCustomGradient, setUseCustomGradient] = useState(false);
   const isMobile = useIsMobile();
 
-  const handleSupply = () => {
-    console.log("Supply button clicked in parent component");
-  };
+  useEffect(() => {
+    const fetchPools = async () => {
+      try {
+        const poolsData = await getPools();
+        setPools(poolsData);
+      } catch (error) {
+        console.error("Error fetching pools:", error);
+        toast({
+          title: "Error fetching pools",
+          description: "Failed to load pool data. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleWithdraw = () => {
-    console.log("Withdraw button clicked in parent component");
-  };
+    fetchPools();
+  }, []);
 
   const toggleGradient = () => {
     setUseCustomGradient(!useCustomGradient);
@@ -75,37 +89,23 @@ const Lending = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <LendingPoolCard 
-            title="USDC Pool" 
-            apy={8.5} 
-            totalSupply={2450000}
-            availableLiquidity={185000}
-            useCustomGradient={useCustomGradient}
-          />
-        </div>
-
-        {/* User Portfolio Card */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          {showDummyData ? (
-            <UserPortfolioCard
-              balance={1250.75}
-              depositedValue={1200}
-              currentValue={1250.75}
-              earnings={50.75}
-              onSupply={handleSupply}
-              onWithdraw={handleWithdraw}
-              useCustomGradient={useCustomGradient}
-            />
+          {loading ? (
+            <div className="py-8 text-center text-gray-500">Loading pools...</div>
+          ) : showDummyData ? (
+            pools.map(pool => (
+              <PoolCard
+                key={pool.id}
+                id={pool.id}
+                title={pool.name}
+                apy={pool.apy}
+                totalSupply={pool.total_value_locked}
+                availableLiquidity={pool.available_liquidity}
+                status={pool.status}
+                useCustomGradient={useCustomGradient}
+              />
+            ))
           ) : (
-            <UserPortfolioCard
-              balance={0}
-              depositedValue={0}
-              currentValue={0}
-              earnings={0}
-              onSupply={handleSupply}
-              onWithdraw={handleWithdraw}
-              useCustomGradient={useCustomGradient}
-            />
+            <div className="py-8 text-center text-gray-500">Connect your wallet to view available pools.</div>
           )}
         </div>
 
@@ -135,6 +135,15 @@ const Lending = () => {
                 <h4 className="font-semibold text-sm sm:text-base text-gray-800 mb-1">How It Works</h4>
                 <p className="text-xs sm:text-sm">
                   Deposit assets into Magnify Cash lending pools to receive LP tokens, representing your share of the pool. As borrowers repay loans with interest, your LP tokens increase in value.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-sm sm:text-base text-gray-800 mb-1">Pool Statuses</h4>
+                <p className="text-xs sm:text-sm">
+                  <span className="font-medium">Warm-up:</span> New pools in preparation phase.<br/>
+                  <span className="font-medium">Active:</span> Pools accepting deposits and generating yield.<br/>
+                  <span className="font-medium">Completed:</span> Closed pools no longer accepting new deposits.
                 </p>
               </div>
               

@@ -1,12 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Coins, TrendingUp, AlertCircle, Info, Wallet } from "lucide-react";
+import { Coins, TrendingUp, AlertCircle, Info, Wallet } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { LendingGraph } from "@/components/LendingGraph";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPoolById, getUserPoolPosition } from "@/lib/poolRequests";
 import { LiquidityPool, UserPoolPosition } from "@/types/supabase/liquidity";
@@ -49,9 +47,18 @@ const PoolDetails = () => {
           return;
         }
         
+        if (poolData) {
+          if (poolId === 1) {
+            poolData.name = "Pool A";
+          } else if (poolId === 2) {
+            poolData.name = "Pool B";
+          } else if (poolId === 3) {
+            poolData.name = "Pool C";
+          }
+        }
+        
         setPool(poolData);
         
-        // Fetch user position if we have a pool
         const position = await getUserPoolPosition(poolId);
         setUserPosition(position);
       } catch (error) {
@@ -137,15 +144,6 @@ const PoolDetails = () => {
       <Header title={`${pool?.name || 'Pool'} Details`} />
 
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-4 -ml-2"
-          onClick={() => navigate("/lending")}
-        >
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to Pools
-        </Button>
-
         {pool && (
           <>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
@@ -244,21 +242,6 @@ const PoolDetails = () => {
                       Withdraw
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* LP Token Price Graph */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
-              <Card className="h-full overflow-hidden">
-                <CardHeader className={isMobile ? "pb-1 pt-3 px-3" : "pb-2"}>
-                  <CardTitle className="text-lg sm:text-xl">LP Token Price Over Time</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    Tracks the value of 1 LP token in {pool.token_a}. Higher value indicates growth
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className={isMobile ? "p-2" : ""}>
-                  <LendingGraph />
                 </CardContent>
               </Card>
             </div>

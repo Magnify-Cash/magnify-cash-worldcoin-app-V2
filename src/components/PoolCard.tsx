@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Coins, 
@@ -42,6 +41,13 @@ export function PoolCard({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
+  const getPoolName = () => {
+    if (id === 1) return "Pool A";
+    if (id === 2) return "Pool B";
+    if (id === 3) return "Pool C";
+    return title;
+  };
+
   const formatValue = (value: number, suffix: string) => {
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(2)}M${suffix}`;
@@ -83,7 +89,7 @@ export function PoolCard({
         <div className="flex items-center justify-between">
           <CardTitle className={`text-xl flex items-center gap-2`}>
             <Coins className={`h-5 w-5 ${useCustomGradient ? 'text-[#A855F7]' : 'text-[#8B5CF6]'}`} />
-            {title}
+            {getPoolName()}
           </CardTitle>
           <Badge variant="outline" className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
             {getStatusIcon()}

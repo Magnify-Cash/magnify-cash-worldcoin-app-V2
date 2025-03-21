@@ -1,4 +1,3 @@
-
 import { ArrowLeft, Home } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -19,10 +18,14 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isLendingPage = location.pathname === "/lending";
+  const isPoolPage = location.pathname.startsWith("/pool/");
 
   const handleBackClick = () => {
-    // Always navigate to welcome page instead of browser history
-    navigate("/welcome");
+    if (isPoolPage) {
+      navigate("/lending");
+    } else {
+      navigate("/welcome");
+    }
   };
 
   return (
@@ -43,7 +46,7 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
             {title}
           </h1>
 
-          {!isLendingPage && (
+          {!isLendingPage && !isPoolPage && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-white h-10 w-10">
@@ -144,7 +147,7 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
             </DropdownMenu>
           )}
           
-          {isLendingPage && <div className="w-10" />}
+          {(isLendingPage || isPoolPage) && <div className="w-10" />}
         </div>
       </div>
     </header>

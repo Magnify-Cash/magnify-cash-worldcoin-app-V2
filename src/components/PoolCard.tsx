@@ -6,8 +6,10 @@ import {
   Droplet, 
   TrendingUp, 
   Info, 
-  Circle, 
-  CircleCheck, 
+  Clock, 
+  Package,
+  Lock,
+  Shield,
   ExternalLink 
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -74,32 +76,50 @@ export function PoolCard({
   const getStatusIcon = () => {
     switch (status) {
       case 'warm-up':
-        return <Circle className="h-3 w-3 text-amber-500" />;
+        return <Clock className="h-3 w-3 mr-1 text-amber-500" />;
       case 'active':
-        return <CircleCheck className="h-3 w-3 text-green-500" />;
+        return <Lock className="h-3 w-3 mr-1 text-green-500" />;
       case 'completed':
-        return <CircleCheck className="h-3 w-3 text-gray-500" />;
+        return <Package className="h-3 w-3 mr-1 text-gray-500" />;
       default:
-        return <Circle className="h-3 w-3 text-gray-500" />;
+        return null;
     }
   };
 
+  const gradientBg = useCustomGradient 
+    ? 'from-[#8B5CF6]/10 via-[#A855F7]/10 to-[#D946EF]/5' 
+    : 'from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5';
+  
+  const accentColor = useCustomGradient ? 'text-[#A855F7]' : 'text-[#8B5CF6]';
+  const borderColor = useCustomGradient ? 'border-[#D946EF]/20' : 'border-[#8B5CF6]/20';
+
   return (
-    <Card className={`overflow-hidden border ${useCustomGradient ? 'border-[#D946EF]/20' : 'border-[#8B5CF6]/20'}`}>
-      <CardHeader className={`pb-2 pt-4 bg-gradient-to-r ${useCustomGradient ? 'from-[#8B5CF6]/10 via-[#A855F7]/10 to-[#D946EF]/5' : 'from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5'}`}>
+    <Card className={`overflow-hidden border ${borderColor}`}>
+      <CardHeader className={`pb-2 pt-4 bg-gradient-to-r ${gradientBg}`}>
         <div className="flex items-center justify-between">
-          <CardTitle className={`text-xl flex items-center gap-2`}>
-            <Coins className={`h-5 w-5 ${useCustomGradient ? 'text-[#A855F7]' : 'text-[#8B5CF6]'}`} />
-            {getPoolName()}
-          </CardTitle>
-          <Badge variant="outline" className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
-            {getStatusIcon()}
-            <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-          </Badge>
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center justify-center ${useCustomGradient ? 'bg-[#A855F7]/10' : 'bg-[#8B5CF6]/10'} p-2 rounded-full h-9 w-9`}>
+              <Coins className={`h-4 w-4 ${accentColor}`} />
+            </div>
+            <div>
+              <CardTitle className="text-xl">{getPoolName()}</CardTitle>
+              <div className="flex items-center mt-1">
+                <Badge variant="outline" className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
+                  {getStatusIcon()}
+                  <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                </Badge>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <p className={`text-sm font-medium ${accentColor}`}>
+              {apy}% APY
+            </p>
+          </div>
         </div>
       </CardHeader>
       <CardContent className={`p-4 sm:p-6 ${isMobile ? 'pt-3' : ''}`}>
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-4">
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
               <Landmark className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
@@ -138,26 +158,13 @@ export function PoolCard({
               ${formatValue(availableLiquidity, '')}
             </div>
           </div>
-          <div className="space-y-1">
-            <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">APY</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="inline-flex">
-                    <Info className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600 transition-colors" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="max-w-[250px] text-xs p-3">
-                  <p>Annual Percentage Yield (APY). This is an estimated return on your deposited funds over one year.</p>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className={`font-semibold text-base sm:text-lg flex items-center ${useCustomGradient ? "text-[#D946EF]" : "text-[#8B5CF6]"}`}>
-              {apy}%
-            </div>
-          </div>
         </div>
+        
+        <div className="flex items-center gap-2 mb-4">
+          <Shield className="h-3.5 w-3.5 text-gray-500" />
+          <span className="text-xs text-gray-500">Worldcoin Verified Borrowers</span>
+        </div>
+        
         <Button 
           onClick={() => navigate(`/pool/${id}`)} 
           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"

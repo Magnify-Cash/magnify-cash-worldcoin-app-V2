@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock, BarChart, Lock, Unlock } from "lucide-react";
+import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock, BarChart, Lock, Unlock, Shield, Package } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPoolById, getUserPoolPosition } from "@/lib/poolRequests";
@@ -95,6 +95,21 @@ const PoolDetails = () => {
     }
   };
 
+  const getStatusIcon = () => {
+    if (!pool) return null;
+    
+    switch (pool.status) {
+      case 'warm-up':
+        return <Clock className="h-4 w-4 mr-1.5" />;
+      case 'active':
+        return <Lock className="h-4 w-4 mr-1.5" />;
+      case 'completed':
+        return <Package className="h-4 w-4 mr-1.5" />;
+      default:
+        return null;
+    }
+  };
+
   const formatValue = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -135,7 +150,7 @@ const PoolDetails = () => {
     switch (pool.status) {
       case 'active':
         const maturityDate = getPoolMaturityDate();
-        return `Funds locked until: \n${formatToLocalTime(maturityDate)}`;
+        return `Funds locked until: \n${formatToLocalTime(maturityDate, 'h:mma')}\n${formatToLocalTime(maturityDate, 'd MMM yyyy')}`;
       case 'warm-up':
         const [startDate, endDate] = getWarmupPeriod();
         const lockDate = getPoolLockDate();
@@ -205,15 +220,39 @@ const PoolDetails = () => {
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         {pool && (
           <>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-              <div className="flex items-center gap-2 mb-2 sm:mb-0">
-                <Coins className="h-6 w-6 text-[#8B5CF6]" />
-                <h1 className="text-2xl sm:text-3xl font-bold">
-                  {pool.name}
-                </h1>
-                <Badge variant="outline" className={`ml-2 ${getStatusColor()}`}>
-                  {pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}
-                </Badge>
+            {/* New redesigned pool header section */}
+            <div className="mb-6">
+              <div className="bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5 rounded-lg p-4 sm:p-6 border border-[#8B5CF6]/20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex items-center justify-center bg-[#8B5CF6]/10 p-3 rounded-full h-12 w-12 sm:h-14 sm:w-14">
+                      <Coins className="h-6 w-6 sm:h-8 sm:w-8 text-[#8B5CF6]" />
+                    </div>
+                    <div>
+                      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{pool.name}</h1>
+                      <div className="flex items-center mt-1">
+                        <Badge variant="outline" className={`${getStatusColor()} flex items-center px-2.5 py-1`}>
+                          {getStatusIcon()}
+                          <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+                        </Badge>
+                        {pool.status !== 'completed' && (
+                          <p className="ml-3 text-sm text-gray-600 flex items-center">
+                            <TrendingUp className="h-3.5 w-3.5 mr-1 text-[#8B5CF6]" />
+                            <span>{pool.apy}% APY</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col items-start sm:items-end">
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <Shield className="h-4 w-4 text-[#8B5CF6]" />
+                      <span>Worldcoin Verified</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Created {formatToLocalTime(new Date(2023, 0, 15), 'd MMM yyyy')}</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -239,13 +278,12 @@ const PoolDetails = () => {
                       </div>
                     )}
                     
-                    <div>
-                      <p className="text-xs sm:text-sm text-gray-500">APY</p>
-                      <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6]">
-                        <TrendingUp className="h-4 w-4 inline mr-1" />
-                        {pool.apy}%
-                      </p>
-                    </div>
+                    {(pool.status === 'warm-up' || pool.status === 'active' || pool.status === 'completed') && (
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500">APY</p>
+                        <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6]">{pool.apy}%</p>
+                      </div>
+                    )}
                     
                     {pool.status === 'active' && (
                       <div>

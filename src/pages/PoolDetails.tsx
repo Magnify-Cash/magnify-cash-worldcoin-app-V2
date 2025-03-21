@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock, BarChart, Lock, Unlock } from "lucide-react";
+import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock, BarChart, Lock, Unlock, Timer } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPoolById, getUserPoolPosition } from "@/lib/poolRequests";
@@ -91,6 +91,21 @@ const PoolDetails = () => {
         return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = () => {
+    if (!pool) return null;
+    
+    switch (pool.status) {
+      case 'warm-up':
+        return <Timer className="h-4 w-4 mr-1 text-amber-500" />;
+      case 'active':
+        return <CircleCheck className="h-4 w-4 mr-1 text-green-500" />;
+      case 'completed':
+        return <CircleCheck className="h-4 w-4 mr-1 text-gray-500" />;
+      default:
+        return <Circle className="h-4 w-4 mr-1 text-gray-500" />;
     }
   };
 
@@ -206,12 +221,18 @@ const PoolDetails = () => {
           <>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
               <div className="flex items-center gap-2 mb-2 sm:mb-0">
-                <Coins className="h-6 w-6 text-[#8B5CF6]" />
-                <h1 className="text-2xl sm:text-3xl font-bold">
-                  {pool.name}
-                </h1>
-                <Badge variant="outline" className={`ml-2 ${getStatusColor()}`}>
-                  {pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}
+                <div className="bg-[#8B5CF6]/10 rounded-full p-2 flex items-center justify-center">
+                  <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-[#8B5CF6]" />
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold">
+                    {pool.name}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-gray-500">High-yield lending pool</p>
+                </div>
+                <Badge variant="outline" className={`ml-1 flex items-center ${getStatusColor()}`}>
+                  {getStatusIcon()}
+                  <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
                 </Badge>
               </div>
             </div>
@@ -403,3 +424,4 @@ const PoolDetails = () => {
 };
 
 export default PoolDetails;
+

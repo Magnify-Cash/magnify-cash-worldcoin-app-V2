@@ -8,7 +8,8 @@ import {
   Info, 
   Circle, 
   CircleCheck, 
-  ExternalLink 
+  ExternalLink,
+  Timer 
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { 
@@ -74,13 +75,13 @@ export function PoolCard({
   const getStatusIcon = () => {
     switch (status) {
       case 'warm-up':
-        return <Circle className="h-3 w-3 text-amber-500" />;
+        return <Timer className="h-3 w-3 mr-1 text-amber-500" />;
       case 'active':
-        return <CircleCheck className="h-3 w-3 text-green-500" />;
+        return <CircleCheck className="h-3 w-3 mr-1 text-green-500" />;
       case 'completed':
-        return <CircleCheck className="h-3 w-3 text-gray-500" />;
+        return <CircleCheck className="h-3 w-3 mr-1 text-gray-500" />;
       default:
-        return <Circle className="h-3 w-3 text-gray-500" />;
+        return <Circle className="h-3 w-3 mr-1 text-gray-500" />;
     }
   };
 
@@ -88,11 +89,15 @@ export function PoolCard({
     <Card className={`overflow-hidden border ${useCustomGradient ? 'border-[#D946EF]/20' : 'border-[#8B5CF6]/20'}`}>
       <CardHeader className={`pb-2 pt-4 bg-gradient-to-r ${useCustomGradient ? 'from-[#8B5CF6]/10 via-[#A855F7]/10 to-[#D946EF]/5' : 'from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5'}`}>
         <div className="flex items-center justify-between">
-          <CardTitle className={`text-xl flex items-center gap-2`}>
-            <Coins className={`h-5 w-5 ${useCustomGradient ? 'text-[#A855F7]' : 'text-[#8B5CF6]'}`} />
-            {getPoolName()}
-          </CardTitle>
-          <Badge variant="outline" className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
+          <div className="flex items-center">
+            <div className={`flex justify-center items-center rounded-full p-1.5 mr-2 ${useCustomGradient ? 'bg-[#A855F7]/10' : 'bg-[#8B5CF6]/10'}`}>
+              <Coins className={`h-4 w-4 sm:h-5 sm:w-5 ${useCustomGradient ? 'text-[#A855F7]' : 'text-[#8B5CF6]'}`} />
+            </div>
+            <CardTitle className="text-lg sm:text-xl">
+              {getPoolName()}
+            </CardTitle>
+          </div>
+          <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
             {getStatusIcon()}
             <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
           </Badge>

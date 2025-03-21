@@ -9,6 +9,7 @@ import RepayLoan from "@/pages/RepayLoan";
 import Announcements from "@/pages/Announcements";
 import LoanHistory from "@/pages/LoanHistory";
 import Lending from "@/pages/Lending";
+import PoolDetails from "@/pages/PoolDetails";
 import ProtectedRoute from "@/pages/ProtectedPage";
 import NotFound from "@/pages/NotFound";
 import "./App.css";
@@ -45,6 +46,7 @@ function App() {
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/lending" element={<Lending />} />
+          <Route path="/pool/:id" element={<PoolDetails />} />
           <Route
             path="/guide"
             element={

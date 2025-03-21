@@ -6,13 +6,13 @@ import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
 
-type LoanDetails = {
+export type LoanDetails = {
   amount: number;
   duration: number;
   transactionId: string;
 };
 
-type RequestLoanResponse = {
+export type RequestLoanResponse = {
   requestNewLoan: (requestedTierId: bigint) => Promise<void>;
   error: string | null;
   transactionId: string | null;

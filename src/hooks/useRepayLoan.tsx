@@ -10,11 +10,20 @@ import {
   WORLDCOIN_TOKEN_COLLATERAL,
 } from "@/utils/constants";
 
-type LoanDetails = {
+export type LoanDetails = {
   amount: number;
   interest: number;
   totalDue: number;
   transactionId: string;
+};
+
+export type RepayLoanResponse = {
+  repayLoanWithPermit2: (loanAmount: string, V1OrV2: string) => Promise<void>;
+  error: string | null;
+  transactionId: string | null;
+  isConfirming: boolean;
+  isConfirmed: boolean;
+  loanDetails: LoanDetails | null;
 };
 
 const getContractAddress = (contract_version: string) => {
@@ -27,7 +36,7 @@ const getContractAddress = (contract_version: string) => {
   }
 };
 
-const useRepayLoan = () => {
+const useRepayLoan = (): RepayLoanResponse => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
@@ -48,7 +57,6 @@ const useRepayLoan = () => {
       },
     });
 
-  // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
     if (isConfirmingTransaction) {
       setIsConfirming(true);

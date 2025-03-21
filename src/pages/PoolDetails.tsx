@@ -1,9 +1,23 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock, BarChart, Lock, Unlock, Timer } from "lucide-react";
+import { 
+  Coins, 
+  TrendingUp, 
+  AlertCircle, 
+  Info, 
+  Wallet, 
+  Clock, 
+  BarChart, 
+  Lock, 
+  Unlock, 
+  Timer,
+  Circle,
+  CircleCheck 
+} from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPoolById, getUserPoolPosition } from "@/lib/poolRequests";

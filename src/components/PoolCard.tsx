@@ -71,7 +71,7 @@ export function PoolCard({
       case 'active':
         return <CircleCheck className="h-3 w-3 text-green-500" />;
       case 'completed':
-        return <Circle className="h-3 w-3 text-gray-500" />;
+        return <CircleCheck className="h-3 w-3 text-gray-500" />;
       default:
         return <Circle className="h-3 w-3 text-gray-500" />;
     }

@@ -262,17 +262,13 @@ const PoolDetails = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-xs sm:text-sm text-gray-500">Status</p>
-                      <div className="flex items-center mt-1">
-                        <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
-                          {getStatusIcon()}
-                          <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
-                        </Badge>
-                      </div>
-                    </div>
-                    
+                  <div className="flex justify-center mt-1">
+                    <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
+                      {getStatusIcon()}
+                      <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">                    
                     <div>
                       <p className="text-xs sm:text-sm text-gray-500">Total Supply</p>
                       <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.total_value_locked)}</p>
@@ -325,22 +321,22 @@ const PoolDetails = () => {
                     <div className="mt-4 sm:mt-6">
                       <div className="flex items-center">
                         <Lock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
-                        <p className="text-sm sm:text-base font-medium mr-2">
+                        <p className="text-sm sm:text-base font-medium mr-2 items-center text-center w-full">
                           Funds locked for: {getLockDaysRemaining()} days
-                        </p>
-                        <Popover>
+                          <Popover>
                           <PopoverTrigger asChild>
-                            <button className="flex-shrink-0">
+                            <button className="flex-shrink-0 ml-1">
                               <HelpCircle className="h-4 w-4 text-gray-400" />
                             </button>
                           </PopoverTrigger>
                           <PopoverContent className="max-w-sm p-3">
                             <div className="text-sm">
                               <p className="font-medium mb-1">Unlock on</p>
-                              <p className="font-medium">{formatUnlockDate(getPoolMaturityDate())}</p>
+                              <p>{formatUnlockDate(getPoolMaturityDate())}</p>
                             </div>
                           </PopoverContent>
                         </Popover>
+                        </p>
                       </div>
                     </div>
                   )}

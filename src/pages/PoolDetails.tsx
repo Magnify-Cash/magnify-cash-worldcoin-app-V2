@@ -232,8 +232,14 @@ const PoolDetails = () => {
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         {pool && (
           <>
-            <Card className="mb-6 border border-[#8B5CF6]/20 overflow-hidden">
-              <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5 py-4 px-6 flex justify-center">
+            <Card className="mb-6 border border-[#8B5CF6]/20 overflow-hidden relative">
+              <div className="absolute top-3 right-3">
+                <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
+                  {getStatusIcon()}
+                  <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+                </Badge>
+              </div>
+              <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5 py-5 px-6 flex justify-center">
                 <div className="flex items-center gap-3">
                   <div className="bg-[#8B5CF6]/20 rounded-full p-2 flex items-center justify-center">
                     <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-[#8B5CF6]" />
@@ -241,10 +247,6 @@ const PoolDetails = () => {
                   <h1 className="text-2xl sm:text-3xl font-bold">
                     {pool.name}
                   </h1>
-                  <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
-                    {getStatusIcon()}
-                    <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
-                  </Badge>
                 </div>
               </div>
             </Card>

@@ -91,7 +91,9 @@ export function UserPortfolioCard({
         <CardTitle className={`text-xl flex items-center gap-2 justify-center`}>
           <Wallet className={`h-5 w-5 text-[#8B5CF6]`} />
           Your Position
-          {showToggle && onToggleDummyData && (
+        </CardTitle>
+      </CardHeader>
+      {showToggle && onToggleDummyData && (
             <Button 
               variant="ghost" 
               size="sm" 
@@ -106,8 +108,6 @@ export function UserPortfolioCard({
               )}
             </Button>
           )}
-        </CardTitle>
-      </CardHeader>
       <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
         {balance > 0 ? (
           <>

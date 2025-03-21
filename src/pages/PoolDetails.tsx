@@ -230,10 +230,12 @@ const PoolDetails = () => {
                     </div>
                     <div>
                       <p className="text-xs sm:text-sm text-gray-500">APY</p>
-                      <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6] flex items-center gap-1">
-                        <TrendingUp className="h-4 w-4" />
-                        {pool.apy}%
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className="h-4 w-4 text-[#8B5CF6]" />
+                        <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6]">
+                          {pool.apy}%
+                        </p>
+                      </div>
                     </div>
                     {pool.status !== 'warm-up' && (
                       <div>

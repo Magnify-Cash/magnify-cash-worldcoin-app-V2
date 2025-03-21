@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -115,6 +116,11 @@ const PoolDetails = () => {
     return new Date(2025, 11, 12, 12, 0, 0);
   };
 
+  const getPoolLockDate = (): Date => {
+    const currentYear = new Date().getFullYear();
+    return new Date(currentYear, 2, 15);
+  };
+
   const getWarmupPeriod = (): [Date, Date] => {
     const currentYear = new Date().getFullYear();
     return [
@@ -129,10 +135,12 @@ const PoolDetails = () => {
     switch (pool.status) {
       case 'active':
         const maturityDate = getPoolMaturityDate();
-        return `Funds locked until: ${formatToLocalTime(maturityDate)}`;
+        return `Funds locked until: \n${formatToLocalTime(maturityDate)}`;
       case 'warm-up':
         const [startDate, endDate] = getWarmupPeriod();
-        return formatDateRange(startDate, endDate);
+        const lockDate = getPoolLockDate();
+        const maturityDateForWarmup = getPoolMaturityDate();
+        return `Warm-up: ${formatDateRange(startDate, endDate)}\nLocks: ${formatToLocalTime(lockDate, 'd MMM yyyy')}\nUnlocks: ${formatToLocalTime(maturityDateForWarmup, 'd MMM yyyy')}`;
       case 'completed':
         return "Pool is completed";
       default:
@@ -223,10 +231,14 @@ const PoolDetails = () => {
                       <p className="text-xs sm:text-sm text-gray-500">Total Supply</p>
                       <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.total_value_locked)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs sm:text-sm text-gray-500">Available Liquidity</p>
-                      <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.available_liquidity)}</p>
-                    </div>
+                    
+                    {(pool.status === 'active' || pool.status === 'completed') && (
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500">Available Liquidity</p>
+                        <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.available_liquidity)}</p>
+                      </div>
+                    )}
+                    
                     <div>
                       <p className="text-xs sm:text-sm text-gray-500">APY</p>
                       <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6]">
@@ -234,7 +246,8 @@ const PoolDetails = () => {
                         {pool.apy}%
                       </p>
                     </div>
-                    {pool.status !== 'warm-up' && (
+                    
+                    {pool.status === 'active' && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Utilization Rate</p>
                         <p className="text-sm sm:text-lg font-semibold">
@@ -242,6 +255,7 @@ const PoolDetails = () => {
                         </p>
                       </div>
                     )}
+                    
                     {pool.status === 'completed' && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Final LP Price</p>
@@ -261,24 +275,33 @@ const PoolDetails = () => {
                     />
                   </div>
 
-                  <div className="mt-4 sm:mt-6 flex items-center gap-2">
+                  <div className="mt-4 sm:mt-6">
                     {pool.status === 'active' ? (
-                      <Lock className="h-4 w-4 text-[#8B5CF6]" />
+                      <div className="flex items-start gap-2">
+                        <Lock className="h-4 w-4 text-[#8B5CF6] mt-0.5" />
+                        <div>
+                          <p className="text-xs sm:text-sm text-gray-500 whitespace-pre-line">
+                            {getFormattedDateInfo()}
+                          </p>
+                        </div>
+                      </div>
                     ) : pool.status === 'warm-up' ? (
-                      <Unlock className="h-4 w-4 text-[#8B5CF6]" />
+                      <div className="flex items-start gap-2">
+                        <Unlock className="h-4 w-4 text-[#8B5CF6] mt-0.5" />
+                        <div>
+                          <p className="text-xs sm:text-sm text-gray-500 whitespace-pre-line">
+                            {getFormattedDateInfo()}
+                          </p>
+                        </div>
+                      </div>
                     ) : (
-                      <Clock className="h-4 w-4 text-[#8B5CF6]" />
+                      <div className="flex items-start gap-2">
+                        <Clock className="h-4 w-4 text-[#8B5CF6] mt-0.5" />
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          {getFormattedDateInfo()}
+                        </p>
+                      </div>
                     )}
-                    
-                    <p className="text-xs sm:text-sm text-gray-500">
-                      {pool.status === 'warm-up' ? (
-                        <><span className="font-medium">Warm-up Period:</span> {getFormattedDateInfo()}</>
-                      ) : pool.status === 'active' ? (
-                        getFormattedDateInfo()
-                      ) : (
-                        getFormattedDateInfo()
-                      )}
-                    </p>
                   </div>
                 </CardContent>
               </Card>

@@ -261,7 +261,7 @@ const PoolDetails = () => {
             <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
               <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
                 <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
-                  <CardTitle className="text-xl flex items-center gap-2">
+                  <CardTitle className="text-xl flex items-center gap-2 justify-center">
                     <BarChart className="h-5 w-5 text-[#8B5CF6]" />
                     Pool Statistics
                   </CardTitle>
@@ -302,11 +302,18 @@ const PoolDetails = () => {
                         </p>
                       </div>
                     )}
+
+                    {pool.status === 'warm-up' && (
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500">Liquidity Lock</p>
+                        <p className="text-sm sm:text-lg font-semibold">04/22/2025</p>
+                      </div>
+                    )}
                     
                     {pool.status === 'warm-up' && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Liquidity Unlock</p>
-                        <p className="text-sm sm:text-lg font-semibold">December 12th, 2025</p>
+                        <p className="text-sm sm:text-lg font-semibold">10/22/2025</p>
                       </div>
                     )}
                     
@@ -331,9 +338,9 @@ const PoolDetails = () => {
 
                   {pool.status === 'active' && (
                     <div className="mt-4 sm:mt-6">
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-center">
                         <Lock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
-                        <p className="text-sm sm:text-base font-medium mr-2 items-center text-center w-full">
+                        <p className="text-sm sm:text-base font-medium text-center flex items-center">
                           Funds locked for: {getLockDaysRemaining()} days
                           <Popover>
                           <PopoverTrigger asChild>
@@ -355,10 +362,10 @@ const PoolDetails = () => {
 
                   {pool.status !== 'active' && pool.status !== 'completed' && (
                     <div className="mt-4 sm:mt-6">
-                      <div className="flex items-start">
-                        <Unlock className="h-4 w-4 text-[#8B5CF6] mt-1 flex-shrink-0 mr-2" />
-                        <p className="text-sm sm:text-base font-medium flex items-center">
-                          Warm-Up for {getWarmupDays()} days
+                      <div className="flex items-center justify-center">
+                        <Unlock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
+                        <p className="text-sm sm:text-base font-medium text-center flex items-center">
+                          Warm-Up ends in {getWarmupDays()} days
                           <Popover>
                             <PopoverTrigger asChild>
                               <button className="flex-shrink-0 ml-1">
@@ -367,7 +374,7 @@ const PoolDetails = () => {
                             </PopoverTrigger>
                             <PopoverContent className="max-w-sm p-3">
                               <div className="text-sm">
-                                <p className="font-medium mb-1">Pool Lock</p>
+                                <p className="font-medium mb-1">Warm-Up ends on</p>
                                 <p>{formatUnlockDate(getPoolMaturityDate())}</p>
                               </div>
                             </PopoverContent>
@@ -401,39 +408,6 @@ const PoolDetails = () => {
               </CardHeader>
               <CardContent className="text-sm text-gray-600">
                 <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold text-base text-gray-800 mb-1">Pool Description</h4>
-                    <p className="text-sm">
-                      {pool.metadata?.description || `This is a ${pool.name} lending pool where you can deposit ${pool.token_a} to earn yield.`}
-                    </p>
-                  </div>
-                  
-                  {pool.status === 'warm-up' && (
-                    <div className="bg-amber-50 p-4 rounded-md">
-                      <div className="flex items-start">
-                        <AlertCircle className="mr-2 h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-amber-800">Warm-up Period</p>
-                          <p className="text-sm text-amber-700">
-                            This pool is in the warm-up phase. During this period, deposits are accepted but interest accrual may not have started yet.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {pool.status === 'completed' && (
-                    <div className="bg-gray-50 p-4 rounded-md">
-                      <div className="flex">
-                        <div>
-                          <p className="font-medium text-gray-800">Pool Completed</p>
-                          <p className="text-sm text-gray-700">
-                            This pool is no longer accepting new deposits. Existing depositors can withdraw their assets at any time.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>

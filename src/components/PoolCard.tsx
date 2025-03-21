@@ -167,7 +167,7 @@ export function PoolCard({
           onClick={() => navigate(`/pool/${id}`)} 
           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
         >
-          View Pool <ExternalLink className="h-4 w-4" />
+          View Pool 
         </Button>
       </CardContent>
     </Card>

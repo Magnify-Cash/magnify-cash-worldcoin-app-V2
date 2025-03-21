@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -230,12 +229,10 @@ const PoolDetails = () => {
                     </div>
                     <div>
                       <p className="text-xs sm:text-sm text-gray-500">APY</p>
-                      <div className="flex items-center gap-1">
-                        <TrendingUp className="h-4 w-4 text-[#8B5CF6]" />
-                        <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6]">
-                          {pool.apy}%
-                        </p>
-                      </div>
+                      <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6]">
+                        <TrendingUp className="h-4 w-4 inline mr-1" />
+                        {pool.apy}%
+                      </p>
                     </div>
                     {pool.status !== 'warm-up' && (
                       <div>

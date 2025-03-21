@@ -28,7 +28,7 @@ import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { Progress } from "@/components/ui/progress";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
-import { formatToLocalTime, formatDateRange, getDaysBetween } from "@/utils/dateUtils";
+import { formatToLocalTime, formatDateRange, getDaysBetween, formatUnlockDate } from "@/utils/dateUtils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const PoolDetails = () => {
@@ -169,7 +169,7 @@ const PoolDetails = () => {
         const [startDate, endDate] = getWarmupPeriod();
         const lockDate = getPoolLockDate();
         const maturityDateForWarmup = getPoolMaturityDate();
-        return `Warm-up: ${formatDateRange(startDate, endDate)}\nLocks: ${formatToLocalTime(lockDate, 'd MMM yyyy')}\nUnlocks: ${formatToLocalTime(maturityDateForWarmup, 'd MMM yyyy')}`;
+        return `Warm-up: ${formatDateRange(startDate, endDate)}\nLocks: ${formatToLocalTime(lockDate, 'd MMM yyyy')}\nUnlocks: ${formatUnlockDate(maturityDateForWarmup)}`;
       case 'completed':
         return "Pool is completed";
       default:
@@ -336,9 +336,8 @@ const PoolDetails = () => {
                           </PopoverTrigger>
                           <PopoverContent className="max-w-sm p-3">
                             <div className="text-sm">
-                              <p className="font-medium mb-1">Lock Details</p>
-                              <p>Funds will be unlocked on:</p>
-                              <p className="font-medium">{formatToLocalTime(getPoolMaturityDate(), 'PPPP')} at {formatToLocalTime(getPoolMaturityDate(), 'h:mm a')}</p>
+                              <p className="font-medium mb-1">Unlock on</p>
+                              <p className="font-medium">{formatUnlockDate(getPoolMaturityDate())}</p>
                             </div>
                           </PopoverContent>
                         </Popover>
@@ -358,7 +357,7 @@ const PoolDetails = () => {
                             Locks: {formatToLocalTime(getPoolLockDate(), 'd MMM yyyy')}
                           </p>
                           <p className="text-xs sm:text-sm text-gray-700">
-                            Unlocks: {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
+                            Unlocks: {formatUnlockDate(getPoolMaturityDate())}
                           </p>
                         </div>
                       </div>

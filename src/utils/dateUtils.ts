@@ -39,3 +39,16 @@ export function getDaysBetween(startDate: Date, endDate: Date): number {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays;
 }
+
+/**
+ * Formats a date in a formal unlock message format
+ */
+export function formatUnlockDate(date: Date): string {
+  const dayOfWeek = format(date, 'EEEE');
+  const month = format(date, 'MMMM');
+  const day = format(date, 'do');
+  const year = format(date, 'yyyy');
+  const time = format(date, 'h:mm a');
+  
+  return `${dayOfWeek}, ${month} ${day}, ${year} at ${time}`;
+}

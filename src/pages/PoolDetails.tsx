@@ -27,7 +27,8 @@ import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { Progress } from "@/components/ui/progress";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
-import { formatToLocalTime, formatDateRange } from "@/utils/dateUtils";
+import { formatToLocalTime, formatDateRange, getDaysBetween } from "@/utils/dateUtils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -179,6 +180,12 @@ const PoolDetails = () => {
     return 1.25;
   };
 
+  const getLockDaysRemaining = (): number => {
+    const now = new Date();
+    const maturityDate = getPoolMaturityDate();
+    return getDaysBetween(now, maturityDate);
+  };
+
   const handleSupply = () => {
     if (pool?.status === 'completed') {
       toast({
@@ -254,15 +261,17 @@ const PoolDetails = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
-                  <div className="flex justify-center">
-                    <div>
-                      <Badge variant="outline" className={`mt-1 flex items-center justify-end ${getStatusColor()}`}>
-                        {getStatusIcon()}
-                        <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
-                      </Badge>
-                    </div>
-                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500">Status</p>
+                      <div className="flex items-center mt-1">
+                        <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
+                          {getStatusIcon()}
+                          <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+                        </Badge>
+                      </div>
+                    </div>
+                    
                     <div>
                       <p className="text-xs sm:text-sm text-gray-500">Total Supply</p>
                       <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.total_value_locked)}</p>
@@ -298,6 +307,31 @@ const PoolDetails = () => {
                         <p className="text-sm sm:text-lg font-semibold">${getLPTokenPrice().toFixed(2)}</p>
                       </div>
                     )}
+                    
+                    {pool.status === 'active' && (
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500">Lock Information</p>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center mt-1">
+                                <Lock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
+                                <p className="text-sm sm:text-base font-medium">
+                                  Funds locked for: {getLockDaysRemaining()} days
+                                </p>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm p-2">
+                              <div className="text-sm">
+                                <p className="font-medium mb-1">Lock Details</p>
+                                <p>Funds will be unlocked on:</p>
+                                <p className="font-medium">{formatToLocalTime(getPoolMaturityDate(), 'PPPP')} at {formatToLocalTime(getPoolMaturityDate(), 'h:mm a')}</p>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-4 sm:mt-6">
@@ -311,52 +345,35 @@ const PoolDetails = () => {
                     />
                   </div>
 
-                  <div className="mt-4 sm:mt-6">
-                    {pool.status === 'active' ? (
-                      <div className="flex justify-center">
-                        <div className="flex items-start">
-                          <Lock className="h-4 w-4 text-[#8B5CF6] mt-1 flex-shrink-0 mr-2" />
-                          <div className="text-center">
-                            <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                              Funds locked until:
-                            </p>
-                            <p className="text-xs sm:text-sm text-gray-700">
-                              {formatToLocalTime(getPoolMaturityDate(), 'h:mma')}
-                            </p>
-                            <p className="text-xs sm:text-sm text-gray-700">
-                              {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : pool.status === 'warm-up' ? (
-                      <div className="flex justify-center">
-                        <div className="flex items-start">
-                          <Unlock className="h-4 w-4 text-[#8B5CF6] mt-1 flex-shrink-0 mr-2" />
-                          <div className="text-center">
-                            <p className="text-xs sm:text-sm text-gray-500">
-                              Warm-up: {formatDateRange(getWarmupPeriod()[0], getWarmupPeriod()[1])}
-                            </p>
-                            <p className="text-xs sm:text-sm text-gray-700">
-                              Locks: {formatToLocalTime(getPoolLockDate(), 'd MMM yyyy')}
-                            </p>
-                            <p className="text-xs sm:text-sm text-gray-700">
-                              Unlocks: {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex justify-center">
-                        <div className="flex items-start">
-                          <Clock className="h-4 w-4 text-[#8B5CF6] mt-1 flex-shrink-0 mr-2" />
-                          <p className="text-xs sm:text-sm text-gray-500 font-medium text-center">
-                            Pool is completed
+                  {pool.status !== 'active' && pool.status !== 'completed' && (
+                    <div className="mt-4 sm:mt-6">
+                      <div className="flex items-start">
+                        <Unlock className="h-4 w-4 text-[#8B5CF6] mt-1 flex-shrink-0 mr-2" />
+                        <div>
+                          <p className="text-xs sm:text-sm text-gray-500">
+                            Warm-up: {formatDateRange(getWarmupPeriod()[0], getWarmupPeriod()[1])}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-700">
+                            Locks: {formatToLocalTime(getPoolLockDate(), 'd MMM yyyy')}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-700">
+                            Unlocks: {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
                           </p>
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  
+                  {pool.status === 'completed' && (
+                    <div className="mt-4 sm:mt-6">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
+                        <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                          Pool is completed
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

@@ -30,3 +30,12 @@ export function formatDateRange(
 ): string {
   return `${format(startDate, formatStr)} - ${format(endDate, formatStr)}`;
 }
+
+/**
+ * Calculates the number of days between two dates
+ */
+export function getDaysBetween(startDate: Date, endDate: Date): number {
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}

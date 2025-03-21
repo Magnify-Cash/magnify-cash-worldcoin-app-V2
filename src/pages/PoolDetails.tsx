@@ -158,6 +158,11 @@ const PoolDetails = () => {
     ];
   };
 
+  const getWarmupDays = (): number => {
+    const [startDate, endDate] = getWarmupPeriod();
+    return getDaysBetween(startDate, endDate);
+  };
+
   const getFormattedDateInfo = () => {
     if (!pool) return "";
     
@@ -298,6 +303,11 @@ const PoolDetails = () => {
                       </div>
                     )}
                     
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500">Liquidity Unlock</p>
+                      <p className="text-sm sm:text-lg font-semibold">December 12th, 2025</p>
+                    </div>
+                    
                     {pool.status === 'completed' && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Final LP Price</p>
@@ -345,17 +355,22 @@ const PoolDetails = () => {
                     <div className="mt-4 sm:mt-6">
                       <div className="flex items-start">
                         <Unlock className="h-4 w-4 text-[#8B5CF6] mt-1 flex-shrink-0 mr-2" />
-                        <div>
-                          <p className="text-xs sm:text-sm text-gray-500">
-                            Warm-up: {formatDateRange(getWarmupPeriod()[0], getWarmupPeriod()[1])}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-700">
-                            Locks: {formatToLocalTime(getPoolLockDate(), 'd MMM yyyy')}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-700">
-                            Unlocks: {formatUnlockDate(getPoolMaturityDate())}
-                          </p>
-                        </div>
+                        <p className="text-sm sm:text-base font-medium flex items-center">
+                          Warm-Up for {getWarmupDays()} days
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="flex-shrink-0 ml-1">
+                                <HelpCircle className="h-4 w-4 text-gray-400" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="max-w-sm p-3">
+                              <div className="text-sm">
+                                <p className="font-medium mb-1">Pool Lock</p>
+                                <p>{formatUnlockDate(getPoolMaturityDate())}</p>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </p>
                       </div>
                     </div>
                   )}

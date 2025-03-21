@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 const poolsData = [
   {
     id: 1,
-    name: "USDC Pool",
+    name: "Pool A",
     color: "#8B5CF6", // Purple
     data: [
       { date: "Jan", rate: 1.000 },
@@ -27,7 +27,7 @@ const poolsData = [
   },
   {
     id: 2,
-    name: "ETH Pool",
+    name: "Pool B",
     color: "#10B981", // Green
     data: [
       { date: "Jan", rate: 1.000 },
@@ -46,7 +46,7 @@ const poolsData = [
   },
   {
     id: 3,
-    name: "WBTC Pool",
+    name: "Pool C",
     color: "#F59E0B", // Amber/Orange
     data: [
       { date: "Jan", rate: 1.000 },
@@ -103,7 +103,7 @@ export function LendingGraph() {
               id={`pool-${pool.id}`}
               checked={visiblePools.includes(pool.id)}
               onCheckedChange={() => togglePoolVisibility(pool.id)}
-              className="border-2"
+              className="border-2 data-[state=checked]:bg-transparent"
               style={{ borderColor: pool.color }}
             />
             <label
@@ -161,7 +161,9 @@ export function LendingGraph() {
                       <div className="pt-1 space-y-1">
                         {payload.map((entry, index) => {
                           if (!entry.value) return null;
-                          const poolId = parseInt(entry.dataKey.split('_')[1]);
+                          // Fix: Cast dataKey to string before using split
+                          const dataKey = String(entry.dataKey);
+                          const poolId = parseInt(dataKey.split('_')[1]);
                           const pool = poolsData.find(p => p.id === poolId);
                           if (!pool || !visiblePools.includes(poolId)) return null;
                           

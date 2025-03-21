@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -232,23 +233,28 @@ const PoolDetails = () => {
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         {pool && (
           <>
-            <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-bold text-center">
-                {pool.name}
-              </h1>
+            <div className="mb-6 flex justify-center items-center">
+              <div className="flex items-center gap-2">
+                <div className="bg-[#8B5CF6]/10 rounded-full p-2 flex items-center justify-center">
+                  <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-[#8B5CF6]" />
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold">
+                  {pool.name}
+                </h1>
+                <Badge variant="outline" className={`ml-2 flex items-center ${getStatusColor()}`}>
+                  {getStatusIcon()}
+                  <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+                </Badge>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
               <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
-                <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5 flex flex-row justify-between items-center">
+                <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
                   <CardTitle className="text-xl flex items-center gap-2">
                     <BarChart className="h-5 w-5 text-[#8B5CF6]" />
                     Pool Statistics
                   </CardTitle>
-                  <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
-                    {getStatusIcon()}
-                    <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
-                  </Badge>
                 </CardHeader>
                 <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

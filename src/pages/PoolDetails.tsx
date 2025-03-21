@@ -303,10 +303,12 @@ const PoolDetails = () => {
                       </div>
                     )}
                     
-                    <div>
-                      <p className="text-xs sm:text-sm text-gray-500">Liquidity Unlock</p>
-                      <p className="text-sm sm:text-lg font-semibold">December 12th, 2025</p>
-                    </div>
+                    {pool.status === 'warm-up' && (
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500">Liquidity Unlock</p>
+                        <p className="text-sm sm:text-lg font-semibold">December 12th, 2025</p>
+                      </div>
+                    )}
                     
                     {pool.status === 'completed' && (
                       <div>
@@ -374,17 +376,6 @@ const PoolDetails = () => {
                       </div>
                     </div>
                   )}
-                  
-                  {pool.status === 'completed' && (
-                    <div className="mt-4 sm:mt-6">
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
-                        <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                          Pool is completed
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
@@ -433,8 +424,7 @@ const PoolDetails = () => {
                   
                   {pool.status === 'completed' && (
                     <div className="bg-gray-50 p-4 rounded-md">
-                      <div className="flex items-start">
-                        <AlertCircle className="mr-2 h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex">
                         <div>
                           <p className="font-medium text-gray-800">Pool Completed</p>
                           <p className="text-sm text-gray-700">

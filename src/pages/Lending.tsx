@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Info, Eye, EyeOff, Palette } from "lucide-react";
+import { Info, Palette } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PoolCard } from "@/components/PoolCard";
 import { LendingGraph } from "@/components/LendingGraph";
@@ -13,7 +14,6 @@ import { LiquidityPool } from "@/types/supabase/liquidity";
 const Lending = () => {
   const [loading, setLoading] = useState(true);
   const [pools, setPools] = useState<LiquidityPool[]>([]);
-  const [showDummyData, setShowDummyData] = useState(true);
   const [useCustomGradient, setUseCustomGradient] = useState(false);
   const isMobile = useIsMobile();
 
@@ -69,16 +69,6 @@ const Lending = () => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => setShowDummyData(!showDummyData)}
-            className="flex items-center gap-1.5 text-xs"
-          >
-            {showDummyData ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            {showDummyData ? "Hide Demo Data" : "Show Demo Data"}
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm"
             onClick={toggleGradient}
             className={`flex items-center gap-1.5 text-xs ${useCustomGradient ? 'border-[#D946EF]/30 hover:bg-[#A855F7]/10' : ''}`}
           >
@@ -90,7 +80,7 @@ const Lending = () => {
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {loading ? (
             <div className="py-8 text-center text-gray-500">Loading pools...</div>
-          ) : showDummyData ? (
+          ) : (
             pools.map(pool => (
               <PoolCard
                 key={pool.id}
@@ -103,8 +93,6 @@ const Lending = () => {
                 useCustomGradient={useCustomGradient}
               />
             ))
-          ) : (
-            <div className="py-8 text-center text-gray-500">Connect your wallet to view available pools.</div>
           )}
         </div>
 

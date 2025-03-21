@@ -10,6 +10,7 @@ const poolsData = [
     id: 1,
     name: "Pool A",
     color: "#8B5CF6", // Purple
+    transparentColor: "#E5DEFF", // Transparent purple
     data: [
       { date: "Jan", rate: 1.000 },
       { date: "Feb", rate: 1.004 },
@@ -29,6 +30,7 @@ const poolsData = [
     id: 2,
     name: "Pool B",
     color: "#10B981", // Green
+    transparentColor: "#F2FCE2", // Transparent green
     data: [
       { date: "Jan", rate: 1.000 },
       { date: "Feb", rate: 1.006 },
@@ -48,6 +50,7 @@ const poolsData = [
     id: 3,
     name: "Pool C",
     color: "#F59E0B", // Amber/Orange
+    transparentColor: "#FEC6A1", // Transparent orange
     data: [
       { date: "Jan", rate: 1.000 },
       { date: "Feb", rate: 1.002 },
@@ -104,7 +107,10 @@ export function LendingGraph() {
               checked={visiblePools.includes(pool.id)}
               onCheckedChange={() => togglePoolVisibility(pool.id)}
               className="border-2 data-[state=checked]:bg-transparent"
-              style={{ borderColor: pool.color }}
+              style={{ 
+                borderColor: pool.color,
+                backgroundColor: visiblePools.includes(pool.id) ? pool.transparentColor : 'transparent'
+              }}
             />
             <label
               htmlFor={`pool-${pool.id}`}

@@ -10,10 +10,6 @@ type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
   address: string;
 };
 
-type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
-  address: string;
-};
-
 const Welcome = () => {
   const navigate = useNavigate();
   const toast = useToast();

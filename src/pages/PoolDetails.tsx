@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -207,13 +208,6 @@ const PoolDetails = () => {
                   {pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}
                 </Badge>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <div className="text-sm font-medium flex items-center gap-1">
-                  <TrendingUp className="h-4 w-4 text-[#8B5CF6]" />
-                  <span className="text-[#8B5CF6]">{pool.apy}% APY</span>
-                </div>
-              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
@@ -233,6 +227,13 @@ const PoolDetails = () => {
                     <div>
                       <p className="text-xs sm:text-sm text-gray-500">Available Liquidity</p>
                       <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.available_liquidity)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500">APY</p>
+                      <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6] flex items-center gap-1">
+                        <TrendingUp className="h-4 w-4" />
+                        {pool.apy}%
+                      </p>
                     </div>
                     {pool.status !== 'warm-up' && (
                       <div>

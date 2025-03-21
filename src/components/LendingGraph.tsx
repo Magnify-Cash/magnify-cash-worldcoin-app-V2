@@ -106,7 +106,7 @@ export function LendingGraph() {
               id={`pool-${pool.id}`}
               checked={visiblePools.includes(pool.id)}
               onCheckedChange={() => togglePoolVisibility(pool.id)}
-              className="border-2 data-[state=checked]:bg-transparent"
+              className="border-2 data-[state=checked]:bg-transparent data-[state=checked]:text-transparent"
               style={{ 
                 borderColor: pool.color,
                 backgroundColor: visiblePools.includes(pool.id) ? pool.transparentColor : 'transparent'

@@ -232,13 +232,7 @@ const PoolDetails = () => {
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         {pool && (
           <>
-            <Card className="mb-6 border border-[#8B5CF6]/20 overflow-hidden relative">
-              <div className="absolute top-3 right-3">
-                <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
-                  {getStatusIcon()}
-                  <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
-                </Badge>
-              </div>
+            <Card className="mb-6 border border-[#8B5CF6]/20 overflow-hidden">
               <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5 py-5 px-6 flex justify-center">
                 <div className="flex items-center gap-3">
                   <div className="bg-[#8B5CF6]/20 rounded-full p-2 flex items-center justify-center">
@@ -257,6 +251,10 @@ const PoolDetails = () => {
                   <CardTitle className="text-xl flex items-center gap-2">
                     <BarChart className="h-5 w-5 text-[#8B5CF6]" />
                     Pool Statistics
+                    <Badge variant="outline" className={`ml-auto flex items-center ${getStatusColor()}`}>
+                      {getStatusIcon()}
+                      <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+                    </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>

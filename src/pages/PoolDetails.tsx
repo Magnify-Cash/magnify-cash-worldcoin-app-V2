@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -220,7 +219,6 @@ const PoolDetails = () => {
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         {pool && (
           <>
-            {/* New redesigned pool header section */}
             <div className="mb-6">
               <div className="bg-gradient-to-r from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5 rounded-lg p-4 sm:p-6 border border-[#8B5CF6]/20">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
@@ -315,28 +313,40 @@ const PoolDetails = () => {
 
                   <div className="mt-4 sm:mt-6">
                     {pool.status === 'active' ? (
-                      <div className="flex items-start gap-2">
-                        <Lock className="h-4 w-4 text-[#8B5CF6] mt-0.5" />
+                      <div className="flex items-center gap-2 justify-center text-center">
+                        <Lock className="h-4 w-4 text-[#8B5CF6] flex-shrink-0" />
                         <div>
-                          <p className="text-xs sm:text-sm text-gray-500 whitespace-pre-line">
-                            {getFormattedDateInfo()}
+                          <p className="text-xs sm:text-sm text-gray-500 whitespace-pre-line font-medium">
+                            Funds locked until:
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-700">
+                            {formatToLocalTime(getPoolMaturityDate(), 'h:mma')}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-700">
+                            {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
                           </p>
                         </div>
                       </div>
                     ) : pool.status === 'warm-up' ? (
-                      <div className="flex items-start gap-2">
-                        <Unlock className="h-4 w-4 text-[#8B5CF6] mt-0.5" />
+                      <div className="flex items-center gap-2 justify-center text-center">
+                        <Unlock className="h-4 w-4 text-[#8B5CF6] flex-shrink-0" />
                         <div>
-                          <p className="text-xs sm:text-sm text-gray-500 whitespace-pre-line">
-                            {getFormattedDateInfo()}
+                          <p className="text-xs sm:text-sm text-gray-500">
+                            Warm-up: {formatDateRange(getWarmupPeriod()[0], getWarmupPeriod()[1])}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-700">
+                            Locks: {formatToLocalTime(getPoolLockDate(), 'd MMM yyyy')}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-700">
+                            Unlocks: {formatToLocalTime(getPoolMaturityDate(), 'd MMM yyyy')}
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-start gap-2">
-                        <Clock className="h-4 w-4 text-[#8B5CF6] mt-0.5" />
-                        <p className="text-xs sm:text-sm text-gray-500">
-                          {getFormattedDateInfo()}
+                      <div className="flex items-center gap-2 justify-center">
+                        <Clock className="h-4 w-4 text-[#8B5CF6] flex-shrink-0" />
+                        <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                          Pool is completed
                         </p>
                       </div>
                     )}

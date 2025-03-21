@@ -16,16 +16,16 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
       name: "USDC Pool",
       token_a: "USDC",
       token_b: "LP",
-      token_a_amount: 2450000,
-      token_b_amount: 2450000,
+      token_a_amount: 24500,
+      token_b_amount: 24500,
       apy: 8.5,
-      total_value_locked: 2450000,
-      available_liquidity: 185000,
+      total_value_locked: 24500,
+      available_liquidity: 18500,
       status: "active",
       metadata: {
         description: "Main USDC lending pool",
         minDeposit: 10,
-        maxDeposit: 1000000
+        maxDeposit: 30000
       }
     },
     {
@@ -35,11 +35,11 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
       name: "ETH Pool",
       token_a: "ETH",
       token_b: "LP",
-      token_a_amount: 1200000,
-      token_b_amount: 1200000,
+      token_a_amount: 12000,
+      token_b_amount: 12000,
       apy: 6.2,
-      total_value_locked: 1200000,
-      available_liquidity: 75000,
+      total_value_locked: 12000,
+      available_liquidity: 7500,
       status: "warm-up",
       metadata: {
         description: "Ethereum lending pool",
@@ -54,11 +54,11 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
       name: "WBTC Pool",
       token_a: "WBTC",
       token_b: "LP",
-      token_a_amount: 3500000,
-      token_b_amount: 3500000,
+      token_a_amount: 30000,
+      token_b_amount: 30000,
       apy: 4.8,
-      total_value_locked: 3500000,
-      available_liquidity: 220000,
+      total_value_locked: 30000,
+      available_liquidity: 22000,
       status: "completed",
       metadata: {
         description: "Wrapped Bitcoin lending pool",

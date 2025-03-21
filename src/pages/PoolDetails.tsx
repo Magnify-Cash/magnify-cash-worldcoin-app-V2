@@ -252,7 +252,7 @@ const PoolDetails = () => {
 
                   <div className="mt-4 sm:mt-6">
                     <div className="flex justify-between mb-2">
-                      <span className="text-xs sm:text-sm text-gray-500">Progress to Target</span>
+                      <span className="text-xs sm:text-sm text-gray-500">Target</span>
                       <span className="text-xs sm:text-sm font-medium">{formatValue(pool.total_value_locked)} / $15,000</span>
                     </div>
                     <Progress 

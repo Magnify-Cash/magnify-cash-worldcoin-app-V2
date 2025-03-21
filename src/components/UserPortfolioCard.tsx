@@ -6,7 +6,7 @@ import { ArrowUpFromLine, ArrowDownToLine, Wallet, Info } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
-import { 
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -20,51 +20,57 @@ interface UserPortfolioCardProps {
   onSupply: () => void;
   onWithdraw: () => void;
   useCustomGradient?: boolean;
+  hideButtons?: boolean;
+  showSupplyButton?: boolean;
+  showWithdrawButton?: boolean;
 }
 
-export function UserPortfolioCard({ 
-  balance, 
-  depositedValue, 
-  currentValue, 
-  earnings, 
-  onSupply, 
+export function UserPortfolioCard({
+  balance,
+  depositedValue,
+  currentValue,
+  earnings,
+  onSupply,
   onWithdraw,
-  useCustomGradient = false
+  useCustomGradient = false,
+  hideButtons = false,
+  showSupplyButton = true,
+  showWithdrawButton = true
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
   const [isSupplyModalOpen, setIsSupplyModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
-  
+
   // Calculate percentage growth/loss
   const percentageChange = depositedValue > 0 ? (earnings / depositedValue * 100) : 0;
   const isPositive = percentageChange >= 0;
-  
+
   // Pool's standard APY
   const poolAPY = 8.5;
-  
+
   // Calculate personalized APY based on earnings and deposit time
   // For demo purposes, we'll assume the deposit was made 30 days ago
   // In a real app, we would store the deposit timestamp in the database
   const calculatePersonalizedAPY = () => {
     if (depositedValue <= 0 || earnings === 0) return poolAPY;
-    
+
     // Assuming deposit was made 30 days ago for this demo
     const daysSinceDeposit = 30;
-    
+
     // Annualize the returns: (earnings / depositedValue) * (365 / daysSinceDeposit) * 100
     // This formula converts the earnings over X days to an annual percentage
     const annualizedReturn = (earnings / depositedValue) * (365 / daysSinceDeposit) * 100;
-    
+
     // For very recent deposits (< 7 days), showing the pool APY might be more accurate
     if (daysSinceDeposit < 7) return poolAPY;
-    
+
     return annualizedReturn;
   };
-  
+
   // Get the APY to display
   const displayAPY = calculatePersonalizedAPY();
   const apyTextColor = useCustomGradient ? "text-[#D946EF]" : "text-[#8B5CF6]";
-  
+
   return (
     <Card className={`h-full border border-[#8B5CF6]/20 overflow-hidden`}>
       <CardHeader className={`pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5`}>
@@ -106,36 +112,32 @@ export function UserPortfolioCard({
           </div>
         )}
       </CardContent>
-      <CardFooter className={`flex gap-2 ${isMobile ? "px-3 py-3" : ""}`}>
-        <Button 
-          onClick={() => setIsSupplyModalOpen(true)} 
-          className={`flex-1 ${useCustomGradient ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF]" : "bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75]"} hover:opacity-90 text-white text-xs sm:text-sm py-1.5 sm:py-2 border-0`}
-        >
-          <ArrowUpFromLine className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
-          Supply
-        </Button>
-        <Button 
-          onClick={() => setIsWithdrawModalOpen(true)} 
-          variant="outline" 
-          className={`flex-1 text-xs sm:text-sm py-1.5 sm:py-2 ${useCustomGradient ? "border-[#D946EF]/50 text-[#A855F7] hover:text-white hover:bg-[#A855F7]" : "border-[#8B5CF6]/50 text-[#8B5CF6] hover:text-white hover:bg-[#8B5CF6]"}`}
-          disabled={balance <= 0}
-        >
-          <ArrowDownToLine className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
-          Withdraw
-        </Button>
-      </CardFooter>
       
-      <SupplyModal 
-        isOpen={isSupplyModalOpen} 
-        onClose={() => setIsSupplyModalOpen(false)} 
-      />
-      
-      <WithdrawModal 
-        isOpen={isWithdrawModalOpen} 
-        onClose={() => setIsWithdrawModalOpen(false)}
-        lpBalance={balance}
-        lpValue={currentValue}
-      />
+      {!hideButtons && (
+        <CardFooter className={`flex gap-2 ${isMobile ? "px-3 py-3" : ""}`}>
+          {showSupplyButton && (
+            <Button 
+              onClick={onSupply} 
+              className={`flex-1 ${useCustomGradient ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF]" : "bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75]"} hover:opacity-90 text-white text-xs sm:text-sm py-1.5 sm:py-2 border-0`}
+            >
+              <ArrowUpFromLine className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
+              Supply
+            </Button>
+          )}
+          
+          {showWithdrawButton && (
+            <Button 
+              onClick={onWithdraw} 
+              variant="outline" 
+              className={`flex-1 text-xs sm:text-sm py-1.5 sm:py-2 ${useCustomGradient ? "border-[#D946EF]/50 text-[#A855F7] hover:text-white hover:bg-[#A855F7]" : "border-[#8B5CF6]/50 text-[#8B5CF6] hover:text-white hover:bg-[#8B5CF6]"}`}
+              disabled={balance <= 0}
+            >
+              <ArrowDownToLine className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
+              Withdraw
+            </Button>
+          )}
+        </CardFooter>
+      )}
     </Card>
   );
 }

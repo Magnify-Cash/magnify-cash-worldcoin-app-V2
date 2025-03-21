@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock, BarChart } from "lucide-react";
+import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock, BarChart, Lock, Unlock } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPoolById, getUserPoolPosition } from "@/lib/poolRequests";
@@ -14,6 +14,7 @@ import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { Progress } from "@/components/ui/progress";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
+import { formatToLocalTime, formatDateRange } from "@/utils/dateUtils";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -105,15 +106,42 @@ const PoolDetails = () => {
   const calculateProgressPercentage = () => {
     if (!pool) return 0;
     
-    // Assuming the goal is 15,000 USDC
     const goal = 15000;
     const progress = (pool.total_value_locked / goal) * 100;
     return Math.min(progress, 100);
   };
 
-  const getPoolMaturityDate = () => {
-    // For example: 12PM GMT+8, 12th Dec 2025
-    return "12PM GMT+8, 12th Dec 2025";
+  const getPoolMaturityDate = (): Date => {
+    return new Date(2025, 11, 12, 12, 0, 0);
+  };
+
+  const getWarmupPeriod = (): [Date, Date] => {
+    const currentYear = new Date().getFullYear();
+    return [
+      new Date(currentYear, 2, 1),
+      new Date(currentYear, 2, 14)
+    ];
+  };
+
+  const getFormattedDateInfo = () => {
+    if (!pool) return "";
+    
+    switch (pool.status) {
+      case 'active':
+        const maturityDate = getPoolMaturityDate();
+        return `Funds locked until: ${formatToLocalTime(maturityDate)}`;
+      case 'warm-up':
+        const [startDate, endDate] = getWarmupPeriod();
+        return formatDateRange(startDate, endDate);
+      case 'completed':
+        return "Pool is completed";
+      default:
+        return "";
+    }
+  };
+
+  const getLPTokenPrice = (): number => {
+    return 1.25;
   };
 
   const handleSupply = () => {
@@ -155,10 +183,12 @@ const PoolDetails = () => {
     );
   }
 
-  // Calculate earnings
   const depositedValue = userPosition?.token_a_amount || 0;
   const currentValue = userPosition?.total_value_locked || 0;
   const earnings = currentValue - depositedValue;
+
+  const shouldShowSupplyButton = pool?.status !== 'active' && pool?.status !== 'completed';
+  const shouldShowWithdrawButton = pool?.status !== 'active';
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -187,7 +217,6 @@ const PoolDetails = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
-              {/* Pool Stats - Updated to match UserPortfolioCard header style */}
               <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
                 <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
                   <CardTitle className="text-xl flex items-center gap-2">
@@ -205,12 +234,20 @@ const PoolDetails = () => {
                       <p className="text-xs sm:text-sm text-gray-500">Available Liquidity</p>
                       <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.available_liquidity)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs sm:text-sm text-gray-500">Utilization Rate</p>
-                      <p className="text-sm sm:text-lg font-semibold">
-                        {((pool.total_value_locked - pool.available_liquidity) / pool.total_value_locked * 100).toFixed(2)}%
-                      </p>
-                    </div>
+                    {pool.status !== 'warm-up' && (
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500">Utilization Rate</p>
+                        <p className="text-sm sm:text-lg font-semibold">
+                          {((pool.total_value_locked - pool.available_liquidity) / pool.total_value_locked * 100).toFixed(2)}%
+                        </p>
+                      </div>
+                    )}
+                    {pool.status === 'completed' && (
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500">Final LP Price</p>
+                        <p className="text-sm sm:text-lg font-semibold">${getLPTokenPrice().toFixed(2)}</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-4 sm:mt-6">
@@ -225,15 +262,27 @@ const PoolDetails = () => {
                   </div>
 
                   <div className="mt-4 sm:mt-6 flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-[#8B5CF6]" />
+                    {pool.status === 'active' ? (
+                      <Lock className="h-4 w-4 text-[#8B5CF6]" />
+                    ) : pool.status === 'warm-up' ? (
+                      <Unlock className="h-4 w-4 text-[#8B5CF6]" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-[#8B5CF6]" />
+                    )}
+                    
                     <p className="text-xs sm:text-sm text-gray-500">
-                      <span className="font-medium">Pool Maturity:</span> {getPoolMaturityDate()}
+                      {pool.status === 'warm-up' ? (
+                        <><span className="font-medium">Warm-up Period:</span> {getFormattedDateInfo()}</>
+                      ) : pool.status === 'active' ? (
+                        getFormattedDateInfo()
+                      ) : (
+                        getFormattedDateInfo()
+                      )}
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* UserPortfolioCard */}
               <UserPortfolioCard
                 balance={userPosition?.token_b_amount || 0}
                 depositedValue={depositedValue}
@@ -241,10 +290,12 @@ const PoolDetails = () => {
                 earnings={earnings}
                 onSupply={handleSupply}
                 onWithdraw={handleWithdraw}
+                hideButtons={pool.status === 'active'}
+                showSupplyButton={shouldShowSupplyButton}
+                showWithdrawButton={shouldShowWithdrawButton}
               />
             </div>
 
-            {/* About This Pool */}
             <Card className="bg-gradient-to-r from-[#1A1E8F]/5 via-[#5A1A8F]/10 to-[#A11F75]/5 border-[#8B5CF6]/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -295,7 +346,6 @@ const PoolDetails = () => {
         )}
       </main>
 
-      {/* Modals */}
       {pool && (
         <>
           <SupplyModal isOpen={showSupplyModal} onClose={() => setShowSupplyModal(false)} />

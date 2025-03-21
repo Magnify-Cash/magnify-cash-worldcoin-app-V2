@@ -248,14 +248,16 @@ const PoolDetails = () => {
             <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
               <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
                 <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <BarChart className="h-5 w-5 text-[#8B5CF6]" />
-                    Pool Statistics
-                    <Badge variant="outline" className={`ml-auto flex items-center ${getStatusColor()}`}>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <BarChart className="h-5 w-5 text-[#8B5CF6]" />
+                      Pool Statistics
+                    </CardTitle>
+                    <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
                       {getStatusIcon()}
                       <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
                     </Badge>
-                  </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

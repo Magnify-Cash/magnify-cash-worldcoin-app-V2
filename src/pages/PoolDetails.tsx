@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -443,6 +442,7 @@ const PoolDetails = () => {
                 showWithdrawButton={shouldShowWithdrawButton}
                 onToggleDummyData={toggleDummyData}
                 showToggle={true}
+                poolStatus={pool.status}
               />
             </div>
 

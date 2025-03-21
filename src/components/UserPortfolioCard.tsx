@@ -25,6 +25,7 @@ interface UserPortfolioCardProps {
   showWithdrawButton?: boolean;
   onToggleDummyData?: () => void;
   showToggle?: boolean;
+  poolStatus?: 'warm-up' | 'active' | 'completed';
 }
 
 export function UserPortfolioCard({
@@ -39,7 +40,8 @@ export function UserPortfolioCard({
   showSupplyButton = true,
   showWithdrawButton = true,
   onToggleDummyData,
-  showToggle = false
+  showToggle = false,
+  poolStatus
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
   const [isSupplyModalOpen, setIsSupplyModalOpen] = useState(false);
@@ -74,6 +76,14 @@ export function UserPortfolioCard({
   // Get the APY to display
   const displayAPY = calculatePersonalizedAPY();
   const apyTextColor = useCustomGradient ? "text-[#D946EF]" : "text-[#8B5CF6]";
+
+  // Determine the appropriate message for empty balance
+  const getEmptyBalanceMessage = () => {
+    if (poolStatus === 'active' || poolStatus === 'completed') {
+      return "You haven't supplied any assets";
+    }
+    return "You haven't supplied any assets yet";
+  };
 
   return (
     <Card className={`h-full border border-[#8B5CF6]/20 overflow-hidden`}>
@@ -126,8 +136,10 @@ export function UserPortfolioCard({
           </>
         ) : (
           <div className="text-center py-4 sm:py-6">
-            <p className="text-xs sm:text-sm text-gray-500 mb-2">You haven't supplied any assets yet</p>
-            <p className="text-xs text-gray-400">Supply assets to start earning interest</p>
+            <p className="text-xs sm:text-sm text-gray-500 mb-2">{getEmptyBalanceMessage()}</p>
+            {!(poolStatus === 'active' || poolStatus === 'completed') && (
+              <p className="text-xs text-gray-400">Supply assets to start earning interest</p>
+            )}
           </div>
         )}
       </CardContent>

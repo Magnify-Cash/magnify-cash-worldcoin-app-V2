@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock } from "lucide-react";
+import { Coins, TrendingUp, AlertCircle, Info, Wallet, Clock, BarChart } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPoolById, getUserPoolPosition } from "@/lib/poolRequests";
@@ -187,33 +187,36 @@ const PoolDetails = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
-              {/* Pool Stats */}
-              <Card className="w-full">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Pool Statistics</CardTitle>
+              {/* Pool Stats - Updated to match UserPortfolioCard header style */}
+              <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
+                <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <BarChart className="h-5 w-5 text-[#8B5CF6]" />
+                    Pool Statistics
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500">Total Supply</p>
-                      <p className="text-lg font-semibold">{formatValue(pool.total_value_locked)}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Total Supply</p>
+                      <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.total_value_locked)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Available Liquidity</p>
-                      <p className="text-lg font-semibold">{formatValue(pool.available_liquidity)}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Available Liquidity</p>
+                      <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.available_liquidity)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Utilization Rate</p>
-                      <p className="text-lg font-semibold">
+                      <p className="text-xs sm:text-sm text-gray-500">Utilization Rate</p>
+                      <p className="text-sm sm:text-lg font-semibold">
                         {((pool.total_value_locked - pool.available_liquidity) / pool.total_value_locked * 100).toFixed(2)}%
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-6">
+                  <div className="mt-4 sm:mt-6">
                     <div className="flex justify-between mb-2">
-                      <span className="text-sm text-gray-500">Progress to Target</span>
-                      <span className="text-sm font-medium">{formatValue(pool.total_value_locked)} / $15,000</span>
+                      <span className="text-xs sm:text-sm text-gray-500">Progress to Target</span>
+                      <span className="text-xs sm:text-sm font-medium">{formatValue(pool.total_value_locked)} / $15,000</span>
                     </div>
                     <Progress 
                       value={calculateProgressPercentage()} 
@@ -221,16 +224,16 @@ const PoolDetails = () => {
                     />
                   </div>
 
-                  <div className="mt-6 flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <p className="text-sm text-gray-500">
+                  <div className="mt-4 sm:mt-6 flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-[#8B5CF6]" />
+                    <p className="text-xs sm:text-sm text-gray-500">
                       <span className="font-medium">Pool Maturity:</span> {getPoolMaturityDate()}
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Your Position - Replace with UserPortfolioCard */}
+              {/* UserPortfolioCard */}
               <UserPortfolioCard
                 balance={userPosition?.token_b_amount || 0}
                 depositedValue={depositedValue}

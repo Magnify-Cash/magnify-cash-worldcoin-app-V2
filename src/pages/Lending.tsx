@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -134,23 +133,21 @@ const Lending = () => {
               <div>
                 <h4 className="font-semibold text-sm sm:text-base text-gray-800 mb-1">How It Works</h4>
                 <p className="text-xs sm:text-sm">
-                  Deposit assets into Magnify Cash lending pools to receive LP tokens, representing your share of the pool. As borrowers repay loans with interest, your LP tokens increase in value.
+                  Magnify Cash offers <span className="font-medium">termed liquidity pools</span>, where lenders contribute funds during a <span className="font-medium">warm-up period</span>. Once the pool reaches its funding target or the warm-up period ends, borrowers can access loans. Lenders receive LP tokens representing their share of the pool, which increases in value as loans are repaid with interest. Since pools operate on fixed terms, funds remain in the pool until maturity, at which point lenders can withdraw their balance along with earnings.
                 </p>
               </div>
               
               <div>
-                <h4 className="font-semibold text-sm sm:text-base text-gray-800 mb-1">Pool Statuses</h4>
+                <h4 className="font-semibold text-sm sm:text-base text-gray-800 mb-1">Pool Lifecycle</h4>
                 <p className="text-xs sm:text-sm">
-                  <span className="font-medium">Warm-up:</span> New pools in preparation phase.<br/>
-                  <span className="font-medium">Active:</span> Pools accepting deposits and generating yield.<br/>
-                  <span className="font-medium">Completed:</span> Closed pools no longer accepting new deposits.
+                  Each pool has a <span className="font-medium">fixed term</span> (e.g., 6 or 12 months). New loans stop being issued towards the end of the term to ensure proper repayment before pool closure. At maturity, lenders can <span className="font-medium">redeem their LP tokens for earnings</span> based on the final pool performance.
                 </p>
               </div>
               
               <div>
                 <h4 className="font-semibold text-sm sm:text-base text-gray-800 mb-1">Risk Management</h4>
                 <p className="text-xs sm:text-sm">
-                  Borrowers must verify their identity with World ID, helping to minimize defaults and ensure a safer lending environment.
+                  To enhance security, all borrowers must verify their identity using <span className="font-medium">World ID</span>, reducing default risks and ensuring a safer lending environment. Additionally, lenders can track <span className="font-medium">loan repayment rates</span> and <span className="font-medium">pool performance metrics</span> to make informed decisions.
                 </p>
               </div>
             </div>

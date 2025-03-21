@@ -12,7 +12,7 @@ type LoanDetails = {
   transactionId: string;
 };
 
-type RequestLoanResponse = {
+export type RequestLoanResponse = {
   requestNewLoan: (requestedTierId: bigint) => Promise<void>;
   error: string | null;
   transactionId: string | null;
@@ -21,7 +21,7 @@ type RequestLoanResponse = {
   loanDetails: LoanDetails | null;
 };
 
-const useRequestLoan = (): RequestLoanResponse => {
+export const useRequestLoan = (): RequestLoanResponse => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
@@ -106,5 +106,3 @@ const useRequestLoan = (): RequestLoanResponse => {
 
   return { requestNewLoan, error, transactionId, isConfirming, isConfirmed, loanDetails };
 };
-
-export default useRequestLoan;

@@ -76,7 +76,7 @@ export function UserPortfolioCard({
       <CardHeader className={`pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5`}>
         <CardTitle className={`text-xl flex items-center gap-2`}>
           <Wallet className={`h-5 w-5 text-[#8B5CF6]`} />
-          Your Portfolio
+          Your Position
         </CardTitle>
       </CardHeader>
       <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>

@@ -12,7 +12,7 @@ type LoanDetails = {
   transactionId: string;
 };
 
-export type RequestLoanResponse = {
+type RequestLoanResponse = {
   requestNewLoan: (requestedTierId: bigint) => Promise<void>;
   error: string | null;
   transactionId: string | null;
@@ -21,7 +21,7 @@ export type RequestLoanResponse = {
   loanDetails: LoanDetails | null;
 };
 
-export const useRequestLoan = (): RequestLoanResponse => {
+const useRequestLoan = (): RequestLoanResponse => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
@@ -30,15 +30,18 @@ export const useRequestLoan = (): RequestLoanResponse => {
 
   const client = createPublicClient({
     chain: worldchain,
-    transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
-  });
+    transport: http('https://worldchain-mainnet.g.alchemy.com/public'),
+  })
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      client,
-      hash: transactionId as `0x${string}` || "0x",
-      enabled: !!transactionId,
+      client: client as any,
+      transactionId: transactionId as `0x${string}` || "0x",
+      appConfig: {
+        app_id: WORLDCOIN_CLIENT_ID,
+      },
     });
+    
 
   // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
@@ -106,3 +109,5 @@ export const useRequestLoan = (): RequestLoanResponse => {
 
   return { requestNewLoan, error, transactionId, isConfirming, isConfirmed, loanDetails };
 };
+
+export default useRequestLoan;

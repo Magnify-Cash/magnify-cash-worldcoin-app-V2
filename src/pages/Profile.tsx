@@ -137,8 +137,7 @@ const Dashboard = () => {
           variant: "destructive",
         });
         return;
-      }
-  
+      }  
       // Backend verification call
       const isVerified = await verify(finalPayload, verificationStatus, ls_wallet);
       if (isVerified) {

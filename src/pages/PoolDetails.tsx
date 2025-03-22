@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -134,6 +135,15 @@ const PoolDetails = () => {
       currency: 'USD',
       maximumFractionDigits: 2,
       minimumFractionDigits: 2
+    }).format(value);
+  };
+
+  const formatValueNoDecimals = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+      minimumFractionDigits: 0
     }).format(value);
   };
 
@@ -362,7 +372,9 @@ const PoolDetails = () => {
                   <div className="mt-4 sm:mt-6">
                     <div className="flex justify-between mb-2">
                       <span className="text-xs sm:text-sm text-gray-500">Target</span>
-                      <span className="text-xs sm:text-sm font-medium">{formatValue(pool.total_value_locked)} / $15,000</span>
+                      <span className="text-xs sm:text-sm font-medium">
+                        {formatValue(pool.total_value_locked)} / {formatValueNoDecimals(15000)}
+                      </span>
                     </div>
                     <Progress 
                       value={calculateProgressPercentage()} 

@@ -347,7 +347,7 @@ const PoolDetails = () => {
                     {pool.status === 'warm-up' && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Liquidity Unlock</p>
-                        <p className="text-sm sm:text-lg font-semibold">December 12th, 2025</p>
+                        <p className="text-sm sm:text-lg font-semibold">10/22/2025</p>
                       </div>
                     )}
                     

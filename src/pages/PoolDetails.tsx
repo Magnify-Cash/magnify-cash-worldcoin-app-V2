@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -373,7 +372,7 @@ const PoolDetails = () => {
                     <div className="flex justify-between mb-2">
                       <span className="text-xs sm:text-sm text-gray-500">Target</span>
                       <span className="text-xs sm:text-sm font-medium">
-                        {formatValue(pool.total_value_locked)} / {formatValueNoDecimals(15000)}
+                        {formatValueNoDecimals(pool.total_value_locked)} / {formatValueNoDecimals(15000)}
                       </span>
                     </div>
                     <Progress 

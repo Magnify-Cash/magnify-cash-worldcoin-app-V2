@@ -98,67 +98,47 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
       setIsLoading(true);
       setIsError(false);
   
-      // Fetch contract data
-      const loanToken = await readContract(config, {
-        address: MAGNIFY_WORLD_ADDRESS,
-        abi: magnifyworldabi,
-        functionName: "loanToken",
-      });
-  
-      const tierCount = await readContract(config, {
-        address: MAGNIFY_WORLD_ADDRESS,
-        abi: magnifyworldabi,
-        functionName: "tierCount",
-      });
-  
-      const userNFT = (await readContract(config, {
-        address: MAGNIFY_WORLD_ADDRESS,
-        abi: magnifyworldabi,
-        functionName: "userNFT",
-        args: [walletAddress],
-      })) as bigint;
+      const [
+        loanToken,
+        tierCount,
+        userNFTResult,
+        loanResult
+      ] = await Promise.all([
+        readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "loanToken" }),
+        readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "tierCount" }),
+        readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "userNFT", args: [walletAddress] }),
+        readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "fetchLoanByAddress", args: [walletAddress] })
+      ]);
   
       let tokenId: bigint | null = null;
       let nftTier: Tier | null = null;
   
-      if (userNFT !== BigInt(0)) {
-        tokenId = userNFT;
-        const tierId = await readContract(config, {
-          address: MAGNIFY_WORLD_ADDRESS,
-          abi: magnifyworldabi,
-          functionName: "nftToTier",
-          args: [tokenId],
-        }) as bigint;
-        const tierData = await readContract(config, {
-          address: MAGNIFY_WORLD_ADDRESS,
-          abi: magnifyworldabi,
-          functionName: "tiers",
-          args: [tierId],
-        });
+      // If user has an NFT, fetch tier info
+      if (userNFTResult !== BigInt(0)) {
+        tokenId = userNFTResult as bigint;
+  
+        const [tierId, tierData] = await Promise.all([
+          readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "nftToTier", args: [tokenId] }),
+          readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "tiers", args: [userNFTResult] })
+        ]);
   
         if (tierData) {
           nftTier = {
             loanAmount: tierData[0],
             interestRate: tierData[1],
             loanPeriod: tierData[2],
-            tierId: BigInt(tierId),
+            tierId: BigInt(tierId as string | number | bigint | boolean),
             verificationStatus: getVerificationStatus(Number(tierId)),
           };
         }
       }
   
-      const loanResult = await readContract(config, {
-        address: MAGNIFY_WORLD_ADDRESS,
-        abi: magnifyworldabi,
-        functionName: "fetchLoanByAddress",
-        args: [walletAddress],
-      }) as unknown;
+      // Fetch all tiers concurrently
+      const allTiers = await fetchAllTiers(Number(tierCount));
   
       const loanData: Loan | null = Array.isArray(loanResult) && loanResult.length === 2
         ? (loanResult[1] as Loan)
         : null;
-  
-      const allTiers = await fetchAllTiers(Number(tierCount));
   
       const newData: ContractData = {
         loanToken: String(loanToken),
@@ -171,7 +151,6 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         allTiers,
       };
   
-  
       globalCache[walletAddress] = newData;
       setData(newData);
     } catch (error) {
@@ -181,6 +160,7 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
       setIsLoading(false);
     }
   }, [walletAddress]);
+  
 
   useEffect(() => {
     if (!globalCache[walletAddress]) {
@@ -201,27 +181,35 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
 
 // Fetch all tiers
 async function fetchAllTiers(tierCount: number): Promise<Record<number, Tier> | null> {
-  const allTiers: Record<number, Tier> = {};
-  for (let i = 1; i <= tierCount; i++) {
-    const tierData = await readContract(config, {
+  if (tierCount <= 0) return null;
+
+  const tierRequests = Array.from({ length: tierCount }, (_, i) =>
+    readContract(config, {
       address: MAGNIFY_WORLD_ADDRESS,
       abi: magnifyworldabi,
       functionName: "tiers",
-      args: [BigInt(i)],
-    });
+      args: [BigInt(i + 1)],
+    })
+  );
 
+  const tierResults = await Promise.all(tierRequests);
+
+  const allTiers: Record<number, Tier> = {};
+  tierResults.forEach((tierData, index) => {
     if (tierData) {
-      allTiers[i] = {
+      allTiers[index + 1] = {
         loanAmount: tierData[0],
         interestRate: tierData[1],
         loanPeriod: tierData[2],
-        tierId: BigInt(i),
-        verificationStatus: getVerificationStatus(i),
+        tierId: BigInt(index + 1),
+        verificationStatus: getVerificationStatus(index + 1),
       };
     }
-  }
+  });
+
   return allTiers;
 }
+
 
 // Helper function to get verification status based on tier ID
 function getVerificationStatus(tierId: number): VerificationTier {

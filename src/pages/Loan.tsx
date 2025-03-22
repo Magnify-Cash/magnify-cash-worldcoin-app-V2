@@ -12,16 +12,15 @@ import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
 const Loan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
-  const [liquidityError, setLiquidityError] = useState<string | null>(null);
 
   // Hooks
   const { toast } = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
-  const { requestNewLoan, error, transactionId, isConfirming, isConfirmed } = useRequestLoan();
+  const { data, isLoading, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const { requestNewLoan, isConfirming, isConfirmed, transactionId } = useRequestLoan();
   const { usdcBalance, refreshBalance } = useUSDCBalance();
-
+  
   const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = loanData?.isActive ?? false;
   // Handle loan application
@@ -30,24 +29,27 @@ const Loan = () => {
       event.preventDefault();
       if (isClicked) return;
       setIsClicked(true);
-      setLiquidityError(null);
-
+  
       try {
         await refreshBalance();
         const latestBalance = usdcBalance ?? 0;
+        
         if (latestBalance < 10) {
-          setLiquidityError("Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.");
           toast({
             title: "Error",
             description: "Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.",
             variant: "destructive",
           });
-          setIsClicked(false);
           return;
         }
-
+  
         if (data?.nftInfo?.tokenId) {
           await requestNewLoan(requestedTierId);
+  
+          sessionStorage.removeItem("usdcBalance");
+          sessionStorage.removeItem("walletTokens");
+          sessionStorage.removeItem("walletCacheTimestamp");
+  
         } else {
           toast({
             title: "Error",
@@ -57,31 +59,25 @@ const Loan = () => {
         }
       } catch (error: any) {
         console.error("Loan application error:", error);
-        if (error?.message?.includes("user rejected transaction")) {
-          toast({
-            title: "Error",
-            description: "Transaction rejected by user.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: error?.message || "Unable to pay back loan.",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Error",
+          description: error?.message?.includes("user rejected transaction")
+            ? "Transaction rejected by user."
+            : error?.message || "Unable to pay back loan.",
+          variant: "destructive",
+        });
       } finally {
         setIsClicked(false);
       }
     },
     [data, requestNewLoan, toast, usdcBalance, refreshBalance, isClicked]
   );
-
+  
   // Handle navigation after claiming loan
   const handleNavigateAfterTransaction = () => {
     refetch();
     setTimeout(() => navigate("/repay-loan"), 1000);
-  };
+  };  
 
   return (
     <div className="min-h-screen">

@@ -1,13 +1,32 @@
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import * as Sentry from "@sentry/react";
 import App from "./App.tsx";
 import "./index.css";
-import * as Sentry from "@sentry/react";
-import { ENVIRONMENT } from "@/utils/constants"
+import { ENVIRONMENT } from "@/utils/constants";
 
 Sentry.init({
-  dsn: "https://9a7429f41e52235e6710247e408767a1@o4508925291069440.ingest.us.sentry.io/4508925295788032",
-  integrations: [],
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: ENVIRONMENT || "development",
+  integrations: [ 
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration({
+      maskAllText: false,
+      blockAllMedia: false,
+    }),
+  ],
+  tracesSampleRate: 1.0, // Capture 100% of transactions (adjust as needed)
+  replaysSessionSampleRate: 0.1, // Record 10% of sessions
+  replaysOnErrorSampleRate: 1.0, // Always record a replay on error
+  beforeSend(event) {
+    if (
+      event.exception?.values?.some((e) => e.value?.includes("MiniKit is not installed")) 
+      || event.exception?.values?.some((e) => e.value?.includes("MiniKit.install"))
+      || event.exception?.values?.some((e) => e.value?.includes("This could be due to syntax errors or importing non-existent modules"))) {
+      return null; // Prevent this error from being sent to Sentry
+    }
+    return event;
+  }
 });
 
 const formatError = (message: string | Error) => {
@@ -24,34 +43,39 @@ console.error = (...args: unknown[]): void => {
 };
 
 window.onerror = (message, source, lineno, colno, error) => {
-  const formattedMessage = formatError(error || message as string);
+  const formattedMessage = formatError(error || (message as string));
   Sentry.captureException(new Error(formattedMessage));
 };
 
-interface OnUnhandledRejectionEvent extends PromiseRejectionEvent {
-  reason: any;
-}
-
-window.onunhandledrejection = (event: OnUnhandledRejectionEvent) => {
+window.onunhandledrejection = (event: PromiseRejectionEvent) => {
   const formattedMessage = formatError(event.reason);
   Sentry.captureException(new Error(formattedMessage));
 };
 
-// Create a QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
+      staleTime: 5 * 60 * 1000, // Cache API responses for 5 minutes
+      retry: 1, // Retry failed queries once
     },
   },
 });
 
-// Wrap App in Sentry.ErrorBoundary
-createRoot(document.getElementById("root")!).render(
+const walletAddress = localStorage.getItem("ls_wallet_address") || "unknown_wallet";
+const userName = localStorage.getItem("ls_username") || "anonymous";
+
+Sentry.setUser({
+  id: walletAddress,
+  username: userName,
+  wallet: walletAddress,
+});
+
+const AppWithSentry = () => (
   <Sentry.ErrorBoundary fallback={<h2>Something went wrong</h2>}>
     <QueryClientProvider client={queryClient}>
       <App />
     </QueryClientProvider>
   </Sentry.ErrorBoundary>
 );
+
+createRoot(document.getElementById("root")!).render(<AppWithSentry />);

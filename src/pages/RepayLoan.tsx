@@ -50,6 +50,8 @@ const RepayLoan = () => {
           sessionStorage.removeItem("usdcBalance");
           sessionStorage.removeItem("walletTokens");
           sessionStorage.removeItem("walletCacheTimestamp");
+
+          refetch();
   
           if (error) {
             toast.toast({

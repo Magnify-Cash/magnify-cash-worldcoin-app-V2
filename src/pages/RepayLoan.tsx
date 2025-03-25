@@ -23,6 +23,22 @@ const RepayLoan = () => {
   const loan = data?.loan;
   const loanData: Loan = loan && loan[1];
 
+  // Update USDC balance on page load
+  useEffect(() => {
+    const updateUSDCBalance = async () => {
+      if (ls_wallet) {
+        try {
+          const balance = await getUSDCBalance(ls_wallet);
+          sessionStorage.setItem("usdcBalance", balance.toString());
+        } catch (error) {
+          console.error("Failed to fetch USDC balance:", error);
+        }
+      }
+    };
+
+    updateUSDCBalance();
+  }, [ls_wallet]);
+
   // loan repayment
   const loanAmountDue = useMemo(() => {
     if (loanData) {
@@ -45,13 +61,19 @@ const RepayLoan = () => {
   
       setIsClicked(true);
 
-      const currentBalance = await getUSDCBalance(ls_wallet as `0x${string}`);
+
+      if(sessionStorage.getItem("usdcBalance") === null) {
+        const balance = await getUSDCBalance(ls_wallet as string);
+        sessionStorage.setItem("usdcBalance", balance.toString());
+      }
+
+      const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
       const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
 
       if (currentBalance < amountDueFloat) {
         toast.toast({
           title: "Insufficient USDC",
-          description: `You need $${amountDueFloat.toFixed(2)} USDC to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
+          description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
           variant: "destructive",
         });
         setIsClicked(false);

@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -53,13 +54,6 @@ const RepayLoan = () => {
 
           refetch();
   
-          if (error) {
-            toast.toast({
-              title: error.includes("Insufficient funds") ? "Insufficient Funds" : "Error",
-              description: error,
-              variant: "destructive",
-            });
-          }
         } else {
           toast.toast({
             title: "Error",
@@ -69,33 +63,18 @@ const RepayLoan = () => {
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
-        
-        let errorTitle = "Error";
-        let errorMessage = "Unable to pay back loan.";
-        
-        if (error?.message) {
-          if (error.message.toLowerCase().includes("insufficient") || 
-              error.message.toLowerCase().includes("balance too low") ||
-              error.message.toLowerCase().includes("enough funds")) {
-            errorTitle = "Insufficient Funds";
-            errorMessage = "You don't have enough USDC to repay this loan. Please add more funds to your wallet.";
-          } else if (error.message.includes("user rejected transaction")) {
-            errorMessage = "Transaction rejected by user.";
-          } else {
-            errorMessage = error.message;
-          }
-        }
-        
         toast.toast({
-          title: errorTitle,
-          description: errorMessage,
+          title: "Error",
+          description: error?.message?.includes("user rejected transaction")
+            ? "Transaction rejected by user."
+            : error?.message || "Unable to pay back loan.",
           variant: "destructive",
         });
       } finally {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast, error]
+    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast]
   );
   
   // Call refetch after loan repayment is confirmed
@@ -108,17 +87,6 @@ const RepayLoan = () => {
       return () => clearTimeout(timeout);
     }
   }, [isConfirmed, refetch]);
-
-  // Show error messages if present from the hook
-  useEffect(() => {
-    if (error && !isConfirming && !isClicked) {
-      toast.toast({
-        title: error.includes("Insufficient funds") ? "Insufficient Funds" : "Transaction Error",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  }, [error, isConfirming, isClicked, toast]);
 
   // Loading & error states
   if (isLoading || !loan) {

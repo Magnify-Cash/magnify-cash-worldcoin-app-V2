@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
@@ -187,33 +186,12 @@ const useRepayLoan = () => {
         });
       } else {
         console.error("Error sending transaction", finalPayload, commandPayload);
-
-        // Check for specific error codes related to insufficient funds
-        if (finalPayload.error_code === "simulation_error" || 
-            finalPayload.error_message?.toLowerCase().includes("insufficient") ||
-            commandPayload?.error?.toLowerCase().includes("insufficient")) {
-          setError("Insufficient funds to repay your loan. Please add more USDC to your wallet.");
-        } else if (finalPayload.error_code === "user_rejected") {
-          setError("User rejected transaction");
-        } else {
-          setError(`Transaction failed: ${finalPayload.error_message || "Unknown error"}`);
-        }
-        
+        setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
         setIsConfirming(false); // Reset `isConfirming` in case of error
       }
     } catch (err) {
       console.error("Error sending transaction", err);
-      const errMsg = (err as Error).message || "Unknown error";
-      
-      // Check for insufficient funds in the error message
-      if (errMsg.toLowerCase().includes("insufficient") || 
-          errMsg.toLowerCase().includes("enough funds") ||
-          errMsg.toLowerCase().includes("balance too low")) {
-        setError("Insufficient funds to repay your loan. Please add more USDC to your wallet.");
-      } else {
-        setError(`Transaction failed: ${errMsg}`);
-      }
-      
+      setError(`Transaction failed: ${(err as Error).message}`);
       setIsConfirming(false); // Reset `isConfirming` in case of error
     }
   }, []);

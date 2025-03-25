@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Welcome from "@/pages/Welcome";
 import Guide from "@/pages/Guide";
 import Profile from "@/pages/Profile";
+import VerifyAgain from "@/pages/VerifyAgain";
 import Wallet from "@/pages/Wallet";
 import Loan from "@/pages/Loan";
 import RepayLoan from "@/pages/RepayLoan";
@@ -54,6 +55,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/verify-again"
+            element={
+              <ProtectedRoute>
+                <VerifyAgain />
               </ProtectedRoute>
             }
           />

@@ -78,13 +78,20 @@ export const getTransactionHistory = async (wallet: string): Promise<Transaction
 export const verify = async (
   finalPayload: ISuccessResult,
   verificationStatus: { claimAction?: string; upgradeAction?: string },
-  ls_wallet: string
+  ls_wallet: string,
+  tokenId?: string
 ): Promise<boolean> => {
-  const response = await backendRequest<BackendResponse<any>>("POST", "verify", {
+  const requestBody: Record<string, any> = {
     payload: finalPayload,
     action: verificationStatus.claimAction || verificationStatus.upgradeAction,
     signal: ls_wallet,
-  });
+  };
+
+  if (tokenId) {
+    requestBody.tokenId = tokenId;
+  }
+
+  const response = await backendRequest<BackendResponse<any>>("POST", "verify", requestBody);
 
   if (response.status === 200) {
     return true;

@@ -9,6 +9,7 @@ import { calculateRemainingTime } from "@/utils/timeinfo";
 import useRepayLoan from "@/hooks/useRepayLoan";
 import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
+import { getUSDCBalance } from "@/lib/backendRequests";
 
 const RepayLoan = () => {
   // States
@@ -43,6 +44,19 @@ const RepayLoan = () => {
       if (isClicked) return;
   
       setIsClicked(true);
+
+      const currentBalance = await getUSDCBalance(ls_wallet as `0x${string}`);
+      const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
+
+      if (currentBalance < amountDueFloat) {
+        toast.toast({
+          title: "Insufficient USDC",
+          description: `You need $${amountDueFloat.toFixed(2)} USDC to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
+          variant: "destructive",
+        });
+        setIsClicked(false);
+        return;
+      }
   
       try {
         if (data?.nftInfo?.tokenId) {
@@ -51,8 +65,6 @@ const RepayLoan = () => {
           sessionStorage.removeItem("usdcBalance");
           sessionStorage.removeItem("walletTokens");
           sessionStorage.removeItem("walletCacheTimestamp");
-
-          refetch();
   
         } else {
           toast.toast({
@@ -74,7 +86,7 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast]
+    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast, ls_wallet, refetch]
   );
   
   // Call refetch after loan repayment is confirmed

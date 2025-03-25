@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { formatUnits } from "viem";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +23,17 @@ const Loan = () => {
   
   const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = loanData?.isActive ?? false;
+
+    // Call refetch after loan is confirmed
+    useEffect(() => {
+      if (isConfirmed) {
+        const timeout = setTimeout(() => {
+          refetch();
+        }, 1000);
+  
+        return () => clearTimeout(timeout);
+      }
+    }, [isConfirmed, refetch]);
   
   // Handle loan application
   const handleApplyLoan = useCallback(
@@ -50,8 +61,6 @@ const Loan = () => {
           sessionStorage.removeItem("usdcBalance");
           sessionStorage.removeItem("walletTokens");
           sessionStorage.removeItem("walletCacheTimestamp");
-
-          refetch();
   
         } else {
           toast({
@@ -80,7 +89,7 @@ const Loan = () => {
   const handleNavigateAfterTransaction = () => {
     refetch();
     setTimeout(() => navigate("/repay-loan"), 1000);
-  };  
+  }; 
 
   return (
     <div className="min-h-screen">

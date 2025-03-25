@@ -81,7 +81,7 @@ export const verify = async (
   ls_wallet: string
 ): Promise<boolean> => {
   const response = await backendRequest<BackendResponse<any>>("POST", "verify", {
-    payload: JSON.stringify(finalPayload),
+    payload: finalPayload,
     action: verificationStatus.claimAction || verificationStatus.upgradeAction,
     signal: ls_wallet,
   });

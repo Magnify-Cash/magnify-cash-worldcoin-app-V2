@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
@@ -96,74 +97,22 @@ const Dashboard = () => {
   }, [ls_wallet, hasActiveLoan, loan, isOrbVerified]);
 
   const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
-    if (!MiniKit.isInstalled()) {
-      toast({
-        title: "Verification Failed",
-        description: "Please install World App to verify.",
-        variant: "destructive",
-      });
-      return;
-    }
-  
-    setVerifying(true);
-    setCurrentTier(tier as unknown as Tier);
-  
-    const verificationStatus = {
-      claimAction: tier.action,
-      upgradeAction: tier.upgradeAction,
-      verification_level: tier.verification_level,
-      level: tier.level,
-    };
-  
-    const verifyPayload: VerifyCommandInput = {
-      action: verificationStatus.claimAction || verificationStatus.upgradeAction,
-      signal: ls_wallet,
-      verification_level: verificationStatus.verification_level as VerificationLevel,
-    };
-  
-    try {
-      const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
-      if (finalPayload.status === "error") {
-        console.error("Verification failed:", finalPayload);
-  
-        const errorMessage =
-          finalPayload.error_code === "credential_unavailable"
-            ? "You are not Orb Verified in the WorldChain App. Please complete Orb verification first."
-            : "Something went wrong. Please try again.";
-  
-        toast({
-          title: "Verification Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }  
-      // Backend verification call
-      const isVerified = await verify(finalPayload, verificationStatus, ls_wallet);
-      if (isVerified) {
-        toast({
-          title: "Verification Successful",
-          description: `You are now ${verificationStatus.level} Verified.`,
-        });
-        refetch();
-      }
-    } catch (error: any) {
-      console.error("Error during verification:", error);
-      
-      let errorMessage = "Something went wrong while verifying.";
-      if (error?.message?.includes("credential_unavailable")) {
-        errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
-      }
-  
-      toast({
-        title: "Verification Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setVerifying(false);
-    }
-  }, [ls_wallet, refetch, toast]);
+    // Display maintenance message instead of actual verification
+    toast({
+      title: "Verification Maintenance",
+      description: "We're currently undergoing maintenance for the verification process. Please check back later.",
+      variant: "destructive",
+    });
+    
+    // Log the attempt for debugging purposes
+    console.log("Verification attempt during maintenance", {
+      wallet: ls_wallet,
+      tier: tier.level,
+      timestamp: new Date().toISOString()
+    });
+    
+    return; // Exit early without attempting verification
+  }, [ls_wallet]);
 
   if (isLoading) {
     return (

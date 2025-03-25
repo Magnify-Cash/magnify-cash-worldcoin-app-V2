@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import CreditScore from "@/components/CreditScore";
 import { getTransactionHistory, verify } from "@/lib/backendRequests";
+
 
 interface Transaction {
   status: "received" | "repaid";
@@ -263,28 +263,6 @@ const Dashboard = () => {
                   </motion.div>
                 );
               })}
-
-              {isOrbVerified && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="glass-card p-6"
-                >
-                  <Shield className="w-12 h-12 mx-auto mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2 text-center">Re-Verify</h3>
-                  <p className="text-muted-foreground text-center mb-4">
-                    Re-verify your identity even if you already have an NFT
-                  </p>
-                  <Button 
-                    className="w-full"
-                    variant="outline"
-                    onClick={() => navigate("/verify-again")}
-                  >
-                    Go to Re-Verification
-                  </Button>
-                </motion.div>
-              )}
 
               {nftInfo.tokenId === null && !isDeviceVerified && (
                 <motion.div

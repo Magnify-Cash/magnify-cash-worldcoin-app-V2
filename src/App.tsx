@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Welcome from "@/pages/Welcome";
 import Guide from "@/pages/Guide";
 import Profile from "@/pages/Profile";
-import VerifyAgain from "@/pages/VerifyAgain";
 import Wallet from "@/pages/Wallet";
 import Loan from "@/pages/Loan";
 import RepayLoan from "@/pages/RepayLoan";
@@ -22,8 +21,7 @@ const allowedWallets = [
   "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c",
   "0x7af5e0de231d82def3bc262b1d5b3359495a4bfb",
   "0xf0c7db5acea62029058b0e4e0b79f2bac18686c4",
-  "0x6a7ec268afb31dab2b0ad39511af9db7c11944a1",
-  "0xcb7e27fb22ed164b058ee4783a3b8389e288be9e"
+  "0x6a7ec268afb31dab2b0ad39511af9db7c11944a1"
 ];
 
 // Hard-coded to developer's wallet address
@@ -56,14 +54,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/verify-again"
-            element={
-              <ProtectedRoute>
-                <VerifyAgain />
               </ProtectedRoute>
             }
           />

@@ -29,6 +29,7 @@ const Dashboard = () => {
   const [creditScore, setCreditScore] = useState(2);
 
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
+  console.log(nftInfo)
   const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
@@ -139,8 +140,12 @@ const Dashboard = () => {
         return;
       }
   
+      // Include tokenId if the action is "upgrade-orb-verified-nft"
+      const isUpgradeAction = verificationStatus.upgradeAction === "upgrade-orb-verified-nft";
+      const tokenId = isUpgradeAction ? nftInfo.tokenId.toString() : undefined;
+  
       // Backend verification call
-      const isVerified = await verify(finalPayload, verificationStatus, ls_wallet);
+      const isVerified = await verify(finalPayload, verificationStatus, ls_wallet, tokenId);
       if (isVerified) {
         toast({
           title: "Verification Successful",
@@ -150,7 +155,7 @@ const Dashboard = () => {
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
-      
+  
       let errorMessage = "Something went wrong while verifying.";
       if (error?.message?.includes("credential_unavailable")) {
         errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
@@ -164,7 +169,7 @@ const Dashboard = () => {
     } finally {
       setVerifying(false);
     }
-  }, [ls_wallet, refetch, toast]);
+  }, [ls_wallet, refetch, toast, nftInfo.tokenId]);
 
   if (isLoading) {
     return (

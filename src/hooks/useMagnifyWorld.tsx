@@ -87,7 +87,7 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
   data: ContractData | null;
   isLoading: boolean;
   isError: boolean;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 } {
   const [data, setData] = useState<ContractData | null>(globalCache[walletAddress] || null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -170,10 +170,10 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
     }
   }, [walletAddress, fetchData]);
 
-  // Refetch function for user action invalidation
-  const refetch = useCallback(() => {
+  // Refetch function for user action invalidation - now returns a Promise
+  const refetch = useCallback(async (): Promise<void> => {
     invalidateCache(walletAddress);
-    fetchData();
+    return fetchData();
   }, [walletAddress, fetchData]);
 
   return { data, isLoading, isError, refetch };
@@ -209,7 +209,6 @@ async function fetchAllTiers(tierCount: number): Promise<Record<number, Tier> | 
 
   return allTiers;
 }
-
 
 // Helper function to get verification status based on tier ID
 function getVerificationStatus(tierId: number): VerificationTier {

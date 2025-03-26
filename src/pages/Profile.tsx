@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
@@ -10,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import CreditScore from "@/components/CreditScore";
 import { getTransactionHistory, verify } from "@/lib/backendRequests";
-
 
 interface Transaction {
   status: "received" | "repaid";
@@ -27,12 +27,15 @@ const Dashboard = () => {
   const [verifying, setVerifying] = useState(false);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
   const [creditScore, setCreditScore] = useState(2);
+  const [isVerificationSuccessful, setIsVerificationSuccessful] = useState(false);
 
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
+  console.log("NFT Info:", nftInfo);
   const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
   const isOrbVerified = nftInfo?.tier?.verificationStatus?.verification_level === "orb";
+  const isDeviceVerified = nftInfo?.tier?.verificationStatus?.verification_level === "device";
 
   const verificationLevels = {
     orb: {
@@ -93,7 +96,10 @@ const Dashboard = () => {
     if (ls_wallet) {
       calculateCreditScore();
     }
-  }, [ls_wallet, hasActiveLoan, loan, isOrbVerified]);
+
+    // Reset verification success state when data changes
+    setIsVerificationSuccessful(false);
+  }, [ls_wallet, hasActiveLoan, loan, isOrbVerified, data]);
 
   const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {
@@ -108,21 +114,37 @@ const Dashboard = () => {
     setVerifying(true);
     setCurrentTier(tier as unknown as Tier);
   
+    const isUpgradeAction = isDeviceVerified || nftInfo.tokenId !== null;
+    console.log("Is upgrade action:", isUpgradeAction, "NFT Token ID:", nftInfo.tokenId);
+    
     const verificationStatus = {
-      claimAction: tier.action,
-      upgradeAction: tier.upgradeAction,
+      claimAction: isUpgradeAction ? null : tier.action,
+      upgradeAction: isUpgradeAction ? tier.upgradeAction : null,
       verification_level: tier.verification_level,
       level: tier.level,
     };
+    
+    const action = isUpgradeAction ? verificationStatus.upgradeAction : verificationStatus.claimAction;
+    console.log("Using action:", action);
+    
+    if (!action) {
+      console.error("No valid action found for verification");
+      setVerifying(false);
+      return;
+    }
   
     const verifyPayload: VerifyCommandInput = {
-      action: verificationStatus.claimAction || verificationStatus.upgradeAction,
+      action: action,
       signal: ls_wallet,
       verification_level: verificationStatus.verification_level as VerificationLevel,
     };
+    
+    console.log("Verify payload:", verifyPayload);
   
     try {
       const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+      console.log("Verification response:", finalPayload);
+      
       if (finalPayload.status === "error") {
         console.error("Verification failed:", finalPayload);
   
@@ -136,21 +158,36 @@ const Dashboard = () => {
           description: errorMessage,
           variant: "destructive",
         });
+        setVerifying(false);
         return;
-      }  
-      // Backend verification call
-      const isVerified = await verify(finalPayload, verificationStatus, ls_wallet);
+      }
+  
+      const tokenId = isUpgradeAction ? nftInfo.tokenId?.toString() : undefined;
+      console.log("Using tokenId for verification:", tokenId);
+  
+      const isVerified = await verify(finalPayload, verificationStatus, ls_wallet, tokenId);
       if (isVerified) {
+        setIsVerificationSuccessful(true);
         toast({
           title: "Verification Successful",
           description: `You are now ${verificationStatus.level} Verified.`,
         });
-        refetch();
+        await refetch();
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
-      
-      let errorMessage = "Something went wrong while verifying.";
+      console.error("NFT Info: ", nftInfo);
+      console.error("Nft TokenId: ", nftInfo.tokenId);
+      console.error("Tier: ", tier);
+      console.error("Verification Status: ", verificationStatus);
+      console.error("Is Upgrade Action: ", verificationStatus.upgradeAction === "upgrade-orb-verified-nft");
+      console.error("Is orb verified: ", isOrbVerified);
+      console.error("Is device verified: ", nftInfo?.tier?.verificationStatus.verification_level === "device");
+      console.error("Wallet: " , ls_wallet);
+      console.error("Action: ", action);
+      console.error("Final Payload: ", JSON.stringify(verifyPayload));
+  
+      let errorMessage = "We are not able to verify you right now. Please try again later.";
       if (error?.message?.includes("credential_unavailable")) {
         errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
       }
@@ -163,7 +200,7 @@ const Dashboard = () => {
     } finally {
       setVerifying(false);
     }
-  }, [ls_wallet, refetch, toast]);
+  }, [ls_wallet, refetch, isDeviceVerified, nftInfo.tokenId, nftInfo, isOrbVerified]);
 
   if (isLoading) {
     return (
@@ -228,6 +265,25 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               {Object.values(verificationLevels).map((tier) => {
                 const IconComponent = tier.icon;
+                const isDeviceOrHasNFT = isDeviceVerified || nftInfo.tokenId !== null;
+                
+                let buttonText;
+                if (verifying && currentTier?.tierId === tier.tierId) {
+                  buttonText = "Verifying...";
+                } else if (isOrbVerified || (tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level) || isVerificationSuccessful) {
+                  buttonText = "Already Claimed";
+                } else if (isDeviceOrHasNFT) {
+                  buttonText = "Upgrade NFT";
+                } else {
+                  buttonText = "Claim NFT";
+                }
+
+                // Determine if button should be disabled
+                const isButtonDisabled = 
+                  verifying || // Disable while verifying
+                  isVerificationSuccessful || // Disable after successful verification until refresh
+                  userTierId > tier.tierId || // User already at a higher tier
+                  tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level;
 
                 return (
                   <motion.div
@@ -243,21 +299,10 @@ const Dashboard = () => {
                     <Button
                       className="w-full"
                       variant="default"
-                      disabled={
-                        verifying || // Disable while verifying
-                        userTierId > tier.tierId || // User already at a higher tier
-                        tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
-                      }
+                      disabled={isButtonDisabled}
                       onClick={() => handleVerify(tier)}
                     >
-                      {verifying && currentTier?.tierId === tier.tierId
-                        ? "Verifying..."
-                        : nftInfo.tokenId === null || isDeviceVerified
-                        ? "Claim NFT"
-                        : userTierId > tier.tierId ||
-                          tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
-                        ? "Already Claimed"
-                        : `Upgrade to ${tier.level}`}
+                      {buttonText}
                     </Button>
                   </motion.div>
                 );

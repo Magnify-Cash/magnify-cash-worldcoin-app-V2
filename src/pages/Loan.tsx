@@ -27,8 +27,8 @@ const Loan = () => {
     // Call refetch after loan is confirmed
     useEffect(() => {
       if (isConfirmed) {
-        const timeout = setTimeout(() => {
-          refetch();
+        const timeout = setTimeout(async () => {
+          await refetch();
         }, 1000);
   
         return () => clearTimeout(timeout);
@@ -86,8 +86,8 @@ const Loan = () => {
   );
   
   // Handle navigation after claiming loan
-  const handleNavigateAfterTransaction = () => {
-    refetch();
+  const handleNavigateAfterTransaction = async () => {
+    await refetch();
     setTimeout(() => navigate("/repay-loan"), 1000);
   }; 
 

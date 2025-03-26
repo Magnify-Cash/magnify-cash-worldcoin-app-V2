@@ -370,7 +370,7 @@ const PoolDetails = () => {
                       <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.total_value_locked)}</p>
                     </div>
                     
-                    {(pool.status === 'active' || pool.status === 'completed' || pool.status === 'withdrawal') && (
+                    {(pool.status === 'active' || pool.status === 'withdrawal') && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Available Liquidity</p>
                         <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.available_liquidity)}</p>
@@ -399,7 +399,7 @@ const PoolDetails = () => {
                       </div>
                     )}
                     
-                    {pool.status === 'completed' && (
+                    {pool.status === 'withdrawal' && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Final LP Price</p>
                         <p className="text-sm sm:text-lg font-semibold">${getLPTokenPrice().toFixed(2)}</p>
@@ -431,7 +431,7 @@ const PoolDetails = () => {
                     </div>
                   )}
 
-                  {pool.status !== 'active' && pool.status !== 'completed' && (
+                  {pool.status !== 'active' && pool.status !== 'withdrawal' && (
                     <div className="mt-4 sm:mt-6">
                       <div className="flex items-center justify-center">
                         <Unlock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
@@ -455,11 +455,11 @@ const PoolDetails = () => {
                     </div>
                   )}
                   
-                  {pool.status === 'completed' && (
+                  {pool.status === 'withdrawal' && (
                     <div className="mt-4 sm:mt-6">
                       <div className="flex items-center justify-center">
                         <p className="text-sm sm:text-base font-medium text-center text-gray-500">
-                          Pool is completed
+                          Pool is in withdrawal phase
                         </p>
                       </div>
                     </div>

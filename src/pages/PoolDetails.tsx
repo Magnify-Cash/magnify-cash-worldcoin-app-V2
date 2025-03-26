@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -288,7 +287,7 @@ const PoolDetails = () => {
         return {
           warmupPeriod: "14 days",
           lockDuration: "180 days",
-          borrowerLoanAmount: "$500 - $5,000",
+          borrowerLoanAmount: "$10 - $30",
           borrowerLoanPeriod: "30 days",
           borrowerInterest: "8.5%",
           originationFee: "10%"
@@ -297,7 +296,7 @@ const PoolDetails = () => {
         return {
           warmupPeriod: "30 days",
           lockDuration: "365 days",
-          borrowerLoanAmount: "$1,000 - $10,000",
+          borrowerLoanAmount: "$10 - $30",
           borrowerLoanPeriod: "60 days",
           borrowerInterest: "6.2%",
           originationFee: "10%"
@@ -306,7 +305,7 @@ const PoolDetails = () => {
         return {
           warmupPeriod: "7 days",
           lockDuration: "90 days",
-          borrowerLoanAmount: "$250 - $2,500",
+          borrowerLoanAmount: "$10 - $30",
           borrowerLoanPeriod: "15 days",
           borrowerInterest: "4.8%",
           originationFee: "10%"
@@ -315,7 +314,7 @@ const PoolDetails = () => {
         return {
           warmupPeriod: "14 days",
           lockDuration: "180 days",
-          borrowerLoanAmount: "$500 - $5,000",
+          borrowerLoanAmount: "$10 - $30",
           borrowerLoanPeriod: "30 days",
           borrowerInterest: "6.5%",
           originationFee: "10%"

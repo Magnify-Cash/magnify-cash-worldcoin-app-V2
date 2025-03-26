@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -94,8 +93,6 @@ const Lending = () => {
             ))
           )}
         </div>
-
-        {/* LP Token Price Graph - Hidden for now */}
 
         <Card className={`${useCustomGradient ? "bg-gradient-to-r from-[#8B5CF6]/5 via-[#A855F7]/10 to-[#D946EF]/5 border-[#D946EF]/20" : "bg-gradient-to-r from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20"}`}>
           <CardHeader className={isMobile ? "py-3 px-3" : ""}>

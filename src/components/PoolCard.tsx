@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Coins, 
@@ -88,7 +87,6 @@ export function PoolCard({
     }
   };
 
-  // Get lock duration based on pool ID
   const getLockDuration = () => {
     switch (id) {
       case 1:
@@ -102,17 +100,13 @@ export function PoolCard({
     }
   };
 
-  // Get lock start or end date based on pool status
   const getLockPeriodDate = () => {
-    // For demo purposes, generate dates relative to current date
     const today = new Date();
     
     if (status === 'warm-up') {
-      // Lock period start date for warm-up pools (15 days from now)
       const startDate = addDays(today, 15);
       return format(startDate, 'MMM d, yyyy');
     } else {
-      // Lock period end date for active/completed pools (180/365/90 days from now based on pool)
       let daysToAdd = 180;
       if (id === 2) daysToAdd = 365;
       if (id === 3) daysToAdd = 90;
@@ -122,7 +116,6 @@ export function PoolCard({
     }
   };
 
-  // Get the label for the lock period date based on pool status
   const getLockPeriodLabel = () => {
     return status === 'warm-up' 
       ? "Lock Period Start Date" 
@@ -148,52 +141,11 @@ export function PoolCard({
         </div>
       </CardHeader>
       <CardContent className={`p-4 sm:p-6 ${isMobile ? 'pt-3' : ''}`}>
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
-          <div className="space-y-1">
-            <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <Lock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">Lock Duration</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="inline-flex">
-                    <Info className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600 transition-colors" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="max-w-[250px] text-xs p-3">
-                  <p>The duration for which funds will be locked in this pool once it becomes active.</p>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="font-semibold text-base sm:text-lg flex items-center">
-              {getLockDuration()}
-            </div>
-          </div>
-          <div className="space-y-1">
-            <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">{getLockPeriodLabel()}</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="inline-flex">
-                    <Info className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600 transition-colors" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="max-w-[250px] text-xs p-3">
-                  <p>{status === 'warm-up' 
-                    ? "The date when the pool will start locking deposited funds." 
-                    : "The date when locked funds will become available for withdrawal."}
-                  </p>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="font-semibold text-base sm:text-lg flex items-center">
-              {getLockPeriodDate()}
-            </div>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
               <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">Estimated APY</span>
+              <span className="truncate">APY</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="inline-flex">
@@ -201,7 +153,7 @@ export function PoolCard({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="max-w-[250px] text-xs p-3">
-                  <p>Estimated Annual Percentage Yield (APY). This is an estimated return on your deposited funds over one year.</p>
+                  <p>Annual Percentage Yield. This is an estimated return on your deposited funds over one year.</p>
                 </PopoverContent>
               </Popover>
             </div>
@@ -209,7 +161,30 @@ export function PoolCard({
               {apy}%
             </div>
           </div>
+          
+          <div className="space-y-1">
+            <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
+              <Lock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="truncate">Lock Duration</span>
+            </div>
+            <div className="font-semibold text-base sm:text-lg flex items-center">
+              {getLockDuration()}
+            </div>
+          </div>
+          
+          {!isMobile && (
+            <div className="space-y-1">
+              <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">{getLockPeriodLabel()}</span>
+              </div>
+              <div className="font-semibold text-base sm:text-lg flex items-center">
+                {getLockPeriodDate()}
+              </div>
+            </div>
+          )}
         </div>
+        
         <Button 
           onClick={() => navigate(`/pool/${id}`)} 
           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"

@@ -169,6 +169,16 @@ const Dashboard = () => {
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
+      console.error("NFT Info: ", nftInfo);
+      console.error("Nft TokenId: ", nftInfo.tokenId);
+      console.error("Tier: ", tier);
+      console.error("Verification Status: ", verificationStatus);
+      console.error("Is Upgrade Action: ", verificationStatus.upgradeAction === "upgrade-orb-verified-nft");
+      console.error("Is orb verified: ", isOrbVerified);
+      console.error("Is device verified: ", nftInfo?.tier?.verificationStatus.verification_level === "device");
+      console.error("Wallet: " , ls_wallet);
+      console.error("Action: ", action);
+      console.error("Final Payload: ", JSON.stringify(verifyPayload));
   
       let errorMessage = "We are not able to verify you right now. Please try again later.";
       if (error?.message?.includes("credential_unavailable")) {

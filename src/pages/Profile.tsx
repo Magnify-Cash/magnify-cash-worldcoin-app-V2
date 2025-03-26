@@ -258,7 +258,7 @@ const Dashboard = () => {
                     >
                       {verifying && currentTier?.tierId === tier.tierId
                         ? "Verifying..."
-                        : nftInfo.tokenId === null || isDeviceVerified
+                        : nftInfo.tokenId === null
                         ? "Claim NFT"
                         : userTierId > tier.tierId ||
                           tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level

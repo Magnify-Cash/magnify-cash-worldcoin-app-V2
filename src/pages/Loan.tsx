@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { formatUnits } from "viem";
 import { Shield } from "lucide-react";
@@ -6,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
-import { useRequestLoan } from "@/hooks/useRequestLoan"; // Fixed import
+import useRequestLoan from "@/hooks/useRequestLoan";
 import { Button } from "@/components/ui/button";
 import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
 

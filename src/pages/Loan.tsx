@@ -48,8 +48,8 @@ const Loan = () => {
   
         if (latestBalance < 10) {
           toast({
-            title: "Error",
-            description: "Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.",
+            title: "Loan Unavailable",
+            description: "Our lending pool is temporarily depleted. Please try again later.",
             variant: "destructive",
           });
           return;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
@@ -11,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import CreditScore from "@/components/CreditScore";
 import { getTransactionHistory, verify } from "@/lib/backendRequests";
-
 
 interface Transaction {
   status: "received" | "repaid";
@@ -111,7 +109,6 @@ const Dashboard = () => {
     setVerifying(true);
     setCurrentTier(tier as unknown as Tier);
   
-    // Determine if we need to mint or upgrade based on whether the user is already device verified
     const isUpgradeAction = isDeviceVerified || nftInfo.tokenId !== null;
     console.log("Is upgrade action:", isUpgradeAction, "NFT Token ID:", nftInfo.tokenId);
     
@@ -159,11 +156,9 @@ const Dashboard = () => {
         return;
       }
   
-      // Include tokenId only if this is an upgrade action
       const tokenId = isUpgradeAction ? nftInfo.tokenId?.toString() : undefined;
       console.log("Using tokenId for verification:", tokenId);
   
-      // Backend verification call
       const isVerified = await verify(finalPayload, verificationStatus, ls_wallet, tokenId);
       if (isVerified) {
         toast({
@@ -254,11 +249,17 @@ const Dashboard = () => {
               {Object.values(verificationLevels).map((tier) => {
                 const IconComponent = tier.icon;
                 const isDeviceOrHasNFT = isDeviceVerified || nftInfo.tokenId !== null;
-                const buttonText = verifying && currentTier?.tierId === tier.tierId
-                  ? "Verifying..."
-                  : isDeviceOrHasNFT
-                    ? "Upgrade NFT"
-                    : "Claim NFT";
+                
+                let buttonText;
+                if (verifying && currentTier?.tierId === tier.tierId) {
+                  buttonText = "Verifying...";
+                } else if (isOrbVerified || (tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level)) {
+                  buttonText = "Already Claimed";
+                } else if (isDeviceOrHasNFT) {
+                  buttonText = "Upgrade NFT";
+                } else {
+                  buttonText = "Claim NFT";
+                }
 
                 return (
                   <motion.div

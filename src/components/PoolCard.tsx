@@ -146,7 +146,7 @@ export function PoolCard({
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
               <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">APY</span>
+              <span className="truncate">Estimated APY</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="inline-flex">
@@ -154,7 +154,7 @@ export function PoolCard({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="max-w-[250px] text-xs p-3">
-                  <p>Annual Percentage Yield (APY). This is an estimated return on your deposited funds over one year.</p>
+                  <p>Estimated Annual Percentage Yield (APY). This is an estimated return on your deposited funds over one year.</p>
                 </PopoverContent>
               </Popover>
             </div>

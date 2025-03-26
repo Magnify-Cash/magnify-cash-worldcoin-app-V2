@@ -26,7 +26,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
-import { Progress } from "@/components/ui/progress";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
 import { formatToLocalTime, formatDateRange, getDaysBetween, formatUnlockDate } from "@/utils/dateUtils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -233,7 +232,6 @@ const PoolDetails = () => {
 
   const toggleDummyData = () => {
     if (hasDummyData) {
-      // Remove dummy data
       setUserPosition(null);
       setHasDummyData(false);
       toast({
@@ -241,7 +239,6 @@ const PoolDetails = () => {
         description: "User position has been cleared.",
       });
     } else {
-      // Add dummy data
       const dummyPosition: UserPoolPosition = {
         id: 1,
         created_at: new Date().toISOString(),
@@ -330,22 +327,13 @@ const PoolDetails = () => {
                     )}
                     
                     <div>
-                      <p className="text-xs sm:text-sm text-gray-500">APY</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Estimated APY</p>
                       <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6]">
                         <TrendingUp className="h-4 w-4 inline mr-1" />
                         {pool.apy}%
                       </p>
                     </div>
                     
-                    {pool.status === 'active' && (
-                      <div>
-                        <p className="text-xs sm:text-sm text-gray-500">Utilization Rate</p>
-                        <p className="text-sm sm:text-lg font-semibold">
-                          {((pool.total_value_locked - pool.available_liquidity) / pool.total_value_locked * 100).toFixed(2)}%
-                        </p>
-                      </div>
-                    )}
-
                     {pool.status === 'warm-up' && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Liquidity Lock</p>
@@ -366,19 +354,6 @@ const PoolDetails = () => {
                         <p className="text-sm sm:text-lg font-semibold">${getLPTokenPrice().toFixed(2)}</p>
                       </div>
                     )}
-                  </div>
-
-                  <div className="mt-4 sm:mt-6">
-                    <div className="flex justify-between mb-2">
-                      <span className="text-xs sm:text-sm text-gray-500">Target</span>
-                      <span className="text-xs sm:text-sm font-medium">
-                        {formatValueNoDecimals(pool.total_value_locked)} / {formatValueNoDecimals(15000)}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={calculateProgressPercentage()} 
-                      className="h-3 bg-gray-100" 
-                    />
                   </div>
 
                   {pool.status === 'active' && (

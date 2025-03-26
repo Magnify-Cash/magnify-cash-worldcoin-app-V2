@@ -9,7 +9,9 @@ import {
   Circle, 
   CircleCheck, 
   ExternalLink,
-  Timer 
+  Timer,
+  Lock,
+  Calendar
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { 
@@ -20,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { format, addDays } from "date-fns";
 
 interface PoolCardProps {
   id: number;
@@ -85,6 +88,47 @@ export function PoolCard({
     }
   };
 
+  // Get lock duration based on pool ID
+  const getLockDuration = () => {
+    switch (id) {
+      case 1:
+        return "180 days";
+      case 2:
+        return "365 days";
+      case 3:
+        return "90 days";
+      default:
+        return "180 days";
+    }
+  };
+
+  // Get lock start or end date based on pool status
+  const getLockPeriodDate = () => {
+    // For demo purposes, generate dates relative to current date
+    const today = new Date();
+    
+    if (status === 'warm-up') {
+      // Lock period start date for warm-up pools (15 days from now)
+      const startDate = addDays(today, 15);
+      return format(startDate, 'MMM d, yyyy');
+    } else {
+      // Lock period end date for active/completed pools (180/365/90 days from now based on pool)
+      let daysToAdd = 180;
+      if (id === 2) daysToAdd = 365;
+      if (id === 3) daysToAdd = 90;
+      
+      const endDate = addDays(today, daysToAdd);
+      return format(endDate, 'MMM d, yyyy');
+    }
+  };
+
+  // Get the label for the lock period date based on pool status
+  const getLockPeriodLabel = () => {
+    return status === 'warm-up' 
+      ? "Lock Period Start Date" 
+      : "Lock Period End Date";
+  };
+
   return (
     <Card className={`overflow-hidden border ${useCustomGradient ? 'border-[#D946EF]/20' : 'border-[#8B5CF6]/20'}`}>
       <CardHeader className={`pb-2 pt-4 bg-gradient-to-r ${useCustomGradient ? 'from-[#8B5CF6]/10 via-[#A855F7]/10 to-[#D946EF]/5' : 'from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5'}`}>
@@ -107,8 +151,8 @@ export function PoolCard({
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <Landmark className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">Supply</span>
+              <Lock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="truncate">Lock Duration</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="inline-flex">
@@ -116,18 +160,18 @@ export function PoolCard({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="max-w-[250px] text-xs p-3">
-                  <p>Total Supply. The combined value of all assets deposited into this lending pool by all users.</p>
+                  <p>The duration for which funds will be locked in this pool once it becomes active.</p>
                 </PopoverContent>
               </Popover>
             </div>
             <div className="font-semibold text-base sm:text-lg flex items-center">
-              ${formatValue(totalSupply, '')}
+              {getLockDuration()}
             </div>
           </div>
           <div className="space-y-1">
             <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <Droplet className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">Liquidity</span>
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="truncate">{getLockPeriodLabel()}</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="inline-flex">
@@ -135,12 +179,15 @@ export function PoolCard({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="max-w-[250px] text-xs p-3">
-                  <p>Available Liquidity. The amount of funds currently available for borrowing or withdrawal from this pool.</p>
+                  <p>{status === 'warm-up' 
+                    ? "The date when the pool will start locking deposited funds." 
+                    : "The date when locked funds will become available for withdrawal."}
+                  </p>
                 </PopoverContent>
               </Popover>
             </div>
             <div className="font-semibold text-base sm:text-lg flex items-center">
-              ${formatValue(availableLiquidity, '')}
+              {getLockPeriodDate()}
             </div>
           </div>
           <div className="space-y-1">

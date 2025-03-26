@@ -4,14 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info } from "lucide-react";
 
 interface PortfolioSummaryProps {
-  currentValue: number;
-  earnings: number;
+  totalValue: number;
+  totalEarnings: number;
   isMobile: boolean;
 }
 
 export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ 
-  currentValue, 
-  earnings, 
+  totalValue, 
+  totalEarnings, 
   isMobile 
 }) => {
   return (
@@ -26,11 +26,11 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 rounded-lg border border-[#8B5CF6]/20">
             <p className="text-xs text-gray-500">Total Value</p>
-            <p className="text-lg font-semibold">${currentValue.toFixed(2)}</p>
+            <p className="text-lg font-semibold">${totalValue.toFixed(2)}</p>
           </div>
           <div className="p-4 rounded-lg border border-[#8B5CF6]/20">
             <p className="text-xs text-gray-500">Total Earnings</p>
-            <p className="text-lg font-semibold text-green-600">+${earnings.toFixed(2)}</p>
+            <p className="text-lg font-semibold text-green-600">+${totalEarnings.toFixed(2)}</p>
           </div>
         </div>
       </CardContent>

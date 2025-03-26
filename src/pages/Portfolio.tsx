@@ -15,13 +15,35 @@ const Portfolio = () => {
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [pools, setPools] = useState<LiquidityPool[]>([]);
-  const [activePool, setActivePool] = useState<LiquidityPool | null>(null);
   const [showDummyData, setShowDummyData] = useState(true);
-  const [userPosition, setUserPosition] = useState({
-    balance: 1200,
-    depositedValue: 1200,
-    currentValue: 1250.75,
-    earnings: 50.75
+  
+  // Demo data for multiple pools
+  const [demoBalances, setDemoBalances] = useState<Record<number, number>>({
+    1: 1200, // USDC Pool
+    2: 500,  // ETH Pool
+    3: 300,  // WBTC Pool
+    4: 800   // DAI Pool
+  });
+  
+  const [demoDepositedValues, setDemoDepositedValues] = useState<Record<number, number>>({
+    1: 1200,
+    2: 500,
+    3: 300,
+    4: 800
+  });
+  
+  const [demoCurrentValues, setDemoCurrentValues] = useState<Record<number, number>>({
+    1: 1250.75,
+    2: 520.50,
+    3: 305.20,
+    4: 812.40
+  });
+  
+  const [demoEarnings, setDemoEarnings] = useState<Record<number, number>>({
+    1: 50.75,
+    2: 20.50,
+    3: 5.20,
+    4: 12.40
   });
 
   useEffect(() => {
@@ -30,15 +52,6 @@ const Portfolio = () => {
         setLoading(true);
         const poolsData = await getPools();
         setPools(poolsData);
-        
-        const userPositionData = await getUserPoolPosition(1);
-        
-        if (userPositionData) {
-          const poolWithPosition = poolsData.find(pool => pool.id === 1);
-          if (poolWithPosition) {
-            setActivePool(poolWithPosition);
-          }
-        }
       } catch (error) {
         console.error("Error fetching portfolio data:", error);
         toast({
@@ -54,6 +67,26 @@ const Portfolio = () => {
     fetchData();
   }, []);
 
+  // Calculate total portfolio value and earnings
+  const calculateTotals = () => {
+    let totalValue = 0;
+    let totalEarnings = 0;
+    
+    pools.forEach(pool => {
+      if (demoCurrentValues[pool.id]) {
+        totalValue += demoCurrentValues[pool.id];
+      }
+      
+      if (demoEarnings[pool.id]) {
+        totalEarnings += demoEarnings[pool.id];
+      }
+    });
+    
+    return { totalValue, totalEarnings };
+  };
+  
+  const { totalValue, totalEarnings } = calculateTotals();
+
   return (
     <div className="min-h-screen bg-white pb-20">
       <Header title="Lending Portfolio" />
@@ -66,21 +99,21 @@ const Portfolio = () => {
 
         {loading ? (
           <LoadingState />
-        ) : showDummyData && activePool ? (
+        ) : showDummyData && pools.length > 0 ? (
           <div className="space-y-6">
             <ActivePositions 
-              pool={activePool}
-              balance={userPosition.balance}
-              depositedValue={userPosition.depositedValue}
-              currentValue={userPosition.currentValue}
-              earnings={userPosition.earnings}
+              pools={pools}
+              balances={demoBalances}
+              depositedValues={demoDepositedValues}
+              currentValues={demoCurrentValues}
+              earnings={demoEarnings}
               isMobile={isMobile}
               onRemoveDemoData={() => setShowDummyData(false)}
             />
 
             <PortfolioSummary
-              currentValue={userPosition.currentValue}
-              earnings={userPosition.earnings}
+              totalValue={totalValue}
+              totalEarnings={totalEarnings}
               isMobile={isMobile}
             />
           </div>

@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { WalletCard } from "@/components/WalletCard";
 import { Header } from "@/components/Header";
@@ -6,9 +7,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MiniKit, RequestPermissionPayload, Permission } from "@worldcoin/minikit-js";
-import { checkWallet, saveWallet, getUSDCBalance, getWalletTokens } from "@/lib/backendRequests";
+import { checkWallet, saveWallet, getWalletTokens } from "@/lib/backendRequests";
 
 const CACHE_EXPIRATION_MS = 60 * 1000; // 1 minute cache expiration
+const MIN_BALANCE_THRESHOLD = 0.00049; // Minimum balance threshold to display tokens
 
 const Wallet = () => {
   const navigate = useNavigate();
@@ -17,8 +19,6 @@ const Wallet = () => {
 
   const [tokens, setTokens] = useState([]);
   const [error, setError] = useState(null);
-  const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
-  const [loadingUSDC, setLoadingUSDC] = useState(true);
   const [loadingTokens, setLoadingTokens] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -94,15 +94,10 @@ const Wallet = () => {
   }, [requestPermission, checkWalletExists]);
 
   const loadCachedBalances = () => {
-    const cachedUSDC = sessionStorage.getItem("usdcBalance");
     const cachedTokens = sessionStorage.getItem("walletTokens");
     const cacheTimestamp = sessionStorage.getItem("walletCacheTimestamp");
 
     if (cacheTimestamp && Date.now() - Number(cacheTimestamp) < CACHE_EXPIRATION_MS) {
-      if (cachedUSDC) {
-        setUsdcBalance(Number(cachedUSDC));
-        setLoadingUSDC(false);
-      }
       if (cachedTokens) {
         setTokens(JSON.parse(cachedTokens));
         setLoadingTokens(false);
@@ -114,44 +109,19 @@ const Wallet = () => {
   const fetchBalances = async () => {
     try {
       setIsRefreshing(true);
-      setLoadingUSDC(true);
       setLoadingTokens(true);
       setError(null);
 
-      const [usdcPromise, tokensPromise] = [
-        getUSDCBalance(ls_wallet),
-        getWalletTokens(ls_wallet),
-      ];
-
-      usdcPromise
-        .then((balance) => {
-          setUsdcBalance(balance);
-          sessionStorage.setItem("usdcBalance", String(balance));
-        })
-        .catch((error) => {
-          console.error("Failed to fetch USDC balance:", error);
-          // Do not set error for USDC if it fails but we have token data
-          setUsdcBalance(0);
-        })
-        .finally(() => {
-          setLoadingUSDC(false);
-        });
-
-      tokensPromise
-        .then((tokenList) => {
-          setTokens(tokenList);
-          sessionStorage.setItem("walletTokens", JSON.stringify(tokenList));
-        })
-        .catch((error) => {
-          console.error("Failed to fetch wallet tokens:", error);
-          // Only set error if both USDC and tokens fail
-          if (usdcBalance === null) {
-            setError("Failed to fetch wallet tokens");
-          }
-        })
-        .finally(() => {
-          setLoadingTokens(false);
-        });
+      try {
+        const tokenList = await getWalletTokens(ls_wallet);
+        setTokens(tokenList);
+        sessionStorage.setItem("walletTokens", JSON.stringify(tokenList));
+      } catch (error) {
+        console.error("Failed to fetch wallet tokens:", error);
+        setError("Failed to fetch wallet tokens");
+      } finally {
+        setLoadingTokens(false);
+      }
 
       sessionStorage.setItem("walletCacheTimestamp", String(Date.now()));
       setTimeout(() => {
@@ -161,7 +131,6 @@ const Wallet = () => {
     } catch (error) {
       console.error("Unexpected error fetching balances:", error);
       setError("Unexpected error fetching balances");
-      setLoadingUSDC(false);
       setLoadingTokens(false);
       setIsRefreshing(false);
       setDataLoaded(true);
@@ -176,10 +145,11 @@ const Wallet = () => {
     }
   }, [ls_wallet]);
 
+  // Filter tokens based on minimum balance threshold
+  const filteredTokens = tokens.filter(token => token.tokenBalance >= MIN_BALANCE_THRESHOLD);
+
   // Determine if we should show the error message
-  // Only show error if both USDC and tokens failed to load
-  // We're explicitly checking for usdcBalance === null, not 0
-  const shouldShowError = error && loadingUSDC === false && loadingTokens === false && !tokens.length && usdcBalance === null;
+  const shouldShowError = error && loadingTokens === false && !filteredTokens.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -233,34 +203,21 @@ const Wallet = () => {
           )}
           
           <div className="space-y-4">
-            {loadingUSDC ? (
-              <WalletCard currency="Bridged USDC (world-chain-mainnet)" symbol="USDC.e" balance="" isLoading={true} />
-            ) : (
-              usdcBalance !== 0 && (
-                <WalletCard 
-                  currency="Bridged USDC (world-chain-mainnet)" 
-                  symbol="USDC.e" 
-                  balance={usdcBalance !== null ? usdcBalance.toFixed(3) : "0.00"} 
-                />
-              )
-            )}
-
             {loadingTokens ? (
               <>
                 <WalletCard currency="" symbol="" balance="" isLoading={true} />
                 <WalletCard currency="" symbol="" balance="" isLoading={true} />
+                <WalletCard currency="" symbol="" balance="" isLoading={true} />
               </>
-            ) : tokens.length > 0 ? (
-              tokens
-                .filter((token) => token.tokenSymbol !== "USDC.e")
-                .map((token) => (
-                  <WalletCard
-                    key={token.tokenAddress}
-                    currency={token.tokenName}
-                    symbol={token.tokenSymbol}
-                    balance={token.tokenBalance.toFixed(3)}
-                  />
-                ))
+            ) : filteredTokens.length > 0 ? (
+              filteredTokens.map((token) => (
+                <WalletCard
+                  key={token.tokenAddress || token.tokenSymbol}
+                  currency={token.tokenName}
+                  symbol={token.tokenSymbol}
+                  balance={token.tokenBalance.toFixed(3)}
+                />
+              ))
             ) : (
               <div className="text-center py-4">No tokens found. Add some to see your balance!</div>
             )}

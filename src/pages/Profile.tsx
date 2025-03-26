@@ -238,10 +238,8 @@ const Dashboard = () => {
               <User className="w-16 h-16 text-primary" />
             </div>
             <h2 className="text-xl font-bold text-gradient mb-3 text-center break-words">@{ls_username}</h2>
-            {isOrbVerified ? (
-              <p className="text-muted-foreground text-center text-lg">
-                {nftInfo?.tier.verificationStatus.level} Verified User
-              </p>
+            {isOrbVerified || isVerificationSuccessful ? (
+              <p className="text-muted-foreground text-center text-lg">ORB Verified User</p>
             ) : isDeviceVerified ? (
               <p className="text-muted-foreground text-center text-lg">Not Orb Verified</p>
             ) : (
@@ -259,7 +257,11 @@ const Dashboard = () => {
             </div>
             <h2 className="text-2xl font-bold text-gradient mb-2 text-center">Verification Level</h2>
             <p className="text-muted-foreground text-center text-lg mb-6">
-              {isDeviceVerified || nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
+              {isOrbVerified || isVerificationSuccessful
+                ? "Currently: Orb Verified"
+                : isDeviceVerified || nftInfo.tokenId === null
+                ? "Unverified"
+                : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
@@ -326,7 +328,7 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {isOrbVerified || isDeviceVerified ? (
+          {isOrbVerified || isDeviceVerified || isVerificationSuccessful ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -352,9 +354,9 @@ const Dashboard = () => {
                         <FileText className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-lg">
-                          {isOrbVerified ? nftInfo?.tier.verificationStatus.level : "Not Orb Verified"}
-                        </h4>
+                      <h4 className="font-medium text-lg">
+                        {(isOrbVerified || isVerificationSuccessful) ? "ORB" : "Not Orb Verified"}
+                      </h4>
                       </div>
                     </div>
                     <div
@@ -364,7 +366,10 @@ const Dashboard = () => {
                           : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       }`}
                     >
-                      {hasActiveLoan || isDeviceVerified ? "Unavailable for Collateral" : "Available for Collateral"}
+                      {hasActiveLoan || (isDeviceVerified && !isVerificationSuccessful)
+                      ? "Unavailable for Collateral"
+                      : "Available for Collateral"}
+
                     </div>
                   </Card>
                 </motion.div>

@@ -5,7 +5,7 @@ import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "
 import { Shield, User, FileText, Pi, AlertTriangle, Bell, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
-import { useMagnifyWorld, Tier } from "@/hooks/useMagnifyWorld";
+import { useMagnifyWorld, Tier, invalidateCache } from "@/hooks/useMagnifyWorld";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -23,7 +23,7 @@ const Dashboard = () => {
   const ls_username = localStorage.getItem("ls_username");
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
 
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const { data, isLoading, isError } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const [verifying, setVerifying] = useState(false);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
   const [creditScore, setCreditScore] = useState(2);
@@ -167,12 +167,12 @@ const Dashboard = () => {
   
       const isVerified = await verify(finalPayload, verificationStatus, ls_wallet, tokenId);
       if (isVerified) {
+        invalidateCache(ls_wallet as `0x${string}`);
         setIsVerificationSuccessful(true);
         toast({
           title: "Verification Successful",
           description: `You are now ${verificationStatus.level} Verified.`,
         });
-        await refetch();
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
@@ -200,7 +200,7 @@ const Dashboard = () => {
     } finally {
       setVerifying(false);
     }
-  }, [ls_wallet, refetch, isDeviceVerified, nftInfo.tokenId, nftInfo, isOrbVerified]);
+  }, [ls_wallet, isDeviceVerified, nftInfo.tokenId, nftInfo, isOrbVerified]);
 
   if (isLoading) {
     return (

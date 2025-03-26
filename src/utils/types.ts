@@ -41,5 +41,4 @@ export interface RequestParams {
   [key: string]: string | number | boolean | Record<string, any>;
 }
 
-
 export type HttpMethod = "GET" | "POST";

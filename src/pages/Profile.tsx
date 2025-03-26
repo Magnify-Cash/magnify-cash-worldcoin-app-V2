@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
@@ -29,11 +30,12 @@ const Dashboard = () => {
   const [creditScore, setCreditScore] = useState(2);
 
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
-  console.log(nftInfo)
+  console.log("NFT Info:", nftInfo);
   const hasActiveLoan = data?.loan?.[1]?.isActive === true;
   const loan = data?.loan;
 
   const isOrbVerified = nftInfo?.tier?.verificationStatus?.verification_level === "orb";
+  const isDeviceVerified = nftInfo?.tier?.verificationStatus?.verification_level === "device";
 
   const verificationLevels = {
     orb: {
@@ -109,21 +111,38 @@ const Dashboard = () => {
     setVerifying(true);
     setCurrentTier(tier as unknown as Tier);
   
+    // Determine if we need to mint or upgrade based on whether the user is already device verified
+    const isUpgradeAction = isDeviceVerified || nftInfo.tokenId !== null;
+    console.log("Is upgrade action:", isUpgradeAction, "NFT Token ID:", nftInfo.tokenId);
+    
     const verificationStatus = {
-      claimAction: tier.action,
-      upgradeAction: tier.upgradeAction,
+      claimAction: isUpgradeAction ? null : tier.action,
+      upgradeAction: isUpgradeAction ? tier.upgradeAction : null,
       verification_level: tier.verification_level,
       level: tier.level,
     };
+    
+    const action = isUpgradeAction ? verificationStatus.upgradeAction : verificationStatus.claimAction;
+    console.log("Using action:", action);
+    
+    if (!action) {
+      console.error("No valid action found for verification");
+      setVerifying(false);
+      return;
+    }
   
     const verifyPayload: VerifyCommandInput = {
-      action: verificationStatus.claimAction || verificationStatus.upgradeAction,
+      action: action,
       signal: ls_wallet,
       verification_level: verificationStatus.verification_level as VerificationLevel,
     };
+    
+    console.log("Verify payload:", verifyPayload);
   
     try {
       const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+      console.log("Verification response:", finalPayload);
+      
       if (finalPayload.status === "error") {
         console.error("Verification failed:", finalPayload);
   
@@ -140,9 +159,9 @@ const Dashboard = () => {
         return;
       }
   
-      // Include tokenId if the action is "upgrade-orb-verified-nft"
-      const isUpgradeAction = verificationStatus.upgradeAction === "upgrade-orb-verified-nft";
-      const tokenId = isUpgradeAction ? nftInfo.tokenId.toString() : undefined;
+      // Include tokenId only if this is an upgrade action
+      const tokenId = isUpgradeAction ? nftInfo.tokenId?.toString() : undefined;
+      console.log("Using tokenId for verification:", tokenId);
   
       // Backend verification call
       const isVerified = await verify(finalPayload, verificationStatus, ls_wallet, tokenId);
@@ -169,7 +188,7 @@ const Dashboard = () => {
     } finally {
       setVerifying(false);
     }
-  }, [ls_wallet, refetch, toast, nftInfo.tokenId]);
+  }, [ls_wallet, refetch, isDeviceVerified, nftInfo.tokenId]);
 
   if (isLoading) {
     return (
@@ -234,6 +253,12 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               {Object.values(verificationLevels).map((tier) => {
                 const IconComponent = tier.icon;
+                const isDeviceOrHasNFT = isDeviceVerified || nftInfo.tokenId !== null;
+                const buttonText = verifying && currentTier?.tierId === tier.tierId
+                  ? "Verifying..."
+                  : isDeviceOrHasNFT
+                    ? "Upgrade NFT"
+                    : "Claim NFT";
 
                 return (
                   <motion.div
@@ -256,14 +281,7 @@ const Dashboard = () => {
                       }
                       onClick={() => handleVerify(tier)}
                     >
-                      {verifying && currentTier?.tierId === tier.tierId
-                        ? "Verifying..."
-                        : nftInfo.tokenId === null
-                        ? "Claim NFT"
-                        : userTierId > tier.tierId ||
-                          tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
-                        ? "Already Claimed"
-                        : `Upgrade to ${tier.level}`}
+                      {buttonText}
                     </Button>
                   </motion.div>
                 );

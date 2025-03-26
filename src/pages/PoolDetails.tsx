@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -326,13 +327,13 @@ const PoolDetails = () => {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <Header title={`${pool?.name || 'Pool'} Details`} />
+      <Header title={`${pool?.name || 'Pool'}`} />
 
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         {pool && (
           <>
             <Card className="mb-6 border border-[#8B5CF6]/20 overflow-hidden">
-              <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5 py-5 px-6 flex justify-center">
+              <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5 py-5 px-6">
                 <div className="flex items-center gap-3">
                   <div className="bg-[#8B5CF6]/20 rounded-full p-2 flex items-center justify-center">
                     <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-[#8B5CF6]" />
@@ -347,13 +348,13 @@ const PoolDetails = () => {
             <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
               <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
                 <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
-                  <CardTitle className="text-xl flex items-center gap-2 justify-center">
+                  <CardTitle className="text-xl flex items-center gap-2">
                     <BarChart className="h-5 w-5 text-[#8B5CF6]" />
                     Pool Statistics
                   </CardTitle>
                 </CardHeader>
                 <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
-                  <div className="flex justify-center mt-1">
+                  <div className="flex mt-1">
                     <Badge variant="outline" className={`flex items-center ${getStatusColor()}`}>
                       {getStatusIcon()}
                       <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
@@ -404,9 +405,9 @@ const PoolDetails = () => {
 
                   {pool.status === 'active' && (
                     <div className="mt-4 sm:mt-6">
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center">
                         <Lock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
-                        <p className="text-sm sm:text-base font-medium text-center flex items-center">
+                        <p className="text-sm sm:text-base font-medium flex items-center">
                           Funds locked for: {getLockDaysRemaining()} days
                           <Popover>
                           <PopoverTrigger asChild>
@@ -428,9 +429,9 @@ const PoolDetails = () => {
 
                   {pool.status !== 'active' && pool.status !== 'completed' && (
                     <div className="mt-4 sm:mt-6">
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center">
                         <Unlock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
-                        <p className="text-sm sm:text-base font-medium text-center flex items-center">
+                        <p className="text-sm sm:text-base font-medium flex items-center">
                           Warm-Up for {getWarmupDays()} days
                           <Popover>
                             <PopoverTrigger asChild>
@@ -452,8 +453,8 @@ const PoolDetails = () => {
                   
                   {pool.status === 'completed' && (
                     <div className="mt-4 sm:mt-6">
-                      <div className="flex items-center justify-center">
-                        <p className="text-sm sm:text-base font-medium text-center text-gray-500">
+                      <div className="flex items-center">
+                        <p className="text-sm sm:text-base font-medium text-gray-500">
                           Pool is completed
                         </p>
                       </div>

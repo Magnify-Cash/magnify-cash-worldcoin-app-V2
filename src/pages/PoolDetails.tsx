@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -290,7 +289,8 @@ const PoolDetails = () => {
           lockDuration: "180 days",
           borrowerLoanAmount: "$500 - $5,000",
           borrowerLoanPeriod: "30 days",
-          borrowerInterest: "8.5% APY"
+          borrowerInterest: "8.5%",
+          originationFee: "10%"
         };
       case 2:
         return {
@@ -298,7 +298,8 @@ const PoolDetails = () => {
           lockDuration: "365 days",
           borrowerLoanAmount: "$1,000 - $10,000",
           borrowerLoanPeriod: "60 days",
-          borrowerInterest: "6.2% APY"
+          borrowerInterest: "6.2%",
+          originationFee: "10%"
         };
       case 3:
         return {
@@ -306,7 +307,8 @@ const PoolDetails = () => {
           lockDuration: "90 days",
           borrowerLoanAmount: "$250 - $2,500",
           borrowerLoanPeriod: "15 days",
-          borrowerInterest: "4.8% APY"
+          borrowerInterest: "4.8%",
+          originationFee: "10%"
         };
       default:
         return {
@@ -314,7 +316,8 @@ const PoolDetails = () => {
           lockDuration: "180 days",
           borrowerLoanAmount: "$500 - $5,000",
           borrowerLoanPeriod: "30 days",
-          borrowerInterest: "6.5% APY"
+          borrowerInterest: "6.5%",
+          originationFee: "10%"
         };
     }
   };
@@ -521,19 +524,14 @@ const PoolDetails = () => {
                             <span className="text-gray-500">Interest Rate:</span>
                             <span className="font-medium">{poolInfo.borrowerInterest}</span>
                           </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Origination Fee:</span>
+                            <span className="font-medium">{poolInfo.originationFee}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
-                  
-                  <div className="mt-2 p-3 bg-[#8B5CF6]/5 rounded-lg border border-[#8B5CF6]/10">
-                    <div className="flex items-start">
-                      <AlertCircle className="h-5 w-5 text-[#8B5CF6] mr-2 flex-shrink-0 mt-0.5" />
-                      <p>
-                        The information provided here is for reference only. Please review the pool's terms and conditions for complete details before depositing or borrowing funds.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>

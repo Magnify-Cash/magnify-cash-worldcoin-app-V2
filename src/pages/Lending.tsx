@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Info, Palette } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PoolCard } from "@/components/PoolCard";
-import { LendingGraph } from "@/components/LendingGraph";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPools } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
@@ -96,18 +95,7 @@ const Lending = () => {
           )}
         </div>
 
-        {/* LP Token Price Graph */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-8 sm:mb-12">
-          <Card className={`h-full overflow-hidden ${useCustomGradient ? "border-[#D946EF]/20" : ""}`}>
-            <CardHeader className={isMobile ? "pb-1 pt-3 px-3" : "pb-2"}>
-              <CardTitle className="text-lg sm:text-xl">LP Token Price Over Time</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Tracks the value of 1 LP token in USDC. Higher value indicates growth</CardDescription>
-            </CardHeader>
-            <CardContent className={isMobile ? "p-2" : ""}>
-              <LendingGraph />
-            </CardContent>
-          </Card>
-        </div>
+        {/* LP Token Price Graph - Hidden for now */}
 
         <Card className={`${useCustomGradient ? "bg-gradient-to-r from-[#8B5CF6]/5 via-[#A855F7]/10 to-[#D946EF]/5 border-[#D946EF]/20" : "bg-gradient-to-r from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20"}`}>
           <CardHeader className={isMobile ? "py-3 px-3" : ""}>

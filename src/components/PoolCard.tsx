@@ -1,16 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   Coins, 
-  Landmark, 
-  Droplet, 
   TrendingUp, 
-  Info, 
-  Circle, 
-  CircleCheck, 
-  ExternalLink,
-  Timer,
   Lock,
-  Calendar
+  Calendar,
+  Info,
+  ExternalLink
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { 
@@ -22,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { format, addDays } from "date-fns";
+import { Separator } from "@/components/ui/separator";
 
 interface PoolCardProps {
   id: number;
@@ -42,7 +39,6 @@ export function PoolCard({
   status,
   useCustomGradient = false 
 }: PoolCardProps) {
-  const isMobile = useIsMobile();
   const navigate = useNavigate();
 
   const getPoolName = () => {
@@ -50,41 +46,6 @@ export function PoolCard({
     if (id === 2) return "Pool B";
     if (id === 3) return "Pool C";
     return title;
-  };
-
-  const formatValue = (value: number, suffix: string) => {
-    if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(2)}M${suffix}`;
-    } else if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)}K${suffix}`;
-    }
-    return `${value.toFixed(0)}${suffix}`;
-  };
-
-  const getStatusColor = () => {
-    switch (status) {
-      case 'warm-up':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'active':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'completed':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusIcon = () => {
-    switch (status) {
-      case 'warm-up':
-        return <Timer className="h-3 w-3 mr-1 text-amber-500" />;
-      case 'active':
-        return <CircleCheck className="h-3 w-3 mr-1 text-green-500" />;
-      case 'completed':
-        return <CircleCheck className="h-3 w-3 mr-1 text-gray-500" />;
-      default:
-        return <Circle className="h-3 w-3 mr-1 text-gray-500" />;
-    }
   };
 
   const getLockDuration = () => {
@@ -122,34 +83,66 @@ export function PoolCard({
       : "Lock Period End Date";
   };
 
+  const getStatusColor = () => {
+    switch (status) {
+      case 'warm-up':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'active':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'completed':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = () => {
+    switch (status) {
+      case 'warm-up':
+        return <div className="h-3 w-3 rounded-full bg-amber-500 mr-1.5"></div>;
+      case 'active':
+        return <div className="h-3 w-3 rounded-full bg-green-500 mr-1.5"></div>;
+      case 'completed':
+        return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1.5"></div>;
+      default:
+        return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1.5"></div>;
+    }
+  };
+  
+  const gradientClass = useCustomGradient 
+    ? "from-[#8B5CF6]/5 via-[#A855F7]/10 to-[#D946EF]/5 border-[#D946EF]/20" 
+    : "from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20";
+  
+  const accentColor = useCustomGradient ? "text-[#D946EF]" : "text-[#8B5CF6]";
+  const iconBgColor = useCustomGradient ? "bg-[#A855F7]/10" : "bg-[#8B5CF6]/10";
+
   return (
-    <Card className={`overflow-hidden border ${useCustomGradient ? 'border-[#D946EF]/20' : 'border-[#8B5CF6]/20'}`}>
-      <CardHeader className={`pb-2 pt-4 bg-gradient-to-r ${useCustomGradient ? 'from-[#8B5CF6]/10 via-[#A855F7]/10 to-[#D946EF]/5' : 'from-[#8B5CF6]/10 via-[#7E69AB]/10 to-[#6E59A5]/5'}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className={`flex justify-center items-center rounded-full p-1.5 mr-2 ${useCustomGradient ? 'bg-[#A855F7]/10' : 'bg-[#8B5CF6]/10'}`}>
-              <Coins className={`h-4 w-4 sm:h-5 sm:w-5 ${useCustomGradient ? 'text-[#A855F7]' : 'text-[#8B5CF6]'}`} />
-            </div>
-            <CardTitle className="text-lg sm:text-xl">
-              {getPoolName()}
-            </CardTitle>
+    <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
+      <CardHeader className="pb-2 pt-3 flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className={`flex justify-center items-center rounded-full p-1.5 ${iconBgColor}`}>
+            <Coins className={`h-4 w-4 ${accentColor}`} />
           </div>
-          <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
-            {getStatusIcon()}
-            <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-          </Badge>
+          <h3 className="font-semibold">{getPoolName()}</h3>
         </div>
+        <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
+          {getStatusIcon()}
+          <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+        </Badge>
       </CardHeader>
-      <CardContent className={`p-4 sm:p-6 ${isMobile ? 'pt-3' : ''}`}>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-          <div className="space-y-1">
-            <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">APY</span>
+      
+      <CardContent className="px-4 pt-2 pb-4 space-y-4">
+        {/* Primary stats row */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* APY */}
+          <div className="space-y-1 bg-white/30 rounded-lg p-3">
+            <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+              <TrendingUp className="h-3 w-3 flex-shrink-0" />
+              <span>APY</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="inline-flex">
-                    <Info className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600 transition-colors" />
+                    <Info className="h-3 w-3 text-gray-400 hover:text-gray-600 transition-colors" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="max-w-[250px] text-xs p-3">
@@ -157,39 +150,45 @@ export function PoolCard({
                 </PopoverContent>
               </Popover>
             </div>
-            <div className={`font-semibold text-base sm:text-lg flex items-center ${useCustomGradient ? "text-[#D946EF]" : "text-[#8B5CF6]"}`}>
+            <div className={`font-bold text-xl ${accentColor}`}>
               {apy}%
             </div>
           </div>
           
-          <div className="space-y-1">
-            <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-              <Lock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="truncate">Lock Duration</span>
+          {/* Lock Duration */}
+          <div className="space-y-1 bg-white/30 rounded-lg p-3">
+            <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+              <Lock className="h-3 w-3 flex-shrink-0" />
+              <span>Lock Duration</span>
             </div>
-            <div className="font-semibold text-base sm:text-lg flex items-center">
+            <div className="font-bold text-xl text-gray-800">
               {getLockDuration()}
             </div>
           </div>
-          
-          {!isMobile && (
-            <div className="space-y-1">
-              <div className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span className="truncate">{getLockPeriodLabel()}</span>
-              </div>
-              <div className="font-semibold text-base sm:text-lg flex items-center">
-                {getLockPeriodDate()}
-              </div>
-            </div>
-          )}
         </div>
         
+        {/* Lock Period Date */}
+        <div className="bg-white/30 rounded-lg p-3">
+          <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+            <Calendar className="h-3 w-3 flex-shrink-0" />
+            <span>{getLockPeriodLabel()}</span>
+          </div>
+          <div className="font-bold text-base text-gray-800">
+            {getLockPeriodDate()}
+          </div>
+        </div>
+        
+        <Separator className="my-1 bg-gray-200" />
+        
+        {/* Action button */}
         <Button 
           onClick={() => navigate(`/pool/${id}`)} 
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+          className={`w-full flex items-center justify-center gap-2 ${useCustomGradient 
+            ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF] hover:opacity-90"
+            : "bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+          }`}
         >
-          View Pool 
+          View Pool <ExternalLink className="h-4 w-4" />
         </Button>
       </CardContent>
     </Card>

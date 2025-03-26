@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -52,13 +53,13 @@ const Lending = () => {
       <Header title="Lending Dashboard" />
 
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
-        <div className="mb-6 sm:mb-8">
-          <div className="flex justify-center mb-2 sm:mb-4">
+        <div className="mb-6">
+          <div className="flex justify-center mb-2">
             <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r ${gradientStyle} text-transparent bg-clip-text text-center`}>
               Magnify Cash Lending
             </h1>
           </div>
-          <p className="text-sm sm:text-base text-gray-700 mb-4 max-w-3xl mx-auto text-center">
+          <p className="text-sm text-gray-700 mb-4 max-w-3xl mx-auto text-center">
             Supply liquidity to earn yield. Your returns grow as borrowers repay loans, with rates influenced by borrowing demand and repayment performance.
           </p>
         </div>
@@ -75,7 +76,7 @@ const Lending = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 gap-4 mb-6">
           {loading ? (
             <div className="py-8 text-center text-gray-500">Loading pools...</div>
           ) : (

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -278,6 +279,48 @@ const PoolDetails = () => {
   const shouldShowSupplyButton = pool?.status !== 'active' && pool?.status !== 'completed';
   const shouldShowWithdrawButton = pool?.status !== 'active';
 
+  // Get mock data for pool information
+  const getPoolInfo = () => {
+    if (!pool) return null;
+    
+    switch (poolId) {
+      case 1:
+        return {
+          warmupPeriod: "14 days",
+          lockDuration: "180 days",
+          borrowerLoanAmount: "$500 - $5,000",
+          borrowerLoanPeriod: "30 days",
+          borrowerInterest: "8.5% APY"
+        };
+      case 2:
+        return {
+          warmupPeriod: "30 days",
+          lockDuration: "365 days",
+          borrowerLoanAmount: "$1,000 - $10,000",
+          borrowerLoanPeriod: "60 days",
+          borrowerInterest: "6.2% APY"
+        };
+      case 3:
+        return {
+          warmupPeriod: "7 days",
+          lockDuration: "90 days",
+          borrowerLoanAmount: "$250 - $2,500",
+          borrowerLoanPeriod: "15 days",
+          borrowerInterest: "4.8% APY"
+        };
+      default:
+        return {
+          warmupPeriod: "14 days",
+          lockDuration: "180 days",
+          borrowerLoanAmount: "$500 - $5,000",
+          borrowerLoanPeriod: "30 days",
+          borrowerInterest: "6.5% APY"
+        };
+    }
+  };
+
+  const poolInfo = getPoolInfo();
+
   return (
     <div className="min-h-screen bg-white pb-20">
       <Header title={`${pool?.name || 'Pool'} Details`} />
@@ -441,6 +484,56 @@ const PoolDetails = () => {
               </CardHeader>
               <CardContent className="text-sm text-gray-600">
                 <div className="space-y-4">
+                  {poolInfo && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-3 p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <h3 className="font-medium text-[#8B5CF6] flex items-center gap-1.5">
+                          <Wallet className="h-4 w-4" />
+                          Lender Information
+                        </h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Warm-up Period:</span>
+                            <span className="font-medium">{poolInfo.warmupPeriod}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Lock Duration:</span>
+                            <span className="font-medium">{poolInfo.lockDuration}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3 p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <h3 className="font-medium text-[#8B5CF6] flex items-center gap-1.5">
+                          <Coins className="h-4 w-4" />
+                          Borrower Information
+                        </h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Loan Amount:</span>
+                            <span className="font-medium">{poolInfo.borrowerLoanAmount}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Loan Period:</span>
+                            <span className="font-medium">{poolInfo.borrowerLoanPeriod}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Interest Rate:</span>
+                            <span className="font-medium">{poolInfo.borrowerInterest}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-2 p-3 bg-[#8B5CF6]/5 rounded-lg border border-[#8B5CF6]/10">
+                    <div className="flex items-start">
+                      <AlertCircle className="h-5 w-5 text-[#8B5CF6] mr-2 flex-shrink-0 mt-0.5" />
+                      <p>
+                        The information provided here is for reference only. Please review the pool's terms and conditions for complete details before depositing or borrowing funds.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

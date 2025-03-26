@@ -281,8 +281,8 @@ const PoolDetails = () => {
   const currentValue = userPosition?.total_value_locked || 0;
   const earnings = currentValue - depositedValue;
 
-  const shouldShowSupplyButton = pool?.status !== 'active' && pool?.status !== 'completed' && pool?.status !== 'withdrawal';
-  const shouldShowWithdrawButton = pool?.status !== 'active' && pool?.status !== 'completed';
+  const shouldShowSupplyButton = pool?.status !== 'active' && pool?.status !== 'withdrawal';
+  const shouldShowWithdrawButton = pool?.status !== 'active';
 
   const getPoolInfo = () => {
     if (!pool) return null;

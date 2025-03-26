@@ -1,5 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UserPortfolioCardProps {
@@ -7,8 +8,8 @@ interface UserPortfolioCardProps {
   depositedValue: number;
   currentValue: number;
   earnings: number;
-  onSupply: () => void;
-  onWithdraw: () => void;
+  onSupply?: () => void;
+  onWithdraw?: () => void;
   useCustomGradient?: boolean;
   hideButtons?: boolean;
   showSupplyButton?: boolean;
@@ -48,8 +49,8 @@ export function UserPortfolioCard({
   };
 
   return (
-    <Card className="border-none shadow-none">
-      <CardContent className={`${isMobile ? "px-0 py-2" : "p-0"} space-y-3 sm:space-y-4`}>
+    <Card className="border border-[#8B5CF6]/20 shadow-sm">
+      <CardContent className={`${isMobile ? "px-4 py-4" : "p-6"} space-y-3 sm:space-y-4`}>
         {balance > 0 ? (
           <>
             <div className="space-y-2">
@@ -70,10 +71,32 @@ export function UserPortfolioCard({
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500">Earnings</span>
                 <span className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {isPositive ? '+' : ''}{earnings.toFixed(2)}
+                  {isPositive ? '+' : ''}{earnings.toFixed(2)} ({isPositive ? '+' : ''}{percentageChange.toFixed(2)}%)
                 </span>
               </div>
             </div>
+            
+            {!hideButtons && (
+              <div className="flex gap-2 pt-2">
+                {showSupplyButton && (
+                  <Button
+                    onClick={onSupply}
+                    className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+                  >
+                    Supply
+                  </Button>
+                )}
+                {showWithdrawButton && (
+                  <Button
+                    onClick={onWithdraw}
+                    variant="outline"
+                    className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+                  >
+                    Withdraw
+                  </Button>
+                )}
+              </div>
+            )}
           </>
         ) : (
           <div className="text-center py-4">
@@ -81,6 +104,28 @@ export function UserPortfolioCard({
             {!(poolStatus === 'active' || poolStatus === 'withdrawal') && (
               <p className="text-xs text-gray-400">Supply assets to start earning interest</p>
             )}
+            
+            {!hideButtons && showSupplyButton && (
+              <Button
+                onClick={onSupply}
+                className="mt-4 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+              >
+                Supply Assets
+              </Button>
+            )}
+          </div>
+        )}
+        
+        {showToggle && onToggleDummyData && (
+          <div className="flex justify-center pt-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onToggleDummyData} 
+              className="text-xs text-gray-500"
+            >
+              {balance > 0 ? "Remove Demo Data" : "Add Demo Data"}
+            </Button>
           </div>
         )}
       </CardContent>

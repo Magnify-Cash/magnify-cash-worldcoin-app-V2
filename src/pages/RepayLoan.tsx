@@ -114,8 +114,8 @@ const RepayLoan = () => {
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
     if (isConfirmed) {
-      const timeout = setTimeout(() => {
-        refetch();
+      const timeout = setTimeout(async () => {
+        await refetch();
       }, 1000);
 
       return () => clearTimeout(timeout);

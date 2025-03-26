@@ -1,7 +1,8 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Wallet } from "lucide-react";
 
 interface UserPortfolioCardProps {
   balance: number;
@@ -49,7 +50,13 @@ export function UserPortfolioCard({
   };
 
   return (
-    <Card className="border border-[#8B5CF6]/20 shadow-sm">
+    <Card className="border border-[#8B5CF6]/20 shadow-sm overflow-hidden">
+      <CardHeader className="py-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
+        <CardTitle className="text-xl flex items-center gap-2 justify-center">
+          <Wallet className="h-5 w-5 text-[#8B5CF6]" />
+          Your Position
+        </CardTitle>
+      </CardHeader>
       <CardContent className={`${isMobile ? "px-4 py-4" : "p-6"} space-y-3 sm:space-y-4`}>
         {balance > 0 ? (
           <>

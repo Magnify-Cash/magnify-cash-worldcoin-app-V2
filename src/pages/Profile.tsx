@@ -270,7 +270,7 @@ const Dashboard = () => {
                 let buttonText;
                 if (verifying && currentTier?.tierId === tier.tierId) {
                   buttonText = "Verifying...";
-                } else if (isOrbVerified || (tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level)) {
+                } else if (isOrbVerified || (tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level) || isVerificationSuccessful) {
                   buttonText = "Already Claimed";
                 } else if (isDeviceOrHasNFT) {
                   buttonText = "Upgrade NFT";

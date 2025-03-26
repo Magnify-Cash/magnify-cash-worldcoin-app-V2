@@ -175,7 +175,7 @@ const Dashboard = () => {
     } catch (error: any) {
       console.error("Error during verification:", error);
   
-      let errorMessage = "Something went wrong while verifying.";
+      let errorMessage = "We are not able to verify you right now. Please try again later.";
       if (error?.message?.includes("credential_unavailable")) {
         errorMessage = "You are not Orb Verified in the WorldChain App. Please complete Orb verification first.";
       }

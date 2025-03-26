@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { useAccount, useWriteContract } from 'wagmi';
 import { parseUnits } from 'viem';
 import { USDC_ADDRESS, MAGNIFY_ADDRESS } from '@/utils/constants';
-import { MagnifyWorldABI } from '@/utils/magnifyworldabi';
+import { magnifyworldabi } from '@/utils/magnifyworldabi';
 
 export const useRequestLoan = () => {
   const [loading, setLoading] = useState(false);
@@ -25,7 +25,7 @@ export const useRequestLoan = () => {
 
     try {
       const tx = await writeContractAsync({
-        abi: MagnifyWorldABI,
+        abi: magnifyworldabi,
         address: MAGNIFY_ADDRESS,
         functionName: 'requestLoan',
         args: [],

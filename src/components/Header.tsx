@@ -74,7 +74,7 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
                   className="min-h-[40px] focus:text-white focus-visible:text-white"
                   onClick={() => navigate("/lending")}
                 >
-                  Markets
+                  Lending Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="min-h-[40px] focus:text-white focus-visible:text-white"

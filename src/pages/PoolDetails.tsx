@@ -105,8 +105,10 @@ const PoolDetails = () => {
         return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'active':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'completed':
+      case 'cooldown':
         return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'withdrawal':
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -120,8 +122,10 @@ const PoolDetails = () => {
         return <Timer className="h-4 w-4 mr-1 text-amber-500" />;
       case 'active':
         return <CircleCheck className="h-4 w-4 mr-1 text-green-500" />;
-      case 'completed':
+      case 'cooldown':
         return <CircleCheck className="h-4 w-4 mr-1 text-gray-500" />;
+      case 'withdrawal':
+        return <CircleCheck className="h-4 w-4 mr-1 text-red-500" />;
       default:
         return <Circle className="h-4 w-4 mr-1 text-gray-500" />;
     }
@@ -187,8 +191,10 @@ const PoolDetails = () => {
         const lockDate = getPoolLockDate();
         const maturityDateForWarmup = getPoolMaturityDate();
         return `Warm-up: ${formatDateRange(startDate, endDate)}\nLocks: ${formatToLocalTime(lockDate, 'd MMM yyyy')}\nUnlocks: ${formatUnlockDate(maturityDateForWarmup)}`;
-      case 'completed':
-        return "Pool is completed";
+      case 'cooldown':
+        return "Pool is in cooldown";
+      case 'withdrawal':
+        return "Pool is in withdrawal";
       default:
         return "";
     }
@@ -205,7 +211,7 @@ const PoolDetails = () => {
   };
 
   const handleSupply = () => {
-    if (pool?.status === 'completed') {
+    if (pool?.status === 'withdrawal') {
       toast({
         title: "Pool is closed",
         description: "This pool is no longer accepting new deposits.",
@@ -275,10 +281,9 @@ const PoolDetails = () => {
   const currentValue = userPosition?.total_value_locked || 0;
   const earnings = currentValue - depositedValue;
 
-  const shouldShowSupplyButton = pool?.status !== 'active' && pool?.status !== 'completed';
-  const shouldShowWithdrawButton = pool?.status !== 'active';
+  const shouldShowSupplyButton = pool?.status !== 'active' && pool?.status !== 'completed' && pool?.status !== 'withdrawal';
+  const shouldShowWithdrawButton = pool?.status !== 'active' && pool?.status !== 'completed';
 
-  // Get mock data for pool information
   const getPoolInfo = () => {
     if (!pool) return null;
     
@@ -365,7 +370,7 @@ const PoolDetails = () => {
                       <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.total_value_locked)}</p>
                     </div>
                     
-                    {(pool.status === 'active' || pool.status === 'completed') && (
+                    {(pool.status === 'active' || pool.status === 'completed' || pool.status === 'withdrawal') && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Available Liquidity</p>
                         <p className="text-sm sm:text-lg font-semibold">{formatValue(pool.available_liquidity)}</p>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
@@ -26,6 +27,7 @@ const Dashboard = () => {
   const [verifying, setVerifying] = useState(false);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
   const [creditScore, setCreditScore] = useState(2);
+  const [isVerificationSuccessful, setIsVerificationSuccessful] = useState(false);
 
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
   console.log("NFT Info:", nftInfo);
@@ -94,7 +96,10 @@ const Dashboard = () => {
     if (ls_wallet) {
       calculateCreditScore();
     }
-  }, [ls_wallet, hasActiveLoan, loan, isOrbVerified]);
+
+    // Reset verification success state when data changes
+    setIsVerificationSuccessful(false);
+  }, [ls_wallet, hasActiveLoan, loan, isOrbVerified, data]);
 
   const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {
@@ -153,6 +158,7 @@ const Dashboard = () => {
           description: errorMessage,
           variant: "destructive",
         });
+        setVerifying(false);
         return;
       }
   
@@ -161,11 +167,12 @@ const Dashboard = () => {
   
       const isVerified = await verify(finalPayload, verificationStatus, ls_wallet, tokenId);
       if (isVerified) {
+        setIsVerificationSuccessful(true);
         toast({
           title: "Verification Successful",
           description: `You are now ${verificationStatus.level} Verified.`,
         });
-        refetch();
+        await refetch();
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
@@ -193,7 +200,7 @@ const Dashboard = () => {
     } finally {
       setVerifying(false);
     }
-  }, [ls_wallet, refetch, isDeviceVerified, nftInfo.tokenId]);
+  }, [ls_wallet, refetch, isDeviceVerified, nftInfo.tokenId, nftInfo, isOrbVerified]);
 
   if (isLoading) {
     return (
@@ -271,6 +278,13 @@ const Dashboard = () => {
                   buttonText = "Claim NFT";
                 }
 
+                // Determine if button should be disabled
+                const isButtonDisabled = 
+                  verifying || // Disable while verifying
+                  isVerificationSuccessful || // Disable after successful verification until refresh
+                  userTierId > tier.tierId || // User already at a higher tier
+                  tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level;
+
                 return (
                   <motion.div
                     key={tier.level}
@@ -285,11 +299,7 @@ const Dashboard = () => {
                     <Button
                       className="w-full"
                       variant="default"
-                      disabled={
-                        verifying || // Disable while verifying
-                        userTierId > tier.tierId || // User already at a higher tier
-                        tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level
-                      }
+                      disabled={isButtonDisabled}
                       onClick={() => handleVerify(tier)}
                     >
                       {buttonText}

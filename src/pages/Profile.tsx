@@ -5,7 +5,7 @@ import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "
 import { Shield, User, FileText, Pi, AlertTriangle, Bell, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
-import { useMagnifyWorld, Tier } from "@/hooks/useMagnifyWorld";
+import { useMagnifyWorld, Tier, invalidateCache } from "@/hooks/useMagnifyWorld";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -23,7 +23,7 @@ const Dashboard = () => {
   const ls_username = localStorage.getItem("ls_username");
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
 
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const { data, isLoading, isError } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const [verifying, setVerifying] = useState(false);
   const [currentTier, setCurrentTier] = useState<Tier | null>(null);
   const [creditScore, setCreditScore] = useState(2);
@@ -167,12 +167,12 @@ const Dashboard = () => {
   
       const isVerified = await verify(finalPayload, verificationStatus, ls_wallet, tokenId);
       if (isVerified) {
+        invalidateCache(ls_wallet as `0x${string}`);
         setIsVerificationSuccessful(true);
         toast({
           title: "Verification Successful",
           description: `You are now ${verificationStatus.level} Verified.`,
         });
-        await refetch();
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
@@ -200,7 +200,7 @@ const Dashboard = () => {
     } finally {
       setVerifying(false);
     }
-  }, [ls_wallet, refetch, isDeviceVerified, nftInfo.tokenId, nftInfo, isOrbVerified]);
+  }, [ls_wallet, isDeviceVerified, nftInfo.tokenId, nftInfo, isOrbVerified]);
 
   if (isLoading) {
     return (
@@ -238,10 +238,8 @@ const Dashboard = () => {
               <User className="w-16 h-16 text-primary" />
             </div>
             <h2 className="text-xl font-bold text-gradient mb-3 text-center break-words">@{ls_username}</h2>
-            {isOrbVerified ? (
-              <p className="text-muted-foreground text-center text-lg">
-                {nftInfo?.tier.verificationStatus.level} Verified User
-              </p>
+            {isOrbVerified || isVerificationSuccessful ? (
+              <p className="text-muted-foreground text-center text-lg">ORB Verified User</p>
             ) : isDeviceVerified ? (
               <p className="text-muted-foreground text-center text-lg">Not Orb Verified</p>
             ) : (
@@ -259,7 +257,11 @@ const Dashboard = () => {
             </div>
             <h2 className="text-2xl font-bold text-gradient mb-2 text-center">Verification Level</h2>
             <p className="text-muted-foreground text-center text-lg mb-6">
-              {isDeviceVerified || nftInfo.tokenId === null ? "Unverified" : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
+              {isOrbVerified || isVerificationSuccessful
+                ? "Currently: Orb Verified"
+                : isDeviceVerified || nftInfo.tokenId === null
+                ? "Unverified"
+                : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
@@ -326,7 +328,7 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {isOrbVerified || isDeviceVerified ? (
+          {isOrbVerified || isDeviceVerified || isVerificationSuccessful ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -352,9 +354,9 @@ const Dashboard = () => {
                         <FileText className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-lg">
-                          {isOrbVerified ? nftInfo?.tier.verificationStatus.level : "Not Orb Verified"}
-                        </h4>
+                      <h4 className="font-medium text-lg">
+                        {(isOrbVerified || isVerificationSuccessful) ? "ORB" : "Not Orb Verified"}
+                      </h4>
                       </div>
                     </div>
                     <div
@@ -364,7 +366,10 @@ const Dashboard = () => {
                           : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       }`}
                     >
-                      {hasActiveLoan || isDeviceVerified ? "Unavailable for Collateral" : "Available for Collateral"}
+                      {hasActiveLoan || (isDeviceVerified && !isVerificationSuccessful)
+                      ? "Unavailable for Collateral"
+                      : "Available for Collateral"}
+
                     </div>
                   </Card>
                 </motion.div>

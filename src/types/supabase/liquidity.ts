@@ -11,7 +11,7 @@ export interface LiquidityPool {
   apy: number;
   total_value_locked: number;
   available_liquidity: number;
-  status: 'warm-up' | 'active' | 'completed';
+  status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
   metadata?: Record<string, any>;
 }
 

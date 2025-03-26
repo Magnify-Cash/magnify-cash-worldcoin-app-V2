@@ -26,7 +26,7 @@ interface PoolCardProps {
   apy: number;
   totalSupply: number;
   availableLiquidity: number;
-  status: 'warm-up' | 'active' | 'completed';
+  status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
   useCustomGradient?: boolean;
 }
 
@@ -45,6 +45,7 @@ export function PoolCard({
     if (id === 1) return "Pool A";
     if (id === 2) return "Pool B";
     if (id === 3) return "Pool C";
+    if (id === 4) return "Pool D";
     return title;
   };
 
@@ -56,6 +57,8 @@ export function PoolCard({
         return "365 days";
       case 3:
         return "90 days";
+      case 4:
+        return "30 days";
       default:
         return "180 days";
     }
@@ -71,6 +74,7 @@ export function PoolCard({
       let daysToAdd = 180;
       if (id === 2) daysToAdd = 365;
       if (id === 3) daysToAdd = 90;
+      if (id === 4) daysToAdd = 30;
       
       const endDate = addDays(today, daysToAdd);
       return format(endDate, 'MMM d, yyyy');
@@ -89,8 +93,10 @@ export function PoolCard({
         return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'active':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'completed':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'cooldown':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'withdrawal':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -102,8 +108,10 @@ export function PoolCard({
         return <div className="h-3 w-3 rounded-full bg-amber-500 mr-1.5"></div>;
       case 'active':
         return <div className="h-3 w-3 rounded-full bg-green-500 mr-1.5"></div>;
-      case 'completed':
-        return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1.5"></div>;
+      case 'cooldown':
+        return <div className="h-3 w-3 rounded-full bg-blue-500 mr-1.5"></div>;
+      case 'withdrawal':
+        return <div className="h-3 w-3 rounded-full bg-purple-500 mr-1.5"></div>;
       default:
         return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1.5"></div>;
     }
@@ -136,7 +144,7 @@ export function PoolCard({
         <div className="grid grid-cols-2 gap-4">
           {/* APY */}
           <div className="space-y-1 bg-white/30 rounded-lg p-3">
-            <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+            <div className="text-xs text-gray-500 flex items-center gap-1">
               <TrendingUp className="h-3 w-3 flex-shrink-0" />
               <span>APY</span>
               <Popover>
@@ -157,9 +165,9 @@ export function PoolCard({
           
           {/* Lock Duration */}
           <div className="space-y-1 bg-white/30 rounded-lg p-3">
-            <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+            <div className="text-xs text-gray-500 flex items-center gap-1">
               <Lock className="h-3 w-3 flex-shrink-0" />
-              <span>Lock Duration</span>
+              <span className="whitespace-nowrap">Lock Duration</span>
             </div>
             <div className="font-bold text-xl text-gray-800">
               {getLockDuration()}

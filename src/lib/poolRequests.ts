@@ -59,11 +59,30 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
       apy: 4.8,
       total_value_locked: 30000,
       available_liquidity: 22000,
-      status: "completed",
+      status: "withdrawal",
       metadata: {
         description: "Wrapped Bitcoin lending pool",
         minDeposit: 0.001,
         maxDeposit: 10
+      }
+    },
+    {
+      id: 4,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      name: "DAI Pool",
+      token_a: "DAI",
+      token_b: "LP",
+      token_a_amount: 18000,
+      token_b_amount: 18000,
+      apy: 5.6,
+      total_value_locked: 18000,
+      available_liquidity: 9000,
+      status: "cooldown",
+      metadata: {
+        description: "DAI lending pool",
+        minDeposit: 5,
+        maxDeposit: 10000
       }
     }
   ];

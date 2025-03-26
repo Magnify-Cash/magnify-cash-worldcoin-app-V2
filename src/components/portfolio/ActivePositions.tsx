@@ -51,23 +51,23 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   };
 
   return (
-    <Card className="border border-[#8B5CF6]/20 overflow-hidden">
-      <CardHeader className="py-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Wallet className="mr-2 h-5 w-5 text-[#8B5CF6]" />
-            <span>Your Active Positions</span>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className={`${isMobile ? "px-3 py-4" : "px-6 py-5"} space-y-4`}>
+    <div className="space-y-4">
+      <div className="flex items-center py-2">
+        <Wallet className="mr-2 h-5 w-5 text-[#8B5CF6]" />
+        <h2 className="text-lg font-medium">Your Active Positions</h2>
+      </div>
+
+      <div className="space-y-5">
         {pools.map((pool) => (
-          <div key={pool.id} className="rounded-lg border border-[#8B5CF6]/20 overflow-hidden">
-            <div className="bg-gradient-to-r from-[#8B5CF6]/5 to-transparent p-4">
+          <div 
+            key={pool.id} 
+            className="rounded-lg border border-[#8B5CF6]/20 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="bg-gradient-to-r from-[#8B5CF6]/5 to-transparent p-4 sm:p-5">
               <div className="flex justify-between items-center mb-3">
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-lg">{pool.name}</h3>
+                    <h3 className="font-medium text-lg">Pool {String.fromCharCode(64 + pool.id)}</h3>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(pool.status)}`}>
                       {pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}
                     </span>
@@ -76,7 +76,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
               </div>
 
               <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Your Balance</span>
                     <span className="font-medium">{balances[pool.id]?.toFixed(2) || "0.00"} LP</span>
@@ -92,7 +92,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Earnings</span>
                     <span className="font-medium text-green-600">
-                      +{earnings[pool.id]?.toFixed(2) || "0.00"} 
+                      +${earnings[pool.id]?.toFixed(2) || "0.00"} 
                       {depositedValues[pool.id] > 0 ? 
                         ` (+${((earnings[pool.id] / depositedValues[pool.id]) * 100).toFixed(2)}%)` : 
                         ""}
@@ -100,7 +100,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-4 flex gap-2">
+                <div className="mt-5 flex gap-2">
                   {showSupplyButton(pool.status) && (
                     <Button 
                       onClick={() => navigate(`/pool/${pool.id}`)} 
@@ -135,7 +135,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
             Remove Demo Data
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

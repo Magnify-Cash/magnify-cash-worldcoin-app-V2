@@ -110,18 +110,22 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
             className="rounded-lg bg-white shadow-md overflow-hidden"
           >
             <div className="p-4">
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center">
-                    {getPoolIcon(pool.id)}
-                    <h3 className="font-medium text-base sm:text-lg">{name}</h3>
-                  </div>
-                  <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getStatusColor(pool.status)}`}>
-                    {getStatusIndicator(pool.status)}
-                    <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
-                  </div>
+              {/* Pool name on its own row */}
+              <div className="flex items-center mb-2">
+                {getPoolIcon(pool.id)}
+                <h3 className="font-medium text-base sm:text-lg">{name}</h3>
+              </div>
+              
+              {/* Status badge centered on its own row */}
+              <div className="flex justify-center mb-2">
+                <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getStatusColor(pool.status)}`}>
+                  {getStatusIndicator(pool.status)}
+                  <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
                 </div>
+              </div>
 
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex-1"></div>
                 <Button 
                   variant="ghost" 
                   size="sm" 

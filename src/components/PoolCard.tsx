@@ -1,7 +1,5 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
-  Coins, 
   TrendingUp, 
   Lock,
   Calendar,
@@ -137,25 +135,17 @@ export function PoolCard({
 
   return (
     <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
-      <CardHeader className="flex flex-col gap-1 pb-2 pt-3">
-        <div className="flex flex-col w-full relative pl-11">
-          <div className={`absolute left-0 top-[50%] -translate-y-1/2 flex justify-center items-center rounded-full p-2 ${iconBgColor}`}>
-            <Coins className={`h-5 w-5 ${accentColor}`} />
-          </div>
-          
-          <h3 className="font-semibold text-base sm:text-lg leading-tight truncate max-w-[85%]">
-            {getPoolName()}
-          </h3>
-          
-          <div className="mt-1">
-            <Badge variant="outline" className={`inline-flex items-center ${getStatusColor()} py-0.5 px-2`}>
-              <span className="flex items-center">
-                {getStatusIcon()}
-                <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-              </span>
-            </Badge>
-          </div>
-        </div>
+      <CardHeader className="flex flex-col items-center gap-2 pb-2 pt-3">
+        <h3 className="font-semibold text-lg sm:text-xl leading-tight text-center">
+          {getPoolName()}
+        </h3>
+        
+        <Badge variant="outline" className={`inline-flex items-center ${getStatusColor()} py-0.5 px-2`}>
+          <span className="flex items-center">
+            {getStatusIcon()}
+            <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+          </span>
+        </Badge>
       </CardHeader>
       
       <CardContent className="px-3 sm:px-4 pt-2 pb-4 space-y-3 sm:space-y-4">

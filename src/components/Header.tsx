@@ -21,7 +21,8 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
   const isLendingPage = location.pathname === "/lending";
   const isPoolPage = location.pathname.startsWith("/pool/");
   const isPortfolioPage = location.pathname === "/portfolio";
-  const isLendingRelated = isLendingPage || isPoolPage || isPortfolioPage;
+  const isLendingHistoryPage = location.pathname === "/lending-history";
+  const isLendingRelated = isLendingPage || isPoolPage || isPortfolioPage || isLendingHistoryPage;
 
   const handleBackClick = () => {
     // Use browser history to go back instead of hardcoded redirection
@@ -84,6 +85,12 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
                   onClick={() => navigate("/portfolio")}
                 >
                   Portfolio
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="min-h-[40px] focus:text-white focus-visible:text-white"
+                  onClick={() => navigate("/lending-history")}
+                >
+                  Lending History
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

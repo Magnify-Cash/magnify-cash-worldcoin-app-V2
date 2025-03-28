@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { getPools, getUserPoolPosition } from "@/lib/poolRequests";
@@ -93,11 +92,11 @@ const Portfolio = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <Header title="Your Portfolio" />
+      <Header title="Lending Portfolio" />
 
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         <PortfolioHeader 
-          title="Your Portfolio" 
+          title="Lending Portfolio" 
           subtitle="Track and manage your positions across all lending pools."
         />
 

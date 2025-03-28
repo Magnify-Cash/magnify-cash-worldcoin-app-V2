@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
@@ -107,10 +108,10 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
             className="rounded-lg bg-white shadow-md overflow-hidden"
           >
             <div className="p-4">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
                   {getPoolIcon(pool.id)}
-                  <h3 className="font-medium text-base sm:text-lg">{name}</h3>
+                  <h3 className="font-medium text-base sm:text-lg truncate max-w-[65%]">{name}</h3>
                 </div>
                 <Button 
                   variant="ghost" 
@@ -122,7 +123,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                 </Button>
               </div>
               
-              <div className="flex justify-center mb-2">
+              <div className="flex justify-center mb-3">
                 <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getStatusColor(pool.status)}`}>
                   {getStatusIndicator(pool.status)}
                   <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>

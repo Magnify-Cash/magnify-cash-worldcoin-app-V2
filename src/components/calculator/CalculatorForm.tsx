@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Calculator, Sliders } from "lucide-react";
+import { Calculator, Sliders, Calendar, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -102,55 +102,6 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
             </div>
             <p className="text-xs text-gray-500 mt-1">Percentage of pool capital being used for loans</p>
           </div>
-
-          <div>
-            <Label htmlFor="loanAmount">Loan Amount per Borrower (USDC)</Label>
-            <div className="flex items-center gap-4">
-              <Slider
-                id="loanAmount"
-                min={10}
-                max={50}
-                step={10}
-                value={[inputs.loanAmount]}
-                onValueChange={(value) => handleSliderChange("loanAmount", value)}
-                className="flex-1"
-              />
-              <Input
-                name="loanAmount"
-                type="number"
-                min="10"
-                max="50"
-                step="10"
-                value={inputs.loanAmount}
-                onChange={handleInputChange}
-                className="w-20"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="loanPeriod">Loan Period (days)</Label>
-            <div className="flex items-center gap-4">
-              <Slider
-                id="loanPeriod"
-                min={7}
-                max={30}
-                step={1}
-                value={[inputs.loanPeriod]}
-                onValueChange={(value) => handleSliderChange("loanPeriod", value)}
-                className="flex-1"
-              />
-              <Input
-                name="loanPeriod"
-                type="number"
-                min="7"
-                max="30"
-                value={inputs.loanPeriod}
-                onChange={handleInputChange}
-                className="w-20"
-              />
-            </div>
-          </div>
         </div>
 
         <div className="border-t border-gray-200 pt-4">
@@ -159,6 +110,55 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
             Loan Terms
           </h3>
           <div className="space-y-4">
+            <div>
+              <Label htmlFor="loanAmount">Loan Amount per Borrower (USDC)</Label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  id="loanAmount"
+                  min={10}
+                  max={50}
+                  step={10}
+                  value={[inputs.loanAmount]}
+                  onValueChange={(value) => handleSliderChange("loanAmount", value)}
+                  className="flex-1"
+                />
+                <Input
+                  name="loanAmount"
+                  type="number"
+                  min="10"
+                  max="50"
+                  step="10"
+                  value={inputs.loanAmount}
+                  onChange={handleInputChange}
+                  className="w-20"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="loanPeriod">Loan Period (days)</Label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  id="loanPeriod"
+                  min={7}
+                  max={30}
+                  step={1}
+                  value={[inputs.loanPeriod]}
+                  onValueChange={(value) => handleSliderChange("loanPeriod", value)}
+                  className="flex-1"
+                />
+                <Input
+                  name="loanPeriod"
+                  type="number"
+                  min="7"
+                  max="30"
+                  value={inputs.loanPeriod}
+                  onChange={handleInputChange}
+                  className="w-20"
+                />
+              </div>
+            </div>
+
             <div>
               <Label htmlFor="interestRate">Interest Rate (%)</Label>
               <div className="flex items-center gap-4">

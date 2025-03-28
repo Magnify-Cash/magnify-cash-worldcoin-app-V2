@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
-import { ArrowRight, Shield } from "lucide-react";
+import { ArrowRight, Shield, Wallet, Gem } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
+import { Button } from "@/components/ui/button";
 
 type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
   address: string;
@@ -13,7 +13,6 @@ type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
 const Welcome = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  
   const [loading, setLoading] = useState(false);
 
   const handleSignIn = async () => {
@@ -85,43 +84,89 @@ const Welcome = () => {
         </div>
       </nav>
 
-      {/* Hero Section - Mobile Optimized */}
-      <div className="container mx-auto px-3 sm:px-6 pt-8 sm:pt-20 pb-12 sm:pb-24">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text animate-gradient leading-tight">
-            Get a loan just by being you.
-          </h1>
+      {/* Enhanced Hero Section - Mobile Optimized */}
+      <div className="container mx-auto px-3 sm:px-6 pt-8 sm:pt-16 pb-12 sm:pb-24">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
+            {/* Left Content - Text and CTAs */}
+            <div className="lg:col-span-7 text-center lg:text-left">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text animate-gradient leading-tight">
+                Get a loan just by being you.
+              </h1>
 
-          <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-12 max-w-[90%] sm:max-w-2xl mx-auto font-medium">
-            Get instant loans backed by your World ID. No collateral needed, just
-            your verified digital presence.
-          </p>
+              <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-10 max-w-[90%] sm:max-w-2xl mx-auto lg:mx-0 font-medium">
+                Get instant loans backed by your World ID. No collateral needed, just
+                your verified digital presence. Participate in our ecosystem as a borrower or lender.
+              </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6 sm:mb-16 px-3 sm:px-4">
-            <button
-              disabled={loading}
-              onClick={handleSignIn}
-              className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
-            >
-              {loading ? "Connecting..." : "Get a Loan"}
-              <ArrowRight className="w-5 h-5" />
-            </button>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start mb-6 sm:mb-10">
+                <Button
+                  disabled={loading}
+                  onClick={handleSignIn}
+                  className="flex items-center justify-center gap-2 min-h-[48px] text-base py-6 px-8 font-semibold bg-gradient-to-r from-[#6456F1] to-[#8F56F1] hover:from-[#5646E1] hover:to-[#7F46E1] text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+                >
+                  <Wallet className="w-5 h-5" />
+                  {loading ? "Connecting..." : "Get a Loan"}
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
 
-            <button
-              onClick={handleLenderSignUp}
-              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF] text-white hover:opacity-90 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
-            >
-              Become a Lender
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
+                <Button
+                  onClick={handleLenderSignUp}
+                  className="flex items-center justify-center gap-2 py-6 px-8 rounded-xl border border-[#6456F1] text-[#6456F1] hover:bg-[#6456F1] hover:text-white transition-all duration-300 font-semibold min-h-[48px] text-base"
+                >
+                  <Gem className="w-5 h-5" />
+                  Become a Lender
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </div>
 
-          {/* Trust Badge - Mobile Optimized */}
-          <div className="flex items-center justify-center gap-2 text-gray-600 px-3 sm:px-4 text-center">
-            <Shield className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm font-medium">
-              Verified by World ID. Settled on World Chain. Powered by $MAG.
-            </span>
+              {/* Trust Badge - Enhanced */}
+              <div className="flex items-center justify-center lg:justify-start gap-2 text-gray-600 px-3 sm:px-0 text-center lg:text-left bg-gray-50 lg:bg-transparent p-3 lg:p-0 rounded-xl">
+                <Shield className="w-5 h-5 flex-shrink-0 text-[#6456F1]" />
+                <span className="text-sm font-medium">
+                  Verified by World ID. Settled on World Chain. Powered by $MAG.
+                </span>
+              </div>
+            </div>
+
+            {/* Right Content - Feature Cards */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="bg-white rounded-xl p-5 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-start gap-3">
+                  <div className="bg-purple-100 p-2 rounded-full">
+                    <Shield className="w-5 h-5 text-[#6456F1]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-900 mb-1">Identity-Based Lending</h3>
+                    <p className="text-gray-600 text-sm">Get approved for loans based on your verified World ID, no collateral required.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl p-5 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-start gap-3">
+                  <div className="bg-purple-100 p-2 rounded-full">
+                    <Gem className="w-5 h-5 text-[#6456F1]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-900 mb-1">Earn Interest</h3>
+                    <p className="text-gray-600 text-sm">Provide liquidity to lending pools and earn competitive interest rates.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl p-5 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-start gap-3">
+                  <div className="bg-purple-100 p-2 rounded-full">
+                    <Wallet className="w-5 h-5 text-[#6456F1]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-900 mb-1">Simple & Secure</h3>
+                    <p className="text-gray-600 text-sm">Our smart contracts ensure safe transactions and automatic management.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

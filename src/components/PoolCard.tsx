@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   Coins, 
@@ -115,15 +116,15 @@ export function PoolCard({
   const getStatusIcon = () => {
     switch (status) {
       case 'warm-up':
-        return <div className="h-3 w-3 rounded-full bg-amber-500 mr-1.5"></div>;
+        return <div className="h-3 w-3 rounded-full bg-amber-500 mr-1"></div>;
       case 'active':
-        return <div className="h-3 w-3 rounded-full bg-green-500 mr-1.5"></div>;
+        return <div className="h-3 w-3 rounded-full bg-green-500 mr-1"></div>;
       case 'cooldown':
-        return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1.5"></div>;
+        return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1"></div>;
       case 'withdrawal':
-        return <div className="h-3 w-3 rounded-full bg-purple-500 mr-1.5"></div>;
+        return <div className="h-3 w-3 rounded-full bg-purple-500 mr-1"></div>;
       default:
-        return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1.5"></div>;
+        return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1"></div>;
     }
   };
   
@@ -137,8 +138,8 @@ export function PoolCard({
   return (
     <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
       <CardHeader className="flex flex-col gap-1 pb-2 pt-3">
-        <div className="flex flex-col w-full relative pl-10">
-          <div className={`absolute left-0 top-2 flex justify-center items-center rounded-full p-2 ${iconBgColor}`}>
+        <div className="flex flex-col w-full relative pl-11">
+          <div className={`absolute left-0 top-[50%] -translate-y-1/2 flex justify-center items-center rounded-full p-2 ${iconBgColor}`}>
             <Coins className={`h-5 w-5 ${accentColor}`} />
           </div>
           
@@ -147,7 +148,7 @@ export function PoolCard({
           </h3>
           
           <div className="mt-1">
-            <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
+            <Badge variant="outline" className={`inline-flex items-center ${getStatusColor()} py-0.5 pr-1.5 pl-1`}>
               {getStatusIcon()}
               <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
             </Badge>

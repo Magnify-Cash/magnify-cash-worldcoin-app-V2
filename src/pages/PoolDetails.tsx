@@ -328,7 +328,7 @@ const PoolDetails = () => {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <Header title={`${pool?.name || 'Pool'}`} />
+      <Header title="Pool Details" />
 
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         {pool && (

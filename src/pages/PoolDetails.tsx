@@ -255,6 +255,11 @@ const PoolDetails = () => {
     }
   };
 
+  const getPoolSymbol = () => {
+    if (!pool) return "LP";
+    return pool.token_b;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -319,6 +324,7 @@ const PoolDetails = () => {
   };
 
   const poolInfo = getPoolInfo();
+  const poolSymbol = getPoolSymbol();
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -333,7 +339,7 @@ const PoolDetails = () => {
                   <div className="bg-[#8B5CF6]/20 rounded-full p-2 flex items-center justify-center">
                     <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-[#8B5CF6]" />
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-bold">
+                  <h1 className="text-xl sm:text-2xl font-bold">
                     {pool.name}
                   </h1>
                 </div>
@@ -458,7 +464,7 @@ const PoolDetails = () => {
                 </CardContent>
               </Card>
 
-              <PoolPriceGraph poolId={pool.id} />
+              <PoolPriceGraph poolId={pool.id} symbol={poolSymbol} />
 
               <UserPortfolioCard
                 balance={userPosition?.token_b_amount || 0}
@@ -473,6 +479,7 @@ const PoolDetails = () => {
                 onToggleDummyData={toggleDummyData}
                 showToggle={true}
                 poolStatus={pool.status}
+                symbol={poolSymbol}
               />
             </div>
 

@@ -96,9 +96,10 @@ const generatePriceData = (poolId: number, timeframe: "days" | "weeks") => {
 interface PoolPriceGraphProps {
   poolId: number;
   color?: string;
+  symbol?: string;
 }
 
-export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProps) {
+export function PoolPriceGraph({ poolId, color = "#8B5CF6", symbol = "LP" }: PoolPriceGraphProps) {
   const isMobile = useIsMobile();
   const [timeframe, setTimeframe] = useState<"days" | "weeks">("days");
   const priceData = generatePriceData(poolId, timeframe);
@@ -137,7 +138,7 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
         <div className="flex flex-col items-center justify-center">
           <CardTitle className="text-xl flex items-center gap-2 mb-3 text-center">
             <LineChart className="h-5 w-5 text-[#9b87f5]" />
-            LP Token Price
+            {symbol} Token Price
           </CardTitle>
           
           <ToggleGroup 

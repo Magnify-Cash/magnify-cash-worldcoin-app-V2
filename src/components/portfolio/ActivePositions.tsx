@@ -111,7 +111,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
                   {getPoolIcon(pool.id)}
-                  <h3 className="font-medium text-base sm:text-lg truncate max-w-[65%]">{name}</h3>
+                  <h3 className="font-medium text-base sm:text-lg">{name}</h3>
                 </div>
                 <Button 
                   variant="ghost" 

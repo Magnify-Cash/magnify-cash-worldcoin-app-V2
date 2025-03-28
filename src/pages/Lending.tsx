@@ -1,12 +1,15 @@
+
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Info } from "lucide-react";
+import { Info, Calculator } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PoolCard } from "@/components/PoolCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPools } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): number => {
   switch (status) {
@@ -22,6 +25,7 @@ const Lending = () => {
   const [loading, setLoading] = useState(true);
   const [pools, setPools] = useState<LiquidityPool[]>([]);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPools = async () => {
@@ -46,6 +50,10 @@ const Lending = () => {
     fetchPools();
   }, []);
 
+  const handleCalculatorClick = () => {
+    navigate("/calculator");
+  };
+
   return (
     <div className="min-h-screen bg-white pb-20">
       <Header title="Lending Dashboard" />
@@ -60,6 +68,16 @@ const Lending = () => {
           <p className="text-xs sm:text-sm text-gray-700 mb-4 max-w-3xl mx-auto text-center">
             Supply liquidity to earn yield. Your returns grow as borrowers repay loans, with rates influenced by borrowing demand and repayment performance.
           </p>
+          <div className="flex justify-center">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-1.5" 
+              onClick={handleCalculatorClick}
+            >
+              <Calculator className="h-4 w-4" />
+              <span>Earnings Calculator</span>
+            </Button>
+          </div>
         </div>
 
         <div className="mb-6">

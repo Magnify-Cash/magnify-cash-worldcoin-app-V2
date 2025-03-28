@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
-import { ArrowRight, Shield, Calculator } from "lucide-react";
+import { ArrowRight, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -67,10 +68,6 @@ const Welcome = () => {
   const handleLenderSignUp = () => {
     navigate("/lending");
   };
-  
-  const handleCalculator = () => {
-    navigate("/calculator");
-  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -86,14 +83,6 @@ const Welcome = () => {
             Magnify Cash
           </div>
         </div>
-        
-        <button 
-          onClick={handleCalculator}
-          className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm py-1.5 px-3 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <Calculator className="w-4 h-4" />
-          <span>Calculator</span>
-        </button>
       </nav>
 
       {/* Hero Section - Mobile Optimized */}
@@ -124,14 +113,6 @@ const Welcome = () => {
             >
               Become a Lender
               <ArrowRight className="w-5 h-5" />
-            </button>
-            
-            <button
-              onClick={handleCalculator}
-              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 bg-white text-gray-800 hover:bg-gray-50 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
-            >
-              Earnings Calculator
-              <Calculator className="w-5 h-5" />
             </button>
           </div>
 

@@ -1,5 +1,5 @@
 
-import { ArrowLeft, Home, Menu } from "lucide-react";
+import { ArrowLeft, Home, Menu, Calculator } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
@@ -22,7 +22,8 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
   const isPoolPage = location.pathname.startsWith("/pool/");
   const isPortfolioPage = location.pathname === "/portfolio";
   const isLendingHistoryPage = location.pathname === "/lending-history";
-  const isLendingRelated = isLendingPage || isPoolPage || isPortfolioPage || isLendingHistoryPage;
+  const isCalculatorPage = location.pathname === "/calculator";
+  const isLendingRelated = isLendingPage || isPoolPage || isPortfolioPage || isLendingHistoryPage || isCalculatorPage;
 
   const handleBackClick = () => {
     // Use browser history to go back instead of hardcoded redirection
@@ -91,6 +92,13 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
                   onClick={() => navigate("/lending-history")}
                 >
                   History
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="min-h-[40px] focus:text-white focus-visible:text-white"
+                  onClick={() => navigate("/calculator")}
+                >
+                  <Calculator className="mr-2 h-4 w-4" />
+                  Earnings Calculator
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -99,7 +99,7 @@ export function UserPortfolioCard({
                   <Button
                     onClick={onWithdraw}
                     variant="outline"
-                    className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+                    className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/20 hover:text-[#8B5CF6] hover:font-medium"
                   >
                     Withdraw
                   </Button>

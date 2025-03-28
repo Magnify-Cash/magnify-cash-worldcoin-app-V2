@@ -117,7 +117,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                   variant="ghost" 
                   size="sm" 
                   onClick={() => navigate(`/pool/${pool.id}`)}
-                  className="p-1 h-8 w-8"
+                  className="p-1 h-8 w-8 hover:text-white"
                 >
                   <ExternalLink className="h-4 w-4 text-gray-500" />
                 </Button>
@@ -174,7 +174,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                       onClick={() => navigate(`/pool/${pool.id}`)} 
                       variant="outline" 
                       size="sm"
-                      className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+                      className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/20 hover:text-[#8B5CF6] hover:font-medium"
                     >
                       Withdraw
                     </Button>

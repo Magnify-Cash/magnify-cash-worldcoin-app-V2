@@ -200,7 +200,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
             variant="outline" 
             onClick={onClose} 
             disabled={isLoading} 
-            className="w-full py-6"
+            className="w-full py-6 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/20 hover:text-[#8B5CF6] hover:font-medium"
           >
             Cancel
           </Button>

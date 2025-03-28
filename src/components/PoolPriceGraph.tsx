@@ -17,6 +17,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group";
+import { format, addDays, addWeeks, startOfMonth } from "date-fns";
 
 // Generate historical price data based on pool ID and timeframe
 const generatePriceData = (poolId: number, timeframe: "days" | "weeks") => {
@@ -48,8 +49,19 @@ const generatePriceData = (poolId: number, timeframe: "days" | "weeks") => {
   // Generate data based on timeframe
   const dataPoints = timeframe === "days" ? 30 : 12; // 30 days or 12 weeks
   
+  // Get current date to start generating proper dates
+  const today = new Date();
+  
   const data = [];
-  for (let i = 1; i <= dataPoints; i++) {
+  for (let i = 0; i < dataPoints; i++) {
+    // Calculate the date - either adding days or weeks
+    const currentDate = timeframe === "days" 
+      ? addDays(today, i)
+      : addWeeks(today, i);
+    
+    // Format date as MM/DD/YY
+    const formattedDate = format(currentDate, "MM/dd/yy");
+    
     // Simulate price movement with trend and random noise
     const noise = (Math.random() - 0.5) * volatility;
     basePrice = basePrice + trend + noise;
@@ -73,7 +85,7 @@ const generatePriceData = (poolId: number, timeframe: "days" | "weeks") => {
     }
     
     data.push({
-      date: timeframe === "days" ? `Day ${i}` : `Week ${i}`,
+      date: formattedDate,
       price: parseFloat(basePrice.toFixed(4))
     });
   }
@@ -101,10 +113,10 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
     if (color) return color;
     
     switch (poolId) {
-      case 1: return "#8B5CF6"; // Purple
+      case 1: return "#9b87f5"; // Lighter purple
       case 2: return "#10B981"; // Green
       case 3: return "#F59E0B"; // Amber
-      default: return "#8B5CF6"; // Default purple
+      default: return "#9b87f5"; // Default purple
     }
   };
   
@@ -120,25 +132,38 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
   };
 
   return (
-    <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
-      <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <BarChart className="h-5 w-5 text-[#8B5CF6]" />
+    <Card className="w-full border border-[#9b87f5]/20 overflow-hidden">
+      <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#9b87f5]/10 to-[#7E69AB]/5">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+          <CardTitle className="text-xl flex items-center gap-2 mb-3 sm:mb-0">
+            <BarChart className="h-5 w-5 text-[#9b87f5]" />
             LP Token Price
           </CardTitle>
           
-          <ToggleGroup type="single" value={timeframe} onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}>
-            <ToggleGroupItem value="days" aria-label="View by days" className="text-xs">
+          <ToggleGroup 
+            type="single" 
+            value={timeframe} 
+            onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}
+            className="self-end sm:self-auto"
+          >
+            <ToggleGroupItem 
+              value="days" 
+              aria-label="View by days" 
+              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+            >
               Days
             </ToggleGroupItem>
-            <ToggleGroupItem value="weeks" aria-label="View by weeks" className="text-xs">
+            <ToggleGroupItem 
+              value="weeks" 
+              aria-label="View by weeks" 
+              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+            >
               Weeks
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
       </CardHeader>
-      <CardContent className={`${isMobile ? "px-2 py-2" : "pt-5"} h-[260px]`}>
+      <CardContent className={`${isMobile ? "px-1 py-2" : "pt-5"} h-[260px]`}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={priceData}
@@ -146,7 +171,7 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
               top: 10,
               right: isMobile ? 5 : 20,
               left: isMobile ? 0 : 0,
-              bottom: isMobile ? 5 : 0,
+              bottom: isMobile ? 15 : 10, // Increased bottom margin for mobile to fit dates
             }}
           >
             <defs>
@@ -160,15 +185,18 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
             
             <XAxis 
               dataKey="date" 
-              tick={{ fontSize: isMobile ? 11 : 12 }}
-              tickMargin={isMobile ? 5 : 10}
+              tick={{ fontSize: isMobile ? 10 : 12, fill: "#333" }} // Darker text for better readability
+              tickMargin={isMobile ? 10 : 10} // Increased space for date labels
               interval={getTickInterval()}
               padding={{ left: 10, right: 10 }}
+              angle={isMobile ? -45 : 0} // Angle the dates on mobile for better fit
+              textAnchor={isMobile ? "end" : "middle"} // Align text based on angle
+              height={isMobile ? 50 : 30} // Increased height for angled text on mobile
             />
             
             <YAxis 
               domain={[minPrice, maxPrice]}
-              tick={{ fontSize: isMobile ? 11 : 12 }}
+              tick={{ fontSize: isMobile ? 11 : 12, fill: "#333" }} // Darker text
               tickFormatter={(value) => {
                 if (typeof value !== 'number') return value;
                 return "$" + value.toFixed(3);
@@ -179,14 +207,14 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
             />
             
             <Tooltip 
-              content={({ active, payload, label }) => {
+              content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   return (
                     <div className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-md rounded-md p-2 text-xs">
-                      <p className="font-medium">{label}</p>
+                      <p className="font-medium">{payload[0].payload.date}</p>
                       <div className="pt-1">
                         <p style={{ color: poolColor }} className="font-semibold">
-                          Price: ${payload[0].value}
+                          ${payload[0].value}
                         </p>
                       </div>
                     </div>

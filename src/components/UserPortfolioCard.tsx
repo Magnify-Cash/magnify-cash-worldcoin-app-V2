@@ -52,10 +52,10 @@ export function UserPortfolioCard({
   };
 
   return (
-    <Card className="border border-[#8B5CF6]/20 shadow-sm overflow-hidden">
-      <CardHeader className="py-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
+    <Card className="border border-gray-200 shadow-sm overflow-hidden">
+      <CardHeader className="py-4 bg-gray-50">
         <CardTitle className="text-xl flex items-center gap-2 justify-center">
-          <Wallet className="h-5 w-5 text-[#8B5CF6]" />
+          <Wallet className="h-5 w-5 text-gray-700" />
           Your Position
         </CardTitle>
       </CardHeader>
@@ -90,7 +90,7 @@ export function UserPortfolioCard({
                 {showSupplyButton && (
                   <Button
                     onClick={onSupply}
-                    className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700"
                   >
                     Supply
                   </Button>
@@ -99,7 +99,7 @@ export function UserPortfolioCard({
                   <Button
                     onClick={onWithdraw}
                     variant="outline"
-                    className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+                    className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-100"
                   >
                     Withdraw
                   </Button>
@@ -117,7 +117,7 @@ export function UserPortfolioCard({
             {!hideButtons && showSupplyButton && (
               <Button
                 onClick={onSupply}
-                className="mt-4 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+                className="mt-4 bg-indigo-600 hover:bg-indigo-700"
               >
                 Supply Assets
               </Button>

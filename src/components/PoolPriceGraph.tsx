@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   AreaChart, 
@@ -19,26 +18,24 @@ import {
 } from "@/components/ui/toggle-group";
 import { format, addDays, addWeeks, startOfMonth } from "date-fns";
 
-// Generate historical price data based on pool ID and timeframe
 const generatePriceData = (poolId: number, timeframe: "days" | "weeks") => {
-  // Base starting price and pattern varies by pool
   let basePrice = 1.0;
   let volatility = 0.005;
   let trend = 0.002;
   
   switch (poolId) {
-    case 1: // Pool A - Steady growth
+    case 1: 
       basePrice = 1.0;
       volatility = 0.003;
       trend = 0.003;
       break;
-    case 2: // Pool B - Higher growth but more volatile
+    case 2: 
       basePrice = 1.0;
       volatility = 0.006;
       trend = 0.004;
       break;
-    case 3: // Pool C - Lower growth, less volatile
-      basePrice = 0.7; // Start at $0.70 for the example
+    case 3: 
+      basePrice = 0.7;
       volatility = 0.002;
       trend = 0.002;
       break;
@@ -46,42 +43,32 @@ const generatePriceData = (poolId: number, timeframe: "days" | "weeks") => {
       break;
   }
   
-  // Generate data based on timeframe
-  const dataPoints = timeframe === "days" ? 30 : 12; // 30 days or 12 weeks
-  
-  // Get current date to start generating proper dates
+  const dataPoints = timeframe === "days" ? 30 : 12;
   const today = new Date();
   
   const data = [];
   for (let i = 0; i < dataPoints; i++) {
-    // Calculate the date - either adding days or weeks
     const currentDate = timeframe === "days" 
       ? addDays(today, i)
       : addWeeks(today, i);
     
-    // Format date as MM/DD/YY
     const formattedDate = format(currentDate, "MM/dd/yy");
     
-    // Simulate price movement with trend and random noise
     const noise = (Math.random() - 0.5) * volatility;
     basePrice = basePrice + trend + noise;
     
-    // Add some patterns
     if (timeframe === "days") {
-      // Weekend boost
       if (i % 7 === 0 || i % 7 === 6) {
         basePrice += 0.003;
       }
       
-      // Pool-specific patterns
-      if (i === 15 && poolId === 1) basePrice += 0.01; // Mid-month boost for Pool A
-      if (i === 10 && poolId === 2) basePrice -= 0.005; // Early dip for Pool B
-      if (i === 25 && poolId === 3) basePrice += 0.008; // Late month boost for Pool C
+      if (i === 15 && poolId === 1) basePrice += 0.01;
+      if (i === 10 && poolId === 2) basePrice -= 0.005;
+      if (i === 25 && poolId === 3) basePrice += 0.008;
     } else {
-      // Weekly patterns
-      if (i === 4 && poolId === 1) basePrice += 0.01; // Month 1 boost for Pool A
-      if (i === 8 && poolId === 2) basePrice -= 0.005; // Month 2 dip for Pool B
-      if (i === 10 && poolId === 3) basePrice += 0.008; // Month 3 boost for Pool C
+      if (i === 4 && poolId === 1) basePrice += 0.01;
+      if (i === 8 && poolId === 2) basePrice -= 0.005;
+      if (i === 10 && poolId === 3) basePrice += 0.008;
     }
     
     data.push({
@@ -96,48 +83,46 @@ const generatePriceData = (poolId: number, timeframe: "days" | "weeks") => {
 interface PoolPriceGraphProps {
   poolId: number;
   color?: string;
+  symbol?: string;
 }
 
-export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProps) {
+export function PoolPriceGraph({ poolId, color = "#4f46e5", symbol = "LP" }: PoolPriceGraphProps) {
   const isMobile = useIsMobile();
   const [timeframe, setTimeframe] = useState<"days" | "weeks">("days");
   const priceData = generatePriceData(poolId, timeframe);
   
-  // Calculate min and max for yAxis domain with some padding
   const prices = priceData.map(d => d.price);
   const minPrice = Math.min(...prices) * 0.995;
   const maxPrice = Math.max(...prices) * 1.005;
   
-  // Get color based on poolId if not provided
   const getPoolColor = () => {
     if (color) return color;
     
     switch (poolId) {
-      case 1: return "#9b87f5"; // Lighter purple
-      case 2: return "#10B981"; // Green
-      case 3: return "#F59E0B"; // Amber
-      default: return "#9b87f5"; // Default purple
+      case 1: return "#9b87f5";
+      case 2: return "#10B981";
+      case 3: return "#F59E0B";
+      default: return "#9b87f5";
     }
   };
   
   const poolColor = getPoolColor();
   
-  // Get tick interval based on device and timeframe
   const getTickInterval = () => {
     if (timeframe === "days") {
-      return isMobile ? 6 : 3; // Show every 3rd or 6th day
+      return isMobile ? 6 : 3;
     } else {
-      return isMobile ? 2 : 1; // Show every 1st or 2nd week
+      return isMobile ? 2 : 1;
     }
   };
 
   return (
-    <Card className="w-full border border-[#9b87f5]/20 overflow-hidden">
-      <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#9b87f5]/10 to-[#7E69AB]/5">
+    <Card className="w-full border border-gray-200 overflow-hidden">
+      <CardHeader className="pb-2 pt-4 bg-gray-50">
         <div className="flex flex-col items-center justify-center">
           <CardTitle className="text-xl flex items-center gap-2 mb-3 text-center">
-            <LineChart className="h-5 w-5 text-[#9b87f5]" />
-            LP Token Price
+            <LineChart className="h-5 w-5 text-gray-700" />
+            {symbol} Token Price
           </CardTitle>
           
           <ToggleGroup 
@@ -149,14 +134,14 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
             <ToggleGroupItem 
               value="days" 
               aria-label="View by days" 
-              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-indigo-600 data-[state=on]:text-white"
             >
               Days
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="weeks" 
               aria-label="View by weeks" 
-              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-indigo-600 data-[state=on]:text-white"
             >
               Weeks
             </ToggleGroupItem>
@@ -171,7 +156,7 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
               top: 10,
               right: isMobile ? 5 : 20,
               left: isMobile ? 0 : 0,
-              bottom: isMobile ? 15 : 10, // Increased bottom margin for mobile to fit dates
+              bottom: isMobile ? 15 : 10,
             }}
           >
             <defs>
@@ -185,18 +170,18 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
             
             <XAxis 
               dataKey="date" 
-              tick={{ fontSize: isMobile ? 10 : 12, fill: "#333" }} // Darker text for better readability
-              tickMargin={isMobile ? 10 : 10} // Increased space for date labels
+              tick={{ fontSize: isMobile ? 10 : 12, fill: "#333" }}
+              tickMargin={isMobile ? 10 : 10}
               interval={getTickInterval()}
               padding={{ left: 10, right: 10 }}
-              angle={isMobile ? -45 : 0} // Angle the dates on mobile for better fit
-              textAnchor={isMobile ? "end" : "middle"} // Align text based on angle
-              height={isMobile ? 50 : 30} // Increased height for angled text on mobile
+              angle={isMobile ? -45 : 0}
+              textAnchor={isMobile ? "end" : "middle"}
+              height={isMobile ? 50 : 30}
             />
             
             <YAxis 
               domain={[minPrice, maxPrice]}
-              tick={{ fontSize: isMobile ? 11 : 12, fill: "#333" }} // Darker text
+              tick={{ fontSize: isMobile ? 11 : 12, fill: "#333" }}
               tickFormatter={(value) => {
                 if (typeof value !== 'number') return value;
                 return "$" + value.toFixed(3);
@@ -214,7 +199,7 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
                       <p className="font-medium">{payload[0].payload.date}</p>
                       <div className="pt-1">
                         <p style={{ color: poolColor }} className="font-semibold">
-                          ${payload[0].value}
+                          ${payload[0].value} {symbol}
                         </p>
                       </div>
                     </div>
@@ -224,7 +209,6 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
               }}
             />
             
-            {/* Reference line at initial value */}
             <ReferenceLine 
               y={poolId === 3 ? 0.7 : 1} 
               stroke="#666" 

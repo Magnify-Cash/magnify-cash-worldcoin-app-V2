@@ -125,12 +125,10 @@ export function PoolCard({
     }
   };
   
-  const gradientClass = "from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20";
-  
   return (
-    <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
+    <Card className="overflow-hidden border border-gray-200 bg-white">
       <CardHeader className="flex flex-col items-center gap-2 pb-2 pt-3">
-        <h3 className="font-semibold text-lg sm:text-xl leading-tight text-center">
+        <h3 className="font-semibold text-lg leading-tight text-center">
           {getPoolName()}
         </h3>
         
@@ -144,7 +142,7 @@ export function PoolCard({
       
       <CardContent className="px-3 sm:px-4 pt-2 pb-4 space-y-3 sm:space-y-4">
         <div className="grid grid-cols-2 gap-2 sm:gap-4">
-          <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3">
+          <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3 border border-gray-100">
             <div className="text-xs text-gray-500 flex items-center gap-1">
               <TrendingUp className="h-3 w-3 flex-shrink-0" />
               <span>APY</span>
@@ -159,12 +157,12 @@ export function PoolCard({
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="font-bold text-lg sm:text-xl text-[#8B5CF6]">
+            <div className="font-bold text-lg sm:text-xl text-indigo-600">
               {apy}%
             </div>
           </div>
           
-          <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3">
+          <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3 border border-gray-100">
             <div className="text-xs text-gray-500 flex items-center gap-1">
               <Lock className="h-3 w-3 flex-shrink-0" />
               <span className="whitespace-nowrap">Lock Duration</span>
@@ -175,7 +173,7 @@ export function PoolCard({
           </div>
         </div>
         
-        <div className="bg-white/30 rounded-lg p-2 sm:p-3">
+        <div className="bg-white/30 rounded-lg p-2 sm:p-3 border border-gray-100">
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
             <Calendar className="h-3 w-3 flex-shrink-0" />
             <span>{getLockPeriodLabel()}</span>
@@ -189,7 +187,7 @@ export function PoolCard({
         
         <Button 
           onClick={() => navigate(`/pool/${id}`)} 
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+          className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700"
           size={isMobile ? "sm" : "default"}
         >
           View Pool <ExternalLink className="h-4 w-4" />

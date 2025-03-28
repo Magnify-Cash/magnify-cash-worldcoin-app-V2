@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Define a transaction type for lending activities
 interface LendingTransaction {
-  id: string;
+  id: number; // Changed from string to number to match the Transaction type
   created_at: string;
   type: "deposit" | "withdrawal";
   amount: number;
@@ -44,7 +44,7 @@ const LendingHistory = () => {
         // For demo purposes, we'll use mock data
         const mockTransactions: LendingTransaction[] = [
           {
-            id: "1",
+            id: 1, // Changed from string to number
             created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
             type: "deposit",
             amount: 1000,
@@ -54,7 +54,7 @@ const LendingHistory = () => {
             lp_tokens: 980.5
           },
           {
-            id: "2",
+            id: 2, // Changed from string to number
             created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
             type: "deposit",
             amount: 500,
@@ -64,7 +64,7 @@ const LendingHistory = () => {
             lp_tokens: 490.2
           },
           {
-            id: "3",
+            id: 3, // Changed from string to number
             created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
             type: "withdrawal",
             amount: 200,
@@ -93,7 +93,7 @@ const LendingHistory = () => {
   
   // Format transactions for the TransactionList component
   const formattedTransactions = transactions.map(tx => ({
-    id: tx.id,
+    id: tx.id, // Now correctly using a number type
     created_at: tx.created_at,
     type: tx.type,
     amount: tx.amount,

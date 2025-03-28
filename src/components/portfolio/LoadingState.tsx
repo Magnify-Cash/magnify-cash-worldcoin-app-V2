@@ -1,12 +1,11 @@
 
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 
 export const LoadingState: React.FC = () => {
   return (
-    <Card className="border border-[#8B5CF6]/20">
-      <CardContent className="p-4 sm:p-6">
-        <div className="py-8 sm:py-10 flex justify-center items-center">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="p-6 flex flex-col items-center justify-center">
+        <div className="py-8 flex justify-center items-center">
           <div className="orbit-spinner">
             <div className="orbit"></div>
             <div className="orbit"></div>
@@ -14,7 +13,7 @@ export const LoadingState: React.FC = () => {
           </div>
         </div>
         <p className="text-gray-500 text-center">Loading your portfolio...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

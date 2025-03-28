@@ -88,7 +88,7 @@ const Portfolio = () => {
   const { totalValue, totalEarnings } = calculateTotals();
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <Header title="Lending Portfolio" />
 
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
@@ -100,7 +100,7 @@ const Portfolio = () => {
         {loading ? (
           <LoadingState />
         ) : showDummyData && pools.length > 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <ActivePositions 
               pools={pools}
               balances={demoBalances}

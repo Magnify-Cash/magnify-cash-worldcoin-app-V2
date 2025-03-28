@@ -151,13 +151,13 @@ const LendingHistory = () => {
                     <div>
                       <p className="text-xs text-gray-500">{tx.currency}</p>
                       <p className={`text-sm font-medium ${tx.type === "deposit" ? "text-red-600" : "text-green-600"}`}>
-                        {tx.type === "deposit" ? "-" : "+"}{tx.amount} {tx.currency}
+                        {tx.type === "deposit" ? "-" : "+"}{tx.amount}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">{tx.pool_token}</p>
                       <p className={`text-sm font-medium ${tx.type === "deposit" ? "text-green-600" : "text-red-600"}`}>
-                        {tx.type === "deposit" ? "+" : "-"}{tx.lp_tokens.toFixed(2)} {tx.pool_token}
+                        {tx.type === "deposit" ? "+" : "-"}{tx.lp_tokens.toFixed(2)}
                       </p>
                     </div>
                   </div>

@@ -3,10 +3,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
-import { HistoryIcon, ExternalLink } from "lucide-react";
+import { HistoryIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 // Define a transaction type for lending activities
 interface LendingTransaction {
@@ -130,24 +131,16 @@ const LendingHistory = () => {
             {transactions.map((tx) => (
               <Card key={tx.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-medium text-sm">
-                        {tx.type === "deposit" ? "Supplied to" : "Withdrew from"} {tx.pool_name}
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        {new Date(tx.created_at).toLocaleDateString()} at {new Date(tx.created_at).toLocaleTimeString()}
-                      </p>
-                    </div>
-                    <div 
-                      className="cursor-pointer"
-                      onClick={() => navigate(`/pool/${tx.pool_id}`)}
-                    >
-                      <ExternalLink className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                    </div>
+                  <div className="mb-2">
+                    <h3 className="font-medium text-sm">
+                      {tx.type === "deposit" ? "Supplied to" : "Withdrew from"} {tx.pool_name}
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      {new Date(tx.created_at).toLocaleDateString()} at {new Date(tx.created_at).toLocaleTimeString()}
+                    </p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 mt-3">
+                  <div className="grid grid-cols-2 gap-2 mt-3 mb-4">
                     <div>
                       <p className="text-xs text-gray-500">{tx.currency}</p>
                       <p className={`text-sm font-medium ${tx.type === "deposit" ? "text-red-600" : "text-green-600"}`}>
@@ -160,6 +153,17 @@ const LendingHistory = () => {
                         {tx.type === "deposit" ? "+" : "-"}{tx.lp_tokens.toFixed(2)}
                       </p>
                     </div>
+                  </div>
+                  
+                  <div className="mt-4 text-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigate(`/pool/${tx.pool_id}`)}
+                      className="w-full text-xs"
+                    >
+                      View Pool
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

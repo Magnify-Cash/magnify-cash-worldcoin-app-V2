@@ -99,6 +99,7 @@ const LendingHistory = () => {
     amount: tx.amount,
     currency: tx.currency,
     description: tx.pool_name,
+    status: 'completed', // Adding the required status property
     metadata: {
       pool_id: tx.pool_id,
       lp_tokens: tx.lp_tokens

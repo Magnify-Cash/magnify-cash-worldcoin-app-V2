@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   Coins, 
@@ -137,21 +136,18 @@ export function PoolCard({
 
   return (
     <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
-      <CardHeader className="flex flex-col gap-2 pb-2 pt-3">
-        {/* Pool name row */}
-        <div className="flex flex-col w-full">
-          <div className="flex items-center gap-2">
-            <div className={`flex justify-center items-center rounded-full p-1.5 ${iconBgColor}`}>
-              <Coins className={`h-4 w-4 ${accentColor}`} />
-            </div>
-            <h3 className="font-semibold text-sm sm:text-base leading-tight truncate max-w-[85%]">
-              {getPoolName()}
-            </h3>
+      <CardHeader className="flex flex-col gap-1 pb-2 pt-3">
+        <div className="flex flex-col w-full relative pl-10">
+          <div className={`absolute left-0 top-2 flex justify-center items-center rounded-full p-2 ${iconBgColor}`}>
+            <Coins className={`h-5 w-5 ${accentColor}`} />
           </div>
           
-          {/* Status badge below pool name */}
-          <div className="mt-1.5 ml-8">
-            <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()} shrink-0`}>
+          <h3 className="font-semibold text-base sm:text-lg leading-tight truncate max-w-[85%]">
+            {getPoolName()}
+          </h3>
+          
+          <div className="mt-1">
+            <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
               {getStatusIcon()}
               <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
             </Badge>
@@ -160,9 +156,7 @@ export function PoolCard({
       </CardHeader>
       
       <CardContent className="px-3 sm:px-4 pt-2 pb-4 space-y-3 sm:space-y-4">
-        {/* Primary stats row */}
         <div className="grid grid-cols-2 gap-2 sm:gap-4">
-          {/* APY */}
           <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3">
             <div className="text-xs text-gray-500 flex items-center gap-1">
               <TrendingUp className="h-3 w-3 flex-shrink-0" />
@@ -183,7 +177,6 @@ export function PoolCard({
             </div>
           </div>
           
-          {/* Lock Duration */}
           <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3">
             <div className="text-xs text-gray-500 flex items-center gap-1">
               <Lock className="h-3 w-3 flex-shrink-0" />
@@ -195,7 +188,6 @@ export function PoolCard({
           </div>
         </div>
         
-        {/* Lock Period Date */}
         <div className="bg-white/30 rounded-lg p-2 sm:p-3">
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
             <Calendar className="h-3 w-3 flex-shrink-0" />
@@ -208,7 +200,6 @@ export function PoolCard({
         
         <Separator className="my-1 bg-gray-200" />
         
-        {/* Action button */}
         <Button 
           onClick={() => navigate(`/pool/${id}`)} 
           className={`w-full flex items-center justify-center gap-2 ${useCustomGradient 

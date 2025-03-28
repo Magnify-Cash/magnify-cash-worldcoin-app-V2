@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import type { WalletBalance } from "@/types/wallet";
 import type { Announcement } from "@/features/announcements/utils";
@@ -81,7 +82,7 @@ const getInitialDemoData = (): DemoData => ({
   isDeviceVerified: false,
   isOrbVerified: false,
   hasLoan: false,
-  creditScore: 1,
+  creditScore: 1,  // Default credit score is 1 if not verified
   loansRepaid: 0
 });
 
@@ -120,18 +121,22 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, []);
 
   const getCreditScore = useCallback(() => {
+    // Start with 1 if not verified, 2 if Orb verified with no repayments
+    if (!demoData.isOrbVerified) return 1;
+    
+    // Base score is 2 for Orb verified users
     const baseScore = 2;
     const maxScoreFromRepayments = 8;
     const repaymentScore = Math.min(demoData.loansRepaid, maxScoreFromRepayments);
     return baseScore + repaymentScore;
-  }, [demoData.loansRepaid]);
+  }, [demoData.loansRepaid, demoData.isOrbVerified]);
 
   useEffect(() => {
     setDemoData(prev => ({
       ...prev,
       creditScore: getCreditScore()
     }));
-  }, [demoData.loansRepaid, getCreditScore]);
+  }, [demoData.loansRepaid, demoData.isOrbVerified, getCreditScore]);
 
   const login = (address: string) => {
     setDemoData(prev => ({
@@ -182,7 +187,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   const requestLoan = async (tierId: number): Promise<string> => {
     setIsLoading(true);
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
-    const loanAmount = tierId === 2 ? 30 : 1;
+    const loanAmount = tierId === 2 ? 10 : 1; // Changed from 30 to 10 for Orb verified
 
     // Introduce a delay to simulate network request
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -258,6 +263,8 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const originationFee = (tier: boolean) => {
+    // Commented out but kept for future use
+    /*
     if(tier){
       setDemoData(prev => ({
         ...prev,
@@ -275,7 +282,9 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       )
       }));
     }
-  }
+    */
+    console.log("Origination fee is disabled");
+  };
 
   const refreshBalance = useCallback(() => {
     console.log("Refreshing balance...");

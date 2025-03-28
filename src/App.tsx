@@ -80,6 +80,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Redirect /upgrade-verification to /profile */}
+              <Route path="/upgrade-verification" element={<Navigate to="/profile" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>

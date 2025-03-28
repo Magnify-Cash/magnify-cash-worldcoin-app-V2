@@ -25,7 +25,7 @@ const Dashboard = () => {
   const [verifying, setVerifying] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState("Orb Scan");
-  const [creditScore, setCreditScore] = useState(2);
+  const [creditScore, setCreditScore] = useState(1); // Changed default to 1
   const [isVerificationSuccessful, setIsVerificationSuccessful] = useState(false);
 
   // Extract verification status from demo data
@@ -45,57 +45,12 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    const calculateCreditScore = async () => {
-      try {
-        const transactions = await getTransactionHistory(ls_wallet);
-  
-        if (!isOrbVerified) {
-          setCreditScore(1); // Credit score is 1 if not orb verified
-          return;
-        }
-  
-        if (transactions.length === 0) {
-          setCreditScore(2); // Default credit score for orb-verified users with no transactions
-          return;
-        }
-  
-        if (hasActiveLoan) {
-          const receivedLoans = transactions.filter((tx) => tx.status === "received");
-  
-          if (receivedLoans.length > 0) {
-            const lastReceivedLoan = receivedLoans[receivedLoans.length - 1];
-            const loanAmount = parseFloat(lastReceivedLoan.amount);
-  
-            const loanTimestamp = new Date(lastReceivedLoan.timestamp).getTime();
-            const currentTime = Date.now();
-  
-            const loanPeriodDays =
-              loanAmount <= 1 ? 30 : loanAmount <= 5 ? 60 : 90;
-  
-            const loanPeriodMs = loanPeriodDays * 24 * 60 * 60 * 1000;
-  
-            if (currentTime > loanTimestamp + loanPeriodMs) {
-              setCreditScore(-1); // Penalize for overdue loans
-              return;
-            }
-          }
-        }
-  
-        const repaidLoans = transactions.filter((tx) => tx.status === "repaid").length;
-        setCreditScore(2 + Math.min(repaidLoans, 8)); // Formula for orb-verified users
-      } catch (error) {
-        console.error("Error calculating credit score:", error);
-        setCreditScore(2); // Default score in case of error
-      }
-    };
-  
-    if (ls_wallet) {
-      calculateCreditScore();
-    }
-
+    // Use the credit score from demo data
+    setCreditScore(demoData.creditScore);
+    
     // Reset verification success state when data changes
     setIsVerificationSuccessful(false);
-  }, [ls_wallet, hasActiveLoan, isOrbVerified, demoData]);
+  }, [demoData]);
 
   const handleVerify = (tier: typeof verificationLevels.orb) => {
     setVerifying(true);

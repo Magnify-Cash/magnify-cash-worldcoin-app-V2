@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useDemoData } from "@/providers/DemoDataProvider";
 import { LoanDrawer } from "@/components/LoanDrawer";
 import { useToast } from "@/hooks/use-toast";
-import useConfetti from "@/hooks/useConfetti";
 
 const Loan = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -20,7 +19,6 @@ const Loan = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { demoData, requestLoan, originationFee } = useDemoData();
-  const { ConfettiComponent } = useConfetti(isConfirmed);
 
   // Extract user data
   const { isDeviceVerified, isOrbVerified, hasLoan } = demoData;
@@ -28,8 +26,8 @@ const Loan = () => {
   const isOrbTier = isOrbVerified && !isDeviceVerified;
 
   // Determine loan amount and duration based on verification level
-  const loanAmount = isOrbVerified ? 30 : 1;
-  const loanDuration = isOrbVerified ? 90 : 30;
+  const loanAmount = isOrbVerified ? 10 : 1;
+  const loanDuration = 90; // Changed to 90 days for both tiers
 
   // Handle loan application
   const handleApplyLoan = () => {
@@ -53,11 +51,12 @@ const Loan = () => {
       setIsProcessing(false);
       setJustRequestedLoan(true);
 
-      if(isOrbTier) {
-        originationFee(false)
-      } else {
-        originationFee(true)
-      }
+      // Comment out origination fee as requested
+      // if(isOrbTier) {
+      //   originationFee(false)
+      // } else {
+      //   originationFee(true)
+      // }
 
       toast({
         title: "Loan Approved!",
@@ -82,14 +81,12 @@ const Loan = () => {
   return (
     <div className="min-h-screen">
       <Header title="Get a Loan" />
-      {/* Confetti component will show when isConfirmed is true */}
-      {ConfettiComponent}
       
       {!isVerified ? (
         <div className="p-6 space-y-6 text-center">
           <h2 className="text-2xl font-semibold">You Don't Have the Required NFT</h2>
           <p>To be eligible for a loan, you need to own a specific NFT. Please upgrade your account.</p>
-          <Button onClick={() => navigate("/upgrade-verification")} className="w-full">
+          <Button onClick={() => navigate("/profile")} className="w-full">
             Upgrade Now
           </Button>
         </div>

@@ -6,12 +6,16 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useDemoData } from "@/providers/DemoDataProvider";
 
+// Define the minimum balance threshold constant
+const MIN_BALANCE_THRESHOLD = 0.001;
+
 const Wallet = () => {
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { demoData } = useDemoData();
   const [tokens, setTokens] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorState, setErrorState] = useState<string | null>(null);
 
   useEffect(() => {
     if (ls_wallet) {
@@ -38,10 +42,10 @@ const Wallet = () => {
   }, [ls_wallet, demoData.usdcBalance]);
 
   // Filter tokens based on minimum balance threshold
-  const filteredTokens = tokens.filter(token => token.tokenBalance >= MIN_BALANCE_THRESHOLD);
+  const filteredTokens = tokens.filter(token => parseFloat(token.balance) >= MIN_BALANCE_THRESHOLD);
 
   // Determine if we should show the error message
-  const shouldShowError = error && loadingTokens === false && !filteredTokens.length;
+  const shouldShowError = errorState && !isLoading && !filteredTokens.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,27 +90,6 @@ const Wallet = () => {
           ) : (
             <div className="text-center py-4">No tokens found. Add some to see your balance!</div>
           )}
-          
-          <div className="space-y-4">
-            {loadingTokens ? (
-              <>
-                <WalletCard currency="" symbol="" balance="" isLoading={true} />
-                <WalletCard currency="" symbol="" balance="" isLoading={true} />
-                <WalletCard currency="" symbol="" balance="" isLoading={true} />
-              </>
-            ) : filteredTokens.length > 0 ? (
-              filteredTokens.map((token) => (
-                <WalletCard
-                  key={token.tokenAddress || token.tokenSymbol}
-                  currency={token.tokenName}
-                  symbol={token.tokenSymbol}
-                  balance={token.tokenBalance.toFixed(3)}
-                />
-              ))
-            ) : (
-              <div className="text-center py-4">No tokens found. Add some to see your balance!</div>
-            )}
-          </div>
         </div>
       </div>
     </div>

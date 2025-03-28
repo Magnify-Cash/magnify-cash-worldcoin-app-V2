@@ -101,7 +101,7 @@ const Loan = () => {
             Repay Loan
           </Button>
         </div>
-      ) : !data || data?.nftInfo.tokenId === null ? (
+      ) : !demoData.contractData.nftInfo || demoData.contractData.nftInfo.tokenId === null ? (
         <div className="p-6 space-y-6">
           <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
             <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
@@ -113,7 +113,7 @@ const Loan = () => {
             </Button>
           </div>
         </div> 
-      ) : data?.nftInfo?.tier?.verificationStatus?.verification_level === "device" ? (
+      ) : demoData.contractData.nftInfo?.tier?.verificationStatus?.verification_level === "device" ? (
         <div className="p-6 space-y-6">
           <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
             <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
@@ -56,7 +55,6 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
     }
   };
 
-  // Get pool name and symbol based on pool ID
   const getPoolInfo = (poolId: number) => {
     switch (poolId) {
       case 1:
@@ -74,7 +72,6 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
     }
   };
 
-  // Used to get icon based on pool ID
   const getPoolIcon = (poolId: number) => {
     switch (poolId) {
       case 1:
@@ -110,22 +107,11 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
             className="rounded-lg bg-white shadow-md overflow-hidden"
           >
             <div className="p-4">
-              {/* Pool name on its own row */}
-              <div className="flex items-center mb-2">
-                {getPoolIcon(pool.id)}
-                <h3 className="font-medium text-base sm:text-lg">{name}</h3>
-              </div>
-              
-              {/* Status badge centered on its own row */}
-              <div className="flex justify-center mb-2">
-                <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getStatusColor(pool.status)}`}>
-                  {getStatusIndicator(pool.status)}
-                  <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  {getPoolIcon(pool.id)}
+                  <h3 className="font-medium text-base sm:text-lg">{name}</h3>
                 </div>
-              </div>
-
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex-1"></div>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -134,6 +120,13 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                 >
                   <ExternalLink className="h-4 w-4 text-gray-500" />
                 </Button>
+              </div>
+              
+              <div className="flex justify-center mb-2">
+                <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getStatusColor(pool.status)}`}>
+                  {getStatusIndicator(pool.status)}
+                  <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+                </div>
               </div>
 
               <div className="space-y-3 mt-3">

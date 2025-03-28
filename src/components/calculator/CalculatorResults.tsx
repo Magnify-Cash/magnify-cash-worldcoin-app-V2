@@ -30,11 +30,7 @@ export const CalculatorResults = ({ results }: CalculatorResultsProps) => {
     totalInterestEarned,
     totalLossesFromDefaults,
     finalPoolValue,
-    userShare,
-    lpTokenEntryPrice,
-    lpTokenCurrentPrice,
-    priceBasedReturn,
-    timeAdjustedApy
+    userShare
   } = results;
 
   const formatCurrency = (value: number) => {
@@ -69,9 +65,6 @@ export const CalculatorResults = ({ results }: CalculatorResultsProps) => {
 
   const netReturnColorClass = getReturnColorClass(userNetGain);
   const apyColorClass = getReturnColorClass(apy);
-  const timeAdjustedApyColorClass = getReturnColorClass(timeAdjustedApy);
-  const priceReturnColorClass = getReturnColorClass(priceBasedReturn);
-  const lpPriceChangeColorClass = getReturnColorClass(lpTokenCurrentPrice - lpTokenEntryPrice);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm h-full">
@@ -96,43 +89,12 @@ export const CalculatorResults = ({ results }: CalculatorResultsProps) => {
           </div>
         </div>
 
-        <div className="border-b border-gray-100 pb-4">
-          <h4 className="text-sm font-medium mb-2">LP Token Impact</h4>
-          
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className={`w-4 h-4 ${lpPriceChangeColorClass}`} />
-              <span className="text-sm">LP Price Change</span>
-            </div>
-            <span className={`font-medium ${lpPriceChangeColorClass}`}>
-              {lpTokenEntryPrice === lpTokenCurrentPrice 
-                ? "0.00%" 
-                : formatPercent((lpTokenCurrentPrice / lpTokenEntryPrice) - 1)}
-            </span>
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <span className="text-sm">LP Price Return</span>
-            <span className={`font-medium ${priceReturnColorClass}`}>
-              {formatCurrency(priceBasedReturn)}
-            </span>
-          </div>
-        </div>
-
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-1.5">
             <TrendingUp className={`w-4 h-4 ${apyColorClass}`} />
-            <span className="text-sm">Base APY</span>
+            <span className="text-sm">Estimated APY</span>
           </div>
           <span className={`font-medium ${apyColorClass}`}>{formatPercent(apy)}</span>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-1.5">
-            <TrendingUp className={`w-4 h-4 ${timeAdjustedApyColorClass}`} />
-            <span className="text-sm">Time-Adjusted APY</span>
-          </div>
-          <span className={`font-medium ${timeAdjustedApyColorClass}`}>{formatPercent(timeAdjustedApy)}</span>
         </div>
         
         <div className="flex justify-between items-center">
@@ -183,8 +145,8 @@ export const CalculatorResults = ({ results }: CalculatorResultsProps) => {
           <div className="flex items-start gap-2">
             <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
             <p>
-              These calculations include both the effects of pool performance and LP token price fluctuations.
-              Time-adjusted APY reflects returns based on your entry timing in the loan cycle.
+              These calculations are based on the current pool parameters. 
+              Actual returns may vary based on repayment behavior and market conditions.
             </p>
           </div>
         </div>

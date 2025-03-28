@@ -23,12 +23,6 @@ export interface CalculationResult {
   effectiveLoan: number;
   interestPerLoan: number;
   userShare: number;
-
-  // LP token specific
-  lpTokenEntryPrice: number;
-  lpTokenCurrentPrice: number;
-  priceBasedReturn: number;
-  timeAdjustedApy: number;
 }
 
 export interface CalculatorInputs {
@@ -40,9 +34,6 @@ export interface CalculatorInputs {
   defaultRate: number;
   loanAmount: number;
   utilizationRate: number;
-  lpTokenEntryPrice: number;
-  lpTokenCurrentPrice: number;
-  timeElapsed: number;
 }
 
 const Calculator = () => {
@@ -57,10 +48,7 @@ const Calculator = () => {
       originationFee,
       defaultRate,
       loanAmount,
-      utilizationRate,
-      lpTokenEntryPrice,
-      lpTokenCurrentPrice,
-      timeElapsed
+      utilizationRate
     } = inputs;
 
     // Step 1: Calculate actual capital utilized based on utilization rate
@@ -92,20 +80,9 @@ const Calculator = () => {
     // Convert days to years for APY calculation
     const apy = Math.pow(1 + netGainPerCycle, 365 / loanPeriod) - 1;
     
-    // Step 7: Calculate LP token price-based return
-    // This represents gain/loss from buying LP tokens at a different price than "par" value (1.0)
-    const priceBasedReturn = (lpTokenCurrentPrice / lpTokenEntryPrice - 1) * investmentAmount;
-    
-    // Step 8: Calculate time-adjusted APY based on partial completion of loan term
-    // If user bought LP tokens during the loan period, adjust APY accordingly
-    const remainingPeriod = Math.max(0, loanPeriod - timeElapsed);
-    const timeAdjustedApy = timeElapsed > 0 ? 
-      Math.pow(1 + (userNetGain + priceBasedReturn) / investmentAmount, 365 / remainingPeriod) - 1 :
-      apy;
-    
     setResults({
-      userFinalValue: userFinalValue + priceBasedReturn,
-      userNetGain: userNetGain + priceBasedReturn,
+      userFinalValue,
+      userNetGain,
       apy,
       totalLoans,
       successfulLoans,
@@ -115,11 +92,7 @@ const Calculator = () => {
       finalPoolValue,
       effectiveLoan,
       interestPerLoan,
-      userShare,
-      lpTokenEntryPrice,
-      lpTokenCurrentPrice,
-      priceBasedReturn,
-      timeAdjustedApy
+      userShare
     });
   };
 

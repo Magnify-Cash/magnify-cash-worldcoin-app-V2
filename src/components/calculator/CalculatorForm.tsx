@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Calculator } from "lucide-react";
+import { Calculator, Sliders } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,9 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
     loanPeriod: 30,
     interestRate: 8.5,
     originationFee: 10,
-    defaultRate: 5
+    defaultRate: 5,
+    loanAmount: 10,
+    utilizationRate: 80
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,7 +76,56 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               onChange={handleInputChange}
               className="mt-1"
             />
-            <p className="text-xs text-gray-500 mt-1">Each loan is fixed at $10 per borrower</p>
+          </div>
+
+          <div>
+            <Label htmlFor="utilizationRate">Pool Utilization Rate (%)</Label>
+            <div className="flex items-center gap-4">
+              <Slider
+                id="utilizationRate"
+                min={0}
+                max={100}
+                step={1}
+                value={[inputs.utilizationRate]}
+                onValueChange={(value) => handleSliderChange("utilizationRate", value)}
+                className="flex-1"
+              />
+              <Input
+                name="utilizationRate"
+                type="number"
+                min="0"
+                max="100"
+                value={inputs.utilizationRate}
+                onChange={handleInputChange}
+                className="w-20"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Percentage of pool capital being used for loans</p>
+          </div>
+
+          <div>
+            <Label htmlFor="loanAmount">Loan Amount per Borrower (USDC)</Label>
+            <div className="flex items-center gap-4">
+              <Slider
+                id="loanAmount"
+                min={10}
+                max={50}
+                step={10}
+                value={[inputs.loanAmount]}
+                onValueChange={(value) => handleSliderChange("loanAmount", value)}
+                className="flex-1"
+              />
+              <Input
+                name="loanAmount"
+                type="number"
+                min="10"
+                max="50"
+                step="10"
+                value={inputs.loanAmount}
+                onChange={handleInputChange}
+                className="w-20"
+              />
+            </div>
           </div>
 
           <div>
@@ -103,15 +154,18 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
         </div>
 
         <div className="border-t border-gray-200 pt-4">
-          <h3 className="text-md font-medium mb-4">Loan Terms</h3>
+          <h3 className="text-md font-medium mb-4 flex items-center gap-2">
+            <Sliders className="w-4 h-4 text-primary" />
+            Loan Terms
+          </h3>
           <div className="space-y-4">
             <div>
               <Label htmlFor="interestRate">Interest Rate (%)</Label>
               <div className="flex items-center gap-4">
                 <Slider
                   id="interestRate"
-                  min={0}
-                  max={20}
+                  min={1}
+                  max={30}
                   step={0.1}
                   value={[inputs.interestRate]}
                   onValueChange={(value) => handleSliderChange("interestRate", value)}
@@ -120,8 +174,8 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                 <Input
                   name="interestRate"
                   type="number"
-                  min="0"
-                  max="20"
+                  min="1"
+                  max="30"
                   step="0.1"
                   value={inputs.interestRate}
                   onChange={handleInputChange}
@@ -135,8 +189,8 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               <div className="flex items-center gap-4">
                 <Slider
                   id="originationFee"
-                  min={0}
-                  max={20}
+                  min={1}
+                  max={30}
                   step={0.1}
                   value={[inputs.originationFee]}
                   onValueChange={(value) => handleSliderChange("originationFee", value)}
@@ -145,8 +199,8 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                 <Input
                   name="originationFee"
                   type="number"
-                  min="0"
-                  max="20"
+                  min="1"
+                  max="30"
                   step="0.1"
                   value={inputs.originationFee}
                   onChange={handleInputChange}

@@ -32,6 +32,8 @@ export interface CalculatorInputs {
   interestRate: number;
   originationFee: number;
   defaultRate: number;
+  loanAmount: number;
+  utilizationRate: number;
 }
 
 const Calculator = () => {
@@ -44,20 +46,22 @@ const Calculator = () => {
       loanPeriod,
       interestRate,
       originationFee,
-      defaultRate
+      defaultRate,
+      loanAmount,
+      utilizationRate
     } = inputs;
 
-    // Fixed loan amount
-    const loanAmount = 10;
+    // Step 1: Calculate actual capital utilized based on utilization rate
+    const utilizedCapital = poolSize * (utilizationRate / 100);
     
-    // Step 1: Calculate total number of loans issued by the pool
-    const totalLoans = poolSize / loanAmount;
+    // Step 2: Calculate total number of loans issued by the pool
+    const totalLoans = utilizedCapital / loanAmount;
     
-    // Step 2: Break into successful and defaulted loans
+    // Step 3: Break into successful and defaulted loans
     const successfulLoans = totalLoans * (1 - defaultRate / 100);
     const defaultedLoans = totalLoans * (defaultRate / 100);
     
-    // Step 3: Calculate earnings and losses at the pool level
+    // Step 4: Calculate earnings and losses at the pool level
     const effectiveLoan = loanAmount - (originationFee / 100 * loanAmount);
     const interestPerLoan = loanAmount * (interestRate / 100);
     
@@ -66,12 +70,12 @@ const Calculator = () => {
     
     const finalPoolValue = poolSize + totalInterestEarned - totalLossesFromDefaults;
     
-    // Step 4: Calculate the user's share and results
+    // Step 5: Calculate the user's share and results
     const userShare = investmentAmount / poolSize;
     const userFinalValue = finalPoolValue * userShare;
     const userNetGain = userFinalValue - investmentAmount;
     
-    // Step 5: Calculate annualized return (APY)
+    // Step 6: Calculate annualized return (APY)
     const netGainPerCycle = userNetGain / investmentAmount;
     // Convert days to years for APY calculation
     const apy = Math.pow(1 + netGainPerCycle, 365 / loanPeriod) - 1;

@@ -145,7 +145,7 @@ export const CalculatorResults = ({ results }: CalculatorResultsProps) => {
           <div className="flex items-start gap-2">
             <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
             <p>
-              These calculations are based on a fixed loan amount of $10 per borrower. 
+              These calculations are based on the current pool parameters. 
               Actual returns may vary based on repayment behavior and market conditions.
             </p>
           </div>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { formatUnits } from "viem";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +23,17 @@ const Loan = () => {
   
   const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = loanData?.isActive ?? false;
+
+    // Call refetch after loan is confirmed
+    useEffect(() => {
+      if (isConfirmed) {
+        const timeout = setTimeout(async () => {
+          await refetch();
+        }, 1000);
+  
+        return () => clearTimeout(timeout);
+      }
+    }, [isConfirmed, refetch]);
   
   // Handle loan application
   const handleApplyLoan = useCallback(
@@ -37,8 +48,8 @@ const Loan = () => {
   
         if (latestBalance < 10) {
           toast({
-            title: "Error",
-            description: "Loan Unavailable: Our lending pool is temporarily depleted. Please try again later.",
+            title: "Loan Unavailable",
+            description: "Our lending pool is temporarily depleted. Please try again later.",
             variant: "destructive",
           });
           return;
@@ -75,10 +86,10 @@ const Loan = () => {
   );
   
   // Handle navigation after claiming loan
-  const handleNavigateAfterTransaction = () => {
-    refetch();
+  const handleNavigateAfterTransaction = async () => {
+    await refetch();
     setTimeout(() => navigate("/repay-loan"), 1000);
-  };  
+  }; 
 
   return (
     <div className="min-h-screen">

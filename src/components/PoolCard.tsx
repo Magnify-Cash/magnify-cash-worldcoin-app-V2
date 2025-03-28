@@ -125,10 +125,12 @@ export function PoolCard({
     }
   };
   
+  const gradientClass = "from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20";
+  
   return (
-    <Card className="overflow-hidden border">
+    <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
       <CardHeader className="flex flex-col items-center gap-2 pb-2 pt-3">
-        <h3 className="font-semibold text-base sm:text-lg leading-tight text-center truncate max-w-full">
+        <h3 className="font-semibold text-lg sm:text-xl leading-tight text-center">
           {getPoolName()}
         </h3>
         
@@ -157,7 +159,7 @@ export function PoolCard({
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="font-bold text-lg sm:text-xl">
+            <div className="font-bold text-lg sm:text-xl text-[#8B5CF6]">
               {apy}%
             </div>
           </div>
@@ -187,7 +189,7 @@ export function PoolCard({
         
         <Button 
           onClick={() => navigate(`/pool/${id}`)} 
-          className="w-full flex items-center justify-center gap-2"
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
           size={isMobile ? "sm" : "default"}
         >
           View Pool <ExternalLink className="h-4 w-4" />

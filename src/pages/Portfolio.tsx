@@ -16,13 +16,12 @@ const Portfolio = () => {
   const [pools, setPools] = useState<LiquidityPool[]>([]);
   const [showDummyData, setShowDummyData] = useState(true);
   
-  // Demo data for multiple pools
   const [demoBalances, setDemoBalances] = useState<Record<number, number>>({
-    1: 1200, // Default Resistant Pool
-    2: 500,  // High Uptake Pool
-    3: 300,  // Fast Cycle Pool
-    4: 800,  // Identity Based Pool
-    5: 600   // Loyalty Rewards Pool
+    1: 1200,
+    2: 500,
+    3: 300,
+    4: 800,
+    5: 600
   });
   
   const [demoDepositedValues, setDemoDepositedValues] = useState<Record<number, number>>({
@@ -70,7 +69,6 @@ const Portfolio = () => {
     fetchData();
   }, []);
 
-  // Calculate total portfolio value and earnings
   const calculateTotals = () => {
     let totalValue = 0;
     let totalEarnings = 0;
@@ -92,11 +90,11 @@ const Portfolio = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <Header title="Lending Portfolio" />
+      <Header title="Your Lending Portfolio" />
 
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         <PortfolioHeader 
-          title="Lending Portfolio" 
+          title="Your Lending Portfolio" 
           subtitle="Track and manage your positions across all lending pools."
         />
 

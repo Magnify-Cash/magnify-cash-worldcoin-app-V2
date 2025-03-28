@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   TrendingUp, 
@@ -25,7 +26,6 @@ interface PoolCardProps {
   totalSupply: number;
   availableLiquidity: number;
   status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
-  useCustomGradient?: boolean;
 }
 
 export function PoolCard({ 
@@ -34,8 +34,7 @@ export function PoolCard({
   apy, 
   totalSupply, 
   availableLiquidity,
-  status,
-  useCustomGradient = false 
+  status
 }: PoolCardProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -126,13 +125,8 @@ export function PoolCard({
     }
   };
   
-  const gradientClass = useCustomGradient 
-    ? "from-[#8B5CF6]/5 via-[#A855F7]/10 to-[#D946EF]/5 border-[#D946EF]/20" 
-    : "from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20";
+  const gradientClass = "from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20";
   
-  const accentColor = useCustomGradient ? "text-[#D946EF]" : "text-[#8B5CF6]";
-  const iconBgColor = useCustomGradient ? "bg-[#A855F7]/10" : "bg-[#8B5CF6]/10";
-
   return (
     <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
       <CardHeader className="flex flex-col items-center gap-2 pb-2 pt-3">
@@ -165,7 +159,7 @@ export function PoolCard({
                 </PopoverContent>
               </Popover>
             </div>
-            <div className={`font-bold text-lg sm:text-xl ${accentColor}`}>
+            <div className="font-bold text-lg sm:text-xl text-[#8B5CF6]">
               {apy}%
             </div>
           </div>
@@ -195,10 +189,7 @@ export function PoolCard({
         
         <Button 
           onClick={() => navigate(`/pool/${id}`)} 
-          className={`w-full flex items-center justify-center gap-2 ${useCustomGradient 
-            ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF] hover:opacity-90"
-            : "bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
-          }`}
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
           size={isMobile ? "sm" : "default"}
         >
           View Pool <ExternalLink className="h-4 w-4" />

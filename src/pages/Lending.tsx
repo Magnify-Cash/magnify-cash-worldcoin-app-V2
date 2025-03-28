@@ -1,9 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Info, Palette } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Info } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PoolCard } from "@/components/PoolCard";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -13,7 +12,6 @@ import { LiquidityPool } from "@/types/supabase/liquidity";
 const Lending = () => {
   const [loading, setLoading] = useState(true);
   const [pools, setPools] = useState<LiquidityPool[]>([]);
-  const [useCustomGradient, setUseCustomGradient] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -36,18 +34,6 @@ const Lending = () => {
     fetchPools();
   }, []);
 
-  const toggleGradient = () => {
-    setUseCustomGradient(!useCustomGradient);
-    toast({
-      title: useCustomGradient ? "Using standard theme" : "Using custom purple theme",
-      duration: 2000,
-    });
-  };
-
-  const gradientStyle = useCustomGradient 
-    ? "from-[#8B5CF6] via-[#A855F7] to-[#D946EF]" 
-    : "from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75]";
-
   return (
     <div className="min-h-screen bg-white pb-20">
       <Header title="Lending Dashboard" />
@@ -55,7 +41,7 @@ const Lending = () => {
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         <div className="mb-5 sm:mb-6">
           <div className="flex justify-center mb-2">
-            <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r ${gradientStyle} text-transparent bg-clip-text text-center`}>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text text-center">
               Magnify Cash Lending
             </h1>
           </div>
@@ -64,16 +50,13 @@ const Lending = () => {
           </p>
         </div>
 
-        <div className="flex gap-2 mb-3 sm:mb-4">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={toggleGradient}
-            className={`flex items-center gap-1.5 text-xs ${useCustomGradient ? 'border-[#D946EF]/30 hover:bg-[#A855F7]/10' : ''}`}
-          >
-            <Palette className={`h-3.5 w-3.5 ${useCustomGradient ? 'text-[#A855F7]' : ''}`} />
-            {useCustomGradient ? "Standard Theme" : "Purple Theme"}
-          </Button>
+        <div className="mb-6">
+          <h2 className="text-lg sm:text-xl font-medium text-gray-800 mb-3 text-center">
+            Explore Our Lending Pools
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto text-center mb-5">
+            Select from a variety of lending pools designed to match different risk preferences and lock periods. Each pool features unique APY returns and terms.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
@@ -89,16 +72,15 @@ const Lending = () => {
                 totalSupply={pool.total_value_locked}
                 availableLiquidity={pool.available_liquidity}
                 status={pool.status}
-                useCustomGradient={useCustomGradient}
               />
             ))
           )}
         </div>
 
-        <Card className={`${useCustomGradient ? "bg-gradient-to-r from-[#8B5CF6]/5 via-[#A855F7]/10 to-[#D946EF]/5 border-[#D946EF]/20" : "bg-gradient-to-r from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20"}`}>
+        <Card className="bg-gradient-to-r from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20">
           <CardHeader className={isMobile ? "py-3 px-3" : ""}>
             <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-              <Info className={`h-4 w-4 sm:h-5 sm:w-5 ${useCustomGradient ? "text-[#A855F7]" : "text-[#8B5CF6]"}`} />
+              <Info className="h-4 w-4 sm:h-5 sm:w-5 text-[#8B5CF6]" />
               About Lending Pools
             </CardTitle>
           </CardHeader>

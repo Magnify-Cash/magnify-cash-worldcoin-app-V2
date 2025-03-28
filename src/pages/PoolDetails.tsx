@@ -66,16 +66,6 @@ const PoolDetails = () => {
           return;
         }
         
-        if (poolData) {
-          if (poolId === 1) {
-            poolData.name = "Pool A";
-          } else if (poolId === 2) {
-            poolData.name = "Pool B";
-          } else if (poolId === 3) {
-            poolData.name = "Pool C";
-          }
-        }
-        
         setPool(poolData);
         
         const position = await getUserPoolPosition(poolId);

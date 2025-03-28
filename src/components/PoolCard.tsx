@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   Coins, 
@@ -41,10 +42,11 @@ export function PoolCard({
   const navigate = useNavigate();
 
   const getPoolName = () => {
-    if (id === 1) return "Pool A";
-    if (id === 2) return "Pool B";
-    if (id === 3) return "Pool C";
-    if (id === 4) return "Pool D";
+    if (id === 1) return "Default Resistant Pool";
+    if (id === 2) return "High Uptake Pool";
+    if (id === 3) return "Fast Cycle Pool";
+    if (id === 4) return "Identity Based Pool";
+    if (id === 5) return "Loyalty Rewards Pool";
     return title;
   };
 

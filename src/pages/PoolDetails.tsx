@@ -255,19 +255,6 @@ const PoolDetails = () => {
     }
   };
 
-  const getPoolSymbol = () => {
-    if (!pool) return "LP";
-    
-    switch (poolId) {
-      case 1: return "DFLP";
-      case 2: return "HULP";
-      case 3: return "FCLP";
-      case 4: return "IDLP";
-      case 5: return "LRLP";
-      default: return "LP";
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -340,17 +327,22 @@ const PoolDetails = () => {
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         {pool && (
           <>
-            <Card className="mb-6 border border-gray-200 overflow-hidden">
-              <div className="bg-gray-50 py-4 px-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-center">
-                  {pool.name}
-                </h1>
+            <Card className="mb-6 border border-[#8B5CF6]/20 overflow-hidden">
+              <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5 py-5 px-6 flex justify-center">
+                <div className="flex items-center gap-3">
+                  <div className="bg-[#8B5CF6]/20 rounded-full p-2 flex items-center justify-center">
+                    <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-[#8B5CF6]" />
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-bold">
+                    {pool.name}
+                  </h1>
+                </div>
               </div>
             </Card>
 
             <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
-              <Card className="w-full border border-gray-200 overflow-hidden">
-                <CardHeader className="pb-2 pt-4 bg-gray-50">
+              <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
+                <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
                   <CardTitle className="text-xl flex items-center gap-2 justify-center">
                     <BarChart className="h-5 w-5 text-[#8B5CF6]" />
                     Pool Statistics
@@ -466,7 +458,7 @@ const PoolDetails = () => {
                 </CardContent>
               </Card>
 
-              <PoolPriceGraph poolId={pool.id} color="#4f46e5" symbol={getPoolSymbol()} />
+              <PoolPriceGraph poolId={pool.id} />
 
               <UserPortfolioCard
                 balance={userPosition?.token_b_amount || 0}
@@ -481,11 +473,10 @@ const PoolDetails = () => {
                 onToggleDummyData={toggleDummyData}
                 showToggle={true}
                 poolStatus={pool.status}
-                symbol={getPoolSymbol()}
               />
             </div>
 
-            <Card className="bg-gray-50 border-gray-200">
+            <Card className="bg-gradient-to-r from-[#1A1E8F]/5 via-[#5A1A8F]/10 to-[#A11F75]/5 border-[#8B5CF6]/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg justify-center">
                   <Info className="h-5 w-5 text-[#8B5CF6]" />

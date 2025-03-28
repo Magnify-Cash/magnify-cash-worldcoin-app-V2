@@ -41,7 +41,7 @@ const Lending = () => {
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         <div className="mb-5 sm:mb-6">
           <div className="flex justify-center mb-2">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 text-center">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text text-center">
               Magnify Cash Lending
             </h1>
           </div>
@@ -77,10 +77,10 @@ const Lending = () => {
           )}
         </div>
 
-        <Card className="bg-gray-50 border-gray-200">
+        <Card className="bg-gradient-to-r from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20">
           <CardHeader className={isMobile ? "py-3 px-3" : ""}>
             <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-              <Info className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+              <Info className="h-4 w-4 sm:h-5 sm:w-5 text-[#8B5CF6]" />
               About Lending Pools
             </CardTitle>
           </CardHeader>

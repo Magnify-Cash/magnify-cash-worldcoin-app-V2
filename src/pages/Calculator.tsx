@@ -98,12 +98,12 @@ const Calculator = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <Header title="Lender's Calculator" />
+      <Header title="Yield Calculator" />
       
       <Container className="max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Lending Returns Calculator
+            Yield Calculator
           </h1>
           <p className="text-gray-600">
             Estimate your potential earnings as a lender in World Chain liquidity pools.

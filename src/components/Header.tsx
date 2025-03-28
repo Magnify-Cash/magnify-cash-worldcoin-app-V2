@@ -1,5 +1,4 @@
-
-import { ArrowLeft, Home, Menu, Calculator } from "lucide-react";
+import { ArrowLeft, Home, Menu } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
@@ -97,8 +96,7 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
                   className="min-h-[40px] focus:text-white focus-visible:text-white"
                   onClick={() => navigate("/calculator")}
                 >
-                  <Calculator className="mr-2 h-4 w-4" />
-                  Earnings Calculator
+                  Yield Calculator
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

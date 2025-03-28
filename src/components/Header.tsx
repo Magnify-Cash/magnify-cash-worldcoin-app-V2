@@ -78,7 +78,7 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
                   className="min-h-[40px] focus:text-white focus-visible:text-white"
                   onClick={() => navigate("/lending")}
                 >
-                  Lending Dashboard
+                  Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="min-h-[40px] focus:text-white focus-visible:text-white"
@@ -90,7 +90,7 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
                   className="min-h-[40px] focus:text-white focus-visible:text-white"
                   onClick={() => navigate("/lending-history")}
                 >
-                  Lending History
+                  History
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

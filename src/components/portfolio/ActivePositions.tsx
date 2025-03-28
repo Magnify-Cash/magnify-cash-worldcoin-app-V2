@@ -123,7 +123,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                 </Button>
               </div>
               
-              <div className="flex justify-center mb-3">
+              <div className="flex justify-start mb-3">
                 <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getStatusColor(pool.status)}`}>
                   {getStatusIndicator(pool.status)}
                   <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>

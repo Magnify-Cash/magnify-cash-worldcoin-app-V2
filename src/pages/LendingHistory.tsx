@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Define a transaction type for lending activities
 interface LendingTransaction {
-  id: number; // Changed from string to number to match the Transaction type
+  id: number;
   created_at: string;
   type: "deposit" | "withdrawal";
   amount: number;
@@ -18,6 +18,7 @@ interface LendingTransaction {
   pool_id: number;
   pool_name: string;
   lp_tokens: number;
+  pool_token: string;
 }
 
 const LendingHistory = () => {
@@ -43,34 +44,37 @@ const LendingHistory = () => {
         // For demo purposes, we'll use mock data
         const mockTransactions: LendingTransaction[] = [
           {
-            id: 1, // Changed from string to number
+            id: 1,
             created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
             type: "deposit",
             amount: 1000,
             currency: "USDC",
             pool_id: 1,
             pool_name: "Default Resistant Pool",
-            lp_tokens: 980.5
+            lp_tokens: 980.5,
+            pool_token: "DFLP"
           },
           {
-            id: 2, // Changed from string to number
+            id: 2,
             created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
             type: "deposit",
             amount: 500,
             currency: "USDC",
             pool_id: 2,
             pool_name: "High Uptake Pool",
-            lp_tokens: 490.2
+            lp_tokens: 490.2,
+            pool_token: "HULP"
           },
           {
-            id: 3, // Changed from string to number
+            id: 3,
             created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
             type: "withdrawal",
             amount: 200,
             currency: "USDC",
             pool_id: 3,
             pool_name: "Fast Cycle Pool",
-            lp_tokens: 198.3
+            lp_tokens: 198.3,
+            pool_token: "FCLP"
           }
         ];
         
@@ -145,15 +149,15 @@ const LendingHistory = () => {
                   
                   <div className="grid grid-cols-2 gap-2 mt-3">
                     <div>
-                      <p className="text-xs text-gray-500">Amount</p>
-                      <p className={`text-sm font-medium ${tx.type === "deposit" ? "text-green-600" : "text-red-600"}`}>
-                        {tx.type === "deposit" ? "+" : "-"}{tx.amount} {tx.currency}
+                      <p className="text-xs text-gray-500">{tx.currency}</p>
+                      <p className={`text-sm font-medium ${tx.type === "deposit" ? "text-red-600" : "text-green-600"}`}>
+                        {tx.type === "deposit" ? "-" : "+"}{tx.amount} {tx.currency}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">LP Tokens</p>
-                      <p className="text-sm font-medium">
-                        {tx.lp_tokens.toFixed(2)}
+                      <p className="text-xs text-gray-500">{tx.pool_token}</p>
+                      <p className={`text-sm font-medium ${tx.type === "deposit" ? "text-green-600" : "text-red-600"}`}>
+                        {tx.type === "deposit" ? "+" : "-"}{tx.lp_tokens.toFixed(2)} {tx.pool_token}
                       </p>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Calculator, Sliders, Calendar, Clock } from "lucide-react";
+import { Calculator, Sliders, Calendar, Clock, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,10 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
     originationFee: 10,
     defaultRate: 5,
     loanAmount: 10,
-    utilizationRate: 80
+    utilizationRate: 80,
+    lpTokenEntryPrice: 1.0,
+    lpTokenCurrentPrice: 1.0,
+    timeElapsed: 0
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,6 +104,91 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               />
             </div>
             <p className="text-xs text-gray-500 mt-1">Percentage of pool capital being used for loans</p>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200 pt-4">
+          <h3 className="text-md font-medium mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            LP Token Pricing
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="lpTokenEntryPrice">LP Token Entry Price ($)</Label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  id="lpTokenEntryPrice"
+                  min={0.5}
+                  max={1.5}
+                  step={0.01}
+                  value={[inputs.lpTokenEntryPrice]}
+                  onValueChange={(value) => handleSliderChange("lpTokenEntryPrice", value)}
+                  className="flex-1"
+                />
+                <Input
+                  name="lpTokenEntryPrice"
+                  type="number"
+                  min="0.5"
+                  max="1.5"
+                  step="0.01"
+                  value={inputs.lpTokenEntryPrice}
+                  onChange={handleInputChange}
+                  className="w-20"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Price of LP token when you entered the pool (1.0 = par)</p>
+            </div>
+
+            <div>
+              <Label htmlFor="lpTokenCurrentPrice">LP Token Current Price ($)</Label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  id="lpTokenCurrentPrice"
+                  min={0.5}
+                  max={1.5}
+                  step={0.01}
+                  value={[inputs.lpTokenCurrentPrice]}
+                  onValueChange={(value) => handleSliderChange("lpTokenCurrentPrice", value)}
+                  className="flex-1"
+                />
+                <Input
+                  name="lpTokenCurrentPrice"
+                  type="number"
+                  min="0.5"
+                  max="1.5"
+                  step="0.01"
+                  value={inputs.lpTokenCurrentPrice}
+                  onChange={handleInputChange}
+                  className="w-20"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Current price of LP token (1.0 = par)</p>
+            </div>
+
+            <div>
+              <Label htmlFor="timeElapsed">Time Elapsed (days)</Label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  id="timeElapsed"
+                  min={0}
+                  max={30}
+                  step={1}
+                  value={[inputs.timeElapsed]}
+                  onValueChange={(value) => handleSliderChange("timeElapsed", value)}
+                  className="flex-1"
+                />
+                <Input
+                  name="timeElapsed"
+                  type="number"
+                  min="0"
+                  max="30"
+                  value={inputs.timeElapsed}
+                  onChange={handleInputChange}
+                  className="w-20"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Days elapsed in the current loan period</p>
+            </div>
           </div>
         </div>
 

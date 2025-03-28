@@ -55,7 +55,7 @@ const Lending = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <Header title="Lending Dashboard" />
 
       <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
@@ -68,16 +68,6 @@ const Lending = () => {
           <p className="text-xs sm:text-sm text-gray-700 mb-4 max-w-3xl mx-auto text-center">
             Supply liquidity to earn yield. Your returns grow as borrowers repay loans, with rates influenced by borrowing demand and repayment performance.
           </p>
-          <div className="flex justify-center">
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-1.5" 
-              onClick={handleCalculatorClick}
-            >
-              <Calculator className="h-4 w-4" />
-              <span>Earnings Calculator</span>
-            </Button>
-          </div>
         </div>
 
         <div className="mb-6">

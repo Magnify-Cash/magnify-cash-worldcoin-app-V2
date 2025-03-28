@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import {
   ToggleGroup,
   ToggleGroupItem,
@@ -134,9 +134,9 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
   return (
     <Card className="w-full border border-[#9b87f5]/20 overflow-hidden">
       <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#9b87f5]/10 to-[#7E69AB]/5">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-          <CardTitle className="text-xl flex items-center gap-2 mb-3 sm:mb-0">
-            <BarChart className="h-5 w-5 text-[#9b87f5]" />
+        <div className="flex flex-col items-center justify-center">
+          <CardTitle className="text-xl flex items-center gap-2 mb-3 text-center">
+            <TrendingUp className="h-5 w-5 text-[#9b87f5]" />
             LP Token Price
           </CardTitle>
           
@@ -144,7 +144,7 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
             type="single" 
             value={timeframe} 
             onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}
-            className="self-end sm:self-auto"
+            className="mx-auto"
           >
             <ToggleGroupItem 
               value="days" 

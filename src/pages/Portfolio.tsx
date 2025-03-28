@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { getPools, getUserPoolPosition } from "@/lib/poolRequests";

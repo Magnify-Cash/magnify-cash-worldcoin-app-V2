@@ -40,6 +40,7 @@ export function PoolCard({
   useCustomGradient = false 
 }: PoolCardProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const getPoolName = () => {
     if (id === 1) return "Default Resistant Pool";
@@ -48,6 +49,15 @@ export function PoolCard({
     if (id === 4) return "Identity Based Pool";
     if (id === 5) return "Loyalty Rewards Pool";
     return title;
+  };
+
+  const getPoolSymbol = () => {
+    if (id === 1) return "DFLP";
+    if (id === 2) return "HULP";
+    if (id === 3) return "FCLP";
+    if (id === 4) return "IDLP";
+    if (id === 5) return "LRLP";
+    return "";
   };
 
   const getLockDuration = () => {
@@ -127,24 +137,33 @@ export function PoolCard({
 
   return (
     <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
-      <CardHeader className="pb-2 pt-3 flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={`flex justify-center items-center rounded-full p-1.5 ${iconBgColor}`}>
-            <Coins className={`h-4 w-4 ${accentColor}`} />
+      <CardHeader className="flex flex-col gap-2 pb-2 pt-3">
+        {/* Pool name and icon row */}
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-2">
+            <div className={`flex justify-center items-center rounded-full p-1.5 ${iconBgColor}`}>
+              <Coins className={`h-4 w-4 ${accentColor}`} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm sm:text-base leading-tight truncate max-w-[210px]">
+                {getPoolName()}
+              </h3>
+              <span className="text-xs text-gray-500">{getPoolSymbol()}</span>
+            </div>
           </div>
-          <h3 className="font-semibold">{getPoolName()}</h3>
+          
+          <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()} ml-auto shrink-0`}>
+            {getStatusIcon()}
+            <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+          </Badge>
         </div>
-        <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()}`}>
-          {getStatusIcon()}
-          <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-        </Badge>
       </CardHeader>
       
-      <CardContent className="px-4 pt-2 pb-4 space-y-4">
+      <CardContent className="px-3 sm:px-4 pt-2 pb-4 space-y-3 sm:space-y-4">
         {/* Primary stats row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4">
           {/* APY */}
-          <div className="space-y-1 bg-white/30 rounded-lg p-3">
+          <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3">
             <div className="text-xs text-gray-500 flex items-center gap-1">
               <TrendingUp className="h-3 w-3 flex-shrink-0" />
               <span>APY</span>
@@ -159,30 +178,30 @@ export function PoolCard({
                 </PopoverContent>
               </Popover>
             </div>
-            <div className={`font-bold text-xl ${accentColor}`}>
+            <div className={`font-bold text-lg sm:text-xl ${accentColor}`}>
               {apy}%
             </div>
           </div>
           
           {/* Lock Duration */}
-          <div className="space-y-1 bg-white/30 rounded-lg p-3">
+          <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3">
             <div className="text-xs text-gray-500 flex items-center gap-1">
               <Lock className="h-3 w-3 flex-shrink-0" />
               <span className="whitespace-nowrap">Lock Duration</span>
             </div>
-            <div className="font-bold text-xl text-gray-800">
+            <div className="font-bold text-lg sm:text-xl text-gray-800">
               {getLockDuration()}
             </div>
           </div>
         </div>
         
         {/* Lock Period Date */}
-        <div className="bg-white/30 rounded-lg p-3">
+        <div className="bg-white/30 rounded-lg p-2 sm:p-3">
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
             <Calendar className="h-3 w-3 flex-shrink-0" />
             <span>{getLockPeriodLabel()}</span>
           </div>
-          <div className="font-bold text-base text-gray-800">
+          <div className="font-bold text-sm sm:text-base text-gray-800">
             {getLockPeriodDate()}
           </div>
         </div>
@@ -196,6 +215,7 @@ export function PoolCard({
             ? "bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF] hover:opacity-90"
             : "bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
           }`}
+          size={isMobile ? "sm" : "default"}
         >
           View Pool <ExternalLink className="h-4 w-4" />
         </Button>

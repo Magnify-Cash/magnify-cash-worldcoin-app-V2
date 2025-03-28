@@ -6,23 +6,32 @@ import { CalculatorForm } from "@/components/calculator/CalculatorForm";
 import { CalculatorResults } from "@/components/calculator/CalculatorResults";
 
 export interface CalculationResult {
-  totalEarnings: number;
-  interestEarned: number;
-  feesEarned: number;
-  returnOnInvestment: number;
-  estimatedAPY: number;
-  potentialLoss: number;
-  netReturn: number;
+  // Portfolio values
+  userFinalValue: number;
+  userNetGain: number;
+  apy: number;
+  
+  // Pool statistics
+  totalLoans: number;
+  successfulLoans: number;
+  defaultedLoans: number;
+  totalInterestEarned: number;
+  totalLossesFromDefaults: number;
+  finalPoolValue: number;
+  
+  // Loan details
+  effectiveLoan: number;
+  interestPerLoan: number;
+  userShare: number;
 }
 
 export interface CalculatorInputs {
   investmentAmount: number;
-  apy: number;
-  defaultRate: number;
-  loanAmount: number;
+  poolSize: number;
   loanPeriod: number;
   interestRate: number;
   originationFee: number;
+  defaultRate: number;
 }
 
 const Calculator = () => {
@@ -31,43 +40,55 @@ const Calculator = () => {
   const calculateReturns = (inputs: CalculatorInputs) => {
     const {
       investmentAmount,
-      apy,
-      defaultRate,
-      loanAmount,
+      poolSize,
       loanPeriod,
       interestRate,
-      originationFee
+      originationFee,
+      defaultRate
     } = inputs;
 
-    // Calculate interest earned
-    const annualInterestRate = interestRate / 100;
-    const loanPeriodYears = loanPeriod / 12;
-    const interestEarned = loanAmount * annualInterestRate * loanPeriodYears * (investmentAmount / loanAmount);
+    // Fixed loan amount
+    const loanAmount = 10;
     
-    // Calculate fees earned
-    const feesEarned = loanAmount * (originationFee / 100) * (investmentAmount / loanAmount);
+    // Step 1: Calculate total number of loans issued by the pool
+    const totalLoans = poolSize / loanAmount;
     
-    // Calculate potential loss due to defaults
-    const potentialLoss = investmentAmount * (defaultRate / 100);
+    // Step 2: Break into successful and defaulted loans
+    const successfulLoans = totalLoans * (1 - defaultRate / 100);
+    const defaultedLoans = totalLoans * (defaultRate / 100);
     
-    // Calculate net return
-    const totalEarnings = interestEarned + feesEarned;
-    const netReturn = totalEarnings - potentialLoss;
+    // Step 3: Calculate earnings and losses at the pool level
+    const effectiveLoan = loanAmount - (originationFee / 100 * loanAmount);
+    const interestPerLoan = loanAmount * (interestRate / 100);
     
-    // Calculate ROI
-    const returnOnInvestment = (netReturn / investmentAmount) * 100;
+    const totalInterestEarned = successfulLoans * interestPerLoan;
+    const totalLossesFromDefaults = defaultedLoans * effectiveLoan;
     
-    // Annualized APY
-    const estimatedAPY = (returnOnInvestment / loanPeriodYears);
+    const finalPoolValue = poolSize + totalInterestEarned - totalLossesFromDefaults;
+    
+    // Step 4: Calculate the user's share and results
+    const userShare = investmentAmount / poolSize;
+    const userFinalValue = finalPoolValue * userShare;
+    const userNetGain = userFinalValue - investmentAmount;
+    
+    // Step 5: Calculate annualized return (APY)
+    const netGainPerCycle = userNetGain / investmentAmount;
+    // Convert days to years for APY calculation
+    const apy = Math.pow(1 + netGainPerCycle, 365 / loanPeriod) - 1;
     
     setResults({
-      totalEarnings,
-      interestEarned,
-      feesEarned,
-      returnOnInvestment,
-      estimatedAPY,
-      potentialLoss,
-      netReturn
+      userFinalValue,
+      userNetGain,
+      apy,
+      totalLoans,
+      successfulLoans,
+      defaultedLoans,
+      totalInterestEarned,
+      totalLossesFromDefaults,
+      finalPoolValue,
+      effectiveLoan,
+      interestPerLoan,
+      userShare
     });
   };
 
@@ -81,7 +102,7 @@ const Calculator = () => {
             Lending Returns Calculator
           </h1>
           <p className="text-gray-600">
-            Estimate your potential earnings and returns from participating in Magnify Cash lending pools.
+            Estimate your potential earnings as a lender in World Chain liquidity pools.
           </p>
         </div>
 

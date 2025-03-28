@@ -12,6 +12,7 @@ import Lending from "@/pages/Lending";
 import PoolDetails from "@/pages/PoolDetails";
 import Portfolio from "@/pages/Portfolio";
 import LendingHistory from "@/pages/LendingHistory";
+import Calculator from "@/pages/Calculator";
 import ProtectedRoute from "@/pages/ProtectedPage";
 import NotFound from "@/pages/NotFound";
 import "./App.css";
@@ -51,6 +52,7 @@ function App() {
           <Route path="/pool/:id" element={<PoolDetails />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/lending-history" element={<LendingHistory />} />
+          <Route path="/calculator" element={<Calculator />} />
           <Route
             path="/guide"
             element={

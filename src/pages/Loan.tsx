@@ -101,6 +101,30 @@ const Loan = () => {
             Repay Loan
           </Button>
         </div>
+      ) : !data || data?.nftInfo.tokenId === null ? (
+        <div className="p-6 space-y-6">
+          <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
+            <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
+            <p className="mb-4">
+              To be eligible for a loan, you need to own a specific NFT. Please upgrade your account.
+            </p>
+            <Button onClick={() => navigate("/profile")} className="glass-button w-full">
+              Upgrade Now
+            </Button>
+          </div>
+        </div> 
+      ) : data?.nftInfo?.tier?.verificationStatus?.verification_level === "device" ? (
+        <div className="p-6 space-y-6">
+          <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
+            <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
+            <p className="mb-4">
+              We no longer support loans for Device Verified Users. Get Orb verified to access instant loans!
+            </p>
+            <Button onClick={() => navigate("/profile")} className="glass-button w-full">
+              Upgrade Now
+            </Button>
+          </div>
+        </div> 
       ) : (
         <div className="p-6 space-y-6">
           <div className="glass-card p-6">
@@ -113,8 +137,7 @@ const Loan = () => {
               </div>
               <div className="flex flex-col items-start space-y-3 my-3">
                 <p className="text-gray-600">Loan Amount: ${loanAmount}</p>
-                <p className="text-gray-600">Interest Rate: 17.5%</p>
-                <p className="text-gray-600">Origination Fee: 10.0%</p>
+                <p className="text-gray-600">Interest Rate: 1.00%</p>
                 <p className="text-gray-600">Duration: {loanDuration} days</p>
               </div>
               <Button

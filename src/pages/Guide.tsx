@@ -33,19 +33,10 @@ const Guide = () => {
                 1. Verify Your Identity
               </h2>
               <p className="text-gray-600 mb-6">
-                Use World ID to verify your identity and access loans tailored to your
-                verification level:
+                Use World ID to verify your identity and access loans
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <LoanCard
-                  title="DEVICE"
-                  amount="$1"
-                  interest="17.5%"
-                  origination="10.0%"
-                  duration="30 days"
-                  icon="world"
-                />
                 <LoanCard
                   title="ORB"
                   amount="$30"
@@ -60,7 +51,7 @@ const Guide = () => {
                 <div className="flex items-start gap-3">
                   <Info className="w-5 h-5 text-[#5A1A8F] flex-shrink-0 mt-1" />
                   <p className="text-gray-600">
-                    💡 Tip: Verifying with ORB unlocks the highest loan limits and exclusive perks!
+                    💡 Tip: Verifying with ORB ensures our loans go out to a verified human!
                   </p>
                 </div>
               </div>
@@ -70,15 +61,14 @@ const Guide = () => {
               <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
                 2. Apply for a Loan
               </h2>
-              <p className="text-gray-600 mb-6">
-                Choose your loan amount and duration based on your verification level
-              </p>
+                <p className="text-gray-600 mb-6">
+                Navigate to the &lsquo;Get a Loan&rsquo; page and apply for a loan!
+                </p>
               <div className="glass-card p-4 border-l-4 border-[#5A1A8F] bg-gradient-to-r from-[#5A1A8F]/5 to-transparent">
                 <div className="flex items-start gap-3">
                   <Info className="w-5 h-5 text-[#5A1A8F] flex-shrink-0 mt-1" />
                   <p className="text-gray-600">
-                    💡 Tip: Start small with a $1 loan if you're new to Magnify Cash, and
-                    increase your limits as you verify further.
+                    💡 Tip: Stay tuned for further updates where we introduced larger loan amounts!
                   </p>
                 </div>
               </div>
@@ -89,12 +79,8 @@ const Guide = () => {
                 3. Track & Repay
               </h2>
               <p className="text-gray-600 mb-6">
-                Easily monitor your active loans and make repayments directly through
-                your wallet:
+                Easily monitor your active loan and make repayments directly from your wallet via the &lsquo;Loan Status&rsquo; page
               </p>
-              <ul className="list-disc list-inside text-gray-600 mb-6 ml-4 space-y-2">
-                <li>View your loan details, repayment schedule, and status.</li>
-              </ul>
               <div className="glass-card p-4 border-l-4 border-[#5A1A8F] bg-gradient-to-r from-[#5A1A8F]/5 to-transparent">
                 <div className="flex items-start gap-3">
                   <Info className="w-5 h-5 text-[#5A1A8F] flex-shrink-0 mt-1" />
@@ -238,6 +224,15 @@ const Guide = () => {
                 <a className="text-[#5A1A8F] hover:text-[#1A1E8F] transition-colors underline" href="https://discord.gg/magnifycash">
                     Discord
                   </a>, where you&apos;ll be able to ask questions and raise a Support Ticket so that our team can help you out.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-9" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  I was previously device-verified, but now I can&apos;t apply for new loans. Why?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                We have updated our eligibility criteria to offer loans exclusively to Orb-verified users. This change ensures that every borrower is a real, unique human, as Orb verification provides a higher level of identity assurance. Unfortunately, device verification does not offer the same level of certainty, meaning we cannot reliably distinguish between real users and potential fraudulent accounts. By serving only Orb-verified users, we can maintain a fair and secure lending environment for everyone.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

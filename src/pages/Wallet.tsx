@@ -37,6 +37,12 @@ const Wallet = () => {
     setIsLoading(false);
   }, [ls_wallet, demoData.usdcBalance]);
 
+  // Filter tokens based on minimum balance threshold
+  const filteredTokens = tokens.filter(token => token.tokenBalance >= MIN_BALANCE_THRESHOLD);
+
+  // Determine if we should show the error message
+  const shouldShowError = error && loadingTokens === false && !filteredTokens.length;
+
   return (
     <div className="min-h-screen bg-background">
       <Header title="Wallet" showBack={false} />
@@ -80,6 +86,27 @@ const Wallet = () => {
           ) : (
             <div className="text-center py-4">No tokens found. Add some to see your balance!</div>
           )}
+          
+          <div className="space-y-4">
+            {loadingTokens ? (
+              <>
+                <WalletCard currency="" symbol="" balance="" isLoading={true} />
+                <WalletCard currency="" symbol="" balance="" isLoading={true} />
+                <WalletCard currency="" symbol="" balance="" isLoading={true} />
+              </>
+            ) : filteredTokens.length > 0 ? (
+              filteredTokens.map((token) => (
+                <WalletCard
+                  key={token.tokenAddress || token.tokenSymbol}
+                  currency={token.tokenName}
+                  symbol={token.tokenSymbol}
+                  balance={token.tokenBalance.toFixed(3)}
+                />
+              ))
+            ) : (
+              <div className="text-center py-4">No tokens found. Add some to see your balance!</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -11,13 +11,23 @@ interface CreditScoreProps {
 
 const CreditScore: React.FC<CreditScoreProps> = ({ score, className }) => {
   // Calculate progress percentage (max score is 10)
-  const progressPercentage = (score / 10) * 100;
+  const progressPercentage = Math.max(0, ((score + 1) / 11) * 100); // Adjusted for -1 case
   
   // Determine the color based on the score
   const getScoreColor = (score: number): string => {
+    if (score < 0) return 'text-red-500';
     if (score <= 3) return 'text-red-500';
     if (score <= 6) return 'text-amber-500';
     return 'text-green-500';
+  };
+
+  // Get the status text based on score
+  const getScoreStatus = (score: number): string => {
+    if (score < 0) return 'Defaulted';
+    if (score <= 3) return 'Poor';
+    if (score <= 6) return 'Fair';
+    if (score <= 8) return 'Good';
+    return 'Excellent';
   };
 
   return (
@@ -32,12 +42,15 @@ const CreditScore: React.FC<CreditScoreProps> = ({ score, className }) => {
         <Progress 
           value={progressPercentage} 
           className="h-2 bg-purple-100 dark:bg-purple-950/30" 
-          indicatorClassName="bg-gradient-to-r from-[#9b87f5] via-[#7E69AB] to-[#6E59A5]" 
+          style={{ background: 'linear-gradient(to right, #9b87f5, #7E69AB, #6E59A5)' }} 
         />
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <span className={cn("text-3xl font-bold", getScoreColor(score))}>
             {score}
           </span>
+          <p className={cn("text-sm font-medium", getScoreColor(score))}>
+            {getScoreStatus(score)}
+          </p>
         </div>
       </div>
     </div>

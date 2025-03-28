@@ -29,6 +29,7 @@ import { WithdrawModal } from "@/components/WithdrawModal";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
 import { formatToLocalTime, formatDateRange, getDaysBetween, formatUnlockDate } from "@/utils/dateUtils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PoolPriceGraph } from "@/components/PoolPriceGraph";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -466,6 +467,8 @@ const PoolDetails = () => {
                   )}
                 </CardContent>
               </Card>
+
+              <PoolPriceGraph poolId={pool.id} />
 
               <UserPortfolioCard
                 balance={userPosition?.token_b_amount || 0}

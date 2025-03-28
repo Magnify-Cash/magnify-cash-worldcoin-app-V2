@@ -85,8 +85,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
       {pools.map((pool) => (
         <div 
           key={pool.id} 
-          className="rounded-lg bg-white shadow-md overflow-hidden cursor-pointer"
-          onClick={() => navigate(`/pool/${pool.id}`)}
+          className="rounded-lg bg-white shadow-md overflow-hidden"
         >
           <div className="p-4">
             <div className="flex justify-between items-center mb-2">
@@ -104,10 +103,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/pool/${pool.id}`);
-                }}
+                onClick={() => navigate(`/pool/${pool.id}`)}
                 className="p-1 h-8 w-8"
               >
                 <ExternalLink className="h-4 w-4 text-gray-500" />
@@ -145,10 +141,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
               <div className="flex gap-2">
                 {showSupplyButton(pool.status) && (
                   <Button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/pool/${pool.id}`);
-                    }} 
+                    onClick={() => navigate(`/pool/${pool.id}`)} 
                     size="sm"
                     className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
                   >
@@ -158,10 +151,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                 
                 {showWithdrawButton(pool.status) && (
                   <Button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/pool/${pool.id}`);
-                    }} 
+                    onClick={() => navigate(`/pool/${pool.id}`)} 
                     variant="outline" 
                     size="sm"
                     className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"

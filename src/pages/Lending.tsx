@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -9,6 +8,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { getPools } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 
+const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): number => {
+  switch (status) {
+    case 'warm-up': return 1;
+    case 'active': return 2;
+    case 'withdrawal': return 3;
+    case 'cooldown': return 4;
+    default: return 5;
+  }
+};
+
 const Lending = () => {
   const [loading, setLoading] = useState(true);
   const [pools, setPools] = useState<LiquidityPool[]>([]);
@@ -18,7 +27,10 @@ const Lending = () => {
     const fetchPools = async () => {
       try {
         const poolsData = await getPools();
-        setPools(poolsData);
+        const sortedPools = [...poolsData].sort((a, b) => {
+          return getPoolStatusPriority(a.status) - getPoolStatusPriority(b.status);
+        });
+        setPools(sortedPools);
       } catch (error) {
         console.error("Error fetching pools:", error);
         toast({

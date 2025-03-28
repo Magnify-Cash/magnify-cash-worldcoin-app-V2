@@ -138,21 +138,24 @@ export function PoolCard({
   return (
     <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
       <CardHeader className="flex flex-col gap-2 pb-2 pt-3">
-        {/* Pool name and status row */}
-        <div className="flex items-center justify-between w-full">
+        {/* Pool name row */}
+        <div className="flex flex-col w-full">
           <div className="flex items-center gap-2">
             <div className={`flex justify-center items-center rounded-full p-1.5 ${iconBgColor}`}>
               <Coins className={`h-4 w-4 ${accentColor}`} />
             </div>
-            <h3 className="font-semibold text-sm sm:text-base leading-tight truncate max-w-[210px]">
+            <h3 className="font-semibold text-sm sm:text-base leading-tight truncate max-w-[85%]">
               {getPoolName()}
             </h3>
           </div>
           
-          <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()} ml-auto shrink-0`}>
-            {getStatusIcon()}
-            <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-          </Badge>
+          {/* Status badge below pool name */}
+          <div className="mt-1.5 ml-8">
+            <Badge variant="outline" className={`flex items-center gap-0.5 px-2 py-0.5 text-xs font-medium ${getStatusColor()} shrink-0`}>
+              {getStatusIcon()}
+              <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       

@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp } from "lucide-react";
+import { LineChart } from "lucide-react";
 import {
   ToggleGroup,
   ToggleGroupItem,
@@ -38,7 +38,7 @@ const generatePriceData = (poolId: number, timeframe: "days" | "weeks") => {
       trend = 0.004;
       break;
     case 3: // Pool C - Lower growth, less volatile
-      basePrice = 1.0;
+      basePrice = 0.7; // Start at $0.70 for the example
       volatility = 0.002;
       trend = 0.002;
       break;
@@ -136,7 +136,7 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
       <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#9b87f5]/10 to-[#7E69AB]/5">
         <div className="flex flex-col items-center justify-center">
           <CardTitle className="text-xl flex items-center gap-2 mb-3 text-center">
-            <TrendingUp className="h-5 w-5 text-[#9b87f5]" />
+            <LineChart className="h-5 w-5 text-[#9b87f5]" />
             LP Token Price
           </CardTitle>
           
@@ -226,7 +226,7 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
             
             {/* Reference line at initial value */}
             <ReferenceLine 
-              y={1} 
+              y={poolId === 3 ? 0.7 : 1} 
               stroke="#666" 
               strokeDasharray="3 3" 
             />

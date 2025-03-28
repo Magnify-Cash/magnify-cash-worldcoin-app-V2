@@ -12,15 +12,14 @@ import {
 } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Info } from "lucide-react";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { BarChart } from "lucide-react";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
 
-// Generate historical price data based on pool ID
-const generatePriceData = (poolId: number) => {
+// Generate historical price data based on pool ID and timeframe
+const generatePriceData = (poolId: number, timeframe: "days" | "weeks") => {
   // Base starting price and pattern varies by pool
   let basePrice = 1.0;
   let volatility = 0.005;
@@ -46,24 +45,40 @@ const generatePriceData = (poolId: number) => {
       break;
   }
   
-  // Generate 12 months of data
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  // Generate data based on timeframe
+  const dataPoints = timeframe === "days" ? 30 : 12; // 30 days or 12 weeks
   
-  return months.map((month, index) => {
+  const data = [];
+  for (let i = 1; i <= dataPoints; i++) {
     // Simulate price movement with trend and random noise
     const noise = (Math.random() - 0.5) * volatility;
     basePrice = basePrice + trend + noise;
     
-    // Add some seasonal patterns
-    if (index === 6 && poolId === 1) basePrice += 0.01; // Summer boost for Pool A
-    if (index === 3 && poolId === 2) basePrice -= 0.005; // Spring dip for Pool B
-    if (index === 9 && poolId === 3) basePrice += 0.008; // Fall boost for Pool C
+    // Add some patterns
+    if (timeframe === "days") {
+      // Weekend boost
+      if (i % 7 === 0 || i % 7 === 6) {
+        basePrice += 0.003;
+      }
+      
+      // Pool-specific patterns
+      if (i === 15 && poolId === 1) basePrice += 0.01; // Mid-month boost for Pool A
+      if (i === 10 && poolId === 2) basePrice -= 0.005; // Early dip for Pool B
+      if (i === 25 && poolId === 3) basePrice += 0.008; // Late month boost for Pool C
+    } else {
+      // Weekly patterns
+      if (i === 4 && poolId === 1) basePrice += 0.01; // Month 1 boost for Pool A
+      if (i === 8 && poolId === 2) basePrice -= 0.005; // Month 2 dip for Pool B
+      if (i === 10 && poolId === 3) basePrice += 0.008; // Month 3 boost for Pool C
+    }
     
-    return {
-      date: month,
+    data.push({
+      date: timeframe === "days" ? `Day ${i}` : `Week ${i}`,
       price: parseFloat(basePrice.toFixed(4))
-    };
-  });
+    });
+  }
+  
+  return data;
 };
 
 interface PoolPriceGraphProps {
@@ -73,7 +88,8 @@ interface PoolPriceGraphProps {
 
 export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProps) {
   const isMobile = useIsMobile();
-  const priceData = generatePriceData(poolId);
+  const [timeframe, setTimeframe] = useState<"days" | "weeks">("days");
+  const priceData = generatePriceData(poolId, timeframe);
   
   // Calculate min and max for yAxis domain with some padding
   const prices = priceData.map(d => d.price);
@@ -94,28 +110,33 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
   
   const poolColor = getPoolColor();
   
-  // Get tick interval based on device
+  // Get tick interval based on device and timeframe
   const getTickInterval = () => {
-    return isMobile ? 2 : 1; // Show every other month on mobile
+    if (timeframe === "days") {
+      return isMobile ? 6 : 3; // Show every 3rd or 6th day
+    } else {
+      return isMobile ? 2 : 1; // Show every 1st or 2nd week
+    }
   };
 
   return (
     <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
       <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
-        <CardTitle className="text-xl flex items-center gap-2 justify-center">
-          <BarChart className="h-5 w-5 text-[#8B5CF6]" />
-          LP Token Price
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="inline-flex">
-                <Info className="h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="max-w-[250px] text-xs p-3">
-              <p>Historical LP token price showing the growth of value over time.</p>
-            </PopoverContent>
-          </Popover>
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <BarChart className="h-5 w-5 text-[#8B5CF6]" />
+            LP Token Price
+          </CardTitle>
+          
+          <ToggleGroup type="single" value={timeframe} onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}>
+            <ToggleGroupItem value="days" aria-label="View by days" className="text-xs">
+              Days
+            </ToggleGroupItem>
+            <ToggleGroupItem value="weeks" aria-label="View by weeks" className="text-xs">
+              Weeks
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </CardHeader>
       <CardContent className={`${isMobile ? "px-2 py-2" : "pt-5"} h-[260px]`}>
         <ResponsiveContainer width="100%" height="100%">
@@ -162,7 +183,7 @@ export function PoolPriceGraph({ poolId, color = "#8B5CF6" }: PoolPriceGraphProp
                 if (active && payload && payload.length) {
                   return (
                     <div className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-md rounded-md p-2 text-xs">
-                      <p className="font-medium">{label} 2024</p>
+                      <p className="font-medium">{label}</p>
                       <div className="pt-1">
                         <p style={{ color: poolColor }} className="font-semibold">
                           Price: ${payload[0].value}

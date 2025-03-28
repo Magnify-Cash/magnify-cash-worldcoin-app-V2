@@ -35,7 +35,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
       case 'cooldown':
         return 'bg-gray-100 text-gray-800';
       case 'withdrawal':
-        return 'bg-red-100 text-red-800';
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -50,7 +50,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
       case 'cooldown':
         return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1.5"></div>;
       case 'withdrawal':
-        return <div className="h-3 w-3 rounded-full bg-red-500 mr-1.5"></div>;
+        return <div className="h-3 w-3 rounded-full bg-purple-500 mr-1.5"></div>;
       default:
         return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1.5"></div>;
     }

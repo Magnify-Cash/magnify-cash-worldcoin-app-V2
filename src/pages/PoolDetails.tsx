@@ -108,7 +108,7 @@ const PoolDetails = () => {
       case 'cooldown':
         return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'withdrawal':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -119,15 +119,15 @@ const PoolDetails = () => {
     
     switch (pool.status) {
       case 'warm-up':
-        return <Timer className="h-4 w-4 mr-1 text-amber-500" />;
+        return <div className="h-4 w-4 rounded-full bg-amber-500 mr-1.5"></div>;
       case 'active':
-        return <CircleCheck className="h-4 w-4 mr-1 text-green-500" />;
+        return <div className="h-4 w-4 rounded-full bg-green-500 mr-1.5"></div>;
       case 'cooldown':
-        return <CircleCheck className="h-4 w-4 mr-1 text-gray-500" />;
+        return <div className="h-4 w-4 rounded-full bg-gray-500 mr-1.5"></div>;
       case 'withdrawal':
-        return <CircleCheck className="h-4 w-4 mr-1 text-red-500" />;
+        return <div className="h-4 w-4 rounded-full bg-purple-500 mr-1.5"></div>;
       default:
-        return <Circle className="h-4 w-4 mr-1 text-gray-500" />;
+        return <div className="h-4 w-4 rounded-full bg-gray-500 mr-1.5"></div>;
     }
   };
 

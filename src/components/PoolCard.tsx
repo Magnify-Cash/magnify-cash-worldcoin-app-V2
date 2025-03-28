@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   Coins, 
@@ -94,7 +93,7 @@ export function PoolCard({
       case 'active':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'cooldown':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'withdrawal':
         return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
@@ -109,7 +108,7 @@ export function PoolCard({
       case 'active':
         return <div className="h-3 w-3 rounded-full bg-green-500 mr-1.5"></div>;
       case 'cooldown':
-        return <div className="h-3 w-3 rounded-full bg-blue-500 mr-1.5"></div>;
+        return <div className="h-3 w-3 rounded-full bg-gray-500 mr-1.5"></div>;
       case 'withdrawal':
         return <div className="h-3 w-3 rounded-full bg-purple-500 mr-1.5"></div>;
       default:

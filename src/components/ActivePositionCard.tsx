@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, Info, TrendingUp, Wallet } from "lucide-react";
+import { ArrowUpRight, Info, TrendingUp, Wallet, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface ActivePositionCardProps {
@@ -40,9 +40,24 @@ export function ActivePositionCard({
       case 'cooldown':
         return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'withdrawal':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getPoolIcon = (poolId: number) => {
+    switch (poolId) {
+      case 1:
+        return <Coins className="h-3.5 w-3.5 mr-1 text-blue-500" />;
+      case 2:
+        return <Coins className="h-3.5 w-3.5 mr-1 text-purple-500" />;
+      case 3:
+        return <Coins className="h-3.5 w-3.5 mr-1 text-yellow-500" />;
+      case 4:
+        return <Coins className="h-3.5 w-3.5 mr-1 text-green-500" />;
+      default:
+        return <Coins className="h-3.5 w-3.5 mr-1 text-[#8B5CF6]" />;
     }
   };
 
@@ -52,8 +67,17 @@ export function ActivePositionCard({
         <div className="flex justify-between items-center mb-3">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-medium text-lg">{poolName}</h3>
+              <h3 className="font-medium text-lg flex items-center">
+                {getPoolIcon(poolId)}{poolName}
+              </h3>
               <Badge variant="outline" className={`${getStatusColor(status)}`}>
+                <div className={`h-3 w-3 rounded-full mr-1.5 ${
+                  status === 'warm-up' ? 'bg-amber-500' :
+                  status === 'active' ? 'bg-green-500' :
+                  status === 'cooldown' ? 'bg-gray-500' :
+                  status === 'withdrawal' ? 'bg-purple-500' :
+                  'bg-gray-500'
+                }`}></div>
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </Badge>
             </div>

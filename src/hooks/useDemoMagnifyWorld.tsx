@@ -21,12 +21,12 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
     
     // Set loan terms based on tier
     if (tierIdNumber === 2) {
-      loanAmount = 30n * 1000000n; // 5 USDC
-      interestRate = 1750n; // 1.5%
+      loanAmount = 10n * 1000000n; // 10 USDC
+      interestRate = 100n; // 1%
       loanPeriod = 7776000n; // 90 days
     } else if (tierIdNumber === 3) {
-      loanAmount = 30n * 1000000n; // 5 USDC
-      interestRate = 1750n; // 1.5%
+      loanAmount = 10n * 1000000n; // 10 USDC
+      interestRate = 100n; // 1%
       loanPeriod = 7776000n; // 90 days
     }
 
@@ -60,7 +60,7 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
       1: {
         tierId: 1n,
         loanAmount: 1000000n, // 1 USDC
-        interestRate: 250n, // 2%
+        interestRate: 250n, // 2.5%
         loanPeriod: 2592000n, // 30 days
         verificationStatus: {
           level: "DEVICE",
@@ -70,9 +70,9 @@ export function useDemoMagnifyWorld(walletAddress: `0x${string}`) {
       },
       2: {
         tierId: 2n,
-        loanAmount: 30000000n, // 30 USDC
-        interestRate: 1750n, // 1%
-        loanPeriod: 7776000n, // 30 days
+        loanAmount: 10000000n, // 10 USDC (was 30)
+        interestRate: 100n, // 1% (was 1.75%)
+        loanPeriod: 7776000n, // 90 days
         verificationStatus: {
           level: "ORB",
           verification_level: "orb",

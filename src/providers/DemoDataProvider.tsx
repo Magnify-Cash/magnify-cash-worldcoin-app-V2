@@ -187,7 +187,7 @@ export const DemoDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   const requestLoan = async (tierId: number): Promise<string> => {
     setIsLoading(true);
     const txHash = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`;
-    const loanAmount = tierId === 2 ? 10 : 1; // Changed from 30 to 10 for Orb verified
+    const loanAmount = tierId === 2 ? 10 : 1; // 10 USDC for Orb verified
 
     // Introduce a delay to simulate network request
     await new Promise(resolve => setTimeout(resolve, 1000));

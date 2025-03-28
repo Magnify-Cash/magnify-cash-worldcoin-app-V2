@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { getPools, getUserPoolPosition } from "@/lib/poolRequests";
@@ -18,31 +19,35 @@ const Portfolio = () => {
   
   // Demo data for multiple pools
   const [demoBalances, setDemoBalances] = useState<Record<number, number>>({
-    1: 1200, // USDC Pool
-    2: 500,  // ETH Pool
-    3: 300,  // WBTC Pool
-    4: 800   // DAI Pool
+    1: 1200, // Default Resistant Pool
+    2: 500,  // High Uptake Pool
+    3: 300,  // Fast Cycle Pool
+    4: 800,  // Identity Based Pool
+    5: 600   // Loyalty Rewards Pool
   });
   
   const [demoDepositedValues, setDemoDepositedValues] = useState<Record<number, number>>({
     1: 1200,
     2: 500,
     3: 300,
-    4: 800
+    4: 800,
+    5: 600
   });
   
   const [demoCurrentValues, setDemoCurrentValues] = useState<Record<number, number>>({
     1: 1250.75,
     2: 520.50,
     3: 305.20,
-    4: 812.40
+    4: 812.40,
+    5: 618.30
   });
   
   const [demoEarnings, setDemoEarnings] = useState<Record<number, number>>({
     1: 50.75,
     2: 20.50,
     3: 5.20,
-    4: 12.40
+    4: 12.40,
+    5: 18.30
   });
 
   useEffect(() => {

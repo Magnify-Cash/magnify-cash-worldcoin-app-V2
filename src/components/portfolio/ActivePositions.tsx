@@ -56,6 +56,24 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
     }
   };
 
+  // Get pool name and symbol based on pool ID
+  const getPoolInfo = (poolId: number) => {
+    switch (poolId) {
+      case 1:
+        return { name: "Default Resistant Pool", symbol: "DFLP" };
+      case 2:
+        return { name: "High Uptake Pool", symbol: "HULP" };
+      case 3:
+        return { name: "Fast Cycle Pool", symbol: "FCLP" };
+      case 4:
+        return { name: "Identity Based Pool", symbol: "IDLP" };
+      case 5:
+        return { name: "Loyalty Rewards Pool", symbol: "LRLP" };
+      default:
+        return { name: `Pool ${String.fromCharCode(64 + poolId)}`, symbol: "LP" };
+    }
+  };
+
   // Used to get icon based on pool ID
   const getPoolIcon = (poolId: number) => {
     switch (poolId) {
@@ -67,6 +85,8 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
         return <Coins className="h-5 w-5 text-yellow-500 mr-1.5" />;
       case 4:
         return <Coins className="h-5 w-5 text-green-500 mr-1.5" />;
+      case 5:
+        return <Coins className="h-5 w-5 text-red-500 mr-1.5" />;
       default:
         return <Coins className="h-5 w-5 text-gray-500 mr-1.5" />;
     }
@@ -82,88 +102,91 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
 
   return (
     <div className="space-y-5">
-      {pools.map((pool) => (
-        <div 
-          key={pool.id} 
-          className="rounded-lg bg-white shadow-md overflow-hidden"
-        >
-          <div className="p-4">
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center">
-                  {getPoolIcon(pool.id)}
-                  <h3 className="font-medium text-base sm:text-lg">Pool {String.fromCharCode(64 + pool.id)}</h3>
+      {pools.map((pool) => {
+        const { name, symbol } = getPoolInfo(pool.id);
+        return (
+          <div 
+            key={pool.id} 
+            className="rounded-lg bg-white shadow-md overflow-hidden"
+          >
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center">
+                    {getPoolIcon(pool.id)}
+                    <h3 className="font-medium text-base sm:text-lg">{name}</h3>
+                  </div>
+                  <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getStatusColor(pool.status)}`}>
+                    {getStatusIndicator(pool.status)}
+                    <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
+                  </div>
                 </div>
-                <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getStatusColor(pool.status)}`}>
-                  {getStatusIndicator(pool.status)}
-                  <span>{pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}</span>
-                </div>
+
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate(`/pool/${pool.id}`)}
+                  className="p-1 h-8 w-8"
+                >
+                  <ExternalLink className="h-4 w-4 text-gray-500" />
+                </Button>
               </div>
 
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate(`/pool/${pool.id}`)}
-                className="p-1 h-8 w-8"
-              >
-                <ExternalLink className="h-4 w-4 text-gray-500" />
-              </Button>
-            </div>
-
-            <div className="space-y-3 mt-3">
-              <div className="flex justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Your Balance</span>
-                <span className="text-xs sm:text-sm font-medium">{balances[pool.id]?.toFixed(2) || "0.00"} LP</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Deposited Value</span>
-                <span className="text-xs sm:text-sm font-medium">${depositedValues[pool.id]?.toFixed(2) || "0.00"}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Current Value</span>
-                <span className="text-xs sm:text-sm font-medium">${currentValues[pool.id]?.toFixed(2) || "0.00"}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Earnings</span>
-                <span className="text-xs sm:text-sm font-medium text-green-600">
-                  +${earnings[pool.id]?.toFixed(2) || "0.00"} 
-                  {depositedValues[pool.id] > 0 ? 
-                    ` (+${((earnings[pool.id] / depositedValues[pool.id]) * 100).toFixed(1)}%)` : 
-                    ""}
-                </span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-2 mt-4">
-              <div className="flex gap-2">
-                {showSupplyButton(pool.status) && (
-                  <Button 
-                    onClick={() => navigate(`/pool/${pool.id}`)} 
-                    size="sm"
-                    className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
-                  >
-                    Supply More
-                  </Button>
-                )}
+              <div className="space-y-3 mt-3">
+                <div className="flex justify-between">
+                  <span className="text-xs sm:text-sm text-gray-500">Your Balance</span>
+                  <span className="text-xs sm:text-sm font-medium">{balances[pool.id]?.toFixed(2) || "0.00"} {symbol}</span>
+                </div>
                 
-                {showWithdrawButton(pool.status) && (
-                  <Button 
-                    onClick={() => navigate(`/pool/${pool.id}`)} 
-                    variant="outline" 
-                    size="sm"
-                    className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
-                  >
-                    Withdraw
-                  </Button>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-xs sm:text-sm text-gray-500">Deposited Value</span>
+                  <span className="text-xs sm:text-sm font-medium">${depositedValues[pool.id]?.toFixed(2) || "0.00"}</span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-xs sm:text-sm text-gray-500">Current Value</span>
+                  <span className="text-xs sm:text-sm font-medium">${currentValues[pool.id]?.toFixed(2) || "0.00"}</span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-xs sm:text-sm text-gray-500">Earnings</span>
+                  <span className="text-xs sm:text-sm font-medium text-green-600">
+                    +${earnings[pool.id]?.toFixed(2) || "0.00"} 
+                    {depositedValues[pool.id] > 0 ? 
+                      ` (+${((earnings[pool.id] / depositedValues[pool.id]) * 100).toFixed(1)}%)` : 
+                      ""}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-2 mt-4">
+                <div className="flex gap-2">
+                  {showSupplyButton(pool.status) && (
+                    <Button 
+                      onClick={() => navigate(`/pool/${pool.id}`)} 
+                      size="sm"
+                      className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+                    >
+                      Supply More
+                    </Button>
+                  )}
+                  
+                  {showWithdrawButton(pool.status) && (
+                    <Button 
+                      onClick={() => navigate(`/pool/${pool.id}`)} 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+                    >
+                      Withdraw
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       <div className="flex justify-center mt-2">
         <Button 

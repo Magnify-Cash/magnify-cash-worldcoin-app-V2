@@ -18,6 +18,7 @@ interface UserPortfolioCardProps {
   onToggleDummyData?: () => void;
   showToggle?: boolean;
   poolStatus?: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
+  symbol?: string;
 }
 
 export function UserPortfolioCard({
@@ -33,7 +34,8 @@ export function UserPortfolioCard({
   showWithdrawButton = true,
   onToggleDummyData,
   showToggle = false,
-  poolStatus
+  poolStatus,
+  symbol = "LP"
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
 
@@ -65,7 +67,7 @@ export function UserPortfolioCard({
                 <span className="text-sm text-gray-500">
                   Your Balance
                 </span>
-                <span className="font-medium">{balance.toFixed(2)} LP</span>
+                <span className="font-medium">{balance.toFixed(2)} {symbol}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500">Deposited Value</span>

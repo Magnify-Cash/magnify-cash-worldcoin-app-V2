@@ -2,8 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { TransactionList } from "@/components/TransactionList";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { HistoryIcon, ExternalLink } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/components/ui/use-toast";
@@ -90,21 +89,6 @@ const LendingHistory = () => {
     
     fetchTransactions();
   }, []);
-  
-  // Format transactions for the TransactionList component
-  const formattedTransactions = transactions.map(tx => ({
-    id: tx.id, // Now correctly using a number type
-    created_at: tx.created_at,
-    type: tx.type,
-    amount: tx.amount,
-    currency: tx.currency,
-    description: tx.pool_name,
-    status: 'completed', // Adding the required status property
-    metadata: {
-      pool_id: tx.pool_id,
-      lp_tokens: tx.lp_tokens
-    }
-  }));
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -123,62 +107,59 @@ const LendingHistory = () => {
         </div>
         
         {loading ? (
-          <TransactionList transactions={[]} isLoading={true} />
-        ) : transactions.length > 0 ? (
-          <div className="space-y-4">
-            <div className="mb-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <HistoryIcon className="h-5 w-5 text-[#8B5CF6]" />
-                    Transaction Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <TransactionList transactions={formattedTransactions} />
+          <div className="grid grid-cols-1 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-4">
+                  <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                  </div>
                 </CardContent>
               </Card>
-            </div>
-            
-            <div className="space-y-4">
-              {transactions.map((tx) => (
-                <Card key={tx.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-medium text-sm">
-                          {tx.type === "deposit" ? "Supplied to" : "Withdrew from"} {tx.pool_name}
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                          {new Date(tx.created_at).toLocaleDateString()} at {new Date(tx.created_at).toLocaleTimeString()}
-                        </p>
-                      </div>
-                      <div 
-                        className="cursor-pointer"
-                        onClick={() => navigate(`/pool/${tx.pool_id}`)}
-                      >
-                        <ExternalLink className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                      </div>
+            ))}
+          </div>
+        ) : transactions.length > 0 ? (
+          <div className="space-y-4">
+            {transactions.map((tx) => (
+              <Card key={tx.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-medium text-sm">
+                        {tx.type === "deposit" ? "Supplied to" : "Withdrew from"} {tx.pool_name}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {new Date(tx.created_at).toLocaleDateString()} at {new Date(tx.created_at).toLocaleTimeString()}
+                      </p>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 mt-3">
-                      <div>
-                        <p className="text-xs text-gray-500">Amount</p>
-                        <p className={`text-sm font-medium ${tx.type === "deposit" ? "text-green-600" : "text-red-600"}`}>
-                          {tx.type === "deposit" ? "+" : "-"}{tx.amount} {tx.currency}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">LP Tokens</p>
-                        <p className="text-sm font-medium">
-                          {tx.lp_tokens.toFixed(2)}
-                        </p>
-                      </div>
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/pool/${tx.pool_id}`)}
+                    >
+                      <ExternalLink className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <div>
+                      <p className="text-xs text-gray-500">Amount</p>
+                      <p className={`text-sm font-medium ${tx.type === "deposit" ? "text-green-600" : "text-red-600"}`}>
+                        {tx.type === "deposit" ? "+" : "-"}{tx.amount} {tx.currency}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">LP Tokens</p>
+                      <p className="text-sm font-medium">
+                        {tx.lp_tokens.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : (
           <div className="text-center py-12">

@@ -148,9 +148,11 @@ export function PoolCard({
           </h3>
           
           <div className="mt-1">
-            <Badge variant="outline" className={`inline-flex items-center ${getStatusColor()} py-0.5 pr-1.5 pl-1`}>
-              {getStatusIcon()}
-              <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+            <Badge variant="outline" className={`inline-flex items-center ${getStatusColor()} py-0.5 px-2`}>
+              <span className="flex items-center">
+                {getStatusIcon()}
+                <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+              </span>
             </Badge>
           </div>
         </div>

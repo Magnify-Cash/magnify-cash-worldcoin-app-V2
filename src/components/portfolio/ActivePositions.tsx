@@ -117,9 +117,9 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                   variant="ghost" 
                   size="sm" 
                   onClick={() => navigate(`/pool/${pool.id}`)}
-                  className="p-1 h-8 w-8 hover:text-white"
+                  className="p-1 h-8 w-8 hover:text-white group"
                 >
-                  <ExternalLink className="h-4 w-4 text-gray-500" />
+                  <ExternalLink className="h-4 w-4 text-gray-500 group-hover:text-white" />
                 </Button>
               </div>
               

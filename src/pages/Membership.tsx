@@ -79,8 +79,8 @@ export default function Membership() {
 
   const handleConnectWallet = async () => {
     try {
-      // MiniKit.openSidePanel is not the correct method - we need to fix this
-      await MiniKit.commandsAsync.openSidePanel({
+      // Using the correct method from MiniKit API
+      await MiniKit.commandsAsync.connectWallet({
         clientId: WORLDCOIN_CLIENT_ID ?? "",
         onError: (error) => {
           console.error("Connection error:", error);

@@ -1,4 +1,3 @@
-
 import { Header } from "@/components/Header";
 import { LoanCard } from "@/components/LoanCard";
 import { useNavigate } from "react-router-dom";
@@ -41,7 +40,7 @@ const Guide = () => {
                 <LoanCard
                   title="ORB"
                   amount="$10"
-                  interest="1.0%"
+                  interest="1.00%"
                   duration="90 days"
                   icon="orb"
                 />

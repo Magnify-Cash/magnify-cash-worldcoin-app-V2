@@ -8,6 +8,7 @@ import Loan from "@/pages/Loan";
 import RepayLoan from "@/pages/RepayLoan";
 import Announcements from "@/pages/Announcements";
 import LoanHistory from "@/pages/LoanHistory";
+import Membership from "@/pages/Membership";
 import ProtectedRoute from "@/pages/ProtectedPage";
 import NotFound from "@/pages/NotFound";
 import "./App.css";
@@ -86,6 +87,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <LoanHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/membership"
+            element={
+              <ProtectedRoute>
+                <Membership />
               </ProtectedRoute>
             }
           />

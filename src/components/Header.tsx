@@ -104,6 +104,15 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
 
+              <DropdownMenuLabel>Membership</DropdownMenuLabel>
+              <DropdownMenuItem
+                className="min-h-[40px] focus:text-white focus-visible:text-white"
+                onClick={() => navigate("/membership")}
+              >
+                NFT Membership
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+
               <DropdownMenuLabel>Account</DropdownMenuLabel>
               <DropdownMenuItem
                 className="min-h-[40px] focus:text-white focus-visible:text-white"

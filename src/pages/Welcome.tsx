@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
-import { ArrowRight, Shield } from "lucide-react";
+import { ArrowRight, Shield, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -109,6 +109,32 @@ const Welcome = () => {
             >
               Become a Lender - Coming Soon
               <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* New NFT Membership Banner */}
+          <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-4 mb-8 max-w-2xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Crown className="w-5 h-5 text-amber-600" />
+              <h3 className="font-bold text-amber-800">NEW: NFT Memberships</h3>
+            </div>
+            <p className="text-amber-700 text-sm mb-3">
+              Unlock exclusive benefits with our new NFT Membership program. 
+              Higher loan limits, reduced interest rates, and more.
+            </p>
+            <button
+              onClick={() => {
+                const wallet_address = localStorage.getItem("ls_wallet_address");
+                const username = localStorage.getItem("ls_username");
+                if (username && wallet_address) {
+                  navigate("/membership");
+                } else {
+                  handleSignIn();
+                }
+              }}
+              className="bg-amber-600 hover:bg-amber-700 text-white py-1 px-4 rounded-lg text-sm font-medium"
+            >
+              Learn More
             </button>
           </div>
 

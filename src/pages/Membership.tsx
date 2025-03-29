@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { orb } from "@worldcoin/minikit-js";
+import { MiniKit } from "@worldcoin/minikit-js";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CheckCircle, Clock, Globe, Star } from "lucide-react";
@@ -79,7 +79,8 @@ export default function Membership() {
 
   const handleConnectWallet = async () => {
     try {
-      await orb.openSidePanel({
+      // Use MiniKit directly instead of orb
+      await MiniKit.openSidePanel({
         clientId: WORLDCOIN_CLIENT_ID ?? "",
         onError: (error) => {
           console.error("Connection error:", error);
@@ -93,7 +94,7 @@ export default function Membership() {
           setWalletConnected(true);
           // The nullish coalescing operator ensures we never set an empty string that would fail the type check
           const address = result?.walletAddress || "0x0000000000000000000000000000000000000000";
-          setWalletAddress(address as `0x${string}`);
+          setWalletAddress(address);
           localStorage.setItem("ls_wallet_address", address);
           localStorage.setItem("ls_username", result?.username || "User");
           toast({

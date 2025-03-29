@@ -1,248 +1,329 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MiniKit } from "@worldcoin/minikit-js";
-import { Shield, Crown, Zap, Star, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
-import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
-import { useToast } from "@/hooks/use-toast";
-import { Card } from "@/components/ui/card";
+import { orb } from "@worldcoin/minikit-js";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { CheckCircle, Clock, Globe, Star } from "lucide-react";
+import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
+import { useToast } from "@/hooks/use-toast";
 
-// Define the membership tiers
-const membershipTiers = [
+// Define the membership tier structure
+interface MembershipTier {
+  id: string;
+  name: string;
+  price: string;
+  features: string[];
+  description: string;
+  recommended?: boolean;
+}
+
+const membershipTiers: MembershipTier[] = [
   {
     id: "bronze",
-    name: "Bronze Membership",
-    icon: Shield,
-    color: "bg-amber-500",
-    description: "Basic member benefits with priority loan processing",
-    benefits: ["Priority loan processing", "5% increased loan limits", "Early access to new features"],
-    price: "Free with Orb Verification",
-    mintAction: "mint-bronze-membership",
+    name: "Bronze",
+    price: "0.05 ETH",
+    description: "Get started with basic membership benefits",
+    features: [
+      "Access to standard loan pools",
+      "Basic customer support",
+      "Monthly newsletter",
+    ],
   },
   {
     id: "silver",
-    name: "Silver Membership",
-    icon: Star,
-    color: "bg-gray-400",
-    description: "Enhanced benefits with higher loan limits and reduced interest",
-    benefits: ["15% increased loan limits", "0.25% reduced interest rates", "Dedicated support channel", "Priority loan processing"],
-    price: "Coming Soon",
-    disabled: true,
-    mintAction: "mint-silver-membership",
+    name: "Silver",
+    price: "0.1 ETH",
+    description: "Unlock more benefits with our most popular tier",
+    features: [
+      "Priority access to loan pools",
+      "Reduced interest rates",
+      "Premium customer support",
+      "Weekly market insights",
+    ],
+    recommended: true,
   },
   {
     id: "gold",
-    name: "Gold Membership",
-    icon: Crown,
-    color: "bg-yellow-500",
-    description: "Premium benefits with maximum loan amounts and preferred rates",
-    benefits: ["30% increased loan limits", "0.5% reduced interest rates", "Priority verification", "VIP support access", "Exclusive investment opportunities"],
-    price: "Coming Soon",
-    disabled: true,
-    mintAction: "mint-gold-membership",
-  }
+    name: "Gold",
+    price: "0.25 ETH",
+    description: "Our premium tier with exclusive benefits",
+    features: [
+      "VIP access to loan pools",
+      "Lowest interest rates",
+      "24/7 dedicated support",
+      "Exclusive investment opportunities",
+      "Quarterly strategy sessions",
+    ],
+  },
 ];
 
-const Membership = () => {
+export default function Membership() {
+  const [selectedTier, setSelectedTier] = useState<string | null>(null);
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [minting, setMinting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const ls_wallet = localStorage.getItem("ls_wallet_address") as `0x${string}` || "";
-  const { data, isLoading, refetch } = useMagnifyWorld(ls_wallet);
-  const [mintingTier, setMintingTier] = useState<string | null>(null);
-  
-  // Check if the user is Orb verified
-  const isOrbVerified = data?.nftInfo?.tier?.verificationStatus?.verification_level === "orb";
-  const hasActiveLoan = data?.loan?.[1]?.isActive === true;
 
-  const handleMintMembership = async (tierId: string, mintAction: string) => {
-    if (!isOrbVerified) {
-      toast({
-        title: "Verification Required",
-        description: "You need to be Orb verified to mint a membership NFT.",
-        variant: "destructive",
-      });
-      navigate("/profile");
-      return;
+  useEffect(() => {
+    // Check if wallet is already connected
+    const storedWalletAddress = localStorage.getItem("ls_wallet_address");
+    if (storedWalletAddress) {
+      setWalletConnected(true);
+      setWalletAddress(storedWalletAddress);
     }
+  }, []);
 
-    if (hasActiveLoan) {
-      toast({
-        title: "Active Loan Detected",
-        description: "You cannot mint a membership while having an active loan. Please repay your loan first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setMintingTier(tierId);
-    
+  const handleConnectWallet = async () => {
     try {
-      // This is a placeholder for the actual minting functionality
-      // In a real implementation, this would interact with the smart contract
-      toast({
-        title: "Feature Coming Soon",
-        description: "NFT Membership minting will be available in the next update.",
+      await orb.openSidePanel({
+        clientId: WORLDCOIN_CLIENT_ID ?? "",
+        onError: (error) => {
+          console.error("Connection error:", error);
+          toast({
+            title: "Connection Failed",
+            description: "Failed to connect wallet. Please try again.",
+            variant: "destructive",
+          });
+        },
+        onSuccess: (result) => {
+          setWalletConnected(true);
+          // The nullish coalescing operator ensures we never set an empty string that would fail the type check
+          const address = result?.walletAddress || "0x0000000000000000000000000000000000000000";
+          setWalletAddress(address as `0x${string}`);
+          localStorage.setItem("ls_wallet_address", address);
+          localStorage.setItem("ls_username", result?.username || "User");
+          toast({
+            title: "Wallet Connected",
+            description: "Your wallet has been successfully connected.",
+          });
+        },
       });
-      
-      // Simulating a delay
-      setTimeout(() => {
-        setMintingTier(null);
-      }, 2000);
-      
     } catch (error) {
-      console.error("Error minting membership:", error);
+      console.error("Error connecting wallet:", error);
       toast({
-        title: "Minting Failed",
-        description: "There was an error minting your membership NFT. Please try again.",
+        title: "Connection Error",
+        description: "An error occurred while connecting your wallet.",
         variant: "destructive",
       });
-      setMintingTier(null);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <Header title="NFT Membership" />
-        <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="flex items-center justify-center gap-2">
-            <div className="dot-spinner">
-              <div className="dot bg-[#1A1E8E]"></div>
-              <div className="dot bg-[#4A3A9A]"></div>
-              <div className="dot bg-[#7A2F8A]"></div>
-              <div className="dot bg-[#A11F75]"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleMint = async (tierId: string) => {
+    setMinting(true);
+    
+    try {
+      // Simulate minting process with a timeout
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      
+      toast({
+        title: "Membership NFT Minted!",
+        description: `You have successfully minted the ${tierId.toUpperCase()} membership NFT.`,
+      });
+      
+      // After successful minting, navigate to the membership dashboard
+      setTimeout(() => {
+        navigate("/loan");
+      }, 2000);
+    } catch (error) {
+      console.error("Error minting NFT:", error);
+      toast({
+        title: "Minting Failed",
+        description: "Failed to mint membership NFT. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setMinting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Header title="NFT Membership" />
       
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
-            Exclusive NFT Memberships
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Mint your membership NFT to unlock exclusive benefits and enhanced loan privileges on Magnify Cash.
-          </p>
-        </div>
-
-        {!isOrbVerified && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
+      <main className="container px-4 py-6 max-w-4xl mx-auto">
+        <section className="mb-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8"
+            transition={{ duration: 0.5 }}
           >
-            <div className="flex items-start gap-4">
-              <Shield className="h-6 w-6 text-amber-500 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-medium text-amber-800">Verification Required</h3>
-                <p className="text-amber-700 text-sm mt-1">
-                  You need to be Orb verified to mint a membership NFT. Verify your identity to unlock membership benefits.
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-3 bg-amber-100 border-amber-300 text-amber-800 hover:bg-amber-200"
-                  onClick={() => navigate("/profile")}
-                >
-                  Get Verified <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          {membershipTiers.map((tier, index) => (
-            <motion.div
-              key={tier.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="relative"
-            >
-              <Card className={`p-6 h-full border-2 ${tier.id === 'bronze' ? 'border-amber-300' : tier.id === 'silver' ? 'border-gray-300' : 'border-yellow-400'} hover:shadow-lg transition-all duration-300`}>
-                <div className={`w-12 h-12 rounded-full ${tier.color} flex items-center justify-center mb-4 mx-auto`}>
-                  <tier.icon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-center mb-2">{tier.name}</h3>
-                <p className="text-gray-600 text-center text-sm mb-4">{tier.description}</p>
-                
-                <ul className="space-y-2 mb-6">
-                  {tier.benefits.map((benefit, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <Zap className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-                
-                <div className="mt-auto">
-                  <p className="text-center font-medium mb-3">{tier.price}</p>
-                  <Button 
-                    className="w-full" 
-                    variant={tier.id === 'bronze' ? 'default' : 'outline'}
-                    disabled={tier.disabled || mintingTier === tier.id || (!isOrbVerified && tier.id === 'bronze')}
-                    onClick={() => handleMintMembership(tier.id, tier.mintAction)}
-                  >
-                    {mintingTier === tier.id ? (
-                      <>Minting...</>
-                    ) : tier.disabled ? (
-                      <>Coming Soon</>
-                    ) : (
-                      <>Mint Membership</>
-                    )}
-                  </Button>
-                </div>
+            <h1 className="text-3xl font-bold mb-2">Membership Benefits</h1>
+            <p className="text-muted-foreground mb-6">
+              Join our exclusive membership program and unlock premium features and benefits.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <Clock className="mr-2 h-5 w-5 text-primary" />
+                    Priority Access
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Get early access to new loan opportunities before they're available to the public.
+                  </p>
+                </CardContent>
               </Card>
               
-              {tier.id === 'bronze' && (
-                <div className="absolute -top-3 -right-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-                  Available Now
-                </div>
-              )}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <Star className="mr-2 h-5 w-5 text-primary" />
+                    Reduced Rates
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Enjoy lower interest rates and fees on all your loans.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <Globe className="mr-2 h-5 w-5 text-primary" />
+                    Exclusive Features
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Access exclusive features and services only available to members.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {!walletConnected ? (
+              <div className="text-center mb-8">
+                <Button 
+                  size="lg" 
+                  onClick={handleConnectWallet}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  Connect Wallet to Continue
+                </Button>
+              </div>
+            ) : null}
+          </motion.div>
+        </section>
+        
+        {walletConnected && (
+          <section>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <h2 className="text-2xl font-bold mb-6">Choose Your Membership Tier</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                {membershipTiers.map((tier) => (
+                  <Card 
+                    key={tier.id}
+                    className={`relative ${
+                      selectedTier === tier.id ? 'border-primary ring-2 ring-primary' : ''
+                    } ${tier.recommended ? 'border-primary/50' : ''}`}
+                  >
+                    {tier.recommended && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-3 py-1 rounded-full">
+                        Recommended
+                      </div>
+                    )}
+                    <CardHeader>
+                      <CardTitle>{tier.name}</CardTitle>
+                      <CardDescription>{tier.price}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-4">{tier.description}</p>
+                      <ul className="space-y-2">
+                        {tier.features.map((feature, index) => (
+                          <li key={index} className="flex items-start">
+                            <CheckCircle className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
+                            <span className="text-sm">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedTier(tier.id);
+                          handleMint(tier.id);
+                        }}
+                        disabled={minting}
+                      >
+                        {minting && selectedTier === tier.id ? "Minting..." : "Mint Membership NFT"}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
             </motion.div>
-          ))}
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-6 mt-8">
-          <h3 className="text-xl font-bold mb-4">How NFT Memberships Work</h3>
-          <ol className="space-y-4">
-            <li className="flex gap-3">
-              <div className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">1</div>
-              <div>
-                <p className="font-medium">Get Orb Verified</p>
-                <p className="text-gray-600 text-sm">Complete World ID Orb verification to become eligible for NFT memberships.</p>
-              </div>
-            </li>
-            <li className="flex gap-3">
-              <div className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">2</div>
-              <div>
-                <p className="font-medium">Mint Your Membership NFT</p>
-                <p className="text-gray-600 text-sm">Select your preferred tier and mint your NFT membership token.</p>
-              </div>
-            </li>
-            <li className="flex gap-3">
-              <div className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">3</div>
-              <div>
-                <p className="font-medium">Enjoy Exclusive Benefits</p>
-                <p className="text-gray-600 text-sm">Access higher loan limits, reduced interest rates, and other premium features.</p>
-              </div>
-            </li>
-          </ol>
-        </div>
-      </div>
+          </section>
+        )}
+        
+        <section className="mb-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>How It Works</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ol className="space-y-4">
+                  <li className="flex items-start">
+                    <div className="bg-primary/10 rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-0.5">
+                      <span className="text-primary font-medium">1</span>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Connect Your Wallet</h3>
+                      <p className="text-sm text-muted-foreground">Connect your wallet to verify your identity.</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="bg-primary/10 rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-0.5">
+                      <span className="text-primary font-medium">2</span>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Choose a Membership Tier</h3>
+                      <p className="text-sm text-muted-foreground">Select the membership tier that best fits your needs.</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="bg-primary/10 rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-0.5">
+                      <span className="text-primary font-medium">3</span>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Mint Your NFT</h3>
+                      <p className="text-sm text-muted-foreground">Complete the transaction to mint your membership NFT.</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="bg-primary/10 rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-0.5">
+                      <span className="text-primary font-medium">4</span>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Enjoy Benefits</h3>
+                      <p className="text-sm text-muted-foreground">Start enjoying your membership benefits immediately.</p>
+                    </div>
+                  </li>
+                </ol>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </section>
+      </main>
     </div>
   );
-};
-
-export default Membership;
+}

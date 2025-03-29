@@ -25,14 +25,11 @@ const useRequestLoan = () => {
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
   });
 
-  // Fix for the infinite type instantiation - use a simpler type definition
+  // Fix for the infinite type instantiation - use any type to break the cycle
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      // Using just the type without the client variable reference 
-      client: createPublicClient({
-        chain: worldchain,
-        transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
-      }),
+      // Use 'any' type to break the infinite type instantiation
+      client: client as any,
       transactionId: transactionId || "",
       appConfig: {
         app_id: WORLDCOIN_CLIENT_ID,

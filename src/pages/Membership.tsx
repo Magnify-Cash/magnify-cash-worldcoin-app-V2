@@ -79,30 +79,32 @@ export default function Membership() {
 
   const handleConnectWallet = async () => {
     try {
-      // Using the correct method from MiniKit API
-      await MiniKit.commandsAsync.connectWallet({
+      // Using the correct method from MiniKit API - it doesn't have connectWallet
+      // Let's use the id-wallet functionality instead
+      const result = await MiniKit.commandsAsync.idWallet({
         clientId: WORLDCOIN_CLIENT_ID ?? "",
-        onError: (error) => {
-          console.error("Connection error:", error);
-          toast({
-            title: "Connection Failed",
-            description: "Failed to connect wallet. Please try again.",
-            variant: "destructive",
-          });
-        },
-        onSuccess: (result) => {
-          setWalletConnected(true);
-          // The nullish coalescing operator ensures we never set an empty string that would fail the type check
-          const address = result?.walletAddress || "0x0000000000000000000000000000000000000000";
-          setWalletAddress(address);
-          localStorage.setItem("ls_wallet_address", address);
-          localStorage.setItem("ls_username", result?.username || "User");
-          toast({
-            title: "Wallet Connected",
-            description: "Your wallet has been successfully connected.",
-          });
-        },
       });
+      
+      if (result.commandPayload && result.finalPayload.status === "success") {
+        setWalletConnected(true);
+        // The nullish coalescing operator ensures we never set an empty string that would fail the type check
+        const address = result.finalPayload.walletAddress || "0x0000000000000000000000000000000000000000";
+        setWalletAddress(address);
+        localStorage.setItem("ls_wallet_address", address);
+        localStorage.setItem("ls_username", result.finalPayload.username || "User");
+        
+        toast({
+          title: "Wallet Connected",
+          description: "Your wallet has been successfully connected.",
+        });
+      } else {
+        console.error("Connection error:", result);
+        toast({
+          title: "Connection Failed",
+          description: "Failed to connect wallet. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error connecting wallet:", error);
       toast({

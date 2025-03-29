@@ -1,3 +1,4 @@
+
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Sentry from "@sentry/react";
@@ -5,6 +6,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { ENVIRONMENT } from "@/utils/constants";
 
+// Initialize Sentry for error tracking
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: ENVIRONMENT || "development",
@@ -19,10 +21,13 @@ Sentry.init({
   replaysSessionSampleRate: 0.1, // Record 10% of sessions
   replaysOnErrorSampleRate: 1.0, // Always record a replay on error
   beforeSend(event) {
+    // Skip certain errors that are expected or not critical
     if (
       event.exception?.values?.some((e) => e.value?.includes("MiniKit is not installed")) 
       || event.exception?.values?.some((e) => e.value?.includes("MiniKit.install"))
-      || event.exception?.values?.some((e) => e.value?.includes("This could be due to syntax errors or importing non-existent modules"))) {
+      || event.exception?.values?.some((e) => e.value?.includes("This could be due to syntax errors or importing non-existent modules"))
+      || event.exception?.values?.some((e) => e.value?.includes("__WS_TOKEN__"))
+    ) {
       return null; // Prevent this error from being sent to Sentry
     }
     return event;
@@ -35,6 +40,7 @@ const formatError = (message: string | Error) => {
   return `[${env}${path}] ${message instanceof Error ? message.stack || message.message : message}`;
 };
 
+// Override console.error to capture and format errors
 const originalConsoleError = console.error;
 console.error = (...args: unknown[]): void => {
   const formattedMessage = formatError(args.join(" "));
@@ -42,16 +48,19 @@ console.error = (...args: unknown[]): void => {
   originalConsoleError(...args);
 };
 
+// Handle uncaught errors
 window.onerror = (message, source, lineno, colno, error) => {
   const formattedMessage = formatError(error || (message as string));
   Sentry.captureException(new Error(formattedMessage));
 };
 
+// Handle unhandled promise rejections
 window.onunhandledrejection = (event: PromiseRejectionEvent) => {
   const formattedMessage = formatError(event.reason);
   Sentry.captureException(new Error(formattedMessage));
 };
 
+// Create a query client for data fetching
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -61,6 +70,7 @@ const queryClient = new QueryClient({
   },
 });
 
+// Set user context for Sentry
 const walletAddress = localStorage.getItem("ls_wallet_address") || "unknown_wallet";
 const userName = localStorage.getItem("ls_username") || "anonymous";
 
@@ -70,6 +80,7 @@ Sentry.setUser({
   wallet: walletAddress,
 });
 
+// Create the app component with Sentry error boundary
 const AppWithSentry = () => (
   <Sentry.ErrorBoundary fallback={<h2>Something went wrong</h2>}>
     <QueryClientProvider client={queryClient}>
@@ -78,4 +89,5 @@ const AppWithSentry = () => (
   </Sentry.ErrorBoundary>
 );
 
+// Render the app
 createRoot(document.getElementById("root")!).render(<AppWithSentry />);

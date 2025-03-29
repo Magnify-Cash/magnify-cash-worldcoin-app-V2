@@ -42,3 +42,118 @@ export interface RequestParams {
 }
 
 export type HttpMethod = "GET" | "POST";
+
+export interface PreviewMintResponse {
+  lpAmount: string;
+}
+
+export interface PreviewDepositResponse {
+  usdcAmount: string;
+}
+
+export interface PreviewRedeemResponse {
+  usdcAmount: string;
+}
+
+export interface PreviewWithdrawResponse {
+  lpAmount: string;
+}
+
+export interface ActiveLoanData {
+  loanID: string;
+  tokenId: string;
+  loanTimestamp: string;
+  repaymentTimestamp: string;
+  borrower: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+// TODO: Replace `any[]` with proper type once response structure is known
+export type LoanHistoryEntry = any[];
+
+// TODO: Replace `any[]` with proper type once response structure is known
+export type AllLoansEntry = any[]; 
+
+export interface PoolBalanceUSDCResponse {
+  totalAssets: number;
+}
+
+export interface PoolTreasuryFeeResponse {
+  treasuryFee: string;
+}
+
+export interface PoolLPBalanceResponse {
+  totalSupply: string;
+}
+
+export interface PoolActivationResponse {
+  timestamp: string;
+  formattedDate: string;
+}
+
+export interface PoolSymbolResponse {
+  symbol: string;
+}
+
+export interface PoolTierResponse {
+  tier: number;
+}
+
+export interface PoolLoanDurationResponse {
+  seconds: number;
+  minutes: number;
+  hours: number;
+  days: number;
+}
+
+export interface PoolLoanInterestResponse {
+  interestRate: string;
+}
+
+export type PoolStatusType = "isWarmup" | "isActive" | "isCooldown" | "isExpired";
+
+export interface PoolStatusResponse {
+  status: PoolStatusType;
+}
+
+export interface UserMaxField {
+  hex: string;
+  value: bigint;
+  isMax: boolean;
+  isZero: boolean;
+}
+
+export interface UserMaxDataParsed {
+  maxDeposit: UserMaxField;
+  maxMint: UserMaxField;
+  maxRedeem: UserMaxField;
+  maxWithdraw: UserMaxField;
+}
+
+export interface SoulboundDataResponse {
+  loansRepaid: string;
+  interestPaid: string;      
+  loansDefaulted: string;
+  owner: string;
+  tier: number;
+  ongoingLoan: boolean;
+}
+
+export interface SoulboundTokenURIResponse {
+  data: string;
+}
+
+export interface SoulboundLoanHistoryResponse {
+  data: any
+}
+
+export interface SoulboundLoanHistoryDetailedResponse {
+  data: any
+}
+
+export interface SoulboundUserNFTResponse {
+  tokenId: string; 
+}
+
+export type SoulboundPoolAddressesResponse = string[];

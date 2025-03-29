@@ -5,3 +5,4 @@ export const MAGNIFY_WORLD_ADDRESS_V1 = "0x4E52d9e8d2F70aD1805084BA4fa849dC991E7
 export const WORLDCHAIN_RPC_URL = "https://worldchain-mainnet.g.alchemy.com/public"
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 export const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT;
+export const MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");

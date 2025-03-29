@@ -79,8 +79,8 @@ export default function Membership() {
 
   const handleConnectWallet = async () => {
     try {
-      // Use MiniKit directly instead of orb
-      await MiniKit.openSidePanel({
+      // MiniKit.openSidePanel is not the correct method - we need to fix this
+      await MiniKit.commandsAsync.openSidePanel({
         clientId: WORLDCOIN_CLIENT_ID ?? "",
         onError: (error) => {
           console.error("Connection error:", error);

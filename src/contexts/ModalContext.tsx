@@ -11,6 +11,7 @@ interface ModalContextState {
   lpSymbol: string | null;
   lpBalance: number | null;
   lpValue: number | null;
+  walletAddress: string | null; // Add wallet address to context
   openModal: (type: ModalType, params: ModalParams) => void;
   closeModal: () => void;
 }
@@ -21,6 +22,7 @@ interface ModalParams {
   lpSymbol?: string;
   lpBalance?: number;
   lpValue?: number;
+  walletAddress?: string; // Add wallet address to params
 }
 
 const initialState: ModalContextState = {
@@ -31,6 +33,7 @@ const initialState: ModalContextState = {
   lpSymbol: null,
   lpBalance: null,
   lpValue: null,
+  walletAddress: null, // Initialize wallet address
   openModal: () => {},
   closeModal: () => {},
 };
@@ -47,6 +50,7 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [lpSymbol, setLpSymbol] = useState<string | null>(null);
   const [lpBalance, setLpBalance] = useState<number | null>(null);
   const [lpValue, setLpValue] = useState<number | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null); // Add state for wallet address
 
   const openModal = (type: ModalType, params: ModalParams) => {
     setModalType(type);
@@ -55,6 +59,7 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setLpSymbol(params.lpSymbol || null);
     setLpBalance(params.lpBalance || null);
     setLpValue(params.lpValue || null);
+    setWalletAddress(params.walletAddress || null); // Set wallet address
     setIsOpen(true);
   };
 
@@ -67,6 +72,7 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setLpSymbol(null);
       setLpBalance(null);
       setLpValue(null);
+      setWalletAddress(null); // Reset wallet address
     }, 200); // Small delay to allow animation to complete
   };
 
@@ -80,6 +86,7 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         lpSymbol,
         lpBalance,
         lpValue,
+        walletAddress, // Include wallet address in context value
         openModal,
         closeModal,
       }}

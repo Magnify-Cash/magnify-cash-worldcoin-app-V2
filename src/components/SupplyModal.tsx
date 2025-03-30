@@ -14,16 +14,23 @@ import { AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { previewDeposit } from "@/lib/backendRequests";
-import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
+import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
 
 interface SupplyModalProps {
   isOpen: boolean;
   onClose: () => void;
   poolContractAddress?: string;
   lpSymbol?: string;
+  walletAddress?: string; // Add wallet address prop
 }
 
-export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "LP" }: SupplyModalProps) {
+export function SupplyModal({ 
+  isOpen, 
+  onClose, 
+  poolContractAddress, 
+  lpSymbol = "LP",
+  walletAddress 
+}: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [previewLpAmount, setPreviewLpAmount] = useState<string | null>(null);
@@ -32,8 +39,13 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   
-  // Get the actual USDC balance
-  const { usdcBalance, loading: balanceLoading, error: balanceError, refreshBalance } = useUSDCBalance();
+  // Get the wallet's USDC balance using our new hook
+  const { 
+    balance: usdcBalance, 
+    loading: balanceLoading, 
+    error: balanceError, 
+    refetch: refreshBalance 
+  } = useWalletUSDCBalance(walletAddress);
   
   useEffect(() => {
     if (isOpen) {

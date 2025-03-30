@@ -113,14 +113,14 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className={`sm:max-w-[425px] mx-auto ${isMobile ? "p-3 px-4 max-w-[95%]" : ""}`}
+        className={`sm:max-w-[425px] ${isMobile ? "max-w-[90%] p-4" : ""}`}
         style={{
-          left: "50%",
-          transform: "translate(-50%, -50%)",
+          position: 'fixed',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
           maxHeight: isMobile ? "90vh" : "auto",
           overflowY: "auto",
-          width: isMobile ? "95%" : "auto",
-          margin: isMobile ? "0 2.5%" : "auto",
         }}
       >
         <DialogHeader className={isMobile ? "pb-2" : ""}>

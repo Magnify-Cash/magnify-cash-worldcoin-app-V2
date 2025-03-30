@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,9 +88,8 @@ export default function Membership() {
 
   const handleConnectWallet = async () => {
     try {
-      // Using the correct method from MiniKit API - it doesn't have connectWallet
-      // Let's use the id-wallet functionality instead
-      const result = await MiniKit.commandsAsync.idWallet({
+      // Using the correct method from MiniKit API - connectWallet instead of idWallet
+      const result = await MiniKit.commandsAsync.connectWallet({
         clientId: WORLDCOIN_CLIENT_ID ?? "",
       });
       

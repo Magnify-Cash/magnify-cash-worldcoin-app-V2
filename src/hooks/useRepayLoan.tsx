@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
@@ -34,18 +35,17 @@ const useRepayLoan = () => {
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
 
+  // Create public client only once
   const client = createPublicClient({
     chain: worldchain,
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
   });
 
+  // Fix the useWaitForTransactionReceipt hook usage
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      client: client,
-      transactionId: transactionId || "",
-      appConfig: {
-        app_id: WORLDCOIN_CLIENT_ID,
-      },
+      hash: transactionId as `0x${string}` | undefined,
+      // Remove the client and appConfig properties as they cause the infinite type issue
     });
 
   // Sync `isConfirming` and `isConfirmed`

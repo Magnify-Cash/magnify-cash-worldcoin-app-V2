@@ -1,4 +1,3 @@
-
 import { 
   getSoulboundPoolAddresses, 
   getPoolName, 
@@ -231,9 +230,8 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
         pool.borrower_info = {
           loanPeriodDays: Math.ceil(loanDuration.days),
           interestRate: interestRate.interestRate ? 
-            (parseFloat(interestRate.interestRate) / 100).toFixed(1) + '%' : 
-            '8.5%', // Fallback value
-          loanAmount: '$10 - $30', // Placeholder as specified
+            interestRate.interestRate + '%' : '8.5%', // No need to divide by 100
+          loanAmount: '$10', // Fixed to $10
           originationFee: '10%', // Placeholder as specified
           warmupPeriod: '14 days' // Placeholder as specified
         };
@@ -243,7 +241,7 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
         pool.borrower_info = {
           loanPeriodDays: 30,
           interestRate: '8.5%',
-          loanAmount: '$10 - $30',
+          loanAmount: '$10',
           originationFee: '10%',
           warmupPeriod: '14 days'
         };

@@ -1,3 +1,4 @@
+
 import { 
   getSoulboundPoolAddresses, 
   getPoolName, 
@@ -21,6 +22,7 @@ import { Cache } from "@/utils/cacheUtils";
 // Cache keys
 const POOLS_CACHE_KEY = 'pool_data_all';
 const poolCacheKey = (id: number) => `pool_data_${id}`;
+const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
 
 export const getPools = async (): Promise<LiquidityPool[]> => {
   try {
@@ -232,52 +234,68 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
       }
     }
     
-    // Always fetch additional borrower information when the pool is found
+    // Fetch borrower information only if the pool is found
     if (pool && pool.contract_address) {
-      try {
-        console.log(`Fetching detailed borrower info for pool ID ${id}...`);
-        
-        // Fetch loan period - with retry mechanism
-        const loanDuration = await retry(
-          () => getPoolLoanDuration(pool.contract_address!),
-          3,
-          1000,
-          (error, retriesLeft) => console.warn(`Error fetching loan duration, retries left: ${retriesLeft}`, error)
-        );
-        
-        // Fetch interest rate - with retry mechanism
-        const interestRate = await retry(
-          () => getPoolLoanInterestRate(pool.contract_address!),
-          3,
-          1000,
-          (error, retriesLeft) => console.warn(`Error fetching interest rate, retries left: ${retriesLeft}`, error)
-        );
-        
-        // Initialize the borrower_info object with real data from API
-        pool.borrower_info = {
-          loanPeriodDays: Math.ceil(loanDuration.days),
-          interestRate: interestRate.interestRate ? 
-            interestRate.interestRate + '%' : '8.5%', // Add % symbol if needed
-          loanAmount: '$10', // Fixed to $10 as per requirement
-          originationFee: '10%', // Fixed to 10% as per requirement
-          warmupPeriod: '14 days' // Fixed to 14 days as per requirement
-        };
-        
-        console.log(`Successfully fetched borrower info for pool ID ${id}:`, pool.borrower_info);
-      } catch (error) {
-        console.error('Error fetching borrower information:', error);
-        // Provide fallback values if fetching fails
-        pool.borrower_info = {
-          loanPeriodDays: 30,
-          interestRate: '8.5%',
-          loanAmount: '$10',
-          originationFee: '10%',
-          warmupPeriod: '14 days'
-        };
+      // First check if we have cached borrower info
+      const cachedBorrowerInfo = Cache.get<LiquidityPool['borrower_info']>(
+        borrowerInfoCacheKey(pool.contract_address)
+      );
+      
+      if (cachedBorrowerInfo) {
+        console.log(`Using cached borrower info for pool ID ${id}`);
+        pool.borrower_info = cachedBorrowerInfo;
+      } else {
+        try {
+          console.log(`Fetching detailed borrower info for pool ID ${id}...`);
+          
+          // Fetch loan period - with retry mechanism
+          const loanDuration = await retry(
+            () => getPoolLoanDuration(pool.contract_address!),
+            3,
+            1000,
+            (error, retriesLeft) => console.warn(`Error fetching loan duration, retries left: ${retriesLeft}`, error)
+          );
+          
+          // Fetch interest rate - with retry mechanism
+          const interestRate = await retry(
+            () => getPoolLoanInterestRate(pool.contract_address!),
+            3,
+            1000,
+            (error, retriesLeft) => console.warn(`Error fetching interest rate, retries left: ${retriesLeft}`, error)
+          );
+          
+          // Initialize the borrower_info object with real data from API
+          const borrowerInfo = {
+            loanPeriodDays: Math.ceil(loanDuration.days),
+            interestRate: interestRate.interestRate ? 
+              interestRate.interestRate + '%' : '8.5%', // Add % symbol if needed
+            loanAmount: '$10', // Fixed to $10 as per requirement
+            originationFee: '10%', // Fixed to 10% as per requirement
+            warmupPeriod: '14 days' // Fixed to 14 days as per requirement
+          };
+          
+          // Update the pool object
+          pool.borrower_info = borrowerInfo;
+          
+          // Cache the borrower info separately with a longer expiration (60 minutes since it rarely changes)
+          Cache.set(borrowerInfoCacheKey(pool.contract_address), borrowerInfo, 60);
+          
+          console.log(`Successfully fetched borrower info for pool ID ${id}:`, pool.borrower_info);
+        } catch (error) {
+          console.error('Error fetching borrower information:', error);
+          // Provide fallback values if fetching fails
+          pool.borrower_info = {
+            loanPeriodDays: 30,
+            interestRate: '8.5%',
+            loanAmount: '$10',
+            originationFee: '10%',
+            warmupPeriod: '14 days'
+          };
+        }
       }
     }
     
-    // Cache this pool with the enriched data if found
+    // Cache this pool with the enriched data if found (with standard 15 minute expiration)
     if (pool) {
       Cache.set(poolCacheKey(id), pool, 15);
     }

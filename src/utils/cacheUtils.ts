@@ -60,15 +60,16 @@ export const Cache = {
   },
   
   /**
-   * Clear cache for all pools
+   * Clear cache for all pools and borrower info
    */
   clearPoolCache(): void {
     const poolCachePrefix = 'pool_data_';
+    const borrowerInfoPrefix = 'borrower_info_';
     try {
       // Find all pool cache items and remove them
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith(poolCachePrefix)) {
+        if (key && (key.startsWith(poolCachePrefix) || key.startsWith(borrowerInfoPrefix))) {
           localStorage.removeItem(key);
         }
       }

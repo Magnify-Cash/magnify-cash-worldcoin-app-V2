@@ -48,7 +48,7 @@ export interface PreviewMintResponse {
 }
 
 export interface PreviewDepositResponse {
-  usdcAmount: string;
+  lpAmount: string;
 }
 
 export interface PreviewRedeemResponse {

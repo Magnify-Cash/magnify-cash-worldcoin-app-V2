@@ -26,7 +26,7 @@ export const NoPositions: React.FC<NoPositionsProps> = ({ onShowDemoData }) => {
           <p className="text-gray-500 mb-4">You don't have any active positions yet</p>
           <Button 
             onClick={() => navigate('/lending')} 
-            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+            className="bg-[#8B5CF6] hover:bg-[#7c4df3] text-white"
           >
             Explore Pools
           </Button>

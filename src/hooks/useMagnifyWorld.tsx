@@ -1,3 +1,4 @@
+
 import { readContract } from "@wagmi/core";
 import { magnifyworldabi } from "@/utils/magnifyworldabi";
 import { MAGNIFY_WORLD_ADDRESS } from "@/utils/constants";
@@ -104,10 +105,28 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         userNFTResult,
         loanResult
       ] = await Promise.all([
-        readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "loanToken" }),
-        readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "tierCount" }),
-        readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "userNFT", args: [walletAddress] }),
-        readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "fetchLoanByAddress", args: [walletAddress] })
+        readContract(config, { 
+          address: MAGNIFY_WORLD_ADDRESS as `0x${string}`, 
+          abi: magnifyworldabi, 
+          functionName: "loanToken" 
+        }),
+        readContract(config, { 
+          address: MAGNIFY_WORLD_ADDRESS as `0x${string}`, 
+          abi: magnifyworldabi, 
+          functionName: "tierCount" 
+        }),
+        readContract(config, { 
+          address: MAGNIFY_WORLD_ADDRESS as `0x${string}`, 
+          abi: magnifyworldabi, 
+          functionName: "userNFT", 
+          args: [walletAddress] 
+        }),
+        readContract(config, { 
+          address: MAGNIFY_WORLD_ADDRESS as `0x${string}`, 
+          abi: magnifyworldabi, 
+          functionName: "fetchLoanByAddress", 
+          args: [walletAddress] 
+        })
       ]);
   
       let tokenId: bigint | null = null;
@@ -118,8 +137,18 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         tokenId = userNFTResult as bigint;
   
         const [tierId, tierData] = await Promise.all([
-          readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "nftToTier", args: [tokenId] }),
-          readContract(config, { address: MAGNIFY_WORLD_ADDRESS, abi: magnifyworldabi, functionName: "tiers", args: [userNFTResult] })
+          readContract(config, { 
+            address: MAGNIFY_WORLD_ADDRESS as `0x${string}`, 
+            abi: magnifyworldabi, 
+            functionName: "nftToTier", 
+            args: [tokenId] 
+          }),
+          readContract(config, { 
+            address: MAGNIFY_WORLD_ADDRESS as `0x${string}`, 
+            abi: magnifyworldabi, 
+            functionName: "tiers", 
+            args: [userNFTResult] 
+          })
         ]);
   
         if (tierData) {
@@ -161,7 +190,6 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
     }
   }, [walletAddress]);
   
-
   useEffect(() => {
     if (!globalCache[walletAddress]) {
       fetchData();
@@ -185,7 +213,7 @@ async function fetchAllTiers(tierCount: number): Promise<Record<number, Tier> | 
 
   const tierRequests = Array.from({ length: tierCount }, (_, i) =>
     readContract(config, {
-      address: MAGNIFY_WORLD_ADDRESS,
+      address: MAGNIFY_WORLD_ADDRESS as `0x${string}`,
       abi: magnifyworldabi,
       functionName: "tiers",
       args: [BigInt(i + 1)],

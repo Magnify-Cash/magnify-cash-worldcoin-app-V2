@@ -47,9 +47,9 @@ const useRepayLoan = () => {
   // Use the hook with the correct options
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      hash: txHash,
       confirmations: 1,
       chainId: worldchain.id,
+      ...(txHash ? { hash: txHash } : {})
     });
 
   // Sync `isConfirming` and `isConfirmed`

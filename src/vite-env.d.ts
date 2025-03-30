@@ -12,3 +12,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// Add declaration for the Extended Wallet Auth Payload
+declare module "@worldcoin/minikit-js" {
+  interface MiniAppWalletAuthPayload {
+    address?: string;
+  }
+}

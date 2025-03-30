@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +20,11 @@ interface MembershipTier {
   description: string;
   features: string[];
   recommended?: boolean;
+}
+
+interface ExtendedWalletAuthPayload {
+  address: string;
+  [key: string]: any;
 }
 
 const membershipTiers: MembershipTier[] = [
@@ -89,7 +93,6 @@ export default function Membership() {
 
   const handleConnectWallet = async () => {
     try {
-      // Use walletAuth instead of connectWallet
       const nonce = crypto.randomUUID().replace(/-/g, "");
       const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
         nonce,
@@ -97,8 +100,10 @@ export default function Membership() {
         expirationTime: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
       });
       
-      if (finalPayload && finalPayload.address) {
-        const user = await MiniKit.getUserByAddress(finalPayload.address);
+      const extendedPayload = finalPayload as ExtendedWalletAuthPayload;
+      
+      if (extendedPayload && extendedPayload.address) {
+        const user = await MiniKit.getUserByAddress(extendedPayload.address);
         setIsConnected(true);
         setWalletAddress(user.walletAddress);
         localStorage.setItem("ls_wallet_address", user.walletAddress);

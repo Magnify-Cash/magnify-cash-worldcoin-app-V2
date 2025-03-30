@@ -168,7 +168,7 @@ export const previewDeposit = async (
     { assets, contract }
   );
 
-  if (!response.data || typeof response.data.usdcAmount !== "string") {
+  if (!response.data || typeof response.data.lpAmount !== "string") {
     throw new Error(
       `Failed to preview deposit. Status: ${response.status}, Message: ${response.message}`
     );

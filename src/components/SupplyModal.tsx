@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
         setPreviewRequested(true);
         try {
           const preview = await previewDeposit(numAmount, poolContractAddress);
-          setPreviewLpAmount(preview.usdcAmount);
+          setPreviewLpAmount(preview.lpAmount);
         } catch (error) {
           console.error("Error fetching preview deposit:", error);
           setPreviewLpAmount(null);

@@ -170,3 +170,11 @@ export interface PoolDeactivationResponse {
   timestamp: string;
   formattedDate: string;
 }
+
+export interface PoolOriginationFeeResponse {
+  originationFee: number;
+}
+
+export interface PoolLoanAmountResponse {
+  loanAmount: number;
+}

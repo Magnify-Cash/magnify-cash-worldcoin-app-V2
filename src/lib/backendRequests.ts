@@ -33,6 +33,8 @@ import {
   PoolLiquidityResponse,
   PoolDeactivationResponse,
   PoolNameResponse,
+  PoolLoanAmountResponse,
+  PoolOriginationFeeResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -663,28 +665,45 @@ export const getWarmupPeriod = async (
   return { warmupPeriod: '14 days' };
 };
 
-/**
- * Fetches the borrower loan amount for a pool
- * @param contract The pool contract address
- * @returns Object containing the loan amount
- */
-export const getBorrowerLoanAmount = async (
+export const getPoolOriginationFee = async (
   contract: string
-): Promise<{ loanAmount: string }> => {
-  // This is a placeholder - will be implemented in the future
-  console.log('Borrower loan amount function called but not yet implemented');
-  return { loanAmount: '$10' };
+): Promise<PoolOriginationFeeResponse> => {
+  const response = await backendRequest<PoolOriginationFeeResponse>(
+    "GET",
+    "v3/pool/fee/origination",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.originationFee !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch origination fee. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
 };
 
-/**
- * Fetches the origination fee for a pool
- * @param contract The pool contract address
- * @returns Object containing the origination fee
- */
-export const getOriginationFee = async (
+export const getPoolLoanAmount = async (
   contract: string
-): Promise<{ originationFee: string }> => {
-  // This is a placeholder - will be implemented in the future
-  console.log('Origination fee function called but not yet implemented');
-  return { originationFee: '10%' };
+): Promise<PoolLoanAmountResponse> => {
+  const response = await backendRequest<PoolLoanAmountResponse>(
+    "GET",
+    "v3/pool/loan/amount",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.loanAmount !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch loan amount. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
 };
+

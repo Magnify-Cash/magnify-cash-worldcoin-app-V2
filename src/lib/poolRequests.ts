@@ -11,8 +11,8 @@ import {
   getPoolLoanDuration,
   getPoolLoanInterestRate,
   getWarmupPeriod,
-  getBorrowerLoanAmount,
-  getOriginationFee
+  getPoolLoanAmount,
+  getPoolOriginationFee
 } from "@/lib/backendRequests";
 import { LiquidityPool, UserPoolPosition } from "@/types/supabase/liquidity";
 import { format, differenceInDays, parseISO } from "date-fns";

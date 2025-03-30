@@ -1,12 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Info, Calculator } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PoolCard } from "@/components/PoolCard";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getPools } from "@/lib/poolRequests";
+import { getPools, invalidatePoolsCache } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -24,32 +24,60 @@ const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'with
 const Lending = () => {
   const [loading, setLoading] = useState(true);
   const [pools, setPools] = useState<LiquidityPool[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchPools = async () => {
-      try {
-        setLoading(true);
-        const poolsData = await getPools();
+  const fetchPools = useCallback(async (invalidateCache: boolean = false) => {
+    try {
+      setLoading(true);
+      setFetchError(null);
+      
+      if (invalidateCache) {
+        invalidatePoolsCache();
+      }
+      
+      const poolsData = await getPools();
+      
+      if (poolsData.length === 0) {
+        setFetchError("No pools available at this time");
+      } else {
         const sortedPools = [...poolsData].sort((a, b) => {
           return getPoolStatusPriority(a.status) - getPoolStatusPriority(b.status);
         });
         setPools(sortedPools);
-      } catch (error) {
-        console.error("Error fetching pools:", error);
-        toast({
-          title: "Error fetching pools",
-          description: "Failed to load pool data. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchPools();
+    } catch (error) {
+      console.error("Error fetching pools:", error);
+      setFetchError("Failed to load pool data. Please try again later.");
+      toast({
+        title: "Error fetching pools",
+        description: "Failed to load pool data. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchPools();
+    
+    // Set up automatic refresh every 5 minutes
+    const refreshInterval = setInterval(() => {
+      fetchPools(true);
+    }, 5 * 60 * 1000);
+    
+    return () => clearInterval(refreshInterval);
+  }, [fetchPools]);
+
+  const handleRefresh = () => {
+    fetchPools(true);
+    toast({
+      title: "Refreshing pool data",
+      description: "Fetching the latest pool information...",
+    });
+  };
 
   const handleCalculatorClick = () => {
     navigate("/calculator");
@@ -72,9 +100,20 @@ const Lending = () => {
         </div>
 
         <div className="mb-6">
-          <h2 className="text-lg sm:text-xl font-medium text-gray-800 mb-3 text-center">
-            Explore Our Lending Pools
-          </h2>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-lg sm:text-xl font-medium text-gray-800 text-center">
+              Explore Our Lending Pools
+            </h2>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="text-xs"
+              disabled={loading}
+            >
+              Refresh
+            </Button>
+          </div>
           <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto text-center mb-5">
             Select from a variety of lending pools designed to match different risk preferences and lock periods. Each pool features unique APY returns and terms.
           </p>
@@ -83,6 +122,8 @@ const Lending = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
           {loading ? (
             <div className="py-8 text-center text-gray-500 col-span-full">Loading pools...</div>
+          ) : fetchError ? (
+            <div className="py-8 text-center text-gray-500 col-span-full">{fetchError}</div>
           ) : pools.length > 0 ? (
             pools.map(pool => (
               <PoolCard

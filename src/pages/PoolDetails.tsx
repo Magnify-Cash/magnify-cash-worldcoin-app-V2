@@ -442,8 +442,8 @@ const PoolDetails = () => {
                     </div>
                     
                     {pool.status === 'warm-up' && (
-                      <div>
-                        <p className="text-xs sm:text-sm text-gray-500 flex items-center">
+                      <div className="text-center">
+                        <p className="text-xs sm:text-sm text-gray-500 flex items-center justify-center">
                           Lock Start Date
                           <Popover>
                             <PopoverTrigger asChild>
@@ -464,8 +464,8 @@ const PoolDetails = () => {
                     )}
                     
                     {pool.status === 'warm-up' && (
-                      <div>
-                        <p className="text-xs sm:text-sm text-gray-500 flex items-center">
+                      <div className="text-center">
+                        <p className="text-xs sm:text-sm text-gray-500 flex items-center justify-center">
                           Lock End Date
                           <Popover>
                             <PopoverTrigger asChild>
@@ -521,21 +521,8 @@ const PoolDetails = () => {
                     <div className="mt-4 sm:mt-6">
                       <div className="flex items-center justify-center">
                         <Unlock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
-                        <p className="text-sm sm:text-base font-medium text-center flex items-center">
+                        <p className="text-sm sm:text-base font-medium text-center">
                           Warm-Up for {getWarmupDays()} days
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button className="flex-shrink-0 ml-1">
-                                <HelpCircle className="h-4 w-4 text-gray-400" />
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="max-w-sm p-3">
-                              <div className="text-sm">
-                                <p className="font-medium mb-1">Pool Lock</p>
-                                <p>{formatUnlockDate(getPoolMaturityDate())}</p>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
                         </p>
                       </div>
                     </div>

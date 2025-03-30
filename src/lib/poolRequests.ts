@@ -9,7 +9,6 @@ import {
   getPoolLiquidity,
   getPoolLoanDuration,
   getPoolLoanInterestRate,
-  getWarmupPeriod,
   getPoolLoanAmount,
   getPoolOriginationFee,
   getPoolWarmupPeriod
@@ -149,7 +148,7 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             description: `${nameResponse.name || 'Lending'} pool`,
             minDeposit: 10,
             maxDeposit: 30000,
-            lockDurationDays: pool?.metadata?.lockDurationDays || 180,
+            lockDurationDays: lockDurationDays || 1800,
             // Store the raw timestamp for later use, also add a timestamp in milliseconds
             activationTimestamp: activationResponse.timestamp || '',
             activationTimestampMs: activationResponse.timestamp ? 
@@ -165,10 +164,10 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             symbol: symbolResponse.symbol || 'LP'
           },
           borrower_info: {
-            loanPeriodDays: 30,
-            interestRate: '8.5%',
-            loanAmount: '$10',
-            originationFee: '10%',
+            loanPeriodDays: 300,
+            interestRate: '88.5%',
+            loanAmount: '$100',
+            originationFee: '100%',
             warmupPeriod: `${warmupPeriodDays} days`
           }
         };

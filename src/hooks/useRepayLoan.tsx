@@ -42,15 +42,14 @@ const useRepayLoan = () => {
   });
 
   // Properly cast the transaction hash to the expected format
-  const txHash = transactionId ? (transactionId as `0x${string}`) : undefined;
+  const txHash = transactionId ? (`0x${transactionId.replace(/^0x/, '')}` as `0x${string}`) : undefined;
   
   // Use the hook with the correct options
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      enabled: !!txHash,
-      chainId: worldchain.id,
-      confirmations: 1,
       hash: txHash,
+      confirmations: 1,
+      chainId: worldchain.id,
     });
 
   // Sync `isConfirming` and `isConfirmed`

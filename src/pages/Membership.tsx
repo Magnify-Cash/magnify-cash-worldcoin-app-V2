@@ -89,23 +89,28 @@ export default function Membership() {
 
   const handleConnectWallet = async () => {
     try {
-      const result = await MiniKit.commandsAsync.connectWallet({
-        clientId: WORLDCOIN_CLIENT_ID ?? "",
+      // Use walletAuth instead of connectWallet
+      const nonce = crypto.randomUUID().replace(/-/g, "");
+      const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
+        nonce,
+        statement: "Connect your wallet to Magnify World",
+        expirationTime: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
       });
       
-      if (result.status === "success") {
+      if (finalPayload && finalPayload.address) {
+        const user = await MiniKit.getUserByAddress(finalPayload.address);
         setIsConnected(true);
-        setWalletAddress(result.walletAddress);
-        localStorage.setItem("ls_wallet_address", result.walletAddress);
-        localStorage.setItem("ls_worldcoin_address", result.walletAddress);
-        localStorage.setItem("ls_username", result.name || "Anonymous");
+        setWalletAddress(user.walletAddress);
+        localStorage.setItem("ls_wallet_address", user.walletAddress);
+        localStorage.setItem("ls_worldcoin_address", user.walletAddress);
+        localStorage.setItem("ls_username", user.username || "Anonymous");
         toast({
           title: "Connected!",
-          description: `Connected to ${result.walletAddress.slice(0, 8)}...`,
+          description: `Connected to ${user.walletAddress.slice(0, 8)}...`,
         });
         navigate("/profile");
       } else {
-        console.error("Wallet connection error:", result);
+        console.error("Wallet connection error:", finalPayload);
         toast({
           variant: "destructive",
           title: "Connection Failed",

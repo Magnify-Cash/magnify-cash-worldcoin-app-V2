@@ -1,4 +1,5 @@
 
+
 export interface LiquidityPool {
   id: number;
   created_at: string;
@@ -27,6 +28,9 @@ export interface LiquidityPool {
     warmupStartTimestamp?: string; // Unix timestamp in seconds as string
     warmupStartTimestampMs?: string; // Unix timestamp in milliseconds as string
     warmupStartFormattedDate?: string;
+    cooldownStartTimestamp?: string; // Unix timestamp in seconds as string
+    cooldownStartTimestampMs?: string; // Unix timestamp in milliseconds as string
+    cooldownStartFormattedDate?: string;
     symbol?: string;
   };
   borrower_info?: {
@@ -48,3 +52,4 @@ export interface UserPoolPosition {
   token_b_amount: number;
   total_value_locked: number;
 }
+

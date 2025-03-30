@@ -1,3 +1,4 @@
+
 import { 
   getSoulboundPoolAddresses, 
   getPoolName, 
@@ -369,6 +370,47 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
       
       if (pool.metadata.warmupStartTimestamp && !pool.metadata.warmupStartTimestampMs) {
         pool.metadata.warmupStartTimestampMs = (parseInt(pool.metadata.warmupStartTimestamp) * 1000).toString();
+      }
+      
+      // Calculate cooldown start time based on deactivation date and loan duration
+      if (pool.metadata.deactivationTimestamp && pool.contract_address) {
+        try {
+          // Get loan duration in seconds
+          const loanDuration = await retry(
+            () => getPoolLoanDuration(pool.contract_address!),
+            3,
+            1000,
+            (error, retriesLeft) => console.warn(`Error fetching loan duration for cooldown, retries left: ${retriesLeft}`, error)
+          );
+          
+          // Convert loan duration from seconds to milliseconds
+          const loanDurationSeconds = parseInt(loanDuration.seconds.toString(), 10);
+          
+          // Get deactivation timestamp in seconds
+          const deactivationTimestampSeconds = parseInt(pool.metadata.deactivationTimestamp);
+          
+          // Calculate cooldown start timestamp (deactivation timestamp - loan duration in seconds)
+          const cooldownStartTimestampSeconds = deactivationTimestampSeconds - loanDurationSeconds;
+          const cooldownStartTimestampMs = cooldownStartTimestampSeconds * 1000;
+          
+          // Format the cooldown start date
+          const cooldownStartDate = new Date(cooldownStartTimestampMs);
+          const cooldownStartFormattedDate = format(cooldownStartDate, 'MMM d, yyyy');
+          
+          // Store all versions of the cooldown timestamp
+          pool.metadata.cooldownStartTimestamp = cooldownStartTimestampSeconds.toString();
+          pool.metadata.cooldownStartTimestampMs = cooldownStartTimestampMs.toString();
+          pool.metadata.cooldownStartFormattedDate = cooldownStartFormattedDate;
+          
+          console.log(`Calculated cooldown start for pool ${id}:`, {
+            deactivationTimestamp: deactivationTimestampSeconds,
+            loanDurationSeconds,
+            cooldownStartTimestamp: cooldownStartTimestampSeconds,
+            formattedDate: cooldownStartFormattedDate
+          });
+        } catch (error) {
+          console.error('Error calculating cooldown start date:', error);
+        }
       }
     }
     

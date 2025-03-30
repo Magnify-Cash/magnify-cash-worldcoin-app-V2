@@ -345,7 +345,8 @@ const PoolDetails = () => {
         borrowerLoanAmount: defaultBorrowerInfo.borrowerLoanAmount,
         borrowerLoanPeriod: defaultBorrowerInfo.borrowerLoanPeriod,
         borrowerInterest: defaultBorrowerInfo.borrowerInterest,
-        originationFee: defaultBorrowerInfo.originationFee
+        originationFee: defaultBorrowerInfo.originationFee,
+        cooldownStartDate: pool.metadata?.cooldownStartFormattedDate || 'N/A'
       };
     }
     
@@ -355,7 +356,8 @@ const PoolDetails = () => {
       borrowerLoanAmount: pool.borrower_info.loanAmount || defaultBorrowerInfo.borrowerLoanAmount,
       borrowerLoanPeriod: pool.borrower_info.loanPeriodDays ? `${pool.borrower_info.loanPeriodDays} days` : defaultBorrowerInfo.borrowerLoanPeriod,
       borrowerInterest: pool.borrower_info.interestRate || defaultBorrowerInfo.borrowerInterest,
-      originationFee: pool.borrower_info.originationFee || defaultBorrowerInfo.originationFee
+      originationFee: pool.borrower_info.originationFee || defaultBorrowerInfo.originationFee,
+      cooldownStartDate: pool.metadata?.cooldownStartFormattedDate || 'N/A'
     };
   };
 
@@ -567,6 +569,10 @@ const PoolDetails = () => {
                           <div className="flex justify-between">
                             <span className="text-gray-500">Lock Duration:</span>
                             <span className="font-medium">{poolInfo.lockDuration}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Cooldown Period Starts At:</span>
+                            <span className="font-medium">{poolInfo.cooldownStartDate}</span>
                           </div>
                         </div>
                       </div>

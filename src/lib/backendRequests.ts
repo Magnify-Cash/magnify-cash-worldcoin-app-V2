@@ -145,7 +145,7 @@ export const previewMint = async (
 ): Promise<PreviewMintResponse> => {
   const response = await backendRequest<PreviewMintResponse>(
     "GET",
-    "preview/mint",
+    "v3/preview/mint",
     { shares, contract }
   );
 
@@ -164,7 +164,7 @@ export const previewDeposit = async (
 ): Promise<PreviewDepositResponse> => {
   const response = await backendRequest<PreviewDepositResponse>(
     "GET",
-    "preview/deposit",
+    "v3/preview/deposit",
     { assets, contract }
   );
 
@@ -183,7 +183,7 @@ export const previewRedeem = async (
 ): Promise<PreviewRedeemResponse> => {
   const response = await backendRequest<PreviewRedeemResponse>(
     "GET",
-    "preview/redeem",
+    "v3/preview/redeem",
     { shares, contract }
   );
 
@@ -203,7 +203,7 @@ export const previewWithdraw = async (
 ): Promise<PreviewWithdrawResponse> => {
   const response = await backendRequest<PreviewWithdrawResponse>(
     "GET",
-    "preview/withdraw",
+    "v3/preview/withdraw",
     { assets, contract }
   );
 

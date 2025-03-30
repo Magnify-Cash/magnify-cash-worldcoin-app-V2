@@ -1,4 +1,3 @@
-
 import { 
   getSoulboundPoolAddresses, 
   getPoolName, 
@@ -84,10 +83,23 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
         // Parse dates for calculating lock duration
         let lockDurationDays = 180; // Default fallback
         try {
-          const activationDate = parseISO(activationResponse.timestamp);
-          const deactivationDate = parseISO(deactivationResponse.timestamp);
+          // Convert timestamp strings to milliseconds (from seconds) for Date objects
+          const activationTimestamp = activationResponse.timestamp ? 
+            parseInt(activationResponse.timestamp) * 1000 : Date.now();
+          const deactivationTimestamp = deactivationResponse.timestamp ? 
+            parseInt(deactivationResponse.timestamp) * 1000 : Date.now() + 180 * 24 * 60 * 60 * 1000;
+          
+          const activationDate = new Date(activationTimestamp);
+          const deactivationDate = new Date(deactivationTimestamp);
+          
           lockDurationDays = differenceInDays(deactivationDate, activationDate);
           if (isNaN(lockDurationDays) || lockDurationDays <= 0) {
+            console.log("Invalid lock duration calculation", { 
+              activationTimestamp, 
+              deactivationTimestamp, 
+              activationDate, 
+              deactivationDate 
+            });
             lockDurationDays = 180; // Fallback if calculation fails
           }
         } catch (error) {
@@ -104,13 +116,15 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
 
         // Calculate warmup start time (for now using hardcoded timestamp)
         // This will be replaced by a backend call when available
+        // Convert the timestamp to milliseconds (from seconds)
         const hardcodedWarmupStart = new Date(1743324320 * 1000); // Convert unix timestamp to Date
         const warmupStartFormattedDate = format(hardcodedWarmupStart, 'MMM d, yyyy');
         
         const pool: LiquidityPool = {
           id: index + 1, // Use index + 1 as ID for now
           contract_address: contract, // Store contract address for reference
-          created_at: activationResponse.timestamp,
+          created_at: activationResponse.timestamp ? 
+            new Date(parseInt(activationResponse.timestamp) * 1000).toISOString() : new Date().toISOString(),
           updated_at: new Date().toISOString(),
           name: nameResponse.name || `Pool ${index + 1}`,
           token_a: "USDC",
@@ -126,11 +140,17 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             minDeposit: 10,
             maxDeposit: 30000,
             lockDurationDays,
-            activationTimestamp: activationResponse.timestamp,
+            // Store the raw timestamp for later use, also add a timestamp in milliseconds
+            activationTimestamp: activationResponse.timestamp || '',
+            activationTimestampMs: activationResponse.timestamp ? 
+              (parseInt(activationResponse.timestamp) * 1000).toString() : '',
             activationFormattedDate: activationResponse.formattedDate || 'N/A',
-            deactivationTimestamp: deactivationResponse.timestamp,
+            deactivationTimestamp: deactivationResponse.timestamp || '',
+            deactivationTimestampMs: deactivationResponse.timestamp ? 
+              (parseInt(deactivationResponse.timestamp) * 1000).toString() : '',
             deactivationFormattedDate: deactivationResponse.formattedDate || 'N/A',
-            warmupStartTimestamp: hardcodedWarmupStart.toISOString(),
+            warmupStartTimestamp: (hardcodedWarmupStart.getTime() / 1000).toString(), // Store as seconds
+            warmupStartTimestampMs: hardcodedWarmupStart.getTime().toString(), // Store as milliseconds
             warmupStartFormattedDate: warmupStartFormattedDate,
             symbol: symbolResponse.symbol || 'LP'
           },
@@ -327,6 +347,22 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
             warmupPeriod: '14 days'
           };
         }
+      }
+    }
+    
+    // Update timestamps in metadata if they exist
+    if (pool && pool.metadata) {
+      // Make sure we have milliseconds versions of timestamps for easier Date usage
+      if (pool.metadata.activationTimestamp && !pool.metadata.activationTimestampMs) {
+        pool.metadata.activationTimestampMs = (parseInt(pool.metadata.activationTimestamp) * 1000).toString();
+      }
+      
+      if (pool.metadata.deactivationTimestamp && !pool.metadata.deactivationTimestampMs) {
+        pool.metadata.deactivationTimestampMs = (parseInt(pool.metadata.deactivationTimestamp) * 1000).toString();
+      }
+      
+      if (pool.metadata.warmupStartTimestamp && !pool.metadata.warmupStartTimestampMs) {
+        pool.metadata.warmupStartTimestampMs = (parseInt(pool.metadata.warmupStartTimestamp) * 1000).toString();
       }
     }
     

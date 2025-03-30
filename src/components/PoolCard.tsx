@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   TrendingUp, 
@@ -17,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
+import { safeParseDate } from "@/utils/dateUtils";
 
 interface PoolCardProps {
   id: number;
@@ -84,26 +84,12 @@ export function PoolCard({
     }
     
     try {
-      // Try to parse the date string - handle both ISO format and already formatted dates
-      if (dateStr.includes('T') || dateStr.includes('-')) {
-        // Likely an ISO format date
-        return format(parseISO(dateStr), 'MMM d, yyyy');
-      } else {
-        // Already a formatted date, but not in our desired format
-        // Try to parse it assuming it's in month/day/year format
-        const dateParts = dateStr.split(/[\/,-\s]/);
-        if (dateParts.length >= 3) {
-          const date = new Date(dateStr);
-          if (!isNaN(date.getTime())) {
-            return format(date, 'MMM d, yyyy');
-          }
-        }
-        // If we can't parse it, just return the original string
-        return dateStr;
-      }
+      // Use the safer date parsing function
+      const date = safeParseDate(dateStr);
+      return format(date, 'MMM d, yyyy');
     } catch (error) {
       console.error("Error formatting date:", error);
-      return dateStr; // Return the original string if formatting fails
+      return dateStr || 'N/A'; // Return the original string if formatting fails
     }
   };
 

@@ -27,10 +27,15 @@ import { Badge } from "@/components/ui/badge";
 import { SupplyModal } from "@/components/SupplyModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { UserPortfolioCard } from "@/components/UserPortfolioCard";
-import { formatToLocalTime, formatDateRange, getDaysBetween, formatUnlockDate } from "@/utils/dateUtils";
+import { 
+  formatToLocalTime, 
+  formatDateRange, 
+  getDaysBetween, 
+  formatUnlockDate,
+  safeParseDate 
+} from "@/utils/dateUtils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PoolPriceGraph } from "@/components/PoolPriceGraph";
-import { parseISO } from "date-fns";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -88,6 +93,11 @@ const PoolDetails = () => {
 
     fetchPoolData();
   }, [poolId, navigate]);
+
+  const getDateFromTimestamp = (timestamp?: string): Date => {
+    if (!timestamp) return new Date();
+    return safeParseDate(timestamp);
+  };
 
   const getStatusColor = () => {
     if (!pool) return '';
@@ -159,11 +169,13 @@ const PoolDetails = () => {
     }
     
     try {
-      const warmupStartDate = pool.metadata.warmupStartTimestamp ? 
-        parseISO(pool.metadata.warmupStartTimestamp) : new Date();
+      const warmupStartDate = pool.metadata.warmupStartTimestampMs ? 
+        new Date(parseInt(pool.metadata.warmupStartTimestampMs)) : 
+        getDateFromTimestamp(pool.metadata.warmupStartTimestamp);
       
-      const activationDate = pool.metadata.activationTimestamp ? 
-        parseISO(pool.metadata.activationTimestamp) : new Date();
+      const activationDate = pool.metadata.activationTimestampMs ? 
+        new Date(parseInt(pool.metadata.activationTimestampMs)) : 
+        getDateFromTimestamp(pool.metadata.activationTimestamp);
       
       return [warmupStartDate, activationDate];
     } catch (error) {
@@ -182,12 +194,18 @@ const PoolDetails = () => {
   };
 
   const getPoolMaturityDate = (): Date => {
-    if (!pool || !pool.metadata || !pool.metadata.deactivationTimestamp) {
+    if (!pool || !pool.metadata) {
       return new Date(2025, 11, 12, 12, 0, 0);
     }
     
     try {
-      return parseISO(pool.metadata.deactivationTimestamp);
+      if (pool.metadata.deactivationTimestampMs) {
+        return new Date(parseInt(pool.metadata.deactivationTimestampMs));
+      } else if (pool.metadata.deactivationTimestamp) {
+        return getDateFromTimestamp(pool.metadata.deactivationTimestamp);
+      } else {
+        return new Date(2025, 11, 12, 12, 0, 0);
+      }
     } catch (error) {
       console.error("Error parsing deactivation date:", error);
       return new Date(2025, 11, 12, 12, 0, 0);
@@ -195,13 +213,20 @@ const PoolDetails = () => {
   };
 
   const getPoolLockDate = (): Date => {
-    if (!pool || !pool.metadata || !pool.metadata.activationTimestamp) {
+    if (!pool || !pool.metadata) {
       const currentYear = new Date().getFullYear();
       return new Date(currentYear, 2, 15);
     }
     
     try {
-      return parseISO(pool.metadata.activationTimestamp);
+      if (pool.metadata.activationTimestampMs) {
+        return new Date(parseInt(pool.metadata.activationTimestampMs));
+      } else if (pool.metadata.activationTimestamp) {
+        return getDateFromTimestamp(pool.metadata.activationTimestamp);
+      } else {
+        const currentYear = new Date().getFullYear();
+        return new Date(currentYear, 2, 15);
+      }
     } catch (error) {
       console.error("Error parsing activation date:", error);
       const currentYear = new Date().getFullYear();

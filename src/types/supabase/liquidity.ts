@@ -18,11 +18,14 @@ export interface LiquidityPool {
     minDeposit?: number;
     maxDeposit?: number;
     lockDurationDays?: number;
-    activationTimestamp?: string;
+    activationTimestamp?: string;  // Unix timestamp in seconds as string
+    activationTimestampMs?: string; // Unix timestamp in milliseconds as string
     activationFormattedDate?: string;
-    deactivationTimestamp?: string;
+    deactivationTimestamp?: string; // Unix timestamp in seconds as string
+    deactivationTimestampMs?: string; // Unix timestamp in milliseconds as string
     deactivationFormattedDate?: string;
-    warmupStartTimestamp?: string;
+    warmupStartTimestamp?: string; // Unix timestamp in seconds as string
+    warmupStartTimestampMs?: string; // Unix timestamp in milliseconds as string
     warmupStartFormattedDate?: string;
     symbol?: string;
   };

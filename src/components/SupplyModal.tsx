@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,6 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
       setPreviewLpAmount(null);
       setPreviewRequested(false);
       
-      // Focus the input when the modal opens
       setTimeout(() => {
         inputRef.current?.focus();
       }, 0);
@@ -104,7 +102,6 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
       return previewLpAmount;
     }
     
-    // Only use the fallback calculation for amounts less than 10
     return !isNaN(numAmount) && numAmount > 0 && numAmount < 10
       ? (numAmount * 0.95).toFixed(4)
       : "0.0000";
@@ -168,14 +165,9 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
               </Button>
             </div>
 
-            {amount && (
+            {amount && parseFloat(amount) >= 10 && (
               <div className="text-xs text-gray-500 mt-1">
                 You will receive {calculateLPTokens()} {lpSymbol} tokens
-                {parseFloat(amount) < 10 && parseFloat(amount) > 0 && (
-                  <div className="text-amber-500 mt-1">
-                    Enter 10 or more USDC to see accurate LP token estimate
-                  </div>
-                )}
               </div>
             )}
 

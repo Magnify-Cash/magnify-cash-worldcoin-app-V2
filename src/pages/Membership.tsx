@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { MiniKit } from "@worldcoin/minikit-js";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Clock, Star, Globe, CheckCircle } from "lucide-react";
 
 interface MembershipTier {
   id: string;
@@ -87,7 +89,7 @@ export default function Membership() {
 
   const handleConnectWallet = async () => {
     try {
-      const result = await MiniKit.commandsAsync.walletAuthenticate({
+      const result = await MiniKit.commandsAsync.connectWallet({
         clientId: WORLDCOIN_CLIENT_ID ?? "",
       });
       
@@ -152,10 +154,8 @@ export default function Membership() {
       
       <main className="container px-4 py-6 max-w-4xl mx-auto">
         <section className="mb-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+          <div
+            className="opacity-100 translate-y-0 transition-all duration-500"
           >
             <h1 className="text-3xl font-bold mb-2">Membership Benefits</h1>
             <p className="text-muted-foreground mb-6">
@@ -217,15 +217,13 @@ export default function Membership() {
                 </Button>
               </div>
             ) : null}
-          </motion.div>
+          </div>
         </section>
         
         {walletConnected && (
           <section>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+            <div
+              className="opacity-100 transition-all duration-500 delay-200"
             >
               <h2 className="text-2xl font-bold mb-6">Choose Your Membership Tier</h2>
               
@@ -280,15 +278,13 @@ export default function Membership() {
                   </Card>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </section>
         )}
         
         <section className="mb-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
+          <div
+            className="opacity-100 translate-y-0 transition-all duration-500 delay-400"
           >
             <Card>
               <CardHeader>
@@ -335,7 +331,7 @@ export default function Membership() {
                 </ol>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </section>
       </main>
     </div>

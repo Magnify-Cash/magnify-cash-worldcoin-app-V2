@@ -41,11 +41,15 @@ const useRepayLoan = () => {
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
   });
 
-  // Fix the useWaitForTransactionReceipt hook usage by properly casting the transaction hash
-  const txHash = transactionId ? transactionId as `0x${string}` : undefined;
+  // Properly cast the transaction hash to the expected format
+  const txHash = transactionId ? (transactionId as `0x${string}`) : undefined;
   
+  // Use the hook with the correct options
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
+      enabled: !!txHash,
+      chainId: worldchain.id,
+      confirmations: 1,
       hash: txHash,
     });
 

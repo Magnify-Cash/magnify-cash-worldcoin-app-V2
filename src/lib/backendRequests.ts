@@ -36,6 +36,7 @@ import {
   PoolLoanAmountResponse,
   PoolOriginationFeeResponse,
   PoolWarmupPeriodResponse,
+  UserLPBalanceResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -715,3 +716,26 @@ export const getPoolWarmupPeriod = async (
 
   return response.data;
 };
+
+export const getUserLPBalance = async (
+  wallet: string,
+  contract: string
+): Promise<UserLPBalanceResponse> => {
+  const response = await backendRequest<UserLPBalanceResponse>(
+    "GET",
+    "user/lp/balance",
+    { wallet, contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.balance !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch user LP balance. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+

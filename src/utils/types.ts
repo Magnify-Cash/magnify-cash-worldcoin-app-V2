@@ -182,3 +182,7 @@ export interface PoolLoanAmountResponse {
 export interface PoolWarmupPeriodResponse {
   warmupPeriodDays: number; 
 }
+
+export interface UserLPBalanceResponse {
+  balance: number;
+}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { previewDeposit } from "@/lib/backendRequests";
+import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -29,8 +31,9 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
   const [previewRequested, setPreviewRequested] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
-
-  const walletBalance = 1000;
+  
+  // Get the actual USDC balance
+  const { usdcBalance, loading: balanceLoading, error: balanceError, refreshBalance } = useUSDCBalance();
   
   useEffect(() => {
     if (isOpen) {
@@ -39,11 +42,14 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
       setPreviewLpAmount(null);
       setPreviewRequested(false);
       
+      // Refresh the USDC balance when the modal opens
+      refreshBalance();
+      
       setTimeout(() => {
         inputRef.current?.focus();
       }, 0);
     }
-  }, [isOpen]);
+  }, [isOpen, refreshBalance]);
 
   useEffect(() => {
     const fetchPreviewAmount = async () => {
@@ -75,7 +81,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
 
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
-    return !isNaN(numAmount) && numAmount > 0 && numAmount <= walletBalance;
+    return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
   };
 
   const handleSupply = () => {
@@ -107,6 +113,14 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
       : "0.0000";
   };
 
+  // Display a formatted balance or loading state
+  const displayBalance = () => {
+    if (balanceLoading) return "Loading...";
+    if (balanceError) return "Error loading balance";
+    if (usdcBalance === null) return "0.00";
+    return usdcBalance.toFixed(2);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
@@ -134,7 +148,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
                 Amount (USDC)
               </label>
               <span className="text-xs text-gray-500">
-                Balance: {walletBalance.toFixed(2)} USDC
+                Balance: {displayBalance()} USDC
               </span>
             </div>
             <div className="relative">
@@ -159,7 +173,8 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
                 type="button"
                 variant="ghost"
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
-                onClick={() => setAmount(walletBalance.toString())}
+                onClick={() => usdcBalance !== null && setAmount(usdcBalance.toString())}
+                disabled={balanceLoading || usdcBalance === null}
               >
                 MAX
               </Button>
@@ -173,7 +188,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
 
             {amount && !isAmountValid() && (
               <p className="text-xs text-red-500">
-                {parseFloat(amount) > walletBalance
+                {parseFloat(amount) > (usdcBalance || 0)
                   ? "Insufficient balance in wallet"
                   : "Please enter a valid amount"}
               </p>
@@ -199,7 +214,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
         <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
           <Button
             onClick={handleSupply}
-            disabled={!amount || !isAmountValid() || isLoading}
+            disabled={!amount || !isAmountValid() || isLoading || balanceLoading}
             className="bg-[#8B5CF6] hover:bg-[#7c50e6] text-white w-full py-6"
           >
             {isLoading ? "Processing..." : "Supply"}

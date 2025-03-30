@@ -382,7 +382,7 @@ const PoolDetails = () => {
   const currentValue = userPosition?.total_value_locked || 0;
   const earnings = currentValue - depositedValue;
 
-  const shouldShowSupplyButton = pool?.status !== 'active' && pool?.status !== 'withdrawal';
+  const shouldShowSupplyButton = pool?.status !== 'withdrawal';
   const shouldShowWithdrawButton = pool?.status !== 'active';
 
   return (
@@ -549,7 +549,7 @@ const PoolDetails = () => {
                 earnings={earnings}
                 onSupply={handleSupply}
                 onWithdraw={handleWithdraw}
-                hideButtons={pool.status === 'active'}
+                hideButtons={false}
                 showSupplyButton={shouldShowSupplyButton}
                 showWithdrawButton={shouldShowWithdrawButton}
                 onToggleDummyData={toggleDummyData}

@@ -87,7 +87,7 @@ export function UserPortfolioCard({
             
             {!hideButtons && (
               <div className="flex gap-2 pt-2">
-                {showSupplyButton && (
+                {(showSupplyButton || poolStatus === 'active') && (
                   <Button
                     onClick={onSupply}
                     className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
@@ -110,11 +110,11 @@ export function UserPortfolioCard({
         ) : (
           <div className="text-center py-4">
             <p className="text-sm text-gray-500 mb-2">{getEmptyBalanceMessage()}</p>
-            {!(poolStatus === 'active' || poolStatus === 'withdrawal') && (
+            {!(poolStatus === 'withdrawal') && (
               <p className="text-xs text-gray-400">Supply assets to start earning interest</p>
             )}
             
-            {!hideButtons && showSupplyButton && (
+            {!hideButtons && (showSupplyButton || poolStatus === 'active') && (
               <Button
                 onClick={onSupply}
                 className="mt-4 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"

@@ -530,7 +530,7 @@ const PoolDetails = () => {
                             <span className="font-medium">{poolInfo.lockDuration}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-500">Cooldown Period Starts At:</span>
+                            <span className="text-gray-500">Cooldown Period:</span>
                             <span className="font-medium">{poolInfo.cooldownStartDate}</span>
                           </div>
                         </div>

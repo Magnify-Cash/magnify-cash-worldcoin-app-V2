@@ -42,8 +42,9 @@ export const useUserPoolPosition = (poolContractAddress: string | undefined): Us
 
       try {
         // Make all API calls in parallel for optimization
+        // TODO: Change the demo-wallet to the actual wallet address of the user
         const [lpBalanceResponse, depositedValueResponse] = await Promise.all([
-          getUserLPBalance('demo-wallet', poolContractAddress),
+          getUserLPBalance('0x6835939032900e5756abFF28903d8A5E68CB39dF', poolContractAddress),
           getMockDepositedValue()
         ]);
 

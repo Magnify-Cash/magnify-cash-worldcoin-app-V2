@@ -723,7 +723,7 @@ export const getUserLPBalance = async (
 ): Promise<UserLPBalanceResponse> => {
   const response = await backendRequest<UserLPBalanceResponse>(
     "GET",
-    "user/lp/balance",
+    "v3/user/lp/balance",
     { wallet, contract }
   );
 

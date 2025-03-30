@@ -1,6 +1,10 @@
-import { ReactNode, useEffect, useState } from "react";
-import { MiniKit } from "@worldcoin/minikit-js";
+
+import { ReactNode, useEffect } from "react";
+import * as MinikitJS from "@worldcoin/minikit-js";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
+
+// Create an alias to MiniKit for compatibility with existing code
+const MiniKit = MinikitJS.default;
 
 export const MiniKitProvider = ({ children }: { children: ReactNode }) => {
   const initializeMiniKit = () => {

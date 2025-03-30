@@ -18,4 +18,16 @@ declare module "@worldcoin/minikit-js" {
   interface MiniAppWalletAuthPayload {
     address?: string;
   }
+  
+  // Add default export for compatibility with existing code
+  export default interface MiniKit {
+    install(clientId: string): void;
+    commandsAsync: {
+      walletAuth(options: any): Promise<any>;
+      sendTransaction(options: any): Promise<any>;
+      requestPermission(options: any): Promise<any>;
+    };
+    getUserByAddress(address: string): Promise<any>;
+    isInstalled(): boolean;
+  }
 }

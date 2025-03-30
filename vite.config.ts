@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
   // Fix the define configuration to properly handle environment variables
   define: {
     __WS_TOKEN__: JSON.stringify("lovable-dev-token"),
-    // Properly define environment variables without using process.env directly
+    // Properly stringify all environment variables
     'import.meta.env.VITE_WORLDCOIN_CLIENT_ID': JSON.stringify(process.env.VITE_WORLDCOIN_CLIENT_ID || ""),
     'import.meta.env.VITE_BACKEND_URL': JSON.stringify(process.env.VITE_BACKEND_URL || ""),
     'import.meta.env.VITE_ENVIRONMENT': JSON.stringify(process.env.VITE_ENVIRONMENT || ""),

@@ -1,6 +1,6 @@
 
 import { useCallback, useState, useEffect } from "react";
-import { MiniKit } from "@worldcoin/minikit-js";
+import * as MinikitJS from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
@@ -10,6 +10,9 @@ import {
   WORLDCOIN_CLIENT_ID,
   WORLDCOIN_TOKEN_COLLATERAL,
 } from "@/utils/constants";
+
+// Create an alias to MiniKit for compatibility with existing code
+const MiniKit = MinikitJS.default;
 
 type LoanDetails = {
   amount: number;
@@ -48,7 +51,6 @@ const useRepayLoan = () => {
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
       confirmations: 1,
-      chainId: worldchain.id,
       ...(txHash ? { hash: txHash } : {})
     });
 

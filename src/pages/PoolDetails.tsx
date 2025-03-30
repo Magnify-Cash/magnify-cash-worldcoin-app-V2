@@ -49,7 +49,8 @@ const PoolDetails = () => {
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [hasDummyData, setHasDummyData] = useState(false);
-  
+  const [isSupplyModalOpen, setIsSupplyModalOpen] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const poolId = id ? parseInt(id) : 0;
 
   useEffect(() => {
@@ -269,29 +270,11 @@ const PoolDetails = () => {
   };
 
   const handleSupply = () => {
-    if (pool?.status === 'withdrawal') {
-      toast({
-        title: "Pool is closed",
-        description: "This pool is no longer accepting new deposits.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setShowSupplyModal(true);
+    setIsSupplyModalOpen(true);
   };
 
   const handleWithdraw = () => {
-    if (!userPosition || userPosition.total_value_locked <= 0) {
-      toast({
-        title: "No position",
-        description: "You don't have any assets to withdraw from this pool.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setShowWithdrawModal(true);
+    setIsWithdrawModalOpen(true);
   };
 
   const toggleDummyData = () => {
@@ -626,14 +609,21 @@ const PoolDetails = () => {
 
       {pool && (
         <>
-          <SupplyModal isOpen={showSupplyModal} onClose={() => setShowSupplyModal(false)} />
-          
-          <WithdrawModal 
-            isOpen={showWithdrawModal} 
-            onClose={() => setShowWithdrawModal(false)} 
-            lpBalance={userPosition?.token_b_amount || 0}
-            lpValue={userPosition?.total_value_locked || 0}
-          />
+          {isSupplyModalOpen && (
+            <SupplyModal 
+              isOpen={isSupplyModalOpen} 
+              onClose={() => setIsSupplyModalOpen(false)} 
+              poolContractAddress={pool?.contract_address}
+              lpSymbol={pool?.metadata?.symbol || "LP"}
+            />
+          )}
+
+          {isWithdrawModalOpen && (
+            <WithdrawModal 
+              isOpen={isWithdrawModalOpen} 
+              onClose={() => setIsWithdrawModalOpen(false)} 
+            />
+          )}
         </>
       )}
     </div>

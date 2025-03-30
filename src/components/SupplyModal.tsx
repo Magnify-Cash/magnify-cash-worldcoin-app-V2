@@ -13,25 +13,30 @@ import {
 import { AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { previewDeposit } from "@/lib/backendRequests";
 
 interface SupplyModalProps {
   isOpen: boolean;
   onClose: () => void;
+  poolContractAddress?: string;
+  lpSymbol?: string;
 }
 
-export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
+export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "LP" }: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [previewLpAmount, setPreviewLpAmount] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
   const walletBalance = 1000;
-  const exchangeRate = 0.95;
-
+  
   useEffect(() => {
     if (isOpen) {
       setAmount("");
       setIsLoading(false);
+      setPreviewLpAmount(null);
       
       // Focus the input when the modal opens
       setTimeout(() => {
@@ -39,6 +44,32 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
       }, 0);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const fetchPreviewAmount = async () => {
+      const numAmount = parseFloat(amount);
+      if (!isNaN(numAmount) && numAmount >= 10 && poolContractAddress) {
+        setIsPreviewLoading(true);
+        try {
+          const preview = await previewDeposit(numAmount, poolContractAddress);
+          setPreviewLpAmount(preview.usdcAmount);
+        } catch (error) {
+          console.error("Error fetching preview deposit:", error);
+          setPreviewLpAmount(null);
+        } finally {
+          setIsPreviewLoading(false);
+        }
+      } else {
+        setPreviewLpAmount(null);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchPreviewAmount();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [amount, poolContractAddress]);
 
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
@@ -59,9 +90,17 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
   };
 
   const calculateLPTokens = () => {
+    if (isPreviewLoading) {
+      return "Loading...";
+    }
+    
+    if (previewLpAmount) {
+      return previewLpAmount;
+    }
+    
     const numAmount = parseFloat(amount);
     return !isNaN(numAmount) && numAmount > 0
-      ? (numAmount * exchangeRate).toFixed(4)
+      ? (numAmount * 0.95).toFixed(4)
       : "0.0000";
   };
 
@@ -123,7 +162,12 @@ export function SupplyModal({ isOpen, onClose }: SupplyModalProps) {
 
             {amount && (
               <div className="text-xs text-gray-500 mt-1">
-                You will receive {calculateLPTokens()} LP tokens
+                You will receive {calculateLPTokens()} {lpSymbol} tokens
+                {parseFloat(amount) < 10 && parseFloat(amount) > 0 && (
+                  <div className="text-amber-500 mt-1">
+                    Enter 10 or more USDC to see accurate LP token estimate
+                  </div>
+                )}
               </div>
             )}
 

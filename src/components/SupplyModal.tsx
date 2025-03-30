@@ -113,7 +113,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className={`sm:max-w-[425px] ${isMobile ? "max-w-[90%] p-4" : ""}`}
+        className={`sm:max-w-[425px] ${isMobile ? "max-w-[90%] p-4" : ""} rounded-lg`}
         style={{
           position: 'fixed',
           left: '50%',

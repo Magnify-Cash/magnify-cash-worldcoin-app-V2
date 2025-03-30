@@ -83,10 +83,12 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className={`sm:max-w-[425px] mx-auto ${isMobile ? 'p-3 px-4' : ''}`}
+        className={`sm:max-w-[425px] ${isMobile ? 'max-w-[90%] p-4' : ''} rounded-lg`}
         style={{ 
-          left: "50%", 
-          transform: "translate(-50%, -50%)",
+          position: 'fixed',
+          left: '50%', 
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
           maxHeight: isMobile ? "90vh" : "auto",
           overflowY: "auto"
         }}
@@ -192,7 +194,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
           <Button 
             onClick={handleWithdraw} 
             disabled={!amount || !isAmountValid() || isLoading}
-            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full py-6"
+            className="bg-[#8B5CF6] hover:bg-[#7c50e6] text-white w-full py-6"
           >
             {isLoading ? "Processing..." : "Withdraw"}
           </Button>
@@ -200,7 +202,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
             variant="outline" 
             onClick={onClose} 
             disabled={isLoading} 
-            className="w-full py-6 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/20 hover:text-[#8B5CF6] hover:font-medium"
+            className="w-full py-6"
           >
             Cancel
           </Button>

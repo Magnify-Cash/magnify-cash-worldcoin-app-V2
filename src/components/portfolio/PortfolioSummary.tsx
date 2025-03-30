@@ -28,7 +28,9 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
           </div>
           <div className="p-3 rounded-lg bg-gray-50">
             <p className="text-xs text-gray-500 mb-1">Total Earnings</p>
-            <p className="text-base sm:text-lg font-semibold text-green-600">+${totalEarnings.toFixed(2)}</p>
+            <p className="text-base sm:text-lg font-semibold text-green-600">
+              {totalEarnings >= 0 ? '+' : ''}{totalEarnings.toFixed(2)}
+            </p>
           </div>
         </div>
       </div>

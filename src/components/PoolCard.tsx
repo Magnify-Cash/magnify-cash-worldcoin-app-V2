@@ -16,7 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { format, addDays } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 
 interface PoolCardProps {
@@ -26,6 +25,11 @@ interface PoolCardProps {
   totalSupply: number;
   availableLiquidity: number;
   status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
+  symbol?: string;
+  lockDuration?: number;
+  startDate?: string;
+  endDate?: string;
+  contract?: string;
 }
 
 export function PoolCard({ 
@@ -34,30 +38,20 @@ export function PoolCard({
   apy, 
   totalSupply, 
   availableLiquidity,
-  status
+  status,
+  symbol,
+  lockDuration = 180,
+  startDate,
+  endDate
 }: PoolCardProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const getPoolName = () => {
-    if (id === 1) return "Default Resistant Pool";
-    if (id === 2) return "High Uptake Pool";
-    if (id === 3) return "Fast Cycle Pool";
-    if (id === 4) return "Identity Based Pool";
-    if (id === 5) return "Loyalty Rewards Pool";
-    return title;
-  };
-
-  const getPoolSymbol = () => {
-    if (id === 1) return "DFLP";
-    if (id === 2) return "HULP";
-    if (id === 3) return "FCLP";
-    if (id === 4) return "IDLP";
-    if (id === 5) return "LRLP";
-    return "";
-  };
-
   const getLockDuration = () => {
+    if (lockDuration) {
+      return `${lockDuration} days`;
+    }
+    // Fallback to the old logic if lockDuration is not provided
     switch (id) {
       case 1:
         return "180 days";
@@ -73,19 +67,23 @@ export function PoolCard({
   };
 
   const getLockPeriodDate = () => {
-    const today = new Date();
+    if (status === 'warm-up' && startDate) {
+      return startDate;
+    } else if (endDate) {
+      return endDate;
+    }
     
+    // Fallback to the old mock data logic
+    const today = new Date();
     if (status === 'warm-up') {
-      const startDate = addDays(today, 15);
-      return format(startDate, 'MMM d, yyyy');
+      const startDate = new Date(today);
+      startDate.setDate(today.getDate() + 15);
+      return startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     } else {
-      let daysToAdd = 180;
-      if (id === 2) daysToAdd = 365;
-      if (id === 3) daysToAdd = 90;
-      if (id === 4) daysToAdd = 30;
-      
-      const endDate = addDays(today, daysToAdd);
-      return format(endDate, 'MMM d, yyyy');
+      let daysToAdd = lockDuration || 180;
+      const endDate = new Date(today);
+      endDate.setDate(today.getDate() + daysToAdd);
+      return endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
   };
 
@@ -131,7 +129,7 @@ export function PoolCard({
     <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
       <CardHeader className="flex flex-col items-center gap-2 pb-2 pt-3">
         <h3 className="font-semibold text-lg sm:text-xl leading-tight text-center">
-          {getPoolName()}
+          {title}
         </h3>
         
         <Badge variant="outline" className={`inline-flex items-center ${getStatusColor()} py-0.5 px-2`}>

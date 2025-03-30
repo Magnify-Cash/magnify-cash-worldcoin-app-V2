@@ -12,7 +12,18 @@ export interface LiquidityPool {
   total_value_locked: number;
   available_liquidity: number;
   status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
-  metadata?: Record<string, any>;
+  contract_address?: string;
+  metadata?: {
+    description?: string;
+    minDeposit?: number;
+    maxDeposit?: number;
+    lockDurationDays?: number;
+    activationTimestamp?: string;
+    activationFormattedDate?: string;
+    deactivationTimestamp?: string;
+    deactivationFormattedDate?: string;
+    symbol?: string;
+  };
 }
 
 export interface UserPoolPosition {

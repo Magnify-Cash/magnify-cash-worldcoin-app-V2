@@ -1,118 +1,108 @@
 
-import backendRequest from "@/lib/request";
+import { 
+  getSoulboundPoolAddresses, 
+  getPoolName, 
+  getPoolStatus, 
+  getPoolDeactivationDate, 
+  getPoolActivationDate, 
+  getPoolLPSymbol,
+  getPoolUSDCBalance,
+  getPoolLiquidity
+} from "@/lib/backendRequests";
 import { LiquidityPool, UserPoolPosition } from "@/types/supabase/liquidity";
+import { format, differenceInDays, parseISO } from "date-fns";
 
 export const getPools = async (): Promise<LiquidityPool[]> => {
-  // For demo purposes, returning mock data
-  // In a real app, would fetch from backend using:
-  // const response = await backendRequest<LiquidityPool[]>("GET", "getPools");
-  
-  // Mock data
-  const mockPools: LiquidityPool[] = [
-    {
-      id: 1,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      name: "Default Resistant Pool",
-      token_a: "USDC",
-      token_b: "DFLP",
-      token_a_amount: 24500,
-      token_b_amount: 24500,
-      apy: 8.5,
-      total_value_locked: 24500,
-      available_liquidity: 18500,
-      status: "active",
-      metadata: {
-        description: "Main USDC lending pool",
-        minDeposit: 10,
-        maxDeposit: 30000
-      }
-    },
-    {
-      id: 2,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      name: "High Uptake Pool",
-      token_a: "ETH",
-      token_b: "HULP",
-      token_a_amount: 12000,
-      token_b_amount: 12000,
-      apy: 6.2,
-      total_value_locked: 12000,
-      available_liquidity: 7500,
-      status: "warm-up",
-      metadata: {
-        description: "Ethereum lending pool",
-        minDeposit: 0.01,
-        maxDeposit: 100
-      }
-    },
-    {
-      id: 3,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      name: "Fast Cycle Pool",
-      token_a: "WBTC",
-      token_b: "FCLP",
-      token_a_amount: 30000,
-      token_b_amount: 30000,
-      apy: 4.8,
-      total_value_locked: 30000,
-      available_liquidity: 22000,
-      status: "withdrawal",
-      metadata: {
-        description: "Wrapped Bitcoin lending pool",
-        minDeposit: 0.001,
-        maxDeposit: 10
-      }
-    },
-    {
-      id: 4,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      name: "Identity Based Pool",
-      token_a: "DAI",
-      token_b: "IDLP",
-      token_a_amount: 18000,
-      token_b_amount: 18000,
-      apy: 5.6,
-      total_value_locked: 18000,
-      available_liquidity: 9000,
-      status: "cooldown",
-      metadata: {
-        description: "DAI lending pool",
-        minDeposit: 5,
-        maxDeposit: 10000
-      }
-    },
-    {
-      id: 5,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      name: "Loyalty Rewards Pool",
-      token_a: "MAG",
-      token_b: "LRLP",
-      token_a_amount: 15000,
-      token_b_amount: 15000,
-      apy: 7.2,
-      total_value_locked: 15000,
-      available_liquidity: 8500,
-      status: "active",
-      metadata: {
-        description: "MAG token lending pool",
-        minDeposit: 100,
-        maxDeposit: 5000
-      }
+  try {
+    // Fetch all pool addresses
+    const poolAddresses = await getSoulboundPoolAddresses();
+    
+    if (!poolAddresses.length) {
+      console.log("No pool addresses found");
+      return [];
     }
-  ];
-  
-  return mockPools;
+    
+    // For each pool address, fetch details in parallel
+    const poolDataPromises = poolAddresses.map(async (contract, index) => {
+      try {
+        // Fetch all pool data in parallel
+        const [
+          nameResponse, 
+          statusResponse, 
+          deactivationResponse, 
+          activationResponse,
+          symbolResponse,
+          liquidityResponse,
+          balanceResponse
+        ] = await Promise.all([
+          getPoolName(contract),
+          getPoolStatus(contract),
+          getPoolDeactivationDate(contract),
+          getPoolActivationDate(contract),
+          getPoolLPSymbol(contract),
+          getPoolLiquidity(contract),
+          getPoolUSDCBalance(contract)
+        ]);
+        
+        // Parse dates for calculating lock duration
+        const activationDate = parseISO(activationResponse.timestamp);
+        const deactivationDate = parseISO(deactivationResponse.timestamp);
+        
+        // Calculate lock duration in days
+        const lockDurationDays = differenceInDays(deactivationDate, activationDate);
+        
+        // Map API status to UI status
+        const statusMap: Record<string, 'warm-up' | 'active' | 'cooldown' | 'withdrawal'> = {
+          isWarmup: 'warm-up',
+          isActive: 'active',
+          isCooldown: 'cooldown',
+          isExpired: 'withdrawal'
+        };
+        
+        return {
+          id: index + 1, // Use index + 1 as ID for now
+          contract_address: contract, // Store contract address for reference
+          created_at: activationResponse.timestamp,
+          updated_at: new Date().toISOString(),
+          name: nameResponse.name,
+          token_a: "USDC",
+          token_b: symbolResponse.symbol,
+          token_a_amount: balanceResponse.totalAssets,
+          token_b_amount: balanceResponse.totalAssets,
+          apy: 8.5, // Fixed APY as per requirement
+          total_value_locked: balanceResponse.totalAssets,
+          available_liquidity: liquidityResponse.liquidity,
+          status: statusMap[statusResponse.status] || 'active',
+          metadata: {
+            description: `${nameResponse.name} lending pool`,
+            minDeposit: 10,
+            maxDeposit: 30000,
+            lockDurationDays,
+            activationTimestamp: activationResponse.timestamp,
+            activationFormattedDate: activationResponse.formattedDate,
+            deactivationTimestamp: deactivationResponse.timestamp,
+            deactivationFormattedDate: deactivationResponse.formattedDate,
+            symbol: symbolResponse.symbol
+          }
+        };
+      } catch (error) {
+        console.error(`Error fetching details for pool ${contract}:`, error);
+        return null;
+      }
+    });
+    
+    // Wait for all promises to resolve
+    const poolsData = await Promise.all(poolDataPromises);
+    
+    // Filter out any failed pool fetches and return the successful ones
+    return poolsData.filter(Boolean) as LiquidityPool[];
+  } catch (error) {
+    console.error("Error fetching pools:", error);
+    throw error;
+  }
 };
 
 export const getPoolById = async (id: number): Promise<LiquidityPool | null> => {
-  // In a real app, would fetch from backend using:
-  // const response = await backendRequest<LiquidityPool>("GET", "getPool", { id });
-  
   const pools = await getPools();
   return pools.find(pool => pool.id === id) || null;
 };

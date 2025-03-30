@@ -30,6 +30,7 @@ const Lending = () => {
   useEffect(() => {
     const fetchPools = async () => {
       try {
+        setLoading(true);
         const poolsData = await getPools();
         const sortedPools = [...poolsData].sort((a, b) => {
           return getPoolStatusPriority(a.status) - getPoolStatusPriority(b.status);
@@ -82,7 +83,7 @@ const Lending = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
           {loading ? (
             <div className="py-8 text-center text-gray-500 col-span-full">Loading pools...</div>
-          ) : (
+          ) : pools.length > 0 ? (
             pools.map(pool => (
               <PoolCard
                 key={pool.id}
@@ -92,8 +93,15 @@ const Lending = () => {
                 totalSupply={pool.total_value_locked}
                 availableLiquidity={pool.available_liquidity}
                 status={pool.status}
+                symbol={pool.metadata?.symbol}
+                lockDuration={pool.metadata?.lockDurationDays}
+                startDate={pool.metadata?.activationFormattedDate}
+                endDate={pool.metadata?.deactivationFormattedDate}
+                contract={pool.contract_address}
               />
             ))
+          ) : (
+            <div className="py-8 text-center text-gray-500 col-span-full">No lending pools available at this time.</div>
           )}
         </div>
 

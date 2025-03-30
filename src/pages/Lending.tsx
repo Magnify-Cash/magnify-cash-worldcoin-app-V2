@@ -91,17 +91,6 @@ const Lending = () => {
           </p>
         </div>
 
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg sm:text-xl font-medium text-gray-800 text-center">
-              Explore Our Lending Pools
-            </h2>
-          </div>
-          <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto text-center mb-5">
-            Select from a variety of lending pools designed to match different risk preferences and lock periods. Each pool features unique APY returns and terms.
-          </p>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
           {loading ? (
             <div className="py-8 text-center text-gray-500 col-span-full">Loading pools...</div>

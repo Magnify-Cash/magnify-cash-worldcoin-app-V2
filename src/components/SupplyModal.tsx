@@ -27,6 +27,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
   const [isLoading, setIsLoading] = useState(false);
   const [previewLpAmount, setPreviewLpAmount] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewRequested, setPreviewRequested] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
@@ -37,6 +38,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
       setAmount("");
       setIsLoading(false);
       setPreviewLpAmount(null);
+      setPreviewRequested(false);
       
       // Focus the input when the modal opens
       setTimeout(() => {
@@ -50,6 +52,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
       const numAmount = parseFloat(amount);
       if (!isNaN(numAmount) && numAmount >= 10 && poolContractAddress) {
         setIsPreviewLoading(true);
+        setPreviewRequested(true);
         try {
           const preview = await previewDeposit(numAmount, poolContractAddress);
           setPreviewLpAmount(preview.usdcAmount);
@@ -60,6 +63,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
           setIsPreviewLoading(false);
         }
       } else {
+        setPreviewRequested(numAmount >= 10);
         setPreviewLpAmount(null);
       }
     };
@@ -90,7 +94,9 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
   };
 
   const calculateLPTokens = () => {
-    if (isPreviewLoading) {
+    const numAmount = parseFloat(amount);
+    
+    if (isPreviewLoading || (previewRequested && !previewLpAmount)) {
       return "...";
     }
     
@@ -98,8 +104,8 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
       return previewLpAmount;
     }
     
-    const numAmount = parseFloat(amount);
-    return !isNaN(numAmount) && numAmount > 0
+    // Only use the fallback calculation for amounts less than 10
+    return !isNaN(numAmount) && numAmount > 0 && numAmount < 10
       ? (numAmount * 0.95).toFixed(4)
       : "0.0000";
   };

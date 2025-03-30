@@ -649,3 +649,42 @@ export const getPoolDeactivationDate = async (
 
   return response.data;
 };
+
+/**
+ * Fetches the warmup period for a pool
+ * @param contract The pool contract address
+ * @returns Object containing the warmup period in days
+ */
+export const getWarmupPeriod = async (
+  contract: string
+): Promise<{ warmupPeriod: string }> => {
+  // This is a placeholder - will be implemented in the future
+  console.log('Warmup period function called but not yet implemented');
+  return { warmupPeriod: '14 days' };
+};
+
+/**
+ * Fetches the borrower loan amount for a pool
+ * @param contract The pool contract address
+ * @returns Object containing the loan amount
+ */
+export const getBorrowerLoanAmount = async (
+  contract: string
+): Promise<{ loanAmount: string }> => {
+  // This is a placeholder - will be implemented in the future
+  console.log('Borrower loan amount function called but not yet implemented');
+  return { loanAmount: '$10' };
+};
+
+/**
+ * Fetches the origination fee for a pool
+ * @param contract The pool contract address
+ * @returns Object containing the origination fee
+ */
+export const getOriginationFee = async (
+  contract: string
+): Promise<{ originationFee: string }> => {
+  // This is a placeholder - will be implemented in the future
+  console.log('Origination fee function called but not yet implemented');
+  return { originationFee: '10%' };
+};

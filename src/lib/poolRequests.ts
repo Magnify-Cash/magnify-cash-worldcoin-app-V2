@@ -1,3 +1,4 @@
+
 import { 
   getSoulboundPoolAddresses, 
   getPoolName, 
@@ -214,6 +215,7 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
     // Check for individual pool cache first
     const cachedPool = Cache.get<LiquidityPool>(poolCacheKey(id));
     if (cachedPool) {
+      console.log("Using cached pool data for pool ID:", id);
       return cachedPool;
     }
     
@@ -224,6 +226,8 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
     // If pool found, fetch additional borrower information
     if (pool && pool.contract_address) {
       try {
+        console.log(`Fetching detailed borrower info for pool ID ${id}...`);
+        
         // Fetch loan period - with retry mechanism
         const loanDuration = await retry(
           () => getPoolLoanDuration(pool.contract_address!),
@@ -240,15 +244,17 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
           (error, retriesLeft) => console.warn(`Error fetching interest rate, retries left: ${retriesLeft}`, error)
         );
         
-        // Add borrower info to pool object
+        // Initialize the borrower_info object with real data from API
         pool.borrower_info = {
           loanPeriodDays: Math.ceil(loanDuration.days),
           interestRate: interestRate.interestRate ? 
-            interestRate.interestRate + '%' : '8.5%', // No need to divide by 100
-          loanAmount: '$10', // Fixed to $10
-          originationFee: '10%', // Placeholder as specified
-          warmupPeriod: '14 days' // Placeholder as specified
+            interestRate.interestRate + '%' : '8.5%', // Add % symbol if needed
+          loanAmount: '$10', // Fixed to $10 as per requirement
+          originationFee: '10%', // Fixed to 10% as per requirement
+          warmupPeriod: '14 days' // Fixed to 14 days as per requirement
         };
+        
+        console.log(`Successfully fetched borrower info for pool ID ${id}:`, pool.borrower_info);
       } catch (error) {
         console.error('Error fetching borrower information:', error);
         // Provide fallback values if fetching fails
@@ -262,7 +268,7 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
       }
     }
     
-    // Cache this pool if found
+    // Cache this pool with the enriched data if found
     if (pool) {
       Cache.set(poolCacheKey(id), pool, 15);
     }

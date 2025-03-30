@@ -1,4 +1,3 @@
-
 import { 
   getSoulboundPoolAddresses, 
   getPoolName, 
@@ -9,7 +8,10 @@ import {
   getPoolUSDCBalance,
   getPoolLiquidity,
   getPoolLoanDuration,
-  getPoolLoanInterestRate
+  getPoolLoanInterestRate,
+  getWarmupPeriod,
+  getBorrowerLoanAmount,
+  getOriginationFee
 } from "@/lib/backendRequests";
 import { LiquidityPool, UserPoolPosition } from "@/types/supabase/liquidity";
 import { format, differenceInDays, parseISO } from "date-fns";
@@ -214,16 +216,23 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
   try {
     // Check for individual pool cache first
     const cachedPool = Cache.get<LiquidityPool>(poolCacheKey(id));
+    let pool: LiquidityPool | null = null;
+    
     if (cachedPool) {
       console.log("Using cached pool data for pool ID:", id);
-      return cachedPool;
+      pool = { ...cachedPool }; // Create a copy to avoid modifying the cached object directly
+    } else {
+      // If not in cache, get all pools and find by id
+      const pools = await getPools();
+      pool = pools.find(p => p.id === id) || null;
+      
+      // If pool not found, return null
+      if (!pool) {
+        return null;
+      }
     }
     
-    // If not in cache, get all pools and find by id
-    const pools = await getPools();
-    const pool = pools.find(pool => pool.id === id) || null;
-    
-    // If pool found, fetch additional borrower information
+    // Always fetch additional borrower information when the pool is found
     if (pool && pool.contract_address) {
       try {
         console.log(`Fetching detailed borrower info for pool ID ${id}...`);

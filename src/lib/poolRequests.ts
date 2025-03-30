@@ -264,14 +264,40 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
             (error, retriesLeft) => console.warn(`Error fetching interest rate, retries left: ${retriesLeft}`, error)
           );
           
+          // Fetch loan amount - with retry mechanism
+          const loanAmount = await retry(
+            () => getPoolLoanAmount(pool.contract_address!),
+            3,
+            1000,
+            (error, retriesLeft) => console.warn(`Error fetching loan amount, retries left: ${retriesLeft}`, error)
+          );
+          
+          // Fetch origination fee - with retry mechanism
+          const originationFee = await retry(
+            () => getPoolOriginationFee(pool.contract_address!),
+            3,
+            1000,
+            (error, retriesLeft) => console.warn(`Error fetching origination fee, retries left: ${retriesLeft}`, error)
+          );
+          
+          // Fetch warmup period - with retry mechanism
+          const warmupPeriod = await retry(
+            () => getWarmupPeriod(pool.contract_address!),
+            3,
+            1000,
+            (error, retriesLeft) => console.warn(`Error fetching warmup period, retries left: ${retriesLeft}`, error)
+          );
+          
           // Initialize the borrower_info object with real data from API
           const borrowerInfo = {
             loanPeriodDays: Math.ceil(loanDuration.days),
             interestRate: interestRate.interestRate ? 
               interestRate.interestRate + '%' : '8.5%', // Add % symbol if needed
-            loanAmount: '$10', // Fixed to $10 as per requirement
-            originationFee: '10%', // Fixed to 10% as per requirement
-            warmupPeriod: '14 days' // Fixed to 14 days as per requirement
+            loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
+              `$${loanAmount.loanAmount}` : '$10', // Format loan amount with $ symbol
+            originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
+              `${originationFee.originationFee}%` : '10%', // Format origination fee with % symbol
+            warmupPeriod: warmupPeriod.warmupPeriod || '14 days'
           };
           
           // Update the pool object

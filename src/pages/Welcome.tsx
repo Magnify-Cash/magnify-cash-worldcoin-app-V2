@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { invalidatePoolsCache } from "@/lib/poolRequests";
 
 
 type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
@@ -15,6 +16,11 @@ const Welcome = () => {
   const toast = useToast();
   
   const [loading, setLoading] = useState(false);
+
+  // Invalidate pool cache when component mounts
+  useEffect(() => {
+    invalidatePoolsCache();
+  }, []);
 
   const handleSignIn = async () => {
     const wallet_address = localStorage.getItem("ls_wallet_address");

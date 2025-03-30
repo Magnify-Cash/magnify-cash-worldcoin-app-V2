@@ -16,7 +16,8 @@ import {
   Timer,
   Circle,
   CircleCheck,
-  HelpCircle
+  HelpCircle,
+  Calendar
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -442,18 +443,44 @@ const PoolDetails = () => {
                     
                     {pool.status === 'warm-up' && (
                       <div>
-                        <p className="text-xs sm:text-sm text-gray-500">Lock Start Date</p>
+                        <p className="text-xs sm:text-sm text-gray-500 flex items-center">
+                          Lock Start Date
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="ml-1">
+                                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="p-3 w-auto">
+                              <p className="font-medium mb-1">Lock begins on</p>
+                              <p>{formatUnlockDate(getPoolLockDate())}</p>
+                            </PopoverContent>
+                          </Popover>
+                        </p>
                         <p className="text-sm sm:text-lg font-semibold">
-                          {pool.metadata?.activationFormattedDate || 'N/A'}
+                          {formatToLocalTime(pool.metadata?.activationTimestampMs || '', 'MMM d, yyyy')}
                         </p>
                       </div>
                     )}
                     
                     {pool.status === 'warm-up' && (
                       <div>
-                        <p className="text-xs sm:text-sm text-gray-500">Lock End Date</p>
+                        <p className="text-xs sm:text-sm text-gray-500 flex items-center">
+                          Lock End Date
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="ml-1">
+                                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="p-3 w-auto">
+                              <p className="font-medium mb-1">Lock ends on</p>
+                              <p>{formatUnlockDate(getPoolMaturityDate())}</p>
+                            </PopoverContent>
+                          </Popover>
+                        </p>
                         <p className="text-sm sm:text-lg font-semibold">
-                          {pool.metadata?.deactivationFormattedDate || 'N/A'}
+                          {formatToLocalTime(pool.metadata?.deactivationTimestampMs || '', 'MMM d, yyyy')}
                         </p>
                       </div>
                     )}

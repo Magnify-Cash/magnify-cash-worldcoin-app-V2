@@ -2,14 +2,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Info, Calculator } from "lucide-react";
+import { Info } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PoolCard } from "@/components/PoolCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getPools, invalidatePoolsCache } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 
 const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): number => {
   switch (status) {
@@ -71,10 +70,6 @@ const Lending = () => {
     return () => clearInterval(refreshInterval);
   }, [fetchPools]);
 
-  const handleCalculatorClick = () => {
-    navigate("/calculator");
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header title="Lending Dashboard" />
@@ -108,7 +103,8 @@ const Lending = () => {
                 status={pool.status}
                 symbol={pool.metadata?.symbol}
                 lockDuration={pool.metadata?.lockDurationDays}
-                startDate={pool.metadata?.activationFormattedDate}
+                startDate={pool.status === 'warm-up' ? 
+                  pool.metadata?.warmupStartFormattedDate : pool.metadata?.activationFormattedDate}
                 endDate={pool.metadata?.deactivationFormattedDate}
                 contract={pool.contract_address}
               />

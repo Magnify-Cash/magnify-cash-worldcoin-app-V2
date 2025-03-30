@@ -108,7 +108,7 @@ export function PoolCard({
   };
 
   const getLockPeriodDate = () => {
-    if (status === 'warm-up' && startDate) {
+    if (status === 'warm-up') {
       return formatDate(startDate);
     } else if (endDate) {
       return formatDate(endDate);

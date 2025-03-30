@@ -101,6 +101,11 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           isCooldown: 'cooldown',
           isExpired: 'withdrawal'
         };
+
+        // Calculate warmup start time (for now using hardcoded timestamp)
+        // This will be replaced by a backend call when available
+        const hardcodedWarmupStart = new Date(1743324320 * 1000); // Convert unix timestamp to Date
+        const warmupStartFormattedDate = format(hardcodedWarmupStart, 'MMM d, yyyy');
         
         const pool: LiquidityPool = {
           id: index + 1, // Use index + 1 as ID for now
@@ -125,6 +130,8 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             activationFormattedDate: activationResponse.formattedDate || 'N/A',
             deactivationTimestamp: deactivationResponse.timestamp,
             deactivationFormattedDate: deactivationResponse.formattedDate || 'N/A',
+            warmupStartTimestamp: hardcodedWarmupStart.toISOString(),
+            warmupStartFormattedDate: warmupStartFormattedDate,
             symbol: symbolResponse.symbol || 'LP'
           },
           borrower_info: {
@@ -166,6 +173,8 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             activationFormattedDate: 'N/A',
             deactivationTimestamp: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
             deactivationFormattedDate: 'N/A',
+            warmupStartTimestamp: new Date().toISOString(),
+            warmupStartFormattedDate: 'N/A',
             symbol: 'LP'
           },
           borrower_info: {

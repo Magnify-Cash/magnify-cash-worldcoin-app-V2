@@ -22,6 +22,8 @@ export interface LiquidityPool {
     activationFormattedDate?: string;
     deactivationTimestamp?: string;
     deactivationFormattedDate?: string;
+    warmupStartTimestamp?: string;
+    warmupStartFormattedDate?: string;
     symbol?: string;
   };
   borrower_info?: {

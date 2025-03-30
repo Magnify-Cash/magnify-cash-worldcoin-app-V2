@@ -30,6 +30,7 @@ import { UserPortfolioCard } from "@/components/UserPortfolioCard";
 import { formatToLocalTime, formatDateRange, getDaysBetween, formatUnlockDate } from "@/utils/dateUtils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PoolPriceGraph } from "@/components/PoolPriceGraph";
+import { parseISO } from "date-fns";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -148,21 +149,31 @@ const PoolDetails = () => {
     return Math.min(progress, 100);
   };
 
-  const getPoolMaturityDate = (): Date => {
-    return new Date(2025, 11, 12, 12, 0, 0);
-  };
-
-  const getPoolLockDate = (): Date => {
-    const currentYear = new Date().getFullYear();
-    return new Date(currentYear, 2, 15);
-  };
-
   const getWarmupPeriod = (): [Date, Date] => {
-    const currentYear = new Date().getFullYear();
-    return [
-      new Date(currentYear, 2, 1),
-      new Date(currentYear, 2, 14)
-    ];
+    if (!pool || !pool.metadata) {
+      const currentYear = new Date().getFullYear();
+      return [
+        new Date(currentYear, 2, 1),
+        new Date(currentYear, 2, 14)
+      ];
+    }
+    
+    try {
+      const warmupStartDate = pool.metadata.warmupStartTimestamp ? 
+        parseISO(pool.metadata.warmupStartTimestamp) : new Date();
+      
+      const activationDate = pool.metadata.activationTimestamp ? 
+        parseISO(pool.metadata.activationTimestamp) : new Date();
+      
+      return [warmupStartDate, activationDate];
+    } catch (error) {
+      console.error("Error parsing warmup period dates:", error);
+      const currentYear = new Date().getFullYear();
+      return [
+        new Date(currentYear, 2, 1),
+        new Date(currentYear, 2, 14)
+      ];
+    }
   };
 
   const getWarmupDays = (): number => {
@@ -170,18 +181,48 @@ const PoolDetails = () => {
     return getDaysBetween(startDate, endDate);
   };
 
+  const getPoolMaturityDate = (): Date => {
+    if (!pool || !pool.metadata || !pool.metadata.deactivationTimestamp) {
+      return new Date(2025, 11, 12, 12, 0, 0);
+    }
+    
+    try {
+      return parseISO(pool.metadata.deactivationTimestamp);
+    } catch (error) {
+      console.error("Error parsing deactivation date:", error);
+      return new Date(2025, 11, 12, 12, 0, 0);
+    }
+  };
+
+  const getPoolLockDate = (): Date => {
+    if (!pool || !pool.metadata || !pool.metadata.activationTimestamp) {
+      const currentYear = new Date().getFullYear();
+      return new Date(currentYear, 2, 15);
+    }
+    
+    try {
+      return parseISO(pool.metadata.activationTimestamp);
+    } catch (error) {
+      console.error("Error parsing activation date:", error);
+      const currentYear = new Date().getFullYear();
+      return new Date(currentYear, 2, 15);
+    }
+  };
+
   const getFormattedDateInfo = () => {
     if (!pool) return "";
     
     switch (pool.status) {
-      case 'active':
+      case 'active': {
         const maturityDate = getPoolMaturityDate();
         return `Funds locked until: \n${formatToLocalTime(maturityDate)}`;
-      case 'warm-up':
+      }
+      case 'warm-up': {
         const [startDate, endDate] = getWarmupPeriod();
         const lockDate = getPoolLockDate();
         const maturityDateForWarmup = getPoolMaturityDate();
         return `Warm-up: ${formatDateRange(startDate, endDate)}\nLocks: ${formatToLocalTime(lockDate, 'd MMM yyyy')}\nUnlocks: ${formatUnlockDate(maturityDateForWarmup)}`;
+      }
       case 'cooldown':
         return "Pool is in cooldown";
       case 'withdrawal':
@@ -374,15 +415,19 @@ const PoolDetails = () => {
                     
                     {pool.status === 'warm-up' && (
                       <div>
-                        <p className="text-xs sm:text-sm text-gray-500">Liquidity Lock</p>
-                        <p className="text-sm sm:text-lg font-semibold">04/22/2025</p>
+                        <p className="text-xs sm:text-sm text-gray-500">Lock Start Date</p>
+                        <p className="text-sm sm:text-lg font-semibold">
+                          {pool.metadata?.activationFormattedDate || 'N/A'}
+                        </p>
                       </div>
                     )}
                     
                     {pool.status === 'warm-up' && (
                       <div>
-                        <p className="text-xs sm:text-sm text-gray-500">Liquidity Unlock</p>
-                        <p className="text-sm sm:text-lg font-semibold">10/22/2025</p>
+                        <p className="text-xs sm:text-sm text-gray-500">Lock End Date</p>
+                        <p className="text-sm sm:text-lg font-semibold">
+                          {pool.metadata?.deactivationFormattedDate || 'N/A'}
+                        </p>
                       </div>
                     )}
                     
@@ -409,7 +454,7 @@ const PoolDetails = () => {
                           <PopoverContent className="max-w-sm p-3">
                             <div className="text-sm">
                               <p className="font-medium mb-1">Unlock on</p>
-                              <p>Friday, December 12th, 2025 at 12:00 PM</p>
+                              <p>{formatUnlockDate(getPoolMaturityDate())}</p>
                             </div>
                           </PopoverContent>
                         </Popover>
@@ -418,7 +463,7 @@ const PoolDetails = () => {
                     </div>
                   )}
 
-                  {pool.status !== 'active' && pool.status !== 'withdrawal' && (
+                  {pool.status === 'warm-up' && (
                     <div className="mt-4 sm:mt-6">
                       <div className="flex items-center justify-center">
                         <Unlock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
@@ -433,7 +478,7 @@ const PoolDetails = () => {
                             <PopoverContent className="max-w-sm p-3">
                               <div className="text-sm">
                                 <p className="font-medium mb-1">Pool Lock</p>
-                                <p>Friday, December 12th, 2025 at 12:00 PM</p>
+                                <p>{formatUnlockDate(getPoolMaturityDate())}</p>
                               </div>
                             </PopoverContent>
                           </Popover>

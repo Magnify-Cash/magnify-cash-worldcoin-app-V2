@@ -713,7 +713,7 @@ export const getPoolWarmupPeriod = async (
 ): Promise<PoolWarmupPeriodResponse> => {
   const response = await backendRequest<PoolWarmupPeriodResponse>(
     "GET",
-    "pool/warmup",
+    "v3/pool/warmup",
     { contract }
   );
 

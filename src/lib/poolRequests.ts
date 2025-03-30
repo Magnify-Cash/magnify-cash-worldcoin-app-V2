@@ -121,6 +121,13 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             deactivationTimestamp: deactivationResponse.timestamp,
             deactivationFormattedDate: deactivationResponse.formattedDate || 'N/A',
             symbol: symbolResponse.symbol || 'LP'
+          },
+          borrower_info: {
+            loanPeriodDays: 30,
+            interestRate: '8.5%',
+            loanAmount: '$10',
+            originationFee: '10%',
+            warmupPeriod: '14 days'
           }
         };
         
@@ -155,6 +162,13 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             deactivationTimestamp: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
             deactivationFormattedDate: 'N/A',
             symbol: 'LP'
+          },
+          borrower_info: {
+            loanPeriodDays: 30,
+            interestRate: '8.5%',
+            loanAmount: '$10',
+            originationFee: '10%',
+            warmupPeriod: '14 days'
           }
         };
       }

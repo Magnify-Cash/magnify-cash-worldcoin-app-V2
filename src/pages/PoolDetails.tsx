@@ -263,13 +263,33 @@ const PoolDetails = () => {
   const getPoolInfo = () => {
     if (!pool) return null;
     
+    const defaultBorrowerInfo = {
+      warmupPeriod: "14 days",
+      loanPeriodDays: 30,
+      borrowerLoanAmount: "$10",
+      borrowerLoanPeriod: "30 days",
+      borrowerInterest: "8.5%",
+      originationFee: "10%"
+    };
+    
+    if (!pool.borrower_info) {
+      return {
+        warmupPeriod: defaultBorrowerInfo.warmupPeriod,
+        lockDuration: pool.metadata?.lockDurationDays ? `${pool.metadata.lockDurationDays} days` : "180 days",
+        borrowerLoanAmount: defaultBorrowerInfo.borrowerLoanAmount,
+        borrowerLoanPeriod: defaultBorrowerInfo.borrowerLoanPeriod,
+        borrowerInterest: defaultBorrowerInfo.borrowerInterest,
+        originationFee: defaultBorrowerInfo.originationFee
+      };
+    }
+    
     return {
-      warmupPeriod: pool.borrower_info?.warmupPeriod || "14 days",
+      warmupPeriod: pool.borrower_info.warmupPeriod || defaultBorrowerInfo.warmupPeriod,
       lockDuration: pool.metadata?.lockDurationDays ? `${pool.metadata.lockDurationDays} days` : "180 days",
-      borrowerLoanAmount: pool.borrower_info?.loanAmount || "$10 - $30",
-      borrowerLoanPeriod: pool.borrower_info?.loanPeriodDays ? `${pool.borrower_info.loanPeriodDays} days` : "30 days",
-      borrowerInterest: pool.borrower_info?.interestRate || "8.5%",
-      originationFee: pool.borrower_info?.originationFee || "10%"
+      borrowerLoanAmount: pool.borrower_info.loanAmount || defaultBorrowerInfo.borrowerLoanAmount,
+      borrowerLoanPeriod: pool.borrower_info.loanPeriodDays ? `${pool.borrower_info.loanPeriodDays} days` : defaultBorrowerInfo.borrowerLoanPeriod,
+      borrowerInterest: pool.borrower_info.interestRate || defaultBorrowerInfo.borrowerInterest,
+      originationFee: pool.borrower_info.originationFee || defaultBorrowerInfo.originationFee
     };
   };
 

@@ -157,3 +157,16 @@ export interface SoulboundUserNFTResponse {
 }
 
 export type SoulboundPoolAddressesResponse = string[];
+
+export interface PoolLiquidityResponse {
+  liquidity: number;
+}
+
+export interface PoolNameResponse {
+  name: string;
+}
+
+export interface PoolDeactivationResponse {
+  timestamp: string;
+  formattedDate: string;
+}

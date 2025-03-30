@@ -30,6 +30,9 @@ import {
   SoulboundPoolAddressesResponse,
   SoulboundTokenURIResponse,
   SoulboundUserNFTResponse,
+  PoolLiquidityResponse,
+  PoolDeactivationResponse,
+  PoolNameResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -580,6 +583,67 @@ export const getSoulboundPoolAddresses = async (): Promise<SoulboundPoolAddresse
   if (!response.data || !Array.isArray(response.data)) {
     throw new Error(
       `Failed to fetch Soulbound pool addresses. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolLiquidity = async (
+  contract: string
+): Promise<PoolLiquidityResponse> => {
+  const response = await backendRequest<PoolLiquidityResponse>(
+    "GET",
+    "pool/liquidity",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.liquidity !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch pool liquidity. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolName = async (
+  contract: string
+): Promise<PoolNameResponse> => {
+  const response = await backendRequest<PoolNameResponse>(
+    "GET",
+    "pool/name",
+    { contract }
+  );
+
+  if (!response.data || typeof response.data.name !== "string") {
+    throw new Error(
+      `Failed to retrieve pool name. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolDeactivationDate = async (
+  contract: string
+): Promise<PoolDeactivationResponse> => {
+  const response = await backendRequest<PoolDeactivationResponse>(
+    "GET",
+    "pool/deactivation",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.timestamp !== "string" ||
+    typeof response.data.formattedDate !== "string"
+  ) {
+    throw new Error(
+      `Failed to fetch pool deactivation date. Status: ${response.status}, Message: ${response.message}`
     );
   }
 

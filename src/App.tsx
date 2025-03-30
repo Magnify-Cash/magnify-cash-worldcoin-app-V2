@@ -42,8 +42,8 @@ eruda.init();
 function App() {
   return (
     <MiniKitProvider>
-      <ModalProvider>
       <USDCBalanceProvider>
+      <ModalProvider>
       <Toaster />
       <Router>
       <ScrollToTop />
@@ -107,9 +107,9 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
-      </USDCBalanceProvider>
       <ModalManager />
       </ModalProvider>
+      </USDCBalanceProvider>
     </MiniKitProvider>
   );
 }

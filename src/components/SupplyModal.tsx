@@ -91,7 +91,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
 
   const calculateLPTokens = () => {
     if (isPreviewLoading) {
-      return "Loading...";
+      return "...";
     }
     
     if (previewLpAmount) {

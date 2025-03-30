@@ -619,9 +619,11 @@ const PoolDetails = () => {
           )}
 
           {isWithdrawModalOpen && (
-            <WithdrawModal 
-              isOpen={isWithdrawModalOpen} 
-              onClose={() => setIsWithdrawModalOpen(false)} 
+            <WithdrawModal
+              isOpen={isWithdrawModalOpen}
+              onClose={() => setIsWithdrawModalOpen(false)}
+              lpBalance={userPosition?.token_a_amount || 0}
+              lpValue={userPosition?.total_value_locked || 0}
             />
           )}
         </>

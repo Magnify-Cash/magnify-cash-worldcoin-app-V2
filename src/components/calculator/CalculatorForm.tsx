@@ -44,9 +44,9 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm">
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm border border-[#8B5CF6]/10">
       <div className="flex items-center gap-2 mb-6">
-        <Calculator className="w-5 h-5 text-primary" />
+        <Calculator className="w-5 h-5 text-[#8B5CF6]" />
         <h2 className="text-xl font-semibold">Pool Parameters</h2>
       </div>
 
@@ -61,7 +61,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               min="10"
               value={inputs.investmentAmount}
               onChange={handleInputChange}
-              className="mt-1"
+              className="mt-1 focus-visible:ring-[#8B5CF6]"
             />
           </div>
 
@@ -74,7 +74,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               min="100"
               value={inputs.poolSize}
               onChange={handleInputChange}
-              className="mt-1"
+              className="mt-1 focus-visible:ring-[#8B5CF6]"
             />
           </div>
 
@@ -97,7 +97,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                 max="100"
                 value={inputs.utilizationRate}
                 onChange={handleInputChange}
-                className="w-20"
+                className="w-20 focus-visible:ring-[#8B5CF6]"
               />
             </div>
             <p className="text-xs text-gray-500 mt-1">Percentage of pool capital being used for loans</p>
@@ -106,7 +106,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
 
         <div className="border-t border-gray-200 pt-4">
           <h3 className="text-md font-medium mb-4 flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-primary" />
+            <Sliders className="w-4 h-4 text-[#8B5CF6]" />
             Loan Terms
           </h3>
           <div className="space-y-4">
@@ -130,7 +130,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                   step="10"
                   value={inputs.loanAmount}
                   onChange={handleInputChange}
-                  className="w-20"
+                  className="w-20 focus-visible:ring-[#8B5CF6]"
                 />
               </div>
             </div>
@@ -154,7 +154,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                   max="30"
                   value={inputs.loanPeriod}
                   onChange={handleInputChange}
-                  className="w-20"
+                  className="w-20 focus-visible:ring-[#8B5CF6]"
                 />
               </div>
             </div>
@@ -179,7 +179,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                   step="0.1"
                   value={inputs.interestRate}
                   onChange={handleInputChange}
-                  className="w-20"
+                  className="w-20 focus-visible:ring-[#8B5CF6]"
                 />
               </div>
             </div>
@@ -204,7 +204,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                   step="0.1"
                   value={inputs.originationFee}
                   onChange={handleInputChange}
-                  className="w-20"
+                  className="w-20 focus-visible:ring-[#8B5CF6]"
                 />
               </div>
             </div>
@@ -232,14 +232,14 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                   step="0.1"
                   value={inputs.defaultRate}
                   onChange={handleInputChange}
-                  className="w-20"
+                  className="w-20 focus-visible:ring-[#8B5CF6]"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full bg-[#8B5CF6] hover:bg-[#8B5CF6]/90">
           Calculate Returns
         </Button>
       </div>

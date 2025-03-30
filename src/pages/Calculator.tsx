@@ -102,7 +102,7 @@ const Calculator = () => {
       
       <Container className="max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-[#8B5CF6] via-[#7E69AB] to-[#6E59A5] text-transparent bg-clip-text">
             Yield Calculator
           </h1>
           <p className="text-gray-600">

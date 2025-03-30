@@ -9,7 +9,7 @@ interface CalculatorResultsProps {
 export const CalculatorResults = ({ results }: CalculatorResultsProps) => {
   if (!results) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-sm text-center h-full flex flex-col justify-center">
+      <div className="bg-white p-6 rounded-lg shadow-sm text-center h-full flex flex-col justify-center border border-[#8B5CF6]/10">
         <h3 className="text-lg font-medium text-gray-500 mb-2">
           No Results Yet
         </h3>
@@ -67,9 +67,9 @@ export const CalculatorResults = ({ results }: CalculatorResultsProps) => {
   const apyColorClass = getReturnColorClass(apy);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm h-full">
+    <div className="bg-white p-6 rounded-lg shadow-sm h-full border border-[#8B5CF6]/10">
       <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <DollarSign className="w-5 h-5 text-primary" />
+        <DollarSign className="w-5 h-5 text-[#8B5CF6]" />
         Your Returns
       </h3>
 
@@ -99,7 +99,7 @@ export const CalculatorResults = ({ results }: CalculatorResultsProps) => {
         
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-blue-500" />
+            <Users className="w-4 h-4 text-[#8B5CF6]" />
             <span className="text-sm">Pool Share</span>
           </div>
           <span className="font-medium">{formatPercent(userShare)}</span>
@@ -141,9 +141,9 @@ export const CalculatorResults = ({ results }: CalculatorResultsProps) => {
           </div>
         </div>
 
-        <div className="mt-6 text-xs text-gray-500 bg-gray-50 p-3 rounded">
+        <div className="mt-6 text-xs text-gray-500 bg-gray-50 p-3 rounded border border-[#8B5CF6]/5">
           <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+            <Info className="w-4 h-4 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
             <p>
               These calculations are based on the current pool parameters. 
               Actual returns may vary based on repayment behavior and market conditions.

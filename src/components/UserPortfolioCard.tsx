@@ -117,7 +117,7 @@ export function UserPortfolioCard({
                 {(showSupplyButton || poolStatus === 'active') && (
                   <Button
                     onClick={onSupply}
-                    className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+                    className="flex-1 bg-[#8B5CF6] hover:bg-[#7c50e6] text-white"
                   >
                     Supply
                   </Button>
@@ -144,7 +144,7 @@ export function UserPortfolioCard({
             {!hideButtons && (showSupplyButton || poolStatus === 'active') && (
               <Button
                 onClick={onSupply}
-                className="mt-4 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+                className="mt-4 bg-[#8B5CF6] hover:bg-[#7c50e6] text-white"
               >
                 Supply Assets
               </Button>

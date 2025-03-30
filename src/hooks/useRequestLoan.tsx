@@ -8,6 +8,7 @@ import { worldchain } from "wagmi/chains";
 
 type LoanDetails = {
   amount: number;
+  fee: number;
   duration: number;
   transactionId: string;
 };
@@ -47,6 +48,21 @@ const useRequestLoan = () => {
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
+  // Helper function to get loan amount and fee based on tier ID
+  const getLoanAmountAndFee = (tierId: bigint): { amount: number; fee: number } => {
+    const id = Number(tierId);
+    switch (id) {
+      case 1:
+        return { amount: 10, fee: 1 };
+      case 2:
+        return { amount: 20, fee: 2 };
+      case 3:
+        return { amount: 30, fee: 3 };
+      default:
+        return { amount: 0, fee: 0 };
+    }
+  };
+
   const requestNewLoan = useCallback(async (requestedTierId: bigint) => {
     setError(null);
     setTransactionId(null);
@@ -83,9 +99,12 @@ const useRequestLoan = () => {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
         
+        const { amount, fee } = getLoanAmountAndFee(requestedTierId);
+        
         setLoanDetails({
-          amount: 1000, // Replace with actual logic if amount comes from transaction or another source
-          duration: 30, // Replace with actual logic for duration
+          amount,
+          fee,
+          duration: 30, // 30 days loan period
           transactionId: finalPayload.transaction_id,
         });
       } else {

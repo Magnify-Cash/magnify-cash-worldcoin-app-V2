@@ -17,6 +17,8 @@ interface MembershipTier {
   price: string;
   features: string[];
   description: string;
+  loanAmount: string;
+  fee: string;
   recommended?: boolean;
 }
 
@@ -25,22 +27,28 @@ const membershipTiers: MembershipTier[] = [
     id: "bronze",
     name: "Bronze",
     price: "0.05 ETH",
-    description: "Get started with basic membership benefits",
+    loanAmount: "$10",
+    fee: "$1",
+    description: "Basic membership with small loan access",
     features: [
-      "Access to standard loan pools",
+      "Access to $10 loans",
+      "$1 fixed fee",
+      "30-day loan period",
       "Basic customer support",
-      "Monthly newsletter",
     ],
   },
   {
     id: "silver",
     name: "Silver",
     price: "0.1 ETH",
-    description: "Unlock more benefits with our most popular tier",
+    loanAmount: "$20",
+    fee: "$2",
+    description: "Our most popular tier for medium-sized loans",
     features: [
-      "Priority access to loan pools",
-      "Reduced interest rates",
-      "Premium customer support",
+      "Access to $20 loans",
+      "$2 fixed fee",
+      "30-day loan period",
+      "Priority customer support",
       "Weekly market insights",
     ],
     recommended: true,
@@ -49,13 +57,15 @@ const membershipTiers: MembershipTier[] = [
     id: "gold",
     name: "Gold",
     price: "0.25 ETH",
-    description: "Our premium tier with exclusive benefits",
+    loanAmount: "$30",
+    fee: "$3",
+    description: "Premium tier with the largest loan amounts",
     features: [
-      "VIP access to loan pools",
-      "Lowest interest rates",
+      "Access to $30 loans",
+      "$3 fixed fee",
+      "30-day loan period",
       "24/7 dedicated support",
       "Exclusive investment opportunities",
-      "Quarterly strategy sessions",
     ],
   },
 ];
@@ -127,7 +137,7 @@ export default function Membership() {
         description: `You have successfully minted the ${tierId.toUpperCase()} membership NFT.`,
       });
       
-      // After successful minting, navigate to the membership dashboard
+      // After successful minting, navigate to the loan page
       setTimeout(() => {
         navigate("/loan");
       }, 2000);
@@ -164,12 +174,12 @@ export default function Membership() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg">
                     <Clock className="mr-2 h-5 w-5 text-primary" />
-                    Priority Access
+                    Fast Loans
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Get early access to new loan opportunities before they're available to the public.
+                    Get quick access to loans with simplified application process.
                   </p>
                 </CardContent>
               </Card>
@@ -178,12 +188,12 @@ export default function Membership() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg">
                     <Star className="mr-2 h-5 w-5 text-primary" />
-                    Reduced Rates
+                    Fixed Fees
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Enjoy lower interest rates and fees on all your loans.
+                    Enjoy transparent fixed fees based on your membership tier.
                   </p>
                 </CardContent>
               </Card>
@@ -192,12 +202,12 @@ export default function Membership() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg">
                     <Globe className="mr-2 h-5 w-5 text-primary" />
-                    Exclusive Features
+                    Global Access
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Access exclusive features and services only available to members.
+                    Access the platform from anywhere with your Worldcoin ID.
                   </p>
                 </CardContent>
               </Card>
@@ -244,6 +254,14 @@ export default function Membership() {
                       <CardDescription>{tier.price}</CardDescription>
                     </CardHeader>
                     <CardContent>
+                      <div className="flex justify-between mb-4">
+                        <span className="text-sm font-medium">Loan Amount:</span>
+                        <span className="text-sm font-bold">{tier.loanAmount}</span>
+                      </div>
+                      <div className="flex justify-between mb-4">
+                        <span className="text-sm font-medium">Fixed Fee:</span>
+                        <span className="text-sm font-bold">{tier.fee}</span>
+                      </div>
                       <p className="text-sm mb-4">{tier.description}</p>
                       <ul className="space-y-2">
                         {tier.features.map((feature, index) => (
@@ -329,4 +347,3 @@ export default function Membership() {
       </main>
     </div>
   );
-}

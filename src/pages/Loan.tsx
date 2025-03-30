@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { formatUnits } from "viem";
 import { Shield } from "lucide-react";
@@ -18,22 +19,37 @@ const Loan = () => {
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { data, isLoading, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
-  const { requestNewLoan, isConfirming, isConfirmed, transactionId } = useRequestLoan();
+  const { requestNewLoan, isConfirming, isConfirmed, transactionId, loanDetails } = useRequestLoan();
   const { usdcBalance, refreshBalance } = useUSDCBalance();
   
   const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = loanData?.isActive ?? false;
 
-    // Call refetch after loan is confirmed
-    useEffect(() => {
-      if (isConfirmed) {
-        const timeout = setTimeout(async () => {
-          await refetch();
-        }, 1000);
-  
-        return () => clearTimeout(timeout);
-      }
-    }, [isConfirmed, refetch]);
+  // Call refetch after loan is confirmed
+  useEffect(() => {
+    if (isConfirmed) {
+      const timeout = setTimeout(async () => {
+        await refetch();
+      }, 1000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isConfirmed, refetch]);
+
+  // Display loan amount and fee based on tier
+  const getLoanInfo = (tierId: bigint) => {
+    const id = Number(tierId);
+    switch (id) {
+      case 1:
+        return { amount: "$10", fee: "$1" };
+      case 2:
+        return { amount: "$20", fee: "$2" };
+      case 3:
+        return { amount: "$30", fee: "$3" };
+      default:
+        return { amount: "Unknown", fee: "Unknown" };
+    }
+  };
   
   // Handle loan application
   const handleApplyLoan = useCallback(
@@ -148,9 +164,12 @@ const Loan = () => {
                   <span>{data.allTiers[3].verificationStatus.description}</span>
                 </div>
                 <div className="flex flex-col items-start space-y-3 my-3">
-                  <p className="text-gray-600">Loan Amount: ${formatUnits(data.allTiers[3].loanAmount, 6)}</p>
+                  {/* Display converted loan amount based on tier ID */}
                   <p className="text-gray-600">
-                    Interest Rate: {((data.allTiers[3].interestRate || BigInt(0)) / BigInt(100)).toString()}%
+                    Loan Amount: {getLoanInfo(data.allTiers[3].tierId).amount}
+                  </p>
+                  <p className="text-gray-600">
+                    Fixed Fee: {getLoanInfo(data.allTiers[3].tierId).fee}
                   </p>
                   <p className="text-gray-600">
                     Duration: {((data.allTiers[3].loanPeriod || BigInt(0)) / BigInt(60 * 24 * 60)).toString()} days

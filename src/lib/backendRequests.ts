@@ -276,7 +276,7 @@ export const getPoolUSDCBalance = async (
 ): Promise<PoolBalanceUSDCResponse> => {
   const response = await backendRequest<PoolBalanceUSDCResponse>(
     "GET",
-    "pool/balance/usdc",
+    "v3/pool/balance/usdc",
     { contract }
   );
 
@@ -297,7 +297,7 @@ export const getPoolTreasuryFee = async (
 ): Promise<PoolTreasuryFeeResponse> => {
   const response = await backendRequest<PoolTreasuryFeeResponse>(
     "GET",
-    "pool/fee/treasury",
+    "v3/pool/fee/treasury",
     { contract }
   );
 
@@ -315,7 +315,7 @@ export const getPoolLPBalance = async (
 ): Promise<PoolLPBalanceResponse> => {
   const response = await backendRequest<PoolLPBalanceResponse>(
     "GET",
-    "pool/balance/lp",
+    "v3/pool/balance/lp",
     { contract }
   );
 
@@ -333,7 +333,7 @@ export const getPoolActivationDate = async (
 ): Promise<PoolActivationResponse> => {
   const response = await backendRequest<PoolActivationResponse>(
     "GET",
-    "pool/activation",
+    "v3/pool/activation",
     { contract }
   );
 
@@ -355,7 +355,7 @@ export const getPoolLPSymbol = async (
 ): Promise<PoolSymbolResponse> => {
   const response = await backendRequest<PoolSymbolResponse>(
     "GET",
-    "pool/symbol",
+    "v3/pool/symbol",
     { contract }
   );
 
@@ -373,7 +373,7 @@ export const getPoolTier = async (
 ): Promise<PoolTierResponse> => {
   const response = await backendRequest<PoolTierResponse>(
     "GET",
-    "pool/tier",
+    "v3/pool/tier",
     { contract }
   );
 
@@ -391,7 +391,7 @@ export const getPoolLoanDuration = async (
 ): Promise<PoolLoanDurationResponse> => {
   const response = await backendRequest<{ loanDuration: string }>(
     "GET",
-    "pool/loan/duration",
+    "v3/pool/loan/duration",
     { contract }
   );
 
@@ -416,7 +416,7 @@ export const getPoolLoanInterestRate = async (
 ): Promise<PoolLoanInterestResponse> => {
   const response = await backendRequest<PoolLoanInterestResponse>(
     "GET",
-    "pool/loan/interest",
+    "v3/pool/loan/interest",
     { contract }
   );
 
@@ -434,7 +434,7 @@ export const getPoolStatus = async (
 ): Promise<PoolStatusResponse> => {
   const response = await backendRequest<PoolStatusResponse>(
     "GET",
-    "pool/status",
+    "v3/pool/status",
     { contract }
   );
 
@@ -594,7 +594,7 @@ export const getPoolLiquidity = async (
 ): Promise<PoolLiquidityResponse> => {
   const response = await backendRequest<PoolLiquidityResponse>(
     "GET",
-    "pool/liquidity",
+    "v3/pool/liquidity",
     { contract }
   );
 
@@ -615,7 +615,7 @@ export const getPoolName = async (
 ): Promise<PoolNameResponse> => {
   const response = await backendRequest<PoolNameResponse>(
     "GET",
-    "pool/name",
+    "v3/pool/name",
     { contract }
   );
 
@@ -633,7 +633,7 @@ export const getPoolDeactivationDate = async (
 ): Promise<PoolDeactivationResponse> => {
   const response = await backendRequest<PoolDeactivationResponse>(
     "GET",
-    "pool/deactivation",
+    "v3/pool/deactivation",
     { contract }
   );
 

@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { format, parseISO } from "date-fns";
 
 interface PoolCardProps {
   id: number;
@@ -66,25 +67,55 @@ export function PoolCard({
     }
   };
 
-  const getLockPeriodDate = () => {
-    if (status === 'warm-up' && startDate) {
-      return startDate;
-    } else if (endDate) {
-      return endDate;
+  const formatDate = (dateStr?: string): string => {
+    if (!dateStr) {
+      // Fallback to old logic if no date provided
+      const today = new Date();
+      if (status === 'warm-up') {
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() + 15);
+        return format(startDate, 'MMM d, yyyy');
+      } else {
+        let daysToAdd = lockDuration || 180;
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + daysToAdd);
+        return format(endDate, 'MMM d, yyyy');
+      }
     }
     
-    // Fallback to the old mock data logic
-    const today = new Date();
-    if (status === 'warm-up') {
-      const startDate = new Date(today);
-      startDate.setDate(today.getDate() + 15);
-      return startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } else {
-      let daysToAdd = lockDuration || 180;
-      const endDate = new Date(today);
-      endDate.setDate(today.getDate() + daysToAdd);
-      return endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    try {
+      // Try to parse the date string - handle both ISO format and already formatted dates
+      if (dateStr.includes('T') || dateStr.includes('-')) {
+        // Likely an ISO format date
+        return format(parseISO(dateStr), 'MMM d, yyyy');
+      } else {
+        // Already a formatted date, but not in our desired format
+        // Try to parse it assuming it's in month/day/year format
+        const dateParts = dateStr.split(/[\/,-\s]/);
+        if (dateParts.length >= 3) {
+          const date = new Date(dateStr);
+          if (!isNaN(date.getTime())) {
+            return format(date, 'MMM d, yyyy');
+          }
+        }
+        // If we can't parse it, just return the original string
+        return dateStr;
+      }
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return dateStr; // Return the original string if formatting fails
     }
+  };
+
+  const getLockPeriodDate = () => {
+    if (status === 'warm-up' && startDate) {
+      return formatDate(startDate);
+    } else if (endDate) {
+      return formatDate(endDate);
+    }
+    
+    // Fallback to the old mock data logic with the new format
+    return formatDate();
   };
 
   const getLockPeriodLabel = () => {

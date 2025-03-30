@@ -71,14 +71,6 @@ const Lending = () => {
     return () => clearInterval(refreshInterval);
   }, [fetchPools]);
 
-  const handleRefresh = () => {
-    fetchPools(true);
-    toast({
-      title: "Refreshing pool data",
-      description: "Fetching the latest pool information...",
-    });
-  };
-
   const handleCalculatorClick = () => {
     navigate("/calculator");
   };
@@ -104,15 +96,6 @@ const Lending = () => {
             <h2 className="text-lg sm:text-xl font-medium text-gray-800 text-center">
               Explore Our Lending Pools
             </h2>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              className="text-xs"
-              disabled={loading}
-            >
-              Refresh
-            </Button>
           </div>
           <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto text-center mb-5">
             Select from a variety of lending pools designed to match different risk preferences and lock periods. Each pool features unique APY returns and terms.

@@ -2,22 +2,22 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { CheckCircle, Clock, Globe, Star } from "lucide-react";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-// Define the membership tier structure
 interface MembershipTier {
   id: string;
   name: string;
   price: string;
-  features: string[];
-  description: string;
   loanAmount: string;
   fee: string;
+  description: string;
+  features: string[];
   recommended?: boolean;
 }
 
@@ -71,54 +71,51 @@ const membershipTiers: MembershipTier[] = [
 
 export default function Membership() {
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
-  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [minting, setMinting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if wallet is already connected
     const storedWalletAddress = localStorage.getItem("ls_wallet_address");
     if (storedWalletAddress) {
-      setWalletConnected(true);
+      setIsConnected(true);
       setWalletAddress(storedWalletAddress);
     }
   }, []);
 
   const handleConnectWallet = async () => {
     try {
-      // Using the correct method from MiniKit API - connectWallet instead of idWallet
-      const result = await MiniKit.commandsAsync.connectWallet({
+      const result = await MiniKit.commandsAsync.walletAuthenticate({
         clientId: WORLDCOIN_CLIENT_ID ?? "",
       });
       
-      if (result.commandPayload && result.finalPayload.status === "success") {
-        setWalletConnected(true);
-        // The nullish coalescing operator ensures we never set an empty string that would fail the type check
-        const address = result.finalPayload.walletAddress || "0x0000000000000000000000000000000000000000";
-        setWalletAddress(address);
-        localStorage.setItem("ls_wallet_address", address);
-        localStorage.setItem("ls_username", result.finalPayload.username || "User");
-        
+      if (result.status === "success") {
+        setIsConnected(true);
+        setWalletAddress(result.walletAddress);
+        localStorage.setItem("ls_wallet_address", result.walletAddress);
+        localStorage.setItem("ls_worldcoin_address", result.walletAddress);
+        localStorage.setItem("ls_username", result.name || "Anonymous");
         toast({
-          title: "Wallet Connected",
-          description: "Your wallet has been successfully connected.",
+          title: "Connected!",
+          description: `Connected to ${result.walletAddress.slice(0, 8)}...`,
         });
+        navigate("/profile");
       } else {
-        console.error("Connection error:", result);
+        console.error("Wallet connection error:", result);
         toast({
-          title: "Connection Failed",
-          description: "Failed to connect wallet. Please try again.",
           variant: "destructive",
+          title: "Connection Failed",
+          description: "Unable to connect your wallet. Please try again.",
         });
       }
     } catch (error) {
-      console.error("Error connecting wallet:", error);
+      console.error("Wallet connection error:", error);
       toast({
-        title: "Connection Error",
-        description: "An error occurred while connecting your wallet.",
         variant: "destructive",
+        title: "Connection Error",
+        description: "An error occurred while connecting to your wallet.",
       });
     }
   };
@@ -127,7 +124,6 @@ export default function Membership() {
     setMinting(true);
     
     try {
-      // Simulate minting process with a timeout
       await new Promise((resolve) => setTimeout(resolve, 2000));
       
       toast({
@@ -135,7 +131,6 @@ export default function Membership() {
         description: `You have successfully minted the ${tierId.toUpperCase()} membership NFT.`,
       });
       
-      // After successful minting, navigate to the loan page
       setTimeout(() => {
         navigate("/loan");
       }, 2000);

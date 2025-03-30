@@ -41,11 +41,12 @@ const useRepayLoan = () => {
     transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
   });
 
-  // Fix the useWaitForTransactionReceipt hook usage
+  // Fix the useWaitForTransactionReceipt hook usage by properly casting the transaction hash
+  const txHash = transactionId ? transactionId as `0x${string}` : undefined;
+  
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      hash: transactionId as `0x${string}` | undefined,
-      // Remove the client and appConfig properties as they cause the infinite type issue
+      hash: txHash,
     });
 
   // Sync `isConfirming` and `isConfirmed`

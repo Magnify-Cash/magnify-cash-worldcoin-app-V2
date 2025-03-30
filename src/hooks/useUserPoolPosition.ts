@@ -55,7 +55,7 @@ export const useUserPoolPosition = (poolContractAddress: string | undefined): Us
         let currentValue = 0;
         if (balance > 0) {
           const redeemPreview = await previewRedeem(balance, poolContractAddress);
-          currentValue = parseFloat(redeemPreview.usdcAmount);
+          currentValue = redeemPreview.usdcAmount;
         }
 
         // Calculate yield metrics

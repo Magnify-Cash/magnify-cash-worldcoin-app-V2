@@ -44,19 +44,19 @@ export interface RequestParams {
 export type HttpMethod = "GET" | "POST";
 
 export interface PreviewMintResponse {
-  lpAmount: string;
+  lpAmount: number;
 }
 
 export interface PreviewDepositResponse {
-  lpAmount: string;
+  lpAmount: number;
 }
 
 export interface PreviewRedeemResponse {
-  usdcAmount: string;
+  usdcAmount: number;
 }
 
 export interface PreviewWithdrawResponse {
-  lpAmount: string;
+  lpAmount: number;
 }
 
 export interface ActiveLoanData {

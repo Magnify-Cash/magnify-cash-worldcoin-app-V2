@@ -150,7 +150,7 @@ export const previewMint = async (
     { shares, contract }
   );
 
-  if (!response.data || typeof response.data.lpAmount !== "string") {
+  if (!response.data || typeof response.data.lpAmount !== "number") {
     throw new Error(
       `Failed to preview mint. Status: ${response.status}, Message: ${response.message}`
     );
@@ -169,7 +169,7 @@ export const previewDeposit = async (
     { assets, contract }
   );
 
-  if (!response.data || typeof response.data.lpAmount !== "string") {
+  if (!response.data || typeof response.data.lpAmount !== "number") {
     throw new Error(
       `Failed to preview deposit. Status: ${response.status}, Message: ${response.message}`
     );
@@ -188,7 +188,7 @@ export const previewRedeem = async (
     { shares, contract }
   );
 
-  if (!response.data || typeof response.data.usdcAmount !== "string") {
+  if (!response.data || typeof response.data.usdcAmount !== "number") {
     throw new Error(
       `Failed to preview redeem. Status: ${response.status}, Message: ${response.message}`
     );
@@ -208,7 +208,7 @@ export const previewWithdraw = async (
     { assets, contract }
   );
 
-  if (!response.data || typeof response.data.lpAmount !== "string") {
+  if (!response.data || typeof response.data.lpAmount !== "number") {
     throw new Error(
       `Failed to preview withdraw. Status: ${response.status}, Message: ${response.message}`
     );

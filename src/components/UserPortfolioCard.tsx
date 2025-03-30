@@ -17,8 +17,6 @@ interface UserPortfolioCardProps {
   hideButtons?: boolean;
   showSupplyButton?: boolean;
   showWithdrawButton?: boolean;
-  onToggleDummyData?: () => void;
-  showToggle?: boolean;
   poolStatus?: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
   symbol?: string;
 }
@@ -36,8 +34,6 @@ export function UserPortfolioCard({
   hideButtons = false,
   showSupplyButton = true,
   showWithdrawButton = true,
-  onToggleDummyData,
-  showToggle = false,
   poolStatus,
   symbol = "LP"
 }: UserPortfolioCardProps) {
@@ -153,19 +149,6 @@ export function UserPortfolioCard({
                 Supply Assets
               </Button>
             )}
-          </div>
-        )}
-        
-        {showToggle && onToggleDummyData && (
-          <div className="flex justify-center pt-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onToggleDummyData} 
-              className="text-xs text-gray-500"
-            >
-              Toggle Demo Data
-            </Button>
           </div>
         )}
       </CardContent>

@@ -24,6 +24,13 @@ export interface LiquidityPool {
     deactivationFormattedDate?: string;
     symbol?: string;
   };
+  borrower_info?: {
+    loanPeriodDays?: number;
+    interestRate?: string;
+    loanAmount?: string;
+    originationFee?: string;
+    warmupPeriod?: string;
+  };
 }
 
 export interface UserPoolPosition {

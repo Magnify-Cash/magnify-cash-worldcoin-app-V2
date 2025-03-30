@@ -7,7 +7,9 @@ import {
   getPoolActivationDate, 
   getPoolLPSymbol,
   getPoolUSDCBalance,
-  getPoolLiquidity
+  getPoolLiquidity,
+  getPoolLoanDuration,
+  getPoolLoanInterestRate
 } from "@/lib/backendRequests";
 import { LiquidityPool, UserPoolPosition } from "@/types/supabase/liquidity";
 import { format, differenceInDays, parseISO } from "date-fns";
@@ -205,6 +207,48 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
     // If not in cache, get all pools and find by id
     const pools = await getPools();
     const pool = pools.find(pool => pool.id === id) || null;
+    
+    // If pool found, fetch additional borrower information
+    if (pool && pool.contract_address) {
+      try {
+        // Fetch loan period - with retry mechanism
+        const loanDuration = await retry(
+          () => getPoolLoanDuration(pool.contract_address!),
+          3,
+          1000,
+          (error, retriesLeft) => console.warn(`Error fetching loan duration, retries left: ${retriesLeft}`, error)
+        );
+        
+        // Fetch interest rate - with retry mechanism
+        const interestRate = await retry(
+          () => getPoolLoanInterestRate(pool.contract_address!),
+          3,
+          1000,
+          (error, retriesLeft) => console.warn(`Error fetching interest rate, retries left: ${retriesLeft}`, error)
+        );
+        
+        // Add borrower info to pool object
+        pool.borrower_info = {
+          loanPeriodDays: Math.ceil(loanDuration.days),
+          interestRate: interestRate.interestRate ? 
+            (parseFloat(interestRate.interestRate) / 100).toFixed(1) + '%' : 
+            '8.5%', // Fallback value
+          loanAmount: '$10 - $30', // Placeholder as specified
+          originationFee: '10%', // Placeholder as specified
+          warmupPeriod: '14 days' // Placeholder as specified
+        };
+      } catch (error) {
+        console.error('Error fetching borrower information:', error);
+        // Provide fallback values if fetching fails
+        pool.borrower_info = {
+          loanPeriodDays: 30,
+          interestRate: '8.5%',
+          loanAmount: '$10 - $30',
+          originationFee: '10%',
+          warmupPeriod: '14 days'
+        };
+      }
+    }
     
     // Cache this pool if found
     if (pool) {

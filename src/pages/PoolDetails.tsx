@@ -260,6 +260,22 @@ const PoolDetails = () => {
     return pool.token_b;
   };
 
+  const getPoolInfo = () => {
+    if (!pool) return null;
+    
+    return {
+      warmupPeriod: pool.borrower_info?.warmupPeriod || "14 days",
+      lockDuration: pool.metadata?.lockDurationDays ? `${pool.metadata.lockDurationDays} days` : "180 days",
+      borrowerLoanAmount: pool.borrower_info?.loanAmount || "$10 - $30",
+      borrowerLoanPeriod: pool.borrower_info?.loanPeriodDays ? `${pool.borrower_info.loanPeriodDays} days` : "30 days",
+      borrowerInterest: pool.borrower_info?.interestRate || "8.5%",
+      originationFee: pool.borrower_info?.originationFee || "10%"
+    };
+  };
+
+  const poolInfo = getPoolInfo();
+  const poolSymbol = getPoolSymbol();
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -279,52 +295,6 @@ const PoolDetails = () => {
 
   const shouldShowSupplyButton = pool?.status !== 'active' && pool?.status !== 'withdrawal';
   const shouldShowWithdrawButton = pool?.status !== 'active';
-
-  const getPoolInfo = () => {
-    if (!pool) return null;
-    
-    switch (poolId) {
-      case 1:
-        return {
-          warmupPeriod: "14 days",
-          lockDuration: "180 days",
-          borrowerLoanAmount: "$10 - $30",
-          borrowerLoanPeriod: "30 days",
-          borrowerInterest: "8.5%",
-          originationFee: "10%"
-        };
-      case 2:
-        return {
-          warmupPeriod: "30 days",
-          lockDuration: "365 days",
-          borrowerLoanAmount: "$10 - $30",
-          borrowerLoanPeriod: "60 days",
-          borrowerInterest: "6.2%",
-          originationFee: "10%"
-        };
-      case 3:
-        return {
-          warmupPeriod: "7 days",
-          lockDuration: "90 days",
-          borrowerLoanAmount: "$10 - $30",
-          borrowerLoanPeriod: "15 days",
-          borrowerInterest: "4.8%",
-          originationFee: "10%"
-        };
-      default:
-        return {
-          warmupPeriod: "14 days",
-          lockDuration: "180 days",
-          borrowerLoanAmount: "$10 - $30",
-          borrowerLoanPeriod: "30 days",
-          borrowerInterest: "6.5%",
-          originationFee: "10%"
-        };
-    }
-  };
-
-  const poolInfo = getPoolInfo();
-  const poolSymbol = getPoolSymbol();
 
   return (
     <div className="min-h-screen bg-white pb-20">

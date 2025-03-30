@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { getPools, invalidatePoolsCache } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { useNavigate } from "react-router-dom";
+import { LoadingState } from "@/components/portfolio/LoadingState";
 
 const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): number => {
   switch (status) {
@@ -88,7 +89,9 @@ const Lending = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
           {loading ? (
-            <div className="py-8 text-center text-gray-500 col-span-full">Loading pools...</div>
+            <div className="col-span-full">
+              <LoadingState />
+            </div>
           ) : fetchError ? (
             <div className="py-8 text-center text-gray-500 col-span-full">{fetchError}</div>
           ) : pools.length > 0 ? (

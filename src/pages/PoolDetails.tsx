@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -37,6 +38,7 @@ import {
 } from "@/utils/dateUtils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PoolPriceGraph } from "@/components/PoolPriceGraph";
+import { LoadingState } from "@/components/portfolio/LoadingState";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -353,9 +355,7 @@ const PoolDetails = () => {
       <div className="min-h-screen bg-white">
         <Header title="Pool Details" />
         <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
-          <div className="py-20 text-center">
-            <div className="animate-pulse">Loading pool data...</div>
-          </div>
+          <LoadingState />
         </main>
       </div>
     );

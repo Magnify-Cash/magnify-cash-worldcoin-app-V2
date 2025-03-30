@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -22,8 +21,8 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getPoolById, getUserPoolPosition } from "@/lib/poolRequests";
-import { LiquidityPool, UserPoolPosition } from "@/types/supabase/liquidity";
+import { getPoolById } from "@/lib/poolRequests";
+import { LiquidityPool } from "@/types/supabase/liquidity";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { SupplyModal } from "@/components/SupplyModal";
@@ -39,6 +38,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PoolPriceGraph } from "@/components/PoolPriceGraph";
 import { LoadingState } from "@/components/portfolio/LoadingState";
+import { useUserPoolPosition } from "@/hooks/useUserPoolPosition";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -47,13 +47,13 @@ const PoolDetails = () => {
   
   const [loading, setLoading] = useState(true);
   const [pool, setPool] = useState<LiquidityPool | null>(null);
-  const [userPosition, setUserPosition] = useState<UserPoolPosition | null>(null);
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [hasDummyData, setHasDummyData] = useState(false);
   const [isSupplyModalOpen, setIsSupplyModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const poolId = id ? parseInt(id) : 0;
+
+  const userPosition = useUserPoolPosition(pool?.contract_address);
 
   useEffect(() => {
     const fetchPoolData = async () => {
@@ -77,12 +77,6 @@ const PoolDetails = () => {
         }
         
         setPool(poolData);
-        
-        const position = await getUserPoolPosition(poolId);
-        if (position) {
-          setUserPosition(position);
-          setHasDummyData(true);
-        }
       } catch (error) {
         console.error("Error fetching pool data:", error);
         toast({
@@ -279,37 +273,9 @@ const PoolDetails = () => {
     setIsWithdrawModalOpen(true);
   };
 
-  const toggleDummyData = () => {
-    if (hasDummyData) {
-      setUserPosition(null);
-      setHasDummyData(false);
-      toast({
-        title: "Dummy data removed",
-        description: "User position has been cleared.",
-      });
-    } else {
-      const dummyPosition: UserPoolPosition = {
-        id: 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        user_id: "user123",
-        pool_id: poolId,
-        token_a_amount: 1200,
-        token_b_amount: 1200,
-        total_value_locked: 1250.75
-      };
-      setUserPosition(dummyPosition);
-      setHasDummyData(true);
-      toast({
-        title: "Dummy data added",
-        description: "User position has been simulated.",
-      });
-    }
-  };
-
   const getPoolSymbol = () => {
     if (!pool) return "LP";
-    return pool.token_b;
+    return pool.metadata?.symbol || "MAG";
   };
 
   const getPoolInfo = () => {
@@ -360,10 +326,6 @@ const PoolDetails = () => {
       </div>
     );
   }
-
-  const depositedValue = userPosition?.token_a_amount || 0;
-  const currentValue = userPosition?.total_value_locked || 0;
-  const earnings = currentValue - depositedValue;
 
   const shouldShowSupplyButton = pool?.status !== 'withdrawal';
   const shouldShowWithdrawButton = pool?.status !== 'active';
@@ -526,17 +488,17 @@ const PoolDetails = () => {
               <PoolPriceGraph poolId={pool.id} symbol={poolSymbol} />
 
               <UserPortfolioCard
-                balance={userPosition?.token_b_amount || 0}
-                depositedValue={depositedValue}
-                currentValue={currentValue}
-                earnings={earnings}
+                balance={userPosition.balance}
+                depositedValue={userPosition.depositedValue}
+                currentValue={userPosition.currentValue}
+                earnings={userPosition.yield}
+                percentageChange={userPosition.yieldPercentage}
+                isLoading={userPosition.loading}
                 onSupply={handleSupply}
                 onWithdraw={handleWithdraw}
                 hideButtons={false}
                 showSupplyButton={shouldShowSupplyButton}
                 showWithdrawButton={shouldShowWithdrawButton}
-                onToggleDummyData={toggleDummyData}
-                showToggle={true}
                 poolStatus={pool.status}
                 symbol={poolSymbol}
               />
@@ -622,8 +584,8 @@ const PoolDetails = () => {
             <WithdrawModal
               isOpen={isWithdrawModalOpen}
               onClose={() => setIsWithdrawModalOpen(false)}
-              lpBalance={userPosition?.token_a_amount || 0}
-              lpValue={userPosition?.total_value_locked || 0}
+              lpBalance={userPosition.balance}
+              lpValue={userPosition.currentValue}
             />
           )}
         </>

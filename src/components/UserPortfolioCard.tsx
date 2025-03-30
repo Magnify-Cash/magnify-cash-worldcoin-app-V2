@@ -2,13 +2,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Wallet } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 
 interface UserPortfolioCardProps {
   balance: number;
   depositedValue: number;
   currentValue: number;
   earnings: number;
+  percentageChange?: number;
+  isLoading?: boolean;
   onSupply?: () => void;
   onWithdraw?: () => void;
   useCustomGradient?: boolean;
@@ -26,6 +28,8 @@ export function UserPortfolioCard({
   depositedValue,
   currentValue,
   earnings,
+  percentageChange,
+  isLoading = false,
   onSupply,
   onWithdraw,
   useCustomGradient = false,
@@ -39,9 +43,12 @@ export function UserPortfolioCard({
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
 
-  // Calculate percentage growth/loss
-  const percentageChange = depositedValue > 0 ? (earnings / depositedValue * 100) : 0;
-  const isPositive = percentageChange >= 0;
+  // Calculate percentage change if not provided
+  const calculatedPercentage = percentageChange !== undefined ? 
+    percentageChange : 
+    (depositedValue > 0 ? (earnings / depositedValue * 100) : 0);
+  
+  const isPositive = calculatedPercentage >= 0;
 
   // Determine the appropriate message for empty balance
   const getEmptyBalanceMessage = () => {
@@ -50,6 +57,25 @@ export function UserPortfolioCard({
     }
     return "You haven't supplied any assets yet";
   };
+
+  if (isLoading) {
+    return (
+      <Card className="border border-[#8B5CF6]/20 shadow-sm overflow-hidden">
+        <CardHeader className="py-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
+          <CardTitle className="text-xl flex items-center gap-2 justify-center">
+            <Wallet className="h-5 w-5 text-[#8B5CF6]" />
+            Your Position
+          </CardTitle>
+        </CardHeader>
+        <CardContent className={`${isMobile ? "px-4 py-4" : "p-6"} flex justify-center items-center min-h-[200px]`}>
+          <div className="flex flex-col items-center">
+            <Loader2 className="h-8 w-8 text-[#8B5CF6] animate-spin mb-2" />
+            <p className="text-sm text-gray-500">Loading your position...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border border-[#8B5CF6]/20 shadow-sm overflow-hidden">
@@ -78,9 +104,14 @@ export function UserPortfolioCard({
                 <span className="font-medium">${currentValue.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Earnings</span>
-                <span className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {isPositive ? '+' : ''}{earnings.toFixed(2)} ({isPositive ? '+' : ''}{percentageChange.toFixed(2)}%)
+                <span className="text-sm text-gray-500">Yield</span>
+                <span className={`font-medium flex items-center ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  {isPositive ? (
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 mr-1" />
+                  )}
+                  {isPositive ? '+' : ''}{earnings.toFixed(2)} ({isPositive ? '+' : ''}{calculatedPercentage.toFixed(2)}%)
                 </span>
               </div>
             </div>
@@ -133,7 +164,7 @@ export function UserPortfolioCard({
               onClick={onToggleDummyData} 
               className="text-xs text-gray-500"
             >
-              {balance > 0 ? "Remove Demo Data" : "Add Demo Data"}
+              Toggle Demo Data
             </Button>
           </div>
         )}

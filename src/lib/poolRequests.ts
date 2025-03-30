@@ -11,7 +11,8 @@ import {
   getPoolLoanInterestRate,
   getWarmupPeriod,
   getPoolLoanAmount,
-  getPoolOriginationFee
+  getPoolOriginationFee,
+  getPoolWarmupPeriod
 } from "@/lib/backendRequests";
 import { LiquidityPool, UserPoolPosition } from "@/types/supabase/liquidity";
 import { format, differenceInDays, parseISO } from "date-fns";
@@ -63,7 +64,8 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           activationResponse,
           symbolResponse,
           liquidityResponse,
-          balanceResponse
+          balanceResponse,
+          warmupPeriodResponse
         ] = await Promise.all([
           retry(() => getPoolName(contract), 3),
           retry(() => getPoolStatus(contract), 3, 1000, () => ({ status: 'isActive' })), // Default to active on failure
@@ -77,7 +79,8 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           })),
           retry(() => getPoolLPSymbol(contract), 3, 1000, () => ({ symbol: 'LP' })),
           retry(() => getPoolLiquidity(contract), 3, 1000, () => ({ liquidity: 0 })),
-          retry(() => getPoolUSDCBalance(contract), 3, 1000, () => ({ totalAssets: 0 }))
+          retry(() => getPoolUSDCBalance(contract), 3, 1000, () => ({ totalAssets: 0 })),
+          retry(() => getPoolWarmupPeriod(contract), 3, 1000, () => ({ warmupPeriodDays: 14 }))
         ]);
         
         // Parse dates for calculating lock duration
@@ -106,6 +109,19 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           console.error('Error calculating lock duration:', error);
         }
         
+        // Calculate warmup start time based on the activation date and warmup period
+        const warmupPeriodDays = warmupPeriodResponse.warmupPeriodDays || 14; // Default to 14 days if API fails
+        
+        // Get activation timestamp in milliseconds
+        const activationTimestamp = activationResponse.timestamp ? 
+          parseInt(activationResponse.timestamp) * 1000 : Date.now();
+          
+        // Calculate warmup start by subtracting warmup period from activation date
+        const activationDate = new Date(activationTimestamp);
+        const warmupStartDate = new Date(activationDate);
+        warmupStartDate.setDate(activationDate.getDate() - warmupPeriodDays);
+        const warmupStartFormattedDate = format(warmupStartDate, 'MMM d, yyyy');
+        
         // Map API status to UI status
         const statusMap: Record<string, 'warm-up' | 'active' | 'cooldown' | 'withdrawal'> = {
           isWarmup: 'warm-up',
@@ -113,12 +129,6 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           isCooldown: 'cooldown',
           isExpired: 'withdrawal'
         };
-
-        // Calculate warmup start time (for now using hardcoded timestamp)
-        // This will be replaced by a backend call when available
-        // Convert the timestamp to milliseconds (from seconds)
-        const hardcodedWarmupStart = new Date(1743324320 * 1000); // Convert unix timestamp to Date
-        const warmupStartFormattedDate = format(hardcodedWarmupStart, 'MMM d, yyyy');
         
         const pool: LiquidityPool = {
           id: index + 1, // Use index + 1 as ID for now
@@ -139,7 +149,7 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             description: `${nameResponse.name || 'Lending'} pool`,
             minDeposit: 10,
             maxDeposit: 30000,
-            lockDurationDays,
+            lockDurationDays: pool?.metadata?.lockDurationDays || 180,
             // Store the raw timestamp for later use, also add a timestamp in milliseconds
             activationTimestamp: activationResponse.timestamp || '',
             activationTimestampMs: activationResponse.timestamp ? 
@@ -149,8 +159,8 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             deactivationTimestampMs: deactivationResponse.timestamp ? 
               (parseInt(deactivationResponse.timestamp) * 1000).toString() : '',
             deactivationFormattedDate: deactivationResponse.formattedDate || 'N/A',
-            warmupStartTimestamp: (hardcodedWarmupStart.getTime() / 1000).toString(), // Store as seconds
-            warmupStartTimestampMs: hardcodedWarmupStart.getTime().toString(), // Store as milliseconds
+            warmupStartTimestamp: (warmupStartDate.getTime() / 1000).toString(), // Store as seconds
+            warmupStartTimestampMs: warmupStartDate.getTime().toString(), // Store as milliseconds
             warmupStartFormattedDate: warmupStartFormattedDate,
             symbol: symbolResponse.symbol || 'LP'
           },
@@ -159,7 +169,7 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             interestRate: '8.5%',
             loanAmount: '$10',
             originationFee: '10%',
-            warmupPeriod: '14 days'
+            warmupPeriod: `${warmupPeriodDays} days`
           }
         };
         
@@ -277,7 +287,7 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
         try {
           console.log(`Fetching detailed borrower info for pool ID ${id}...`);
           
-          // Fetch loan period - with retry mechanism
+          // Fetch loan related data with retry mechanism
           const loanDuration = await retry(
             () => getPoolLoanDuration(pool.contract_address!),
             3,
@@ -285,7 +295,6 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
             (error, retriesLeft) => console.warn(`Error fetching loan duration, retries left: ${retriesLeft}`, error)
           );
           
-          // Fetch interest rate - with retry mechanism
           const interestRate = await retry(
             () => getPoolLoanInterestRate(pool.contract_address!),
             3,
@@ -293,7 +302,6 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
             (error, retriesLeft) => console.warn(`Error fetching interest rate, retries left: ${retriesLeft}`, error)
           );
           
-          // Fetch loan amount - with retry mechanism
           const loanAmount = await retry(
             () => getPoolLoanAmount(pool.contract_address!),
             3,
@@ -301,7 +309,6 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
             (error, retriesLeft) => console.warn(`Error fetching loan amount, retries left: ${retriesLeft}`, error)
           );
           
-          // Fetch origination fee - with retry mechanism
           const originationFee = await retry(
             () => getPoolOriginationFee(pool.contract_address!),
             3,
@@ -311,7 +318,7 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
           
           // Fetch warmup period - with retry mechanism
           const warmupPeriod = await retry(
-            () => getWarmupPeriod(pool.contract_address!),
+            () => getPoolWarmupPeriod(pool.contract_address!),
             3,
             1000,
             (error, retriesLeft) => console.warn(`Error fetching warmup period, retries left: ${retriesLeft}`, error)
@@ -326,7 +333,7 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
               `$${loanAmount.loanAmount}` : '$10', // Format loan amount with $ symbol
             originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
               `${originationFee.originationFee}%` : '10%', // Format origination fee with % symbol
-            warmupPeriod: warmupPeriod.warmupPeriod || '14 days'
+            warmupPeriod: `${warmupPeriod.warmupPeriodDays} days`
           };
           
           // Update the pool object

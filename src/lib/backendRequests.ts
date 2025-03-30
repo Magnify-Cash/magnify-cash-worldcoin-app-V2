@@ -658,12 +658,25 @@ export const getPoolDeactivationDate = async (
  * @param contract The pool contract address
  * @returns Object containing the warmup period in days
  */
-export const getWarmupPeriod = async (
+export const getPoolWarmupPeriod = async (
   contract: string
-): Promise<{ warmupPeriod: string }> => {
-  // This is a placeholder - will be implemented in the future
-  console.log('Warmup period function called but not yet implemented');
-  return { warmupPeriod: '14 days' };
+): Promise<PoolWarmupPeriodResponse> => {
+  const response = await backendRequest<PoolWarmupPeriodResponse>(
+    "GET",
+    "v3/pool/warmup",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.warmupPeriodDays !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch warmup period. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
 };
 
 export const getPoolOriginationFee = async (

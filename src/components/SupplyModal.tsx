@@ -1,5 +1,4 @@
 
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -114,12 +113,14 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className={`sm:max-w-[425px] mx-auto ${isMobile ? "p-3 px-4" : ""}`}
+        className={`sm:max-w-[425px] mx-auto ${isMobile ? "p-3 px-4 max-w-[95%]" : ""}`}
         style={{
           left: "50%",
           transform: "translate(-50%, -50%)",
           maxHeight: isMobile ? "90vh" : "auto",
           overflowY: "auto",
+          width: isMobile ? "95%" : "auto",
+          margin: isMobile ? "0 2.5%" : "auto",
         }}
       >
         <DialogHeader className={isMobile ? "pb-2" : ""}>
@@ -207,7 +208,7 @@ export function SupplyModal({ isOpen, onClose, poolContractAddress, lpSymbol = "
           <Button
             onClick={handleSupply}
             disabled={!amount || !isAmountValid() || isLoading}
-            className="bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90 border-0 text-white w-full py-6"
+            className="bg-[#8B5CF6] hover:bg-[#7c50e6] text-white w-full py-6"
           >
             {isLoading ? "Processing..." : "Supply"}
           </Button>

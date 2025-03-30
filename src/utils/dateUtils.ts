@@ -16,14 +16,19 @@ export function safeParseDate(dateInput: string | number | Date | undefined | nu
       return isNaN(dateInput.getTime()) ? new Date() : dateInput;
     }
     
-    // If it's a unix timestamp (seconds, not milliseconds)
+    // If it's a unix timestamp in seconds (length of 10)
     if (typeof dateInput === 'string' && /^\d+$/.test(dateInput) && dateInput.length === 10) {
       return new Date(parseInt(dateInput) * 1000);
     }
     
     // If it's a unix timestamp in milliseconds
-    if (typeof dateInput === 'string' && /^\d+$/.test(dateInput)) {
-      return new Date(parseInt(dateInput));
+    if (typeof dateInput === 'number' || (typeof dateInput === 'string' && /^\d+$/.test(dateInput))) {
+      const timestamp = typeof dateInput === 'number' ? dateInput : parseInt(dateInput);
+      // If timestamp is in seconds (before year 2100), convert to milliseconds
+      if (timestamp < 4102444800) {
+        return new Date(timestamp * 1000);
+      }
+      return new Date(timestamp);
     }
     
     // Try to parse ISO or formatted date string

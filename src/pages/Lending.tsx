@@ -104,8 +104,9 @@ const Lending = () => {
                 symbol={pool.metadata?.symbol}
                 lockDuration={pool.metadata?.lockDurationDays}
                 startDate={pool.status === 'warm-up' ? 
-                  pool.metadata?.warmupStartFormattedDate : pool.metadata?.activationFormattedDate}
-                endDate={pool.metadata?.deactivationFormattedDate}
+                  pool.metadata?.activationTimestampMs : 
+                  pool.metadata?.warmupStartTimestampMs}
+                endDate={pool.metadata?.deactivationTimestampMs}
                 contract={pool.contract_address}
               />
             ))

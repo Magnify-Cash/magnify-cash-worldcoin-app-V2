@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   TrendingUp, 
@@ -17,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
-import { safeParseDate } from "@/utils/dateUtils";
+import { safeParseDate, formatToLocalTime } from "@/utils/dateUtils";
 
 interface PoolCardProps {
   id: number;
@@ -83,18 +84,11 @@ export function PoolCard({
       }
     }
     
-    try {
-      // Use the safer date parsing function
-      const date = safeParseDate(dateStr);
-      return format(date, 'MMM d, yyyy');
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return dateStr || 'N/A'; // Return the original string if formatting fails
-    }
+    return formatToLocalTime(dateStr, 'MMM d, yyyy');
   };
 
   const getLockPeriodDate = () => {
-    if (status === 'warm-up') {
+    if (status === 'warm-up' && startDate) {
       return formatDate(startDate);
     } else if (endDate) {
       return formatDate(endDate);

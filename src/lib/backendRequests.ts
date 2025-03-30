@@ -35,6 +35,7 @@ import {
   PoolNameResponse,
   PoolLoanAmountResponse,
   PoolOriginationFeeResponse,
+  PoolWarmupPeriodResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -707,3 +708,23 @@ export const getPoolLoanAmount = async (
   return response.data;
 };
 
+export const getPoolWarmupPeriod = async (
+  contract: string
+): Promise<PoolWarmupPeriodResponse> => {
+  const response = await backendRequest<PoolWarmupPeriodResponse>(
+    "GET",
+    "pool/warmup",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.warmupPeriodDays !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch warmup period. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};

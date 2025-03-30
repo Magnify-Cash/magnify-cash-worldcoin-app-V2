@@ -178,3 +178,7 @@ export interface PoolOriginationFeeResponse {
 export interface PoolLoanAmountResponse {
   loanAmount: number;
 }
+
+export interface PoolWarmupPeriodResponse {
+  warmupPeriodDays: number; 
+}

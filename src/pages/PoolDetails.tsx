@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Coins, 
   TrendingUp, 
-  AlertCircle, 
   Info, 
   Wallet, 
   Clock, 
@@ -39,6 +38,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { PoolPriceGraph } from "@/components/PoolPriceGraph";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 import { useUserPoolPosition } from "@/hooks/useUserPoolPosition";
+import { usePoolModals } from "@/hooks/usePoolModals";
 
 const PoolDetails = () => {
   const { id } = useParams();
@@ -47,10 +47,7 @@ const PoolDetails = () => {
   
   const [loading, setLoading] = useState(true);
   const [pool, setPool] = useState<LiquidityPool | null>(null);
-  const [showSupplyModal, setShowSupplyModal] = useState(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [isSupplyModalOpen, setIsSupplyModalOpen] = useState(false);
-  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const { openSupplyModal, openWithdrawModal } = usePoolModals();
   const poolId = id ? parseInt(id) : 0;
 
   const userPosition = useUserPoolPosition(pool?.contract_address);
@@ -266,11 +263,23 @@ const PoolDetails = () => {
   };
 
   const handleSupply = () => {
-    setIsSupplyModalOpen(true);
+    if (pool) {
+      openSupplyModal({
+        poolId: pool.id,
+        poolContractAddress: pool.contract_address,
+        lpSymbol: pool.metadata?.symbol || "LP"
+      });
+    }
   };
 
   const handleWithdraw = () => {
-    setIsWithdrawModalOpen(true);
+    if (pool) {
+      openWithdrawModal({
+        poolId: pool.id,
+        lpBalance: userPosition.balance,
+        lpValue: userPosition.currentValue
+      });
+    }
   };
 
   const getPoolSymbol = () => {
@@ -568,28 +577,6 @@ const PoolDetails = () => {
           </>
         )}
       </main>
-
-      {pool && (
-        <>
-          {isSupplyModalOpen && (
-            <SupplyModal 
-              isOpen={isSupplyModalOpen} 
-              onClose={() => setIsSupplyModalOpen(false)} 
-              poolContractAddress={pool?.contract_address}
-              lpSymbol={pool?.metadata?.symbol || "LP"}
-            />
-          )}
-
-          {isWithdrawModalOpen && (
-            <WithdrawModal
-              isOpen={isWithdrawModalOpen}
-              onClose={() => setIsWithdrawModalOpen(false)}
-              lpBalance={userPosition.balance}
-              lpValue={userPosition.currentValue}
-            />
-          )}
-        </>
-      )}
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { UserPoolPosition } from "@/hooks/useUserPoolPositions";
+import { usePoolModals } from "@/hooks/usePoolModals";
 
 interface ActivePositionsProps {
   positions: UserPoolPosition[];
@@ -15,6 +16,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   isMobile
 }) => {
   const navigate = useNavigate();
+  const { openSupplyModal, openWithdrawModal } = usePoolModals();
 
   const getStatusColor = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
     switch (status) {
@@ -138,7 +140,11 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
               <div className="flex gap-2">
                 {showSupplyButton(position.status) && (
                   <Button 
-                    onClick={() => navigate(`/pool/${position.poolId}`)} 
+                    onClick={() => openSupplyModal({
+                      poolId: position.poolId,
+                      poolContractAddress: position.contractAddress,
+                      lpSymbol: position.symbol
+                    })}
                     size="sm"
                     className="flex-1 bg-[#8B5CF6] hover:bg-[#7c4df3]"
                   >
@@ -148,7 +154,11 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                 
                 {showWithdrawButton(position.status) && (
                   <Button 
-                    onClick={() => navigate(`/pool/${position.poolId}`)} 
+                    onClick={() => openWithdrawModal({
+                      poolId: position.poolId,
+                      lpBalance: position.balance,
+                      lpValue: position.currentValue
+                    })}
                     variant="outline" 
                     size="sm"
                     className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/20 hover:text-[#8B5CF6] hover:font-medium"

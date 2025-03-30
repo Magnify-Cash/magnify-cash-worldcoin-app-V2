@@ -239,7 +239,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
           </div>
         </div>
 
-        <Button type="submit" className="w-full bg-[#8B5CF6] hover:bg-[#8B5CF6]/90">
+        <Button type="submit" className="w-full bg-[#9b87f5] hover:bg-[#8B5CF6]/90">
           Calculate Returns
         </Button>
       </div>

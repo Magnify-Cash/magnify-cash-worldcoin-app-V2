@@ -90,7 +90,7 @@ const Lending = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
           {loading ? (
             <div className="col-span-full">
-              <LoadingState />
+              <LoadingState message="Loading Liquidity Pools" />
             </div>
           ) : fetchError ? (
             <div className="py-8 text-center text-gray-500 col-span-full">{fetchError}</div>

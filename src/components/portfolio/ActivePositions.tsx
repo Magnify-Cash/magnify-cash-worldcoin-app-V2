@@ -140,7 +140,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                   <Button 
                     onClick={() => navigate(`/pool/${position.poolId}`)} 
                     size="sm"
-                    className="flex-1 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] hover:opacity-90"
+                    className="flex-1 bg-[#8B5CF6] hover:bg-[#7c4df3]"
                   >
                     Supply More
                   </Button>

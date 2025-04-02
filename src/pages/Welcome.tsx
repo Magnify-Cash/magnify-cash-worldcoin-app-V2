@@ -14,18 +14,19 @@ type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
 const Welcome = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { refreshPools } = usePoolData();
+  const { refreshPools, lastFetched } = usePoolData();
   
-  const [loading, setLoading] = useState(false);
+  const [loadingLoan, setLoadingLoan] = useState(false);
+  const [loadingLender, setLoadingLender] = useState(false);
 
   // Prefetch pool data and invalidate cache when component mounts
   useEffect(() => {
-    // Immediately start prefetching pool data
-    console.log("Prefetching pool data from Welcome page");
-    refreshPools(true);
+    // Ensure we aren't repeatedly fetching by checking lastFetched
+    console.log("Welcome page checking if prefetch is needed...");
+    refreshPools(false); // No need to force cache invalidation on initial load
   }, [refreshPools]);
 
-  const signInUser = async (redirectTo: string) => {
+  const signInUser = async (redirectTo: string, isLenderFlow: boolean = false) => {
     const wallet_address = localStorage.getItem("ls_wallet_address");
     const username = localStorage.getItem("ls_username");
   
@@ -35,7 +36,12 @@ const Welcome = () => {
     }
   
     try {
-      setLoading(true);
+      if (isLenderFlow) {
+        setLoadingLender(true);
+      } else {
+        setLoadingLoan(true);
+      }
+      
       const nonce = crypto.randomUUID().replace(/-/g, "");
       const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
         nonce,
@@ -72,17 +78,19 @@ const Welcome = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setLoadingLoan(false);
+      setLoadingLender(false);
     }
   };
 
   const handleSignIn = async () => {
-    await signInUser("/wallet");
+    await signInUser("/wallet", false);
   };
   
   const handleLenderSignUp = async () => {
-    await signInUser("/lending");
+    await signInUser("/lending", true);
   };
+  
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation - Mobile Optimized */}
@@ -113,19 +121,20 @@ const Welcome = () => {
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6 sm:mb-16 px-3 sm:px-4">
             <button
-              disabled={loading}
+              disabled={loadingLoan}
               onClick={handleSignIn}
               className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
             >
-              {loading ? "Connecting..." : "Get a Loan"}
+              {loadingLoan ? "Connecting..." : "Get a Loan"}
               <ArrowRight className="w-5 h-5" />
             </button>
 
             <button
+              disabled={loadingLender}
               onClick={handleLenderSignUp}
               className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF] text-white hover:opacity-90 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
             >
-              Become a Lender
+              {loadingLender ? "Connecting..." : "Become a Lender"}
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
@@ -144,3 +153,4 @@ const Welcome = () => {
 };
 
 export default Welcome;
+

@@ -9,6 +9,7 @@ interface PoolDataContextType {
   error: string | null;
   refreshPools: (invalidateCache?: boolean) => Promise<void>;
   lastFetched: number | null;
+  isPrefetching: boolean;
 }
 
 const PoolDataContext = createContext<PoolDataContextType>({
@@ -16,7 +17,8 @@ const PoolDataContext = createContext<PoolDataContextType>({
   loading: true,
   error: null,
   refreshPools: async () => {},
-  lastFetched: null
+  lastFetched: null,
+  isPrefetching: false
 });
 
 export const usePoolData = () => useContext(PoolDataContext);
@@ -30,9 +32,23 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<number | null>(null);
+  const [isPrefetching, setIsPrefetching] = useState(false);
 
   const refreshPools = async (invalidateCache: boolean = false) => {
+    // Don't refetch if already fetching
+    if (isPrefetching) {
+      console.log("Already prefetching pool data, skipping duplicate request");
+      return;
+    }
+    
+    // Don't refetch if data was fetched within the last minute (unless forced invalidation)
+    if (!invalidateCache && lastFetched && Date.now() - lastFetched < 60 * 1000) {
+      console.log("Pools data already fetched recently, using cached data");
+      return;
+    }
+    
     try {
+      setIsPrefetching(true);
       setLoading(true);
       setError(null);
       
@@ -68,6 +84,7 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       setError("Failed to load pool data. Please try again later.");
     } finally {
       setLoading(false);
+      setIsPrefetching(false);
     }
   };
 
@@ -85,8 +102,9 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   }, []);
 
   return (
-    <PoolDataContext.Provider value={{ pools, loading, error, refreshPools, lastFetched }}>
+    <PoolDataContext.Provider value={{ pools, loading, error, refreshPools, lastFetched, isPrefetching }}>
       {children}
     </PoolDataContext.Provider>
   );
 };
+

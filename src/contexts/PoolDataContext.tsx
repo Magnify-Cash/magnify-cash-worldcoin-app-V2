@@ -10,6 +10,8 @@ interface PoolDataContextType {
   refreshPools: (invalidateCache?: boolean) => Promise<void>;
   lastFetched: number | null;
   isPrefetching: boolean;
+  // Add a flag to track if a fetch has ever been started
+  hasFetchStarted: boolean;
 }
 
 const PoolDataContext = createContext<PoolDataContextType>({
@@ -18,7 +20,8 @@ const PoolDataContext = createContext<PoolDataContextType>({
   error: null,
   refreshPools: async () => {},
   lastFetched: null,
-  isPrefetching: false
+  isPrefetching: false,
+  hasFetchStarted: false
 });
 
 export const usePoolData = () => useContext(PoolDataContext);
@@ -33,6 +36,8 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<number | null>(null);
   const [isPrefetching, setIsPrefetching] = useState(false);
+  // Add state to track if a fetch has ever been started
+  const [hasFetchStarted, setHasFetchStarted] = useState(false);
 
   const refreshPools = async (invalidateCache: boolean = false) => {
     // Don't refetch if already fetching
@@ -49,6 +54,8 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
     
     try {
       setIsPrefetching(true);
+      // Set hasFetchStarted to true as soon as we start the first fetch
+      setHasFetchStarted(true);
       setLoading(true);
       setError(null);
       
@@ -88,23 +95,34 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
     }
   };
 
-  // Initial fetch on mount
+  // Initial fetch on mount - only once for the entire app
   useEffect(() => {
-    refreshPools();
-    
-    // Set up background refresh every 5 minutes
-    const refreshInterval = setInterval(() => {
-      console.log("Background refreshing pools data...");
-      refreshPools(true);
-    }, 5 * 60 * 1000);
-    
-    return () => clearInterval(refreshInterval);
-  }, []);
+    // Only fetch if no fetch has been started yet
+    if (!hasFetchStarted) {
+      console.log("Initial pools data fetch triggered from PoolDataContext");
+      refreshPools();
+      
+      // Set up background refresh every 5 minutes
+      const refreshInterval = setInterval(() => {
+        console.log("Background refreshing pools data...");
+        refreshPools(true);
+      }, 5 * 60 * 1000);
+      
+      return () => clearInterval(refreshInterval);
+    }
+  }, [hasFetchStarted]);
 
   return (
-    <PoolDataContext.Provider value={{ pools, loading, error, refreshPools, lastFetched, isPrefetching }}>
+    <PoolDataContext.Provider value={{ 
+      pools, 
+      loading, 
+      error, 
+      refreshPools, 
+      lastFetched, 
+      isPrefetching,
+      hasFetchStarted 
+    }}>
       {children}
     </PoolDataContext.Provider>
   );
 };
-

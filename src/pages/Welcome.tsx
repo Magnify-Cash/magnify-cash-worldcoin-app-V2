@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { invalidatePoolsCache } from "@/lib/poolRequests";
 import { usePoolData } from "@/contexts/PoolDataContext";
 
 type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
@@ -14,17 +13,19 @@ type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
 const Welcome = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { refreshPools, lastFetched } = usePoolData();
+  const { refreshPools, lastFetched, hasFetchStarted } = usePoolData();
   
   const [loadingLoan, setLoadingLoan] = useState(false);
   const [loadingLender, setLoadingLender] = useState(false);
 
-  // Prefetch pool data and invalidate cache when component mounts
+  // Prefetch pool data only once
   useEffect(() => {
-    // Ensure we aren't repeatedly fetching by checking lastFetched
-    console.log("Welcome page checking if prefetch is needed...");
-    refreshPools(false); // No need to force cache invalidation on initial load
-  }, [refreshPools]);
+    // Only check for prefetch when component mounts, and don't log unnecessarily
+    if (!hasFetchStarted && !lastFetched) {
+      console.log("Welcome page initiating first pools data fetch");
+      refreshPools(false);
+    }
+  }, [refreshPools, lastFetched, hasFetchStarted]);
 
   const signInUser = async (redirectTo: string, isLenderFlow: boolean = false) => {
     const wallet_address = localStorage.getItem("ls_wallet_address");
@@ -153,4 +154,3 @@ const Welcome = () => {
 };
 
 export default Welcome;
-

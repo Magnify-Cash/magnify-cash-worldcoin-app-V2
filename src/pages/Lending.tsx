@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -13,6 +14,18 @@ const Lending = () => {
   const { pools, loading, error: fetchError, refreshPools } = usePoolData();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+
+  // Check for wallet address in localStorage and redirect if not found
+  useEffect(() => {
+    const ls_wallet = localStorage.getItem("ls_wallet_address");
+    if (!ls_wallet) {
+      // Redirect to welcome page if no wallet address is found
+      navigate("/welcome");
+      return;
+    }
+    setWalletAddress(ls_wallet);
+  }, [navigate]);
 
   useEffect(() => {
     const lastRefresh = localStorage.getItem("last_pools_refresh");
@@ -34,6 +47,11 @@ const Lending = () => {
       });
     }
   }, [fetchError]);
+
+  // Don't render content until we've checked for wallet address
+  if (!walletAddress) {
+    return <LoadingState />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">

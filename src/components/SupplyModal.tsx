@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Coins, ArrowUpRight, Loader2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { previewSupply } from "@/lib/backendRequests";
+import { previewDeposit } from "@/lib/backendRequests";
 import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
 import { toast } from "@/components/ui/use-toast";
 
@@ -44,7 +44,7 @@ export function SupplyModal({
     balance: usdcBalance, 
     loading: balanceLoading, 
     error: balanceError,
-    refreshBalance
+    refetch: refreshBalance
   } = useWalletUSDCBalance(walletAddress);
 
   // Reset form when opening modal
@@ -107,8 +107,12 @@ export function SupplyModal({
         return;
       }
       
-      const preview = await previewSupply(value, poolContractAddress);
-      setPreviewLpAmount(preview.lpAmountOut);
+      // Convert the string value to a number for the API call
+      const numericValue = parseFloat(value);
+      
+      // Use previewDeposit instead of previewSupply
+      const preview = await previewDeposit(numericValue, poolContractAddress);
+      setPreviewLpAmount(preview.lpAmount);
     } catch (error) {
       console.error("Error getting supply preview:", error);
       setPreviewLpAmount(null);

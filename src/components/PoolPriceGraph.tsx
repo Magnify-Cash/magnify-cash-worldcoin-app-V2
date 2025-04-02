@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   AreaChart, 
   Area, 
@@ -40,6 +40,16 @@ export function PoolPriceGraph({
   
   // Use our new hook to fetch price data
   const { priceData, isLoading, error } = useLPTokenHistory(poolContract, timeframe);
+  
+  // Check if we have enough data to show weekly view
+  const hasEnoughDataForWeekly = priceData.length >= 14;
+  
+  // Reset to "days" if we don't have enough data for "weeks"
+  useEffect(() => {
+    if (!hasEnoughDataForWeekly && timeframe === "weeks") {
+      setTimeframe("days");
+    }
+  }, [hasEnoughDataForWeekly, timeframe]);
   
   // Calculate min and max for yAxis domain with some padding
   const prices = priceData.map(d => d.price);
@@ -94,13 +104,15 @@ export function PoolPriceGraph({
             >
               Days
             </ToggleGroupItem>
-            <ToggleGroupItem 
-              value="weeks" 
-              aria-label="View by weeks" 
-              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
-            >
-              Weeks
-            </ToggleGroupItem>
+            {hasEnoughDataForWeekly && (
+              <ToggleGroupItem 
+                value="weeks" 
+                aria-label="View by weeks" 
+                className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+              >
+                Weeks
+              </ToggleGroupItem>
+            )}
           </ToggleGroup>
         </div>
       </CardHeader>

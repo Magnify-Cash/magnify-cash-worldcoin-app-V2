@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   AreaChart, 
   Area, 
@@ -41,6 +41,16 @@ export function PoolPriceGraph({
   // Use our new hook to fetch price data
   const { priceData, isLoading, error } = useLPTokenHistory(poolContract, timeframe);
   
+  // Check if we have enough data to show weekly view
+  const hasEnoughDataForWeeklyView = priceData.length >= 14;
+  
+  // Force back to days view if we don't have enough data for weekly view
+  useEffect(() => {
+    if (timeframe === "weeks" && !hasEnoughDataForWeeklyView) {
+      setTimeframe("days");
+    }
+  }, [timeframe, hasEnoughDataForWeeklyView]);
+  
   // Calculate min and max for yAxis domain with some padding
   const prices = priceData.map(d => d.price);
   const minPrice = prices.length > 0 ? Math.min(...prices) * 0.995 : 0.9;
@@ -71,6 +81,9 @@ export function PoolPriceGraph({
 
   // Calculate initial reference line value (starting price)
   const referencePrice = priceData.length > 0 ? priceData[0].price : 1.0;
+  
+  // Check if we have any data at all
+  const hasData = priceData.length > 0;
 
   return (
     <Card className="w-full border border-[#9b87f5]/20 overflow-hidden">
@@ -81,27 +94,34 @@ export function PoolPriceGraph({
             {symbol} Token Price
           </CardTitle>
           
-          <ToggleGroup 
-            type="single" 
-            value={timeframe} 
-            onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}
-            className="mx-auto"
-          >
-            <ToggleGroupItem 
-              value="days" 
-              aria-label="View by days" 
-              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+          {/* Only show toggle if we have data */}
+          {hasData && (
+            <ToggleGroup 
+              type="single" 
+              value={timeframe} 
+              onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}
+              className="mx-auto"
             >
-              Days
-            </ToggleGroupItem>
-            <ToggleGroupItem 
-              value="weeks" 
-              aria-label="View by weeks" 
-              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
-            >
-              Weeks
-            </ToggleGroupItem>
-          </ToggleGroup>
+              <ToggleGroupItem 
+                value="days" 
+                aria-label="View by days" 
+                className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+              >
+                Days
+              </ToggleGroupItem>
+              
+              {/* Only show weeks toggle if we have enough data */}
+              {hasEnoughDataForWeeklyView && (
+                <ToggleGroupItem 
+                  value="weeks" 
+                  aria-label="View by weeks" 
+                  className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+                >
+                  Weeks
+                </ToggleGroupItem>
+              )}
+            </ToggleGroup>
+          )}
         </div>
       </CardHeader>
       <CardContent className={`${isMobile ? "px-1 py-2" : "pt-5"} h-[260px]`}>
@@ -116,6 +136,12 @@ export function PoolPriceGraph({
             <AlertTriangle className="h-8 w-8 mb-2 text-amber-500" />
             <p className="text-sm">Error loading price data</p>
             <p className="text-xs mt-1 text-gray-400">Using fallback data</p>
+          </div>
+        ) : !hasData ? (
+          <div className="h-full w-full flex flex-col items-center justify-center text-gray-500">
+            <LineChart className="h-8 w-8 mb-2 text-gray-300" />
+            <p className="text-sm">No price history available yet</p>
+            <p className="text-xs mt-1 text-gray-400">Check back soon</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

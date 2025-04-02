@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,6 @@ export function SupplyModal({
     refetch: refreshBalance
   } = useWalletUSDCBalance(walletAddress);
 
-  // Reset form when opening modal
   useEffect(() => {
     if (isOpen) {
       setAmount("");
@@ -64,7 +62,6 @@ export function SupplyModal({
     }
   }, [isOpen, refreshBalance]);
 
-  // Handle max button click - set amount to user's USDC balance
   const handleMaxClick = () => {
     if (!balanceLoading && !balanceError && usdcBalance > 0) {
       setAmount(usdcBalance.toString());
@@ -72,22 +69,18 @@ export function SupplyModal({
     }
   };
 
-  // Handle amount input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
-    // Only allow numbers and decimals
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setAmount(value);
       
-      // Clear preview if input is empty
       if (value === "") {
         setPreviewLpAmount(null);
         setPreviewRequested(false);
         return;
       }
       
-      // Throttle preview requests as user types
       if (parseFloat(value) > 0) {
         const timeoutId = setTimeout(() => {
           handlePreview(value);
@@ -98,7 +91,6 @@ export function SupplyModal({
     }
   };
 
-  // Get LP token preview based on USDC amount
   const handlePreview = async (value: string) => {
     try {
       setPreviewRequested(true);
@@ -107,10 +99,8 @@ export function SupplyModal({
         return;
       }
       
-      // Convert the string value to a number for the API call
       const numericValue = parseFloat(value);
       
-      // Use previewDeposit instead of previewSupply
       const preview = await previewDeposit(numericValue, poolContractAddress);
       setPreviewLpAmount(preview.lpAmount);
     } catch (error) {
@@ -124,13 +114,11 @@ export function SupplyModal({
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      // Simulate transaction
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
@@ -151,7 +139,6 @@ export function SupplyModal({
     }
   };
 
-  // Format LP amount for display
   const formatLpAmount = () => {
     return previewLpAmount !== null 
       ? previewLpAmount.toFixed(4)
@@ -242,7 +229,7 @@ export function SupplyModal({
                 isSubmitting || 
                 !amount || 
                 parseFloat(amount) <= 0 || 
-                parseFloat(amount) > usdcBalance
+                (!!usdcBalance && parseFloat(amount) > usdcBalance)
               }
               className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700"
             >

@@ -758,22 +758,36 @@ export const getLPTokenHistory = async (
   return response.data;
 }
 
-export async function previewSupply(
-  poolContractAddress: string, 
-  amount: string
-): Promise<{ shares: string }> {
+export async function getUserPoolPosition(poolContractAddress: string, userAddress: string) {
   try {
     const response = await fetch(
-      `/api/pools/${poolContractAddress}/preview-supply?amount=${amount}`
+      `/api/pools/${poolContractAddress}/positions/${userAddress}`
     );
     
     if (!response.ok) {
-      throw new Error(`Failed to preview supply: ${response.statusText}`);
+      return { error: `Failed to fetch position: ${response.statusText}` };
     }
     
     return await response.json();
   } catch (error) {
-    console.error('Error in previewSupply:', error);
-    return { shares: "0" };
+    console.error('Error in getUserPoolPosition:', error);
+    return { error: 'Failed to fetch user pool position' };
+  }
+}
+
+export async function getUserPoolPositions(userAddress: string) {
+  try {
+    const response = await fetch(
+      `/api/users/${userAddress}/positions`
+    );
+    
+    if (!response.ok) {
+      return { error: `Failed to fetch positions: ${response.statusText}` };
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error in getUserPoolPositions:', error);
+    return { error: 'Failed to fetch user pool positions' };
   }
 }

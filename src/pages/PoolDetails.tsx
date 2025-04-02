@@ -50,7 +50,10 @@ const PoolDetails = () => {
   const { openSupplyModal, openWithdrawModal } = usePoolModals();
   const poolId = id ? parseInt(id) : 0;
 
-  const userPosition = useUserPoolPosition(pool?.contract_address);
+  const userPosition = useUserPoolPosition(
+    pool?.contract_address || '',
+    "0x6835939032900e5756abFF28903d8A5E68CB39dF"
+  );
 
   useEffect(() => {
     const fetchPoolData = async () => {

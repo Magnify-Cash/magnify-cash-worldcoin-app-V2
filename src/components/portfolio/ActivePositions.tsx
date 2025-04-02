@@ -3,11 +3,11 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { UserPoolPosition } from "@/hooks/useUserPoolPositions";
+import { UserPosition } from "@/hooks/useUserPositions";
 import { usePoolModals } from "@/hooks/usePoolModals";
 
 interface ActivePositionsProps {
-  positions: UserPoolPosition[];
+  positions: UserPosition[];
   isMobile: boolean;
 }
 
@@ -84,7 +84,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
                 {getPoolIcon(position.poolId)}
-                <h3 className="font-medium text-base sm:text-lg">{position.poolName}</h3>
+                <h3 className="font-medium text-base sm:text-lg">{position.name || position.poolName || 'Unknown Pool'}</h3>
               </div>
               <Button 
                 variant="ghost" 

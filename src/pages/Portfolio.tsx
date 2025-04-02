@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PortfolioHeader } from "@/components/portfolio/PortfolioHeader";
@@ -8,12 +8,24 @@ import { NoPositions } from "@/components/portfolio/NoPositions";
 import { ActivePositions } from "@/components/portfolio/ActivePositions";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
-
-// Wallet address to fetch data for
-const WALLET_ADDRESS = "0x6835939032900e5756abFF28903d8A5E68CB39dF";
+import { useNavigate } from "react-router-dom";
 
 const Portfolio = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  
+  // Get user's wallet address from localStorage
+  useEffect(() => {
+    const ls_wallet = localStorage.getItem("ls_wallet_address");
+    if (!ls_wallet) {
+      // Redirect to welcome page if no wallet address is found
+      navigate("/welcome");
+      return;
+    }
+    setWalletAddress(ls_wallet);
+  }, [navigate]);
+  
   const { 
     positions, 
     totalValue, 
@@ -22,7 +34,12 @@ const Portfolio = () => {
     error, 
     hasPositions,
     refreshPositions
-  } = useUserPoolPositions(WALLET_ADDRESS);
+  } = useUserPoolPositions(walletAddress || "");
+
+  // Don't render anything until we've checked for wallet address
+  if (!walletAddress) {
+    return <LoadingState />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">

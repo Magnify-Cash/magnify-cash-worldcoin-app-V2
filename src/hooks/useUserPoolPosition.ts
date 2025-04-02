@@ -32,19 +32,25 @@ const initialState: UserPositionData = {
 
 export const useUserPoolPosition = (poolContractAddress: string | undefined): UserPositionData => {
   const [positionData, setPositionData] = useState<UserPositionData>(initialState);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  
+  // Get wallet address from localStorage
+  useEffect(() => {
+    const wallet = localStorage.getItem("ls_wallet_address");
+    setWalletAddress(wallet);
+  }, []);
 
   useEffect(() => {
     const fetchUserPosition = async () => {
-      if (!poolContractAddress) {
+      if (!poolContractAddress || !walletAddress) {
         setPositionData({ ...initialState, loading: false });
         return;
       }
 
       try {
         // Make all API calls in parallel for optimization
-        // TODO: Change the demo-wallet to the actual wallet address of the user
         const [lpBalanceResponse, depositedValueResponse] = await Promise.all([
-          getUserLPBalance('0x6835939032900e5756abFF28903d8A5E68CB39dF', poolContractAddress),
+          getUserLPBalance(walletAddress, poolContractAddress),
           getMockDepositedValue()
         ]);
 
@@ -88,7 +94,7 @@ export const useUserPoolPosition = (poolContractAddress: string | undefined): Us
     };
 
     fetchUserPosition();
-  }, [poolContractAddress]);
+  }, [poolContractAddress, walletAddress]);
 
   return positionData;
 };

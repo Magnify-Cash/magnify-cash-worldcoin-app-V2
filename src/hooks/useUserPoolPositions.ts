@@ -11,7 +11,7 @@ export interface UserPoolPosition {
   symbol: string;
   contractAddress: string;
   balance: number;
-  depositedValue: number; // Using hardcoded values for now
+  depositedValue: number;
   currentValue: number;
   earnings: number;
   status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
@@ -38,7 +38,7 @@ const mockDepositedValues: Record<number, number> = {
 };
 
 export const useUserPoolPositions = (
-  walletAddress = '0x6835939032900e5756abFF28903d8A5E68CB39dF'
+  walletAddress: string
 ): UseUserPoolPositionsResult => {
   const [positions, setPositions] = useState<UserPoolPosition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +47,13 @@ export const useUserPoolPositions = (
 
   useEffect(() => {
     const fetchPositions = async () => {
+      // Skip fetching if we don't have a wallet address
+      if (!walletAddress) {
+        setPositions([]);
+        setLoading(false);
+        return;
+      }
+      
       try {
         setLoading(true);
         setError(null);

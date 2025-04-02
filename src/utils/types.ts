@@ -186,3 +186,8 @@ export interface PoolWarmupPeriodResponse {
 export interface UserLPBalanceResponse {
   balance: number;
 }
+export interface LPTokenHistoryResponse {
+  token_price: number;
+  timestamp: string;
+  date: string;
+}

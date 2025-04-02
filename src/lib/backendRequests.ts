@@ -37,6 +37,7 @@ import {
   PoolOriginationFeeResponse,
   PoolWarmupPeriodResponse,
   UserLPBalanceResponse,
+  LPTokenHistoryResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -738,4 +739,22 @@ export const getUserLPBalance = async (
 
   return response.data;
 };
+
+export const getLPTokenHistory = async (
+  contract: string,
+): Promise <LPTokenHistoryResponse[]> => {
+  const response = await backendRequest<LPTokenHistoryResponse[]>(
+    "GET",
+    "v3/pool/lp/history",
+    { contract }
+  );
+
+  if (!response.data || !Array.isArray(response.data)) {
+    throw new Error(
+      `Failed to fetch LP token history. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+}
 

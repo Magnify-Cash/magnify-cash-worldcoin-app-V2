@@ -22,13 +22,15 @@ const Welcome = () => {
     invalidatePoolsCache();
   }, []);
 
-  const handleSignIn = async () => {
+  const signInUser = async (redirectTo: string) => {
     const wallet_address = localStorage.getItem("ls_wallet_address");
     const username = localStorage.getItem("ls_username");
+  
     if (username && wallet_address) {
-      navigate("/wallet");
+      navigate(redirectTo);
       return;
     }
+  
     try {
       setLoading(true);
       const nonce = crypto.randomUUID().replace(/-/g, "");
@@ -38,22 +40,21 @@ const Welcome = () => {
         expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
         notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
       });
-
+  
       const extendedPayload = finalPayload as ExtendedWalletAuthPayload;
-
-      if (extendedPayload && extendedPayload.address) {
+  
+      if (extendedPayload?.address) {
         const user = await MiniKit.getUserByAddress(extendedPayload.address);
         localStorage.setItem("ls_wallet_address", user.walletAddress);
         localStorage.setItem("ls_username", user.username);
-
+  
         toast.toast({
           title: "Successfully signed in!",
           description: `Welcome back, ${user.username}!`,
         });
-        setLoading(false);
-        navigate("/wallet");
+  
+        navigate(redirectTo);
       } else {
-        setLoading(false);
         toast.toast({
           title: "Error",
           description: "Failed to retrieve wallet address.",
@@ -61,20 +62,24 @@ const Welcome = () => {
         });
       }
     } catch (error) {
-      setLoading(false);
       console.error("Authentication failed:", error);
       toast.toast({
         title: "Error",
         description: "Failed to sign in. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLenderSignUp = () => {
-    navigate("/lending");
+  const handleSignIn = async () => {
+    await signInUser("/wallet");
   };
-
+  
+  const handleLenderSignUp = async () => {
+    await signInUser("/lending");
+  };
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation - Mobile Optimized */}

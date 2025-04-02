@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Wallet, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { Wallet, Loader2 } from "lucide-react";
 
 interface UserPortfolioCardProps {
   balance: number;
@@ -92,23 +92,8 @@ export function UserPortfolioCard({
                 <span className="font-medium">{balance.toFixed(2)} {symbol}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Deposited Value</span>
-                <span className="font-medium">${depositedValue.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-sm text-gray-500">Current Value</span>
                 <span className="font-medium">${currentValue.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Yield</span>
-                <span className={`font-medium flex items-center ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {isPositive ? (
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 mr-1" />
-                  )}
-                  {isPositive ? '+' : ''}{earnings.toFixed(2)} ({isPositive ? '+' : ''}{calculatedPercentage.toFixed(2)}%)
-                </span>
               </div>
             </div>
             

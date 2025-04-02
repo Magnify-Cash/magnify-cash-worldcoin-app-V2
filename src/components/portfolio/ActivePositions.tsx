@@ -112,26 +112,9 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
               </div>
               
               <div className="flex justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Deposited Value</span>
-                <span className="text-xs sm:text-sm font-medium">
-                  ${position.depositedValue.toFixed(2)}
-                </span>
-              </div>
-              
-              <div className="flex justify-between">
                 <span className="text-xs sm:text-sm text-gray-500">Current Value</span>
                 <span className="text-xs sm:text-sm font-medium">
                   ${position.currentValue.toFixed(2)}
-                </span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Earnings</span>
-                <span className="text-xs sm:text-sm font-medium text-green-600">
-                  +${position.earnings.toFixed(2)} 
-                  {position.depositedValue > 0 ? 
-                    ` (+${((position.earnings / position.depositedValue) * 100).toFixed(1)}%)` : 
-                    ""}
                 </span>
               </div>
             </div>

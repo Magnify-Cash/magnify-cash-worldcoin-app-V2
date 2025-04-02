@@ -23,6 +23,7 @@ import { Toaster } from "@/components/ui/toaster";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ModalManager } from "./components/ModalManager";
 import { ModalProvider } from "./contexts/ModalContext";
+import { PoolDataProvider } from "./contexts/PoolDataContext";
 
 const allowedWallets = [
   "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c",
@@ -43,72 +44,74 @@ function App() {
   return (
     <MiniKitProvider>
       <USDCBalanceProvider>
-      <ModalProvider>
-      <Toaster />
-      <Router>
-      <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Navigate to="/welcome" replace />} />
-          <Route path="/welcome" element={<Welcome />} />
-          <Route path="/announcements" element={<Announcements />} />
-          <Route path="/lending" element={<Lending />} />
-          <Route path="/pool/:id" element={<PoolDetails />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/lending-history" element={<LendingHistory />} />
-          <Route path="/calculator" element={<Calculator />} />
-          <Route
-            path="/guide"
-            element={
-              <ProtectedRoute>
-                <Guide />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/wallet"
-            element={
-              <ProtectedRoute>
-                <Wallet />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/loan"
-            element={
-              <ProtectedRoute>
-                <Loan />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/repay-loan"
-            element={
-              <ProtectedRoute>
-                <RepayLoan />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/loan-history"
-            element={
-              <ProtectedRoute>
-                <LoanHistory />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-      <ModalManager />
-      </ModalProvider>
+        <ModalProvider>
+          <PoolDataProvider>
+            <Toaster />
+            <Router>
+              <ScrollToTop />
+              <Routes>
+                <Route path="/" element={<Navigate to="/welcome" replace />} />
+                <Route path="/welcome" element={<Welcome />} />
+                <Route path="/announcements" element={<Announcements />} />
+                <Route path="/lending" element={<Lending />} />
+                <Route path="/pool/:id" element={<PoolDetails />} />
+                <Route path="/portfolio" element={<Portfolio />} />
+                <Route path="/lending-history" element={<LendingHistory />} />
+                <Route path="/calculator" element={<Calculator />} />
+                <Route
+                  path="/guide"
+                  element={
+                    <ProtectedRoute>
+                      <Guide />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/wallet"
+                  element={
+                    <ProtectedRoute>
+                      <Wallet />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/loan"
+                  element={
+                    <ProtectedRoute>
+                      <Loan />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/repay-loan"
+                  element={
+                    <ProtectedRoute>
+                      <RepayLoan />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/loan-history"
+                  element={
+                    <ProtectedRoute>
+                      <LoanHistory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Router>
+            <ModalManager />
+          </PoolDataProvider>
+        </ModalProvider>
       </USDCBalanceProvider>
     </MiniKitProvider>
   );

@@ -1,75 +1,39 @@
-
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Info } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PoolCard } from "@/components/PoolCard";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getPools, invalidatePoolsCache } from "@/lib/poolRequests";
-import { LiquidityPool } from "@/types/supabase/liquidity";
+import { usePoolData } from "@/contexts/PoolDataContext";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 
-const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): number => {
-  switch (status) {
-    case 'warm-up': return 1;
-    case 'active': return 2;
-    case 'withdrawal': return 3;
-    case 'cooldown': return 4;
-    default: return 5;
-  }
-};
-
 const Lending = () => {
-  const [loading, setLoading] = useState(true);
-  const [pools, setPools] = useState<LiquidityPool[]>([]);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const { pools, loading, error: fetchError, refreshPools } = usePoolData();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  const fetchPools = useCallback(async (invalidateCache: boolean = false) => {
-    try {
-      setLoading(true);
-      setFetchError(null);
-      
-      if (invalidateCache) {
-        invalidatePoolsCache();
-      }
-      
-      const poolsData = await getPools();
-      
-      if (poolsData.length === 0) {
-        setFetchError("No pools available at this time");
-      } else {
-        const sortedPools = [...poolsData].sort((a, b) => {
-          return getPoolStatusPriority(a.status) - getPoolStatusPriority(b.status);
-        });
-        setPools(sortedPools);
-      }
-    } catch (error) {
-      console.error("Error fetching pools:", error);
-      setFetchError("Failed to load pool data. Please try again later.");
-      toast({
-        title: "Error fetching pools",
-        description: "Failed to load pool data. Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    const lastRefresh = localStorage.getItem("last_pools_refresh");
+    const refreshThreshold = 5 * 60 * 1000; // 5 minutes
+    
+    if (!lastRefresh || Date.now() - parseInt(lastRefresh) > refreshThreshold) {
+      console.log("Refreshing pool data from Lending page");
+      refreshPools(true);
+      localStorage.setItem("last_pools_refresh", Date.now().toString());
     }
-  }, []);
+  }, [refreshPools]);
 
   useEffect(() => {
-    fetchPools();
-    
-    // Set up automatic refresh every 5 minutes
-    const refreshInterval = setInterval(() => {
-      fetchPools(true);
-    }, 5 * 60 * 1000);
-    
-    return () => clearInterval(refreshInterval);
-  }, [fetchPools]);
+    if (fetchError) {
+      toast({
+        title: "Error fetching pools",
+        description: fetchError,
+        variant: "destructive",
+      });
+    }
+  }, [fetchError]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">

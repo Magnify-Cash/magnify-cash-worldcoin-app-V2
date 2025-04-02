@@ -5,7 +5,7 @@ import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { invalidatePoolsCache } from "@/lib/poolRequests";
-
+import { usePoolData } from "@/contexts/PoolDataContext";
 
 type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
   address: string;
@@ -14,13 +14,16 @@ type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
 const Welcome = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const { refreshPools } = usePoolData();
   
   const [loading, setLoading] = useState(false);
 
-  // Invalidate pool cache when component mounts
+  // Prefetch pool data and invalidate cache when component mounts
   useEffect(() => {
-    invalidatePoolsCache();
-  }, []);
+    // Immediately start prefetching pool data
+    console.log("Prefetching pool data from Welcome page");
+    refreshPools(true);
+  }, [refreshPools]);
 
   const signInUser = async (redirectTo: string) => {
     const wallet_address = localStorage.getItem("ls_wallet_address");

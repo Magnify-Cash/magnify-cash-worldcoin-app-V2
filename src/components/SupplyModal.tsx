@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,7 @@ interface SupplyModalProps {
   onClose: () => void;
   poolContractAddress?: string;
   lpSymbol?: string;
-  walletAddress?: string; // Add wallet address prop
+  walletAddress?: string;
 }
 
 export function SupplyModal({ 
@@ -39,7 +38,6 @@ export function SupplyModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   
-  // Get the wallet's USDC balance using our new hook
   const { 
     balance: usdcBalance, 
     loading: balanceLoading, 
@@ -54,7 +52,6 @@ export function SupplyModal({
       setPreviewLpAmount(null);
       setPreviewRequested(false);
       
-      // Refresh the USDC balance when the modal opens
       refreshBalance();
       
       setTimeout(() => {
@@ -125,7 +122,6 @@ export function SupplyModal({
       : "0.0000";
   };
 
-  // Display a formatted balance or loading state
   const displayBalance = () => {
     if (balanceLoading) return "Loading...";
     if (balanceError) return "Error loading balance";

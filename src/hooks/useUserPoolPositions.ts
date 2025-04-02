@@ -80,6 +80,7 @@ export const useUserPoolPositions = (
             const depositedValue = mockDepositedValues[pool.id] || lpBalance.balance;
             
             // Get the current value by previewing redemption
+            // Convert balance to string since previewRedeem expects a string
             const redeemPreview = await previewRedeem(lpBalance.balance.toString(), pool.contract_address);
             const currentValue = parseFloat(redeemPreview.usdcAmount);
             

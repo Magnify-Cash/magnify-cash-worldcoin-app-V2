@@ -33,7 +33,7 @@ export function SupplyModal({
 }: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [previewLpAmount, setPreviewLpAmount] = useState<string | null>(null);
+  const [previewLpAmount, setPreviewLpAmount] = useState<number | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewRequested, setPreviewRequested] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);

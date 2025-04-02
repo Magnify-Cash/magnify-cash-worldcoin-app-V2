@@ -81,7 +81,7 @@ export const useUserPoolPositions = (
             
             // Get the current value by previewing redemption
             const redeemPreview = await previewRedeem(lpBalance.balance, pool.contract_address);
-            const currentValue = parseFloat(redeemPreview.usdcAmount);
+            const currentValue = redeemPreview.usdcAmount;
             
             // Calculate earnings
             const earnings = currentValue - depositedValue;

@@ -85,37 +85,11 @@ export function useLPTokenHistory(
           processedData = processedData.slice(-30);
         }
         
-        // Handle edge case of too few data points
-        if (processedData.length < 2) {
-          // Generate some additional data points if we don't have enough
-          const basePrice = processedData.length > 0 ? processedData[0].price : 1.0;
-          const baseDate = processedData.length > 0 ? processedData[0].date : "01/01/25";
-          
-          // Add a few synthetic data points
-          for (let i = 1; i <= 3; i++) {
-            const syntheticPrice = basePrice * (1 + (i * 0.01));
-            processedData.push({
-              date: baseDate, // Keep the same date for simplicity
-              price: parseFloat(syntheticPrice.toFixed(4))
-            });
-          }
-        }
-        
         setPriceData(processedData);
       } catch (err) {
         console.error("Error fetching LP token history:", err);
         setError(err instanceof Error ? err : new Error("Failed to fetch token price history"));
-        
-        // Set fallback data
-        setPriceData([
-          { date: "01/01/25", price: 1.0 },
-          { date: "01/15/25", price: 1.05 },
-          { date: "02/01/25", price: 1.1 },
-          { date: "02/15/25", price: 1.15 },
-          { date: "03/01/25", price: 1.2 },
-          { date: "03/15/25", price: 1.25 },
-          { date: "04/01/25", price: 1.3 }
-        ]);
+        setPriceData([]);
       } finally {
         setIsLoading(false);
       }

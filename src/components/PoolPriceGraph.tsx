@@ -44,6 +44,9 @@ export function PoolPriceGraph({
   // Check if we have enough data to show weekly view
   const hasEnoughDataForWeeklyView = priceData.length >= 14;
   
+  // Check if we have enough data to show the graph (at least 2 points)
+  const hasEnoughDataForGraph = priceData.length >= 2;
+  
   // Force back to days view if we don't have enough data for weekly view
   useEffect(() => {
     if (timeframe === "weeks" && !hasEnoughDataForWeeklyView) {
@@ -81,9 +84,6 @@ export function PoolPriceGraph({
 
   // Calculate initial reference line value (starting price)
   const referencePrice = priceData.length > 0 ? priceData[0].price : 1.0;
-  
-  // Check if we have any data at all
-  const hasData = priceData.length > 0;
 
   return (
     <Card className="w-full border border-[#9b87f5]/20 overflow-hidden">
@@ -94,8 +94,8 @@ export function PoolPriceGraph({
             {symbol} Token Price
           </CardTitle>
           
-          {/* Only show toggle if we have data */}
-          {hasData && (
+          {/* Only show toggle if we have enough data */}
+          {hasEnoughDataForGraph && (
             <ToggleGroup 
               type="single" 
               value={timeframe} 
@@ -135,13 +135,12 @@ export function PoolPriceGraph({
           <div className="h-full w-full flex flex-col items-center justify-center text-gray-500">
             <AlertTriangle className="h-8 w-8 mb-2 text-amber-500" />
             <p className="text-sm">Error loading price data</p>
-            <p className="text-xs mt-1 text-gray-400">Using fallback data</p>
           </div>
-        ) : !hasData ? (
+        ) : !hasEnoughDataForGraph ? (
           <div className="h-full w-full flex flex-col items-center justify-center text-gray-500">
             <LineChart className="h-8 w-8 mb-2 text-gray-300" />
-            <p className="text-sm">No price history available yet</p>
-            <p className="text-xs mt-1 text-gray-400">Check back soon</p>
+            <p className="text-sm">Insufficient price history</p>
+            <p className="text-xs mt-1 text-gray-400">At least 2 data points required</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

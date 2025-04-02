@@ -1,95 +1,83 @@
 
-import { useState, useEffect } from 'react';
-import { getUserLPBalance, previewRedeem } from '@/lib/backendRequests';
-import { toast } from '@/components/ui/use-toast';
+import { useState, useCallback, useEffect } from 'react';
+import { getUserPoolPosition, previewRedeem } from '@/lib/backendRequests';
+import { ethers } from 'ethers';
 
-// Mock API for deposited value (as requested)
-const getMockDepositedValue = async (): Promise<number> => {
-  // Simulate network call
-  await new Promise(resolve => setTimeout(resolve, 100));
-  return 1200;
-};
-
-interface UserPositionData {
+interface UseUserPoolPositionResult {
   balance: number;
-  depositedValue: number;
-  currentValue: number;
-  yield: number;
-  yieldPercentage: number;
   loading: boolean;
-  error: string | null;
+  error: string;
+  refetch: () => Promise<void>;
 }
 
-const initialState: UserPositionData = {
-  balance: 0,
-  depositedValue: 0,
-  currentValue: 0,
-  yield: 0,
-  yieldPercentage: 0,
-  loading: true,
-  error: null
-};
+/**
+ * Custom hook to fetch and manage a user's position in a specific pool
+ */
+export function useUserPoolPosition(
+  poolContractAddress: string,
+  userAddress: string
+): UseUserPoolPositionResult {
+  const [balance, setBalance] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
-export const useUserPoolPosition = (poolContractAddress: string | undefined): UserPositionData => {
-  const [positionData, setPositionData] = useState<UserPositionData>(initialState);
+  const fetchPosition = useCallback(async () => {
+    if (!poolContractAddress || !userAddress) {
+      setLoading(false);
+      return;
+    }
 
-  useEffect(() => {
-    const fetchUserPosition = async () => {
-      if (!poolContractAddress) {
-        setPositionData({ ...initialState, loading: false });
-        return;
+    try {
+      setLoading(true);
+      setError('');
+
+      // Call API to get user's position in this specific pool
+      const response = await getUserPoolPosition(poolContractAddress, userAddress);
+
+      if (!response || response.error) {
+        throw new Error(response?.error || 'Failed to fetch pool position');
       }
 
-      try {
-        // Make all API calls in parallel for optimization
-        // TODO: Change the demo-wallet to the actual wallet address of the user
-        const [lpBalanceResponse, depositedValueResponse] = await Promise.all([
-          getUserLPBalance('0x6835939032900e5756abFF28903d8A5E68CB39dF', poolContractAddress),
-          getMockDepositedValue()
-        ]);
+      // Parse the balance as a number to ensure type safety
+      const parsedBalance = parseFloat(response.balance);
+      
+      if (isNaN(parsedBalance)) {
+        throw new Error('Invalid balance received from API');
+      }
+      
+      setBalance(parsedBalance);
 
-        const balance = lpBalanceResponse.balance;
-        const depositedValue = depositedValueResponse;
-
-        // If user has a balance, get the current value via previewRedeem
-        let currentValue = 0;
-        if (balance > 0) {
-          const redeemPreview = await previewRedeem(balance.toString(), poolContractAddress);
-          // Convert string to number for computation
-          currentValue = parseFloat(redeemPreview.usdcAmount);
+      // Get estimated redemption value if needed
+      if (parsedBalance > 0) {
+        try {
+          // Convert balance to string for the API call
+          const balanceAsString = parsedBalance.toString();
+          const redeemPreview = await previewRedeem(poolContractAddress, balanceAsString);
+          console.log('Redeem preview:', redeemPreview);
+          // Additional processing if needed
+        } catch (redeemError) {
+          console.error('Error previewing redemption:', redeemError);
+          // Don't fail the whole request if just the preview fails
         }
-
-        // Calculate yield metrics
-        const yieldValue = currentValue - depositedValue;
-        const yieldPercentage = depositedValue > 0 ? (yieldValue / depositedValue) * 100 : 0;
-
-        setPositionData({
-          balance,
-          depositedValue,
-          currentValue,
-          yield: yieldValue,
-          yieldPercentage,
-          loading: false,
-          error: null
-        });
-      } catch (error) {
-        console.error('Error fetching user position data:', error);
-        setPositionData({
-          ...initialState,
-          loading: false,
-          error: 'Failed to load your position data'
-        });
-        
-        toast({
-          title: "Error",
-          description: "Failed to load your position data. Please try again later.",
-          variant: "destructive",
-        });
       }
-    };
+    } catch (err) {
+      console.error('Error fetching pool position:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      setBalance(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [poolContractAddress, userAddress]);
 
-    fetchUserPosition();
-  }, [poolContractAddress]);
+  // Initial fetch
+  useEffect(() => {
+    fetchPosition();
+  }, [fetchPosition]);
 
-  return positionData;
-};
+  return {
+    balance,
+    loading,
+    error,
+    refetch: fetchPosition,
+  };
+}

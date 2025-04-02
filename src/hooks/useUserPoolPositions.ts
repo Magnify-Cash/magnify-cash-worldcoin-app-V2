@@ -1,152 +1,104 @@
 
-import { useState, useEffect } from 'react';
-import { getPools } from '@/lib/poolRequests';
-import { getUserLPBalance, previewRedeem } from '@/lib/backendRequests';
-import { toast } from '@/components/ui/use-toast';
-import { LiquidityPool } from '@/types/supabase/liquidity';
+import { useState, useEffect, useCallback } from 'react';
+import { getUserPoolPositions, previewRedeem } from '@/lib/backendRequests';
+import { ethers } from 'ethers';
 
-export interface UserPoolPosition {
+export interface PoolPosition {
   poolId: number;
-  poolName: string;
-  symbol: string;
   contractAddress: string;
+  name: string;
+  symbol: string;
   balance: number;
-  depositedValue: number; // Using hardcoded values for now
-  currentValue: number;
-  earnings: number;
-  status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
+  balanceUsd: number;
   apy: number;
+  redeemableAmount?: number; // Optional preview of what user can redeem
 }
 
 interface UseUserPoolPositionsResult {
-  positions: UserPoolPosition[];
-  totalValue: number;
-  totalEarnings: number;
+  positions: PoolPosition[];
   loading: boolean;
-  error: string | null;
-  hasPositions: boolean;
-  refreshPositions: () => void;
+  error: string;
+  refetch: () => Promise<void>;
+  totalInvested: number;
 }
 
-// Mock deposited values for now (real API would track this)
-const mockDepositedValues: Record<number, number> = {
-  1: 1200,
-  2: 500,
-  3: 300,
-  4: 800,
-  5: 600
-};
+/**
+ * Custom hook to fetch and manage a user's positions across all pools
+ */
+export function useUserPoolPositions(
+  userAddress: string
+): UseUserPoolPositionsResult {
+  const [positions, setPositions] = useState<PoolPosition[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const [totalInvested, setTotalInvested] = useState<number>(0);
 
-export const useUserPoolPositions = (
-  walletAddress = '0x6835939032900e5756abFF28903d8A5E68CB39dF'
-): UseUserPoolPositionsResult => {
-  const [positions, setPositions] = useState<UserPoolPosition[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const fetchPositions = useCallback(async () => {
+    if (!userAddress) {
+      setLoading(false);
+      return;
+    }
 
-  useEffect(() => {
-    const fetchPositions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // First, fetch all pools
-        const pools = await getPools();
-        if (!pools || pools.length === 0) {
-          console.log("No pools available");
-          setPositions([]);
-          setLoading(false);
-          return;
-        }
+    try {
+      setLoading(true);
+      setError('');
 
-        // For each pool, check if user has a position
-        const positionPromises = pools.map(async (pool) => {
-          if (!pool.contract_address) {
-            console.log(`Pool ${pool.id} has no contract address`);
-            return null;
-          }
+      // Call API to get all user's positions
+      const response = await getUserPoolPositions(userAddress);
 
-          try {
-            // Get LP balance
-            const lpBalance = await getUserLPBalance(walletAddress, pool.contract_address);
-            
-            // If user doesn't have any LP tokens, they don't have a position
-            if (lpBalance.balance <= 0) {
-              return null;
-            }
-            
-            // Use the mock deposited value for now
-            const depositedValue = mockDepositedValues[pool.id] || lpBalance.balance;
-            
-            // Get the current value by previewing redemption
-            // Convert balance to string since previewRedeem expects a string
-            const redeemPreview = await previewRedeem(lpBalance.balance.toString(), pool.contract_address);
-            const currentValue = parseFloat(redeemPreview.usdcAmount);
-            
-            // Calculate earnings
-            const earnings = currentValue - depositedValue;
-            
-            // Create the position object
-            return {
-              poolId: pool.id,
-              poolName: pool.name,
-              symbol: pool.metadata?.symbol || 'LP',
-              contractAddress: pool.contract_address,
-              balance: lpBalance.balance,
-              depositedValue,
-              currentValue,
-              earnings,
-              status: pool.status,
-              apy: pool.apy
-            };
-          } catch (err) {
-            console.error(`Error fetching position for pool ${pool.id}:`, err);
-            return null;
-          }
-        });
-
-        // Wait for all position promises to resolve
-        const resolvedPositions = await Promise.all(positionPromises);
-        
-        // Filter out null positions (where user doesn't have a balance)
-        const validPositions = resolvedPositions.filter(
-          (position): position is UserPoolPosition => position !== null
-        );
-        
-        setPositions(validPositions);
-      } catch (err) {
-        console.error("Error fetching user positions:", err);
-        setError("Failed to load your portfolio data. Please try again later.");
-        toast({
-          title: "Error",
-          description: "Failed to load your portfolio data. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+      if (!response || response.error) {
+        throw new Error(response?.error || 'Failed to fetch pool positions');
       }
-    };
 
+      const positionsWithRedeemValues = await Promise.all(
+        response.positions.map(async (position) => {
+          if (position.balance > 0) {
+            try {
+              // Convert balance to string for the API call
+              const balanceAsString = position.balance.toString();
+              const redeemPreview = await previewRedeem(position.contractAddress, balanceAsString);
+              
+              return {
+                ...position,
+                redeemableAmount: redeemPreview ? parseFloat(redeemPreview.amount) : undefined,
+              };
+            } catch (err) {
+              console.error(`Failed to get redeem preview for ${position.symbol}:`, err);
+              return position;
+            }
+          }
+          return position;
+        })
+      );
+
+      setPositions(positionsWithRedeemValues);
+      
+      // Calculate total value of all positions
+      const total = positionsWithRedeemValues.reduce(
+        (sum, position) => sum + position.balanceUsd, 
+        0
+      );
+      setTotalInvested(total);
+    } catch (err) {
+      console.error('Error fetching pool positions:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      setPositions([]);
+      setTotalInvested(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [userAddress]);
+
+  // Initial fetch
+  useEffect(() => {
     fetchPositions();
-  }, [walletAddress, refreshTrigger]);
+  }, [fetchPositions]);
 
-  // Calculate totals
-  const totalValue = positions.reduce((sum, position) => sum + position.currentValue, 0);
-  const totalEarnings = positions.reduce((sum, position) => sum + position.earnings, 0);
-  const hasPositions = positions.length > 0;
-
-  const refreshPositions = () => {
-    setRefreshTrigger(prev => prev + 1);
+  return {
+    positions,
+    loading,
+    error,
+    refetch: fetchPositions,
+    totalInvested,
   };
-
-  return { 
-    positions, 
-    totalValue, 
-    totalEarnings, 
-    loading, 
-    error, 
-    hasPositions,
-    refreshPositions
-  };
-};
+}

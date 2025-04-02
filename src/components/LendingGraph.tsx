@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AlertTriangle } from "lucide-react";
 
 // Data for multiple pools
 const poolsData = [
@@ -96,6 +97,19 @@ export function LendingGraph() {
   const getTickInterval = () => {
     return isMobile ? 2 : 1; // Show every other month on mobile
   };
+
+  // Check if we have any data to display based on visible pools
+  const hasVisibleData = visiblePools.length > 0 && combinedData.length > 0;
+
+  if (!hasVisibleData) {
+    return (
+      <div className="w-full h-[280px] sm:h-[300px] flex flex-col items-center justify-center text-gray-500">
+        <AlertTriangle className="h-8 w-8 mb-2 text-amber-500" />
+        <p className="text-sm">No data available</p>
+        <p className="text-xs mt-1 text-gray-400">Please select at least one pool</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">

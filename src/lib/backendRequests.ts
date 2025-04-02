@@ -758,3 +758,22 @@ export const getLPTokenHistory = async (
   return response.data;
 }
 
+export async function previewSupply(
+  poolContractAddress: string, 
+  amount: string
+): Promise<{ shares: string }> {
+  try {
+    const response = await fetch(
+      `/api/pools/${poolContractAddress}/preview-supply?amount=${amount}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to preview supply: ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error in previewSupply:', error);
+    return { shares: "0" };
+  }
+}

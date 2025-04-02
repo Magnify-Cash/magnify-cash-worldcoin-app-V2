@@ -1,252 +1,240 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
   DialogFooter,
-  DialogDescription
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Coins, ArrowUpRight, Loader2 } from "lucide-react";
+import { AlertTriangle, DollarSign } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { previewDeposit } from "@/lib/backendRequests";
 import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
-import { toast } from "@/components/ui/use-toast";
 
 interface SupplyModalProps {
-  poolId: number;
   isOpen: boolean;
   onClose: () => void;
   poolContractAddress?: string;
   lpSymbol?: string;
-  walletAddress?: string;
+  walletAddress?: string; // Add wallet address prop
 }
 
 export function SupplyModal({ 
-  poolId, 
   isOpen, 
-  onClose,
-  poolContractAddress = "0x1234567890123456789012345678901234567890",
-  lpSymbol = "MAG-LP",
-  walletAddress = "0x6835939032900e5756abFF28903d8A5E68CB39dF" 
+  onClose, 
+  poolContractAddress, 
+  lpSymbol = "LP",
+  walletAddress 
 }: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
-  const [previewLpAmount, setPreviewLpAmount] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [previewLpAmount, setPreviewLpAmount] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewRequested, setPreviewRequested] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   
+  // Get the wallet's USDC balance using our new hook
   const { 
     balance: usdcBalance, 
     loading: balanceLoading, 
-    error: balanceError,
-    refetch: refreshBalance
+    error: balanceError, 
+    refetch: refreshBalance 
   } = useWalletUSDCBalance(walletAddress);
-
+  
   useEffect(() => {
     if (isOpen) {
       setAmount("");
+      setIsLoading(false);
       setPreviewLpAmount(null);
       setPreviewRequested(false);
       
+      // Refresh the USDC balance when the modal opens
       refreshBalance();
       
       setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 100);
+        inputRef.current?.focus();
+      }, 0);
     }
   }, [isOpen, refreshBalance]);
 
-  const handleMaxClick = () => {
-    if (!balanceLoading && !balanceError && usdcBalance > 0) {
-      setAmount(usdcBalance.toString());
-      handlePreview(usdcBalance.toString());
-    }
-  };
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    
-    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      setAmount(value);
-      
-      if (value === "") {
+  useEffect(() => {
+    const fetchPreviewAmount = async () => {
+      const numAmount = parseFloat(amount);
+      if (!isNaN(numAmount) && numAmount >= 10 && poolContractAddress) {
+        setIsPreviewLoading(true);
+        setPreviewRequested(true);
+        try {
+          const preview = await previewDeposit(numAmount, poolContractAddress);
+          setPreviewLpAmount(preview.lpAmount);
+        } catch (error) {
+          console.error("Error fetching preview deposit:", error);
+          setPreviewLpAmount(null);
+        } finally {
+          setIsPreviewLoading(false);
+        }
+      } else {
+        setPreviewRequested(numAmount >= 10);
         setPreviewLpAmount(null);
-        setPreviewRequested(false);
-        return;
       }
-      
-      if (parseFloat(value) > 0) {
-        const timeoutId = setTimeout(() => {
-          handlePreview(value);
-        }, 500);
-        
-        return () => clearTimeout(timeoutId);
-      }
-    }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchPreviewAmount();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [amount, poolContractAddress]);
+
+  const isAmountValid = () => {
+    const numAmount = parseFloat(amount);
+    return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
   };
 
-  const handlePreview = async (value: string) => {
-    try {
-      setPreviewRequested(true);
-      if (!poolContractAddress) {
-        setPreviewLpAmount(0);
-        return;
-      }
-      
-      const numericValue = parseFloat(value);
-      
-      const preview = await previewDeposit(numericValue, poolContractAddress);
-      setPreviewLpAmount(preview.lpAmount);
-    } catch (error) {
-      console.error("Error getting supply preview:", error);
-      setPreviewLpAmount(null);
+  const handleSupply = () => {
+    setIsLoading(true);
+    setTimeout(() => {
       toast({
-        title: "Preview Error",
-        description: "Could not estimate LP token amount. Please try again.",
-        variant: "destructive",
+        title: "Supply initiated",
+        description: `You have successfully supplied ${amount} USDC`,
       });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Supply Successful",
-        description: `You have successfully supplied USDC to the pool.`,
-      });
-      
+      setIsLoading(false);
       onClose();
-    } catch (error) {
-      console.error("Error supplying to pool:", error);
-      toast({
-        title: "Supply Failed",
-        description: "Failed to supply USDC to the pool. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+      setAmount("");
+    }, 1500);
   };
 
-  const formatLpAmount = () => {
-    return previewLpAmount !== null 
-      ? previewLpAmount.toFixed(4)
+  const calculateLPTokens = () => {
+    const numAmount = parseFloat(amount);
+    
+    if (isPreviewLoading || (previewRequested && !previewLpAmount)) {
+      return "...";
+    }
+    
+    if (previewLpAmount) {
+      return previewLpAmount;
+    }
+    
+    return !isNaN(numAmount) && numAmount > 0 && numAmount < 10
+      ? (numAmount * 0.95).toFixed(4)
       : "0.0000";
   };
 
+  // Display a formatted balance or loading state
   const displayBalance = () => {
     if (balanceLoading) return "Loading...";
     if (balanceError) return "Error loading balance";
+    if (usdcBalance === null) return "0.00";
     return usdcBalance.toFixed(2);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={`sm:max-w-[425px] ${isMobile ? 'p-4' : ''}`}>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-purple-500" />
-            Supply USDC to Pool
-          </DialogTitle>
-          <DialogDescription>
-            Supply USDC to Pool #{poolId} to receive {lpSymbol} tokens.
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent
+        className={`sm:max-w-[425px] ${isMobile ? "max-w-[90%] p-4" : ""} rounded-lg`}
+        style={{
+          position: 'fixed',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          maxHeight: isMobile ? "90vh" : "auto",
+          overflowY: "auto",
+        }}
+      >
+        <DialogHeader className={isMobile ? "pb-2" : ""}>
+          <DialogTitle className="text-xl text-center">Supply Assets</DialogTitle>
+          <DialogDescription className="text-center">
+            Provide liquidity to earn yield.
           </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
+
+        <div className={`grid gap-3 py-2 ${isMobile ? "py-2" : "py-4"}`}>
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between">
               <label htmlFor="amount" className="text-sm font-medium">
-                USDC Amount
+                Amount (USDC)
               </label>
-              <div className="text-xs text-gray-500 flex items-center gap-1">
-                Balance: {displayBalance()}
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-6 px-2 text-xs font-semibold text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                  onClick={handleMaxClick}
-                  disabled={balanceLoading || balanceError || usdcBalance <= 0}
-                >
-                  MAX
-                </Button>
-              </div>
+              <span className="text-xs text-gray-500">
+                Balance: {displayBalance()} USDC
+              </span>
             </div>
             <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <DollarSign className="h-4 w-4" />
+              </div>
               <Input
                 id="amount"
-                type="text"
                 placeholder="0.00"
+                className="pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 value={amount}
-                onChange={handleAmountChange}
-                className="text-lg pr-16"
+                onChange={(e) => setAmount(e.target.value)}
+                type="number"
+                step="0.01"
+                min="0"
+                autoComplete="off"
+                inputMode="decimal"
                 ref={inputRef}
-                disabled={isSubmitting}
+                tabIndex={-1}
               />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 font-medium text-gray-500">
-                USDC
+              <Button
+                type="button"
+                variant="ghost"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
+                onClick={() => usdcBalance !== null && setAmount(usdcBalance.toString())}
+                disabled={balanceLoading || usdcBalance === null}
+              >
+                MAX
+              </Button>
+            </div>
+
+            {amount && parseFloat(amount) >= 10 && (
+              <div className="text-xs text-gray-500 mt-1">
+                You will receive {calculateLPTokens()} {lpSymbol} tokens
+              </div>
+            )}
+
+            {amount && !isAmountValid() && (
+              <p className="text-xs text-red-500">
+                {parseFloat(amount) > (usdcBalance || 0)
+                  ? "Insufficient balance in wallet"
+                  : "Please enter a valid amount"}
+              </p>
+            )}
+          </div>
+
+          <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? "p-2 my-1" : "mt-2"}`}>
+            <div className="flex items-start">
+              <AlertTriangle className="mr-2 h-5 w-5 text-amber-600 flex-shrink-0 mt-0" />
+              <div className="text-xs text-amber-800">
+                <p className="font-medium mb-1">Risk Warning:</p>
+                <p>
+                  Providing liquidity involves financial risk. Your supplied funds may be subject to market fluctuations, 
+                  smart contract vulnerabilities, and changes in liquidity demand. While you may earn yield, returns are 
+                  not guaranteed, and withdrawal availability depends on pool liquidity. Only contribute what you can 
+                  afford to lose and conduct your own research before participating.
+                </p>
               </div>
             </div>
           </div>
-          
-          {previewRequested && (
-            <div className="rounded-md bg-gray-50 p-3">
-              <div className="text-sm font-medium mb-1">Preview</div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">You will receive:</span>
-                <span className="font-semibold">
-                  {formatLpAmount()} {lpSymbol}
-                </span>
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter className="pt-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={
-                isSubmitting || 
-                !amount || 
-                parseFloat(amount) <= 0 || 
-                (!!usdcBalance && parseFloat(amount) > usdcBalance)
-              }
-              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                  Processing
-                </>
-              ) : (
-                <>
-                  <ArrowUpRight className="mr-2 h-4 w-4" /> 
-                  Supply
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
+
+        <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
+          <Button
+            onClick={handleSupply}
+            disabled={!amount || !isAmountValid() || isLoading || balanceLoading}
+            className="bg-[#8B5CF6] hover:bg-[#7c50e6] text-white w-full py-6"
+          >
+            {isLoading ? "Processing..." : "Supply"}
+          </Button>
+          <Button variant="outline" onClick={onClose} disabled={isLoading} className="w-full py-6">
+            Cancel
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

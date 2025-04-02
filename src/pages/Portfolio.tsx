@@ -7,7 +7,7 @@ import { PortfolioSummary } from "@/components/portfolio/PortfolioSummary";
 import { NoPositions } from "@/components/portfolio/NoPositions";
 import { ActivePositions } from "@/components/portfolio/ActivePositions";
 import { LoadingState } from "@/components/portfolio/LoadingState";
-import { useUserPositions } from "@/hooks/useUserPositions";
+import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
 
 // Wallet address to fetch data for
 const WALLET_ADDRESS = "0x6835939032900e5756abFF28903d8A5E68CB39dF";
@@ -16,15 +16,13 @@ const Portfolio = () => {
   const isMobile = useIsMobile();
   const { 
     positions, 
+    totalValue, 
+    totalEarnings, 
     loading, 
-    error,
-    refetch,
-    totalInvested,
-    hasPositions
-  } = useUserPositions(WALLET_ADDRESS);
-
-  // Calculate total earnings across all positions
-  const totalEarnings = positions.reduce((sum, position) => sum + position.earnings, 0);
+    error, 
+    hasPositions,
+    refreshPositions
+  } = useUserPoolPositions(WALLET_ADDRESS);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -42,7 +40,7 @@ const Portfolio = () => {
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
             <p className="text-red-500 mb-4">{error}</p>
             <button 
-              onClick={refetch}
+              onClick={refreshPositions}
               className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
             >
               Try Again
@@ -56,7 +54,7 @@ const Portfolio = () => {
             />
 
             <PortfolioSummary
-              totalValue={totalInvested}
+              totalValue={totalValue}
               totalEarnings={totalEarnings}
               isMobile={isMobile}
             />

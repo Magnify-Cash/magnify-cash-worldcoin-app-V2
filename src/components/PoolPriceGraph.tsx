@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   AreaChart, 
   Area, 
@@ -41,19 +41,6 @@ export function PoolPriceGraph({
   // Use our new hook to fetch price data
   const { priceData, isLoading, error } = useLPTokenHistory(poolContract, timeframe);
   
-  // Check if we have enough data to show weekly view
-  const hasEnoughDataForWeekly = priceData.length >= 14;
-  
-  // Check if we have at least data for the first day
-  const hasFirstDayData = priceData.length > 0;
-  
-  // Reset to "days" if we don't have enough data for "weeks"
-  useEffect(() => {
-    if (!hasEnoughDataForWeekly && timeframe === "weeks") {
-      setTimeframe("days");
-    }
-  }, [hasEnoughDataForWeekly, timeframe]);
-  
   // Calculate min and max for yAxis domain with some padding
   const prices = priceData.map(d => d.price);
   const minPrice = prices.length > 0 ? Math.min(...prices) * 0.995 : 0.9;
@@ -94,31 +81,27 @@ export function PoolPriceGraph({
             {symbol} Token Price
           </CardTitle>
           
-          {hasFirstDayData && (
-            <ToggleGroup 
-              type="single" 
-              value={timeframe} 
-              onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}
-              className="mx-auto"
+          <ToggleGroup 
+            type="single" 
+            value={timeframe} 
+            onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}
+            className="mx-auto"
+          >
+            <ToggleGroupItem 
+              value="days" 
+              aria-label="View by days" 
+              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
             >
-              <ToggleGroupItem 
-                value="days" 
-                aria-label="View by days" 
-                className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
-              >
-                Days
-              </ToggleGroupItem>
-              {hasEnoughDataForWeekly && (
-                <ToggleGroupItem 
-                  value="weeks" 
-                  aria-label="View by weeks" 
-                  className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
-                >
-                  Weeks
-                </ToggleGroupItem>
-              )}
-            </ToggleGroup>
-          )}
+              Days
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="weeks" 
+              aria-label="View by weeks" 
+              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+            >
+              Weeks
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
       </CardHeader>
       <CardContent className={`${isMobile ? "px-1 py-2" : "pt-5"} h-[260px]`}>
@@ -128,15 +111,11 @@ export function PoolPriceGraph({
               Loading price data...
             </div>
           </div>
-        ) : error || !hasFirstDayData ? (
+        ) : error ? (
           <div className="h-full w-full flex flex-col items-center justify-center text-gray-500">
             <AlertTriangle className="h-8 w-8 mb-2 text-amber-500" />
-            <p className="text-sm">
-              {!hasFirstDayData ? "No price data available" : "Error loading price data"}
-            </p>
-            <p className="text-xs mt-1 text-gray-400">
-              {!hasFirstDayData ? "Please check back later" : "Using fallback data"}
-            </p>
+            <p className="text-sm">Error loading price data</p>
+            <p className="text-xs mt-1 text-gray-400">Using fallback data</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

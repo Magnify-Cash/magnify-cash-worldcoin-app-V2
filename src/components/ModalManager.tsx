@@ -8,12 +8,11 @@ export const ModalManager: React.FC = () => {
   const {
     isOpen,
     modalType,
-    poolId,
     poolContractAddress,
     lpSymbol,
     lpBalance,
     lpValue,
-    walletAddress,
+    walletAddress, // Get wallet address from context
     closeModal,
   } = useModalContext();
 
@@ -24,10 +23,9 @@ export const ModalManager: React.FC = () => {
       <SupplyModal
         isOpen={isOpen}
         onClose={closeModal}
-        poolId={poolId || 1}
         poolContractAddress={poolContractAddress || undefined}
         lpSymbol={lpSymbol || undefined}
-        walletAddress={walletAddress || undefined}
+        walletAddress={walletAddress || undefined} // Pass wallet address
       />
     );
   }

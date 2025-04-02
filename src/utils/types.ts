@@ -1,4 +1,3 @@
-
 export interface BackendResponse<T> {
   status: number;
   message: string;
@@ -53,7 +52,7 @@ export interface PreviewDepositResponse {
 }
 
 export interface PreviewRedeemResponse {
-  usdcAmount: string;
+  usdcAmount: number;
 }
 
 export interface PreviewWithdrawResponse {

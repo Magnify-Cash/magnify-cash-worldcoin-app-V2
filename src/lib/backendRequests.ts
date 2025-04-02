@@ -758,36 +758,3 @@ export const getLPTokenHistory = async (
   return response.data;
 }
 
-export async function getUserPoolPosition(poolContractAddress: string, userAddress: string) {
-  try {
-    const response = await fetch(
-      `/api/pools/${poolContractAddress}/positions/${userAddress}`
-    );
-    
-    if (!response.ok) {
-      return { error: `Failed to fetch position: ${response.statusText}` };
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error in getUserPoolPosition:', error);
-    return { error: 'Failed to fetch user pool position' };
-  }
-}
-
-export async function getUserPoolPositions(userAddress: string) {
-  try {
-    const response = await fetch(
-      `/api/users/${userAddress}/positions`
-    );
-    
-    if (!response.ok) {
-      return { error: `Failed to fetch positions: ${response.statusText}` };
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error in getUserPoolPositions:', error);
-    return { error: 'Failed to fetch user pool positions' };
-  }
-}

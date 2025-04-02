@@ -3,7 +3,7 @@ export interface BackendResponse<T> {
   message: string;
   data: T;
 }
-  
+
 export interface TokenMetadata {
   metadata: {
     tokenName: string;
@@ -186,6 +186,7 @@ export interface PoolWarmupPeriodResponse {
 export interface UserLPBalanceResponse {
   balance: number;
 }
+
 export interface LPTokenHistoryResponse {
   token_price: number;
   timestamp: string;

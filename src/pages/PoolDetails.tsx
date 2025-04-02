@@ -494,7 +494,11 @@ const PoolDetails = () => {
                 </CardContent>
               </Card>
 
-              <PoolPriceGraph poolId={pool.id} symbol={poolSymbol} />
+              <PoolPriceGraph 
+                poolId={pool.id} 
+                symbol={poolSymbol} 
+                contractAddress={pool.contract_address}
+              />
 
               <UserPortfolioCard
                 balance={userPosition.balance}

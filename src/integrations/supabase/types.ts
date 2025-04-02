@@ -165,6 +165,56 @@ export type Database = {
         }
         Relationships: []
       }
+      pool_addresses: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: number
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      pool_lp_tokens: {
+        Row: {
+          created_at: string | null
+          id: number
+          pool_id: number | null
+          timestamp: number | null
+          token_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          pool_id?: number | null
+          timestamp?: number | null
+          token_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          pool_id?: number | null
+          timestamp?: number | null
+          token_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pool_lp_tokens_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "pool_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_announcement_reads: {
         Row: {
           announcement_id: number | null

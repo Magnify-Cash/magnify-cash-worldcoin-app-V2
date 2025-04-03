@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -19,9 +18,9 @@ const Loan = () => {
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
   const [filteredPools, setFilteredPools] = useState<LiquidityPool[]>([]);
   const [poolsWithBorrowerInfo, setPoolsWithBorrowerInfo] = useState<Record<string, any>>({});
-  const [isLoadingBorrowerInfo, setIsLoadingBorrowerInfo] = useState<Record<string, boolean>>({});
+  const [isLoadingBorrowerInfo, setIsLoadingBorrowerInfo] = useState(true);
+  const [borrowerInfoLoaded, setBorrowerInfoLoaded] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [hasFetchedBorrowerInfo, setHasFetchedBorrowerInfo] = useState(false);
 
   // Hooks
   const { toast } = useToast();
@@ -51,73 +50,72 @@ const Loan = () => {
       }
       
       console.log(`[Loan] Filtered ${active.length} active pools with liquidity out of ${pools.length} total pools`);
+      
+      // Now that we have filtered pools, we need to load borrower info
+      // But only reset loading state if we don't already have borrower info loaded
+      if (!borrowerInfoLoaded) {
+        setIsLoadingBorrowerInfo(true);
+      }
     } else {
       setFetchError("No lending pools are currently available. Please try again later.");
     }
-  }, [pools]);
+  }, [pools, borrowerInfoLoaded]);
 
-  // Load borrower info for all pools - but only if we haven't loaded it already
+  // Load borrower info for all pools when filtered pools are ready
   useEffect(() => {
-    if (filteredPools.length > 0 && !hasFetchedBorrowerInfo) {
+    if (filteredPools.length > 0) {
       const loadBorrowerInfo = async () => {
-        // Prevent duplicate fetches by setting this flag
-        setHasFetchedBorrowerInfo(true);
-        
-        const loadingStateUpdates: Record<string, boolean> = {};
-        
-        // Initialize loading state for all pools that don't already have cached data
-        filteredPools.forEach(pool => {
-          if (pool.contract_address) {
-            // Only mark as loading if we don't have cached data
-            const hasCache = hasBorrowerInfoCache(pool.contract_address);
-            loadingStateUpdates[pool.contract_address] = !hasCache;
-          }
-        });
-        
-        setIsLoadingBorrowerInfo(loadingStateUpdates);
-        
-        // Reset errors
+        setIsLoadingBorrowerInfo(true);
         setFetchError(null);
         
-        // Process each pool
+        // Process each pool in parallel
         const results: Record<string, any> = {};
+        const promises: Promise<void>[] = [];
         let hasError = false;
+        
+        // First check which contracts need fetching (if not cached)
+        const contractsToFetch = filteredPools
+          .map(pool => pool.contract_address)
+          .filter((address): address is string => 
+            !!address && !hasBorrowerInfoCache(address)
+          );
+        
+        console.log(`[Loan] Need to fetch borrower info for ${contractsToFetch.length} out of ${filteredPools.length} pools`);
         
         for (const pool of filteredPools) {
           if (!pool.contract_address) continue;
           
-          try {
-            // Try to fetch borrower info - it will use cache if available
-            console.log(`[Loan] Fetching borrower info for pool: ${pool.name}`);
-            const borrowerInfo = await fetchBorrowerInfo(pool.contract_address);
+          const promise = fetchBorrowerInfo(pool.contract_address)
+            .then(borrowerInfo => {
+              results[pool.contract_address!] = {
+                loanAmount: borrowerInfo.loanAmount,
+                interestRate: borrowerInfo.interestRate,
+                loanPeriod: borrowerInfo.loanPeriodDays * 24 * 60 * 60
+              };
+            })
+            .catch(error => {
+              console.error(`[Loan] Failed to fetch borrower info for ${pool.name}:`, error);
+              hasError = true;
+            });
             
-            results[pool.contract_address] = {
-              loanAmount: borrowerInfo.loanAmount,
-              interestRate: borrowerInfo.interestRate,
-              loanPeriod: borrowerInfo.loanPeriodDays * 24 * 60 * 60
-            };
-          } catch (error) {
-            console.error(`[Loan] Failed to fetch borrower info for ${pool.name}:`, error);
-            hasError = true;
-          } finally {
-            // Update loading state for this pool
-            setIsLoadingBorrowerInfo(prev => ({
-              ...prev,
-              [pool.contract_address!]: false
-            }));
-          }
+          promises.push(promise);
         }
+        
+        // Wait for all promises to resolve
+        await Promise.all(promises);
         
         if (Object.keys(results).length === 0 && hasError) {
           setFetchError("Unable to fetch loan information from lending pools. Please try again later.");
         }
         
         setPoolsWithBorrowerInfo(results);
+        setIsLoadingBorrowerInfo(false);
+        setBorrowerInfoLoaded(true);
       };
       
       loadBorrowerInfo();
     }
-  }, [filteredPools, hasFetchedBorrowerInfo]);
+  }, [filteredPools]);
 
   // Call refetch after loan is confirmed
   useEffect(() => {
@@ -185,7 +183,11 @@ const Loan = () => {
     setTimeout(() => navigate("/repay-loan"), 1000);
   }; 
 
-  const isLoading = isLoadingNFT || isLoadingPools;
+  // Determine if we're in a loading state - only show loading when either:
+  // 1. NFT data is loading, or
+  // 2. Pools are loading, or
+  // 3. Borrower info is still loading and we have filtered pools
+  const isLoading = isLoadingNFT || isLoadingPools || (isLoadingBorrowerInfo && filteredPools.length > 0);
 
   return (
     <div className="min-h-screen">
@@ -264,7 +266,7 @@ const Loan = () => {
             filteredPools.map((pool) => {
               const contractAddress = pool.contract_address || "";
               const borrowerInfo = poolsWithBorrowerInfo[contractAddress];
-              const isLoadingData = isLoadingBorrowerInfo[contractAddress] || false;
+              const isLoadingData = !borrowerInfo;
               
               // Use real data from pools data if available, otherwise use loading state
               const loanAmount = borrowerInfo ? borrowerInfo.loanAmount : 0;

@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getPools, invalidatePoolsCache } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
@@ -87,7 +86,7 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   }, []);
 
   const refreshPools = async (invalidateCache: boolean = false) => {
-    // Don't refetch if already fetching
+    // Skip if we're already prefetching to prevent concurrent fetch operations
     if (isPrefetching) {
       console.log("[PoolDataContext] Already prefetching pool data, skipping duplicate request");
       return;
@@ -97,28 +96,31 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
     const storedLastFetched = localStorage.getItem(POOLS_LAST_FETCHED_KEY);
     const lastFetchedTime = storedLastFetched ? parseInt(storedLastFetched, 10) : null;
     
-    // Don't refetch if data was fetched within the cache timeout (unless forced invalidation)
-    if (!invalidateCache && lastFetchedTime && Date.now() - lastFetchedTime < CACHE_TIMEOUT_MS) {
+    // Skip refetch if data is recent, already have pools AND not forcing invalidation
+    if (
+      !invalidateCache && 
+      lastFetchedTime && 
+      Date.now() - lastFetchedTime < CACHE_TIMEOUT_MS && 
+      pools.length > 0
+    ) {
       console.log(`[PoolDataContext] Pools data fetched recently (${Math.round((Date.now() - lastFetchedTime) / 1000)}s ago), using cached data`);
       
-      // Make sure loading is false if we're using cached data and we already have pools
-      if (pools.length > 0) {
-        setLoading(false);
-      }
-      
+      // We already have data and it's recent, so we're not loading
+      setLoading(false);
       return;
     }
     
     try {
       setIsPrefetching(true);
-      // Set hasFetchStarted to true as soon as we start the first fetch
-      setHasFetchStarted(true);
       
       // Only set loading to true if we don't already have pools data
+      // This prevents UI flickering when refreshing in the background
       if (pools.length === 0) {
         setLoading(true);
       }
       
+      // Set hasFetchStarted to true as soon as we start the first fetch
+      setHasFetchStarted(true);
       setError(null);
       
       console.log(`[PoolDataContext] Fetching pools data. Invalidate cache: ${invalidateCache}`);
@@ -127,13 +129,14 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
         invalidatePoolsCache();
       }
       
+      // Fetch pools data
       const poolsData = await getPools();
       
       if (poolsData.length === 0) {
         setError("No pools available at this time");
       } else {
+        // Sort pools by status priority
         const sortedPools = [...poolsData].sort((a, b) => {
-          // Same sorting logic from Lending.tsx
           const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): number => {
             switch (status) {
               case 'warm-up': return 1;

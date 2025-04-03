@@ -71,11 +71,17 @@ export const Cache = {
   clearPoolCache(): void {
     const poolCachePrefix = 'pool_data_';
     const borrowerInfoPrefix = 'borrower_info_';
+    const idToContractKey = 'pool_id_to_contract_map';
+    
     try {
       // Find all pool cache items and remove them
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith(poolCachePrefix) || key.startsWith(borrowerInfoPrefix))) {
+        if (key && (
+          key.startsWith(poolCachePrefix) || 
+          key.startsWith(borrowerInfoPrefix) ||
+          key === idToContractKey
+        )) {
           localStorage.removeItem(key);
           console.log(`[Cache] Cleared ${key}`);
         }
@@ -84,5 +90,14 @@ export const Cache = {
     } catch (error) {
       console.error('[Cache] Error clearing pool cache:', error);
     }
+  },
+  
+  /**
+   * Check if cache exists for a key (even if expired)
+   * @param key Cache key
+   * @returns True if cache exists
+   */
+  exists(key: string): boolean {
+    return localStorage.getItem(key) !== null;
   }
 };

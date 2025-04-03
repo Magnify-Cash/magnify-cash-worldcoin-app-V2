@@ -14,29 +14,22 @@ type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
 const Welcome = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { pools, refreshPools, lastFetched, hasFetchStarted } = usePoolData();
+  const { pools, refreshPools, lastFetched, hasFetchStarted, loading: poolsLoading } = usePoolData();
   
   const [loadingLoan, setLoadingLoan] = useState(false);
   const [loadingLender, setLoadingLender] = useState(false);
+  const [prefetchingBorrowerInfo, setPrefetchingBorrowerInfo] = useState(false);
 
-  // Prefetch pool data and borrower info only once
+  // Prefetch pool data and borrower info
   useEffect(() => {
-    if (!hasFetchStarted) {
-      console.log("[Welcome] Initiating pools data prefetch with borrower info");
+    // Only start prefetching if we haven't already or if we don't have pools data yet
+    if (!hasFetchStarted || (pools.length === 0 && !poolsLoading)) {
+      console.log("[Welcome] Initiating pools data prefetch");
       
       // First, ensure we have the basic pool data
       refreshPools(false).then(() => {
-        // After pools are fetched, prefetch borrower info for all pools in parallel
-        if (pools && pools.length > 0) {
-          const contractAddresses = pools
-            .filter(pool => pool.contract_address && pool.status === 'active')
-            .map(pool => pool.contract_address!);
-          
-          if (contractAddresses.length > 0) {
-            console.log(`[Welcome] Prefetching borrower info for ${contractAddresses.length} active pools`);
-            prefetchBorrowerInfo(contractAddresses);
-          }
-        }
+        // After pools are fetched, log success
+        console.log(`[Welcome] Successfully prefetched pool data from API or cache`);
       }).catch(err => {
         console.error("[Welcome] Error prefetching pools:", err);
       });
@@ -44,7 +37,35 @@ const Welcome = () => {
       // If we already fetched, log the time for debugging
       console.log(`[Welcome] Using previously fetched pool data from ${new Date(lastFetched).toLocaleTimeString()}`);
     }
-  }, [refreshPools, lastFetched, hasFetchStarted, pools]);
+  }, [refreshPools, lastFetched, hasFetchStarted, pools, poolsLoading]);
+
+  // Separate effect for borrower info to avoid unnecessary API calls
+  useEffect(() => {
+    // Only prefetch borrower info if we have pools and haven't started prefetching yet
+    if (pools.length > 0 && !prefetchingBorrowerInfo) {
+      setPrefetchingBorrowerInfo(true);
+      
+      // Filter active pools with contract addresses
+      const contractAddresses = pools
+        .filter(pool => pool.contract_address && pool.status === 'active')
+        .map(pool => pool.contract_address!);
+      
+      if (contractAddresses.length > 0) {
+        console.log(`[Welcome] Prefetching borrower info for ${contractAddresses.length} active pools`);
+        
+        // Prefetch borrower info for all active pools
+        prefetchBorrowerInfo(contractAddresses)
+          .then(() => {
+            console.log('[Welcome] Successfully prefetched borrower info for all active pools');
+          })
+          .catch(err => {
+            console.error('[Welcome] Error prefetching borrower info:', err);
+          });
+      } else {
+        console.log('[Welcome] No active pools with contract addresses found for borrower info prefetch');
+      }
+    }
+  }, [pools, prefetchingBorrowerInfo]);
 
   const signInUser = async (redirectTo: string, isLenderFlow: boolean = false) => {
     const wallet_address = localStorage.getItem("ls_wallet_address");

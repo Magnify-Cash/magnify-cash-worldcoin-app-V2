@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -14,11 +13,12 @@ import { getUSDCBalance } from "@/lib/backendRequests";
 const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
   // hooks
   const toast = useToast();
   const navigate = useNavigate();
-  const ls_wallet = localStorage.getItem("ls_wallet_address");
+  const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const loan = data?.loan;
   const loanData: Loan | undefined = loan && loan[1];
@@ -28,10 +28,13 @@ const RepayLoan = () => {
     const updateUSDCBalance = async () => {
       if (ls_wallet) {
         try {
+          setIsLoadingBalance(true);
           const balance = await getUSDCBalance(ls_wallet);
           sessionStorage.setItem("usdcBalance", balance.toString());
         } catch (error) {
           console.error("Failed to fetch USDC balance:", error);
+        } finally {
+          setIsLoadingBalance(false);
         }
       }
     };
@@ -63,25 +66,27 @@ const RepayLoan = () => {
   
       setIsClicked(true);
 
-      if(sessionStorage.getItem("usdcBalance") === null) {
-        const balance = await getUSDCBalance(ls_wallet as string);
-        sessionStorage.setItem("usdcBalance", balance.toString());
-      }
-
-      const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
-      const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
-
-      if (currentBalance < amountDueFloat) {
-        toast.toast({
-          title: "Insufficient USDC",
-          description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
-          variant: "destructive",
-        });
-        setIsClicked(false);
-        return;
-      }
-  
       try {
+        if (ls_wallet) {
+          if (sessionStorage.getItem("usdcBalance") === null) {
+            const balance = await getUSDCBalance(ls_wallet);
+            sessionStorage.setItem("usdcBalance", balance.toString());
+          }
+
+          const currentBalance = Number(sessionStorage.getItem("usdcBalance") || "0");
+          const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
+
+          if (currentBalance < amountDueFloat) {
+            toast.toast({
+              title: "Insufficient USDC",
+              description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
+              variant: "destructive",
+            });
+            setIsClicked(false);
+            return;
+          }
+        }
+  
         if (data?.nftInfo?.tokenId) {
           // Fix: Convert loanAmountDue to string when passing to repayLoanWithPermit2
           await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
@@ -124,8 +129,8 @@ const RepayLoan = () => {
     }
   }, [isConfirmed, refetch]);
 
-  // Loading & error states
-  if (isLoading || !loan) {
+  // Loading & error states - include balance loading in the loading state
+  if (isLoading || isLoadingBalance || !loan) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -273,8 +278,9 @@ const RepayLoan = () => {
             )}
           </div>
         </div>
-    </div>
-  );
+      </div>
+    );
+  }
 };
-};
+
 export default RepayLoan;

@@ -12,7 +12,10 @@ import { retry } from "@/utils/retryUtils";
 export const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
 
 // Longer cache duration for borrower info (in minutes) - This data rarely changes
-const BORROWER_INFO_CACHE_DURATION = 30;
+const BORROWER_INFO_CACHE_DURATION = 60;
+
+// Track which contract addresses are currently being fetched to prevent duplicate calls
+const inFlightRequests: Record<string, Promise<BorrowerInfo>> = {};
 
 export interface BorrowerInfo {
   loanPeriodDays: number;
@@ -33,55 +36,76 @@ export const fetchBorrowerInfo = async (
   forceRefresh: boolean = false
 ): Promise<BorrowerInfo> => {
   try {
+    // If there's already an in-flight request for this address, return that promise
+    if (inFlightRequests[contractAddress]) {
+      console.log(`[BorrowerInfo] Reusing in-flight request for ${contractAddress}`);
+      return inFlightRequests[contractAddress];
+    }
+    
     console.log(`[BorrowerInfo] Fetching detailed borrower info for pool contract: ${contractAddress}`);
     
     // Check cache first (unless force refresh requested)
     if (!forceRefresh) {
-      const cachedBorrowerInfo = Cache.get(borrowerInfoCacheKey(contractAddress));
+      const cachedBorrowerInfo = Cache.get<BorrowerInfo>(borrowerInfoCacheKey(contractAddress));
       if (cachedBorrowerInfo) {
         console.log(`[BorrowerInfo] Using cached borrower info for ${contractAddress}`);
         return processBorrowerInfo(cachedBorrowerInfo);
       }
     }
     
-    // Fetch all data in parallel with retries for better reliability
-    const results = await Promise.all([
-      retry(() => getPoolLoanDuration(contractAddress), 3),
-      retry(() => getPoolLoanInterestRate(contractAddress), 3),
-      retry(() => getPoolLoanAmount(contractAddress), 3),
-      retry(() => getPoolOriginationFee(contractAddress), 3)
-    ]);
+    // Create a new promise for this fetch request
+    const fetchPromise = (async () => {
+      try {
+        // Fetch all data in parallel with retries for better reliability
+        const results = await Promise.all([
+          retry(() => getPoolLoanDuration(contractAddress), 3),
+          retry(() => getPoolLoanInterestRate(contractAddress), 3),
+          retry(() => getPoolLoanAmount(contractAddress), 3),
+          retry(() => getPoolOriginationFee(contractAddress), 3)
+        ]);
+        
+        const [loanDuration, interestRate, loanAmount, originationFee] = results;
+        
+        // Validate that we got actual data for all requests
+        // If any key fields are missing or invalid, throw an error
+        if (!loanDuration?.days || !interestRate?.interestRate || !loanAmount?.loanAmount) {
+          throw new Error("Missing critical borrower information from API response");
+        }
+        
+        // Create and format the borrower info
+        const borrowerInfo = {
+          loanPeriodDays: Math.ceil(loanDuration.days),
+          interestRate: extractNumericValue(interestRate.interestRate, 0),
+          loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
+            loanAmount.loanAmount : 0,
+          originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
+            originationFee.originationFee : 0,
+        };
+        
+        // Validate that the values make sense
+        if (borrowerInfo.interestRate <= 0 || borrowerInfo.loanAmount <= 0) {
+          throw new Error("Invalid borrower information values from API");
+        }
+        
+        // Cache the result for future use (with longer expiration since this data rarely changes)
+        Cache.set(borrowerInfoCacheKey(contractAddress), borrowerInfo, BORROWER_INFO_CACHE_DURATION);
+        
+        console.log(`[BorrowerInfo] Successfully fetched and cached borrower info for ${contractAddress}:`, borrowerInfo);
+        return processBorrowerInfo(borrowerInfo);
+      } finally {
+        // Remove this request from in-flight tracking once completed (success or error)
+        delete inFlightRequests[contractAddress];
+      }
+    })();
     
-    const [loanDuration, interestRate, loanAmount, originationFee] = results;
+    // Store the promise for this contract address
+    inFlightRequests[contractAddress] = fetchPromise;
     
-    // Validate that we got actual data for all requests
-    // If any key fields are missing or invalid, throw an error
-    if (!loanDuration?.days || !interestRate?.interestRate || !loanAmount?.loanAmount) {
-      throw new Error("Missing critical borrower information from API response");
-    }
-    
-    // Create and format the borrower info
-    const borrowerInfo = {
-      loanPeriodDays: Math.ceil(loanDuration.days),
-      interestRate: extractNumericValue(interestRate.interestRate, 0),
-      loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
-        loanAmount.loanAmount : 0,
-      originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
-        originationFee.originationFee : 0,
-    };
-    
-    // Validate that the values make sense
-    if (borrowerInfo.interestRate <= 0 || borrowerInfo.loanAmount <= 0) {
-      throw new Error("Invalid borrower information values from API");
-    }
-    
-    // Cache the result for future use (with longer expiration since this data rarely changes)
-    Cache.set(borrowerInfoCacheKey(contractAddress), borrowerInfo, BORROWER_INFO_CACHE_DURATION);
-    
-    console.log(`[BorrowerInfo] Successfully fetched and cached borrower info for ${contractAddress}:`, borrowerInfo);
-    return processBorrowerInfo(borrowerInfo);
+    // Return the promise
+    return fetchPromise;
   } catch (error) {
     console.error('[BorrowerInfo] Error fetching borrower information:', error);
+    delete inFlightRequests[contractAddress];
     // Instead of returning fallback values, propagate the error
     throw new Error(`Failed to fetch borrower information: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
@@ -93,7 +117,7 @@ export const fetchBorrowerInfo = async (
  * @returns True if cache exists, false otherwise
  */
 export const hasBorrowerInfoCache = (contractAddress: string): boolean => {
-  return Cache.get(borrowerInfoCacheKey(contractAddress)) !== null;
+  return Cache.exists(borrowerInfoCacheKey(contractAddress));
 };
 
 /**

@@ -43,9 +43,23 @@ export interface SoulboundNFT {
   verificationStatus: VerificationTier;
 }
 
+export interface Loan {
+  amount: number;
+  startTime: number;
+  isActive: boolean;
+  interestRate: number;
+  loanPeriod: number;
+}
+
 export interface ContractData {
   nftInfo: SoulboundNFT;
   hasActiveLoan: boolean;
+  loan?: Loan;
+  allTiers?: Array<{
+    loanAmount: number;
+    interestRate: number;
+    loanPeriod: number;
+  }>;
 }
 
 // Global cache for all components
@@ -89,6 +103,8 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
       };
       
       let hasActiveLoan = false;
+      let loanData = null;
+      let tierData = null;
       
       if (nftResponse && nftResponse.tokenId !== "0") {
         const tokenId = parseInt(nftResponse.tokenId);
@@ -106,12 +122,37 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         
         // Check if user has an active loan
         hasActiveLoan = nftData.hasActiveLoan || false;
+        
+        // Add loan data if available
+        if (nftData.loan) {
+          loanData = {
+            amount: nftData.loan.amount,
+            startTime: nftData.loan.startTime,
+            isActive: nftData.loan.isActive,
+            interestRate: nftData.loan.interestRate,
+            loanPeriod: nftData.loan.loanPeriod
+          };
+        }
+        
+        // Add tier data if available
+        if (nftData.tiers) {
+          tierData = nftData.tiers;
+        }
       }
       
       const newData: ContractData = {
         nftInfo: soulboundNFT,
         hasActiveLoan
       };
+      
+      // Add optional data if available
+      if (loanData) {
+        newData.loan = loanData;
+      }
+      
+      if (tierData) {
+        newData.allTiers = tierData;
+      }
       
       globalCache[walletAddress] = newData;
       setData(newData);

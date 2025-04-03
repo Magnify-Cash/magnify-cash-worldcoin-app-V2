@@ -276,7 +276,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-center mb-6">
                 <Shield className="w-16 h-16 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Your SoulBound NFT</h2>
+              <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Your NFT</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                 <motion.div
@@ -293,7 +293,7 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <h4 className="font-medium text-lg">
-                          Orb Verified NFT
+                          ORB
                         </h4>
                       </div>
                     </div>

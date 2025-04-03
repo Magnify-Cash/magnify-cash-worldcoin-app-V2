@@ -83,6 +83,7 @@ const RepayLoan = () => {
   
       try {
         if (data?.nftInfo?.tokenId) {
+          // Fix: Convert loanAmountDue to string when passing to repayLoanWithPermit2
           await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
   
           sessionStorage.removeItem("usdcBalance");

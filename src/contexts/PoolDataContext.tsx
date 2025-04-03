@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getPools, invalidatePoolsCache } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
@@ -45,6 +44,45 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
     return storedLastFetched ? parseInt(storedLastFetched, 10) : null;
   });
 
+  // Initialize pools from localStorage cache if available
+  useEffect(() => {
+    const loadCachedPools = () => {
+      try {
+        // Check if we have cached pools
+        const cachedPoolsKey = 'pool_data_all';
+        const cachedPoolsData = localStorage.getItem(cachedPoolsKey);
+        
+        if (cachedPoolsData) {
+          try {
+            const parsed = JSON.parse(cachedPoolsData);
+            if (parsed.data && Array.isArray(parsed.data) && parsed.data.length > 0) {
+              console.log("Found cached pools data on initial load, using it");
+              setPools(parsed.data);
+              setLoading(false);
+              setHasFetchStarted(true); // Mark as fetch started since we have data
+              return true;
+            }
+          } catch (e) {
+            console.error("Error parsing cached pools:", e);
+          }
+        }
+        return false;
+      } catch (e) {
+        console.error("Error checking localStorage for cached pools:", e);
+        return false;
+      }
+    };
+    
+    // Try to load cached pools
+    const foundCachedPools = loadCachedPools();
+    
+    // If we didn't find cached pools, keep loading state as true
+    // Otherwise, it will have been set to false in loadCachedPools
+    if (!foundCachedPools) {
+      setLoading(true);
+    }
+  }, []);
+
   const refreshPools = async (invalidateCache: boolean = false) => {
     // Don't refetch if already fetching
     if (isPrefetching) {
@@ -60,6 +98,12 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
     const cacheTimeoutMs = 5 * 60 * 1000; // 5 minutes
     if (!invalidateCache && lastFetchedTime && Date.now() - lastFetchedTime < cacheTimeoutMs) {
       console.log(`Pools data already fetched recently (${Math.round((Date.now() - lastFetchedTime) / 1000)}s ago), using cached data`);
+      
+      // Make sure loading is false if we're using cached data and we already have pools
+      if (pools.length > 0) {
+        setLoading(false);
+      }
+      
       return;
     }
     
@@ -67,7 +111,12 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       setIsPrefetching(true);
       // Set hasFetchStarted to true as soon as we start the first fetch
       setHasFetchStarted(true);
-      setLoading(true);
+      
+      // Only set loading to true if we don't already have pools data
+      if (pools.length === 0) {
+        setLoading(true);
+      }
+      
       setError(null);
       
       console.log(`Fetching pools data. Invalidate cache: ${invalidateCache}`);

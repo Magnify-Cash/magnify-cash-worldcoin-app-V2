@@ -18,6 +18,7 @@ const Lending = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [localLoading, setLocalLoading] = useState(true);
 
   // Check for wallet address in localStorage and redirect if not found
   useEffect(() => {
@@ -28,6 +29,7 @@ const Lending = () => {
       return;
     }
     setWalletAddress(ls_wallet);
+    setLocalLoading(false);
   }, [navigate]);
 
   // Smarter pool data loading logic
@@ -57,9 +59,17 @@ const Lending = () => {
   }, [fetchError]);
 
   // Don't render content until we've checked for wallet address
-  if (!walletAddress) {
-    return <LoadingState />;
+  if (localLoading) {
+    return <LoadingState message="Checking authentication..." />;
   }
+
+  // If not authenticated, don't render anything (the redirect will happen)
+  if (!walletAddress) {
+    return null;
+  }
+
+  // Check if we have pools data from cache, don't show loading if we do
+  const shouldShowLoading = loading && (!pools || pools.length === 0);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -78,7 +88,7 @@ const Lending = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
-          {loading ? (
+          {shouldShowLoading ? (
             <div className="col-span-full">
               <LoadingState message="Loading Liquidity Pools" />
             </div>

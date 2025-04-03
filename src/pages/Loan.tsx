@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -225,9 +224,7 @@ const Loan = () => {
             <Shield className="w-12 h-12 mx-auto mb-4 text-amber-500" />
             <h2 className="text-2xl font-semibold mb-2">You Already Have an Active Loan</h2>
             <p className="mt-2 mb-6 text-gray-600">
-              {loanVersion ? 
-                `You currently have an active loan in the ${loanVersion} contract. Please repay it before applying for a new loan.` : 
-                "You have an existing loan that needs to be repaid before applying for a new one."}
+              You currently have an active loan{loanVersion ? ` in the ${loanVersion} contract` : ''}. Please repay it before applying for a new loan.
             </p>
             <Button onClick={() => navigate("/repay-loan")} className="glass-button w-full sm:w-auto">
               Repay Loan

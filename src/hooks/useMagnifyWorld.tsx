@@ -142,8 +142,8 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         // Check if user has an active loan
         hasActiveLoan = nftData.hasActiveLoan || nftData.ongoingLoan || false;
         
-        // Add loan data if available and active
-        if (nftData.loan && (nftData.loan.isActive || hasActiveLoan)) {
+        // Add loan data if available
+        if (nftData.loan) {
           // Create loan data with version
           const loanVersion = nftData.loan.version || "V2"; // Default to V2 if not specified
           

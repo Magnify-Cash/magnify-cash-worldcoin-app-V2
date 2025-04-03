@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Calendar, DollarSign, Clock } from "lucide-react";
+import { Calendar, DollarSign, Clock, Shield } from "lucide-react";
 import { Loan, useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import { calculateRemainingTime } from "@/utils/timeinfo";
 import useRepayLoan from "@/hooks/useRepayLoan";
@@ -55,7 +55,7 @@ const RepayLoan = () => {
     if (loan) {
       return loan[0];
     }
-    return ""; // Default value if loan is not available
+    return "V2"; // Default to V2 if not available
   }, [loan]);
 
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();

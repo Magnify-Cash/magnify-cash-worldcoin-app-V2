@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Calculator, Sliders, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -8,27 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CalculatorInputs } from "@/pages/Calculator";
 import { usePoolData } from "@/contexts/PoolDataContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Cache } from "@/utils/cacheUtils";
-import { getPoolLoanDuration, getPoolLoanInterestRate, getPoolLoanAmount, getPoolOriginationFee } from "@/lib/backendRequests";
+import { fetchBorrowerInfo, BorrowerInfo } from "@/utils/borrowerInfoUtils";
+import { useToast } from "@/hooks/use-toast";
 
 interface CalculatorFormProps {
   onCalculate: (inputs: CalculatorInputs) => void;
 }
 
-const extractNumericValue = (value: string | undefined, defaultValue: number): number => {
-  if (!value) return defaultValue;
-  
-  const numericString = value.replace(/[^0-9.]/g, '');
-  const parsed = parseFloat(numericString);
-  
-  return isNaN(parsed) ? defaultValue : parsed;
-};
-
-const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
-
 export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
   const { pools, loading } = usePoolData();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   
   const [inputs, setInputs] = useState<CalculatorInputs>({
     investmentAmount: 1000,
@@ -68,55 +59,12 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
     }));
   };
 
-  const fetchBorrowerInfo = async (contractAddress: string) => {
-    try {
-      setIsLoadingPoolData(true);
-      console.log(`Fetching detailed borrower info for pool contract: ${contractAddress}...`);
-      
-      const cachedBorrowerInfo = Cache.get(borrowerInfoCacheKey(contractAddress));
-      if (cachedBorrowerInfo) {
-        console.log(`Using cached borrower info for ${contractAddress}`);
-        return cachedBorrowerInfo;
-      }
-      
-      const [loanDuration, interestRate, loanAmount, originationFee] = await Promise.all([
-        getPoolLoanDuration(contractAddress),
-        getPoolLoanInterestRate(contractAddress),
-        getPoolLoanAmount(contractAddress),
-        getPoolOriginationFee(contractAddress)
-      ]);
-      
-      const borrowerInfo = {
-        loanPeriodDays: Math.ceil(loanDuration.days),
-        interestRate: interestRate.interestRate ? 
-          interestRate.interestRate + '%' : '8.5%',
-        loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
-          `$${loanAmount.loanAmount}` : '$10',
-        originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
-          `${originationFee.originationFee}%` : '10%',
-      };
-      
-      Cache.set(borrowerInfoCacheKey(contractAddress), borrowerInfo, 60);
-      
-      console.log(`Successfully fetched and cached borrower info for ${contractAddress}:`, borrowerInfo);
-      return borrowerInfo;
-    } catch (error) {
-      console.error('Error fetching borrower information:', error);
-      return {
-        loanPeriodDays: 30,
-        interestRate: '8.5%',
-        loanAmount: '$10',
-        originationFee: '10%',
-      };
-    } finally {
-      setIsLoadingPoolData(false);
-    }
-  };
-
   const handlePoolSelect = async (value: string) => {
+    console.log(`Pool template selected: ${value}`);
     setSelectedPool(value);
     
     if (value === "custom") {
+      console.log("Using custom settings, no pool data needed");
       return;
     }
 
@@ -125,27 +73,31 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
     if (selectedPoolData) {
       try {
         setIsLoadingPoolData(true);
+        
+        // Get pool size from the selected pool data
         const poolSize = Math.round(selectedPoolData.total_value_locked || 10000);
+        console.log(`Selected pool size: ${poolSize}`);
         
-        let borrowerInfo = selectedPoolData.borrower_info;
+        // Start with updating pool size only
+        setInputs(prev => ({
+          ...prev,
+          poolSize
+        }));
         
-        if (!borrowerInfo && selectedPoolData.contract_address) {
-          borrowerInfo = await fetchBorrowerInfo(selectedPoolData.contract_address);
-        }
-        
-        if (borrowerInfo) {
-          const loanPeriod = borrowerInfo.loanPeriodDays ? 
-            Math.min(Math.max(1, extractNumericValue(String(borrowerInfo.loanPeriodDays), 30)), 30) : 30;
+        // Fetch borrower info data from API if needed
+        if (selectedPoolData.contract_address) {
+          console.log(`Fetching borrower info for contract: ${selectedPoolData.contract_address}`);
           
-          const interestRate = borrowerInfo.interestRate ? 
-            Math.min(Math.max(1, extractNumericValue(borrowerInfo.interestRate, 8.5)), 30) : 8.5;
+          const borrowerInfo = await fetchBorrowerInfo(selectedPoolData.contract_address);
+          console.log("Fetched and processed borrower info:", borrowerInfo);
           
-          const loanAmount = borrowerInfo.loanAmount ? 
-            Math.min(Math.max(10, extractNumericValue(borrowerInfo.loanAmount, 10)), 50) : 10;
+          // Apply constraints to ensure values are within acceptable ranges
+          const loanPeriod = Math.min(Math.max(7, borrowerInfo.loanPeriodDays), 30);
+          const interestRate = Math.min(Math.max(1, borrowerInfo.interestRate), 30);
+          const loanAmount = Math.min(Math.max(10, borrowerInfo.loanAmount), 50);
+          const originationFee = Math.min(Math.max(1, borrowerInfo.originationFee), 30);
           
-          const originationFee = borrowerInfo.originationFee ? 
-            Math.min(Math.max(1, extractNumericValue(borrowerInfo.originationFee, 10)), 30) : 10;
-          
+          // Update form inputs with the constrained values
           setInputs(prev => ({
             ...prev,
             poolSize,
@@ -164,7 +116,12 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
           });
         }
       } catch (error) {
-        console.error("Error parsing pool data:", error);
+        console.error("Error processing pool data:", error);
+        toast({
+          title: "Error loading pool data",
+          description: "Could not load borrower information for this pool. Using defaults instead.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoadingPoolData(false);
       }
@@ -173,7 +130,22 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onCalculate(inputs);
+    
+    // Validate inputs before calculating
+    const validatedInputs = {
+      ...inputs,
+      investmentAmount: Math.max(10, inputs.investmentAmount),
+      poolSize: Math.max(100, inputs.poolSize),
+      loanPeriod: Math.min(Math.max(7, inputs.loanPeriod), 30),
+      interestRate: Math.min(Math.max(1, inputs.interestRate), 30),
+      originationFee: Math.min(Math.max(1, inputs.originationFee), 30),
+      defaultRate: Math.min(Math.max(0, inputs.defaultRate), 100),
+      loanAmount: Math.min(Math.max(10, inputs.loanAmount), 50),
+      utilizationRate: Math.min(Math.max(0, inputs.utilizationRate), 100)
+    };
+    
+    console.log("Submitting validated calculator inputs:", validatedInputs);
+    onCalculate(validatedInputs);
   };
 
   return (
@@ -185,6 +157,31 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
 
       <div className="space-y-4 sm:space-y-6">
         <div className="space-y-4">
+          {/* Pool template selection - Moved to top for better UX */}
+          <div className="mb-4">
+            <Label htmlFor="poolSelect" className="block text-sm mb-1">Pool Template:</Label>
+            <Select value={selectedPool} onValueChange={handlePoolSelect} disabled={isLoadingPoolData || loading}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={
+                  loading ? "Loading pools..." : 
+                  isLoadingPoolData ? "Loading pool data..." : 
+                  "Select a pool"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="custom">Custom</SelectItem>
+                {pools.map((pool) => (
+                  <SelectItem key={pool.id} value={pool.contract_address || `pool-${pool.id}`}>
+                    {pool.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isLoadingPoolData && (
+              <p className="text-xs text-[#8B5CF6] mt-1">Loading pool data...</p>
+            )}
+          </div>
+        
           <div>
             <Label htmlFor="investmentAmount">Your Investment (USDC)</Label>
             <Input
@@ -271,26 +268,6 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
             <div className="flex items-center gap-2 mb-3">
               <Sliders className="w-4 h-4 text-[#8B5CF6]" />
               <h3 className="text-md font-medium">Loan Terms</h3>
-            </div>
-            
-            <div className="mb-4">
-              <Label htmlFor="poolSelect" className="block text-sm mb-1">Pool Template:</Label>
-              <Select value={selectedPool} onValueChange={handlePoolSelect} disabled={isLoadingPoolData}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={isLoadingPoolData ? "Loading pool data..." : "Select a pool"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="custom">Custom</SelectItem>
-                  {pools.map((pool) => (
-                    <SelectItem key={pool.id} value={pool.contract_address || `pool-${pool.id}`}>
-                      {pool.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {isLoadingPoolData && (
-                <p className="text-xs text-[#8B5CF6] mt-1">Loading pool data...</p>
-              )}
             </div>
           </div>
           

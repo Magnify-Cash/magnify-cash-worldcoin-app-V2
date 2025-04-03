@@ -10,6 +10,8 @@ import { retry } from "@/utils/retryUtils";
 
 // Cache key generator for borrower info
 export const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
+const poolContractCacheKey = (contract: string) => `pool_data_contract_${contract}`;
+const POOLS_CACHE_KEY = 'pool_data_all';
 
 // Longer cache duration for borrower info (in minutes) - This data rarely changes
 const BORROWER_INFO_CACHE_DURATION = 60;
@@ -49,6 +51,10 @@ export const fetchBorrowerInfo = async (
       const cachedBorrowerInfo = Cache.get<BorrowerInfo>(borrowerInfoCacheKey(contractAddress));
       if (cachedBorrowerInfo) {
         console.log(`[BorrowerInfo] Using cached borrower info for ${contractAddress}`);
+        
+        // Also update pool cache with this borrower info if needed
+        updatePoolCacheWithBorrowerInfo(contractAddress, cachedBorrowerInfo);
+        
         return processBorrowerInfo(cachedBorrowerInfo);
       }
     }
@@ -90,6 +96,9 @@ export const fetchBorrowerInfo = async (
         // Cache the result for future use (with longer expiration since this data rarely changes)
         Cache.set(borrowerInfoCacheKey(contractAddress), borrowerInfo, BORROWER_INFO_CACHE_DURATION);
         
+        // Also update pool cache with this borrower info
+        updatePoolCacheWithBorrowerInfo(contractAddress, borrowerInfo);
+        
         console.log(`[BorrowerInfo] Successfully fetched and cached borrower info for ${contractAddress}:`, borrowerInfo);
         return processBorrowerInfo(borrowerInfo);
       } finally {
@@ -108,6 +117,46 @@ export const fetchBorrowerInfo = async (
     delete inFlightRequests[contractAddress];
     // Instead of returning fallback values, propagate the error
     throw new Error(`Failed to fetch borrower information: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+/**
+ * Updates the pool caches with the latest borrower info
+ */
+const updatePoolCacheWithBorrowerInfo = (contractAddress: string, borrowerInfo: BorrowerInfo): void => {
+  try {
+    // Format the borrower info for the pool cache
+    const formattedBorrowerInfo = {
+      loanPeriodDays: borrowerInfo.loanPeriodDays,
+      interestRate: `${borrowerInfo.interestRate}%`,
+      loanAmount: `$${borrowerInfo.loanAmount}`,
+      originationFee: `${borrowerInfo.originationFee}%`,
+      warmupPeriod: '14 days' // Default
+    };
+    
+    // Update the individual pool cache if it exists
+    Cache.update<any>(
+      poolContractCacheKey(contractAddress),
+      (pool) => {
+        if (!pool) return pool;
+        return {
+          ...pool,
+          borrower_info: formattedBorrowerInfo
+        };
+      }
+    );
+    
+    // Also update the pool in the all pools cache if it exists
+    const allPoolsCache = Cache.get<any[]>(POOLS_CACHE_KEY);
+    if (allPoolsCache) {
+      const updatedAllPools = allPoolsCache.map(pool => 
+        pool.contract_address === contractAddress ? 
+          { ...pool, borrower_info: formattedBorrowerInfo } : pool
+      );
+      Cache.set(POOLS_CACHE_KEY, updatedAllPools, 15);
+    }
+  } catch (error) {
+    console.error('[BorrowerInfo] Error updating pool cache with borrower info:', error);
   }
 };
 

@@ -42,7 +42,7 @@ const Welcome = () => {
   // Separate effect for borrower info to avoid unnecessary API calls
   useEffect(() => {
     // Only prefetch borrower info if we have pools and haven't started prefetching yet
-    if (pools.length > 0 && !prefetchingBorrowerInfo) {
+    if (pools.length > 0 && !prefetchingBorrowerInfo && !poolsLoading) {
       setPrefetchingBorrowerInfo(true);
       
       // Filter active pools with contract addresses
@@ -65,7 +65,7 @@ const Welcome = () => {
         console.log('[Welcome] No active pools with contract addresses found for borrower info prefetch');
       }
     }
-  }, [pools, prefetchingBorrowerInfo]);
+  }, [pools, prefetchingBorrowerInfo, poolsLoading]);
 
   const signInUser = async (redirectTo: string, isLenderFlow: boolean = false) => {
     const wallet_address = localStorage.getItem("ls_wallet_address");

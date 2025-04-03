@@ -126,6 +126,7 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       console.log(`[PoolDataContext] Fetching pools data. Invalidate cache: ${invalidateCache}`);
       
       if (invalidateCache) {
+        // This will clear all pool-related caches
         invalidatePoolsCache();
       }
       

@@ -66,6 +66,45 @@ export const Cache = {
   },
   
   /**
+   * Update value in existing cache if it exists
+   * @param key Cache key
+   * @param updateFn Function that takes current value and returns updated value
+   * @returns True if cache was updated, false if cache key doesn't exist
+   */
+  update<T>(key: string, updateFn: (currentValue: T) => T): boolean {
+    try {
+      const item = localStorage.getItem(key);
+      if (!item) return false;
+      
+      const cacheItem: CacheItem<T> = JSON.parse(item);
+      
+      // Check if cache is expired
+      if (Date.now() > cacheItem.timestamp) {
+        console.log(`[Cache] "${key}" has expired, not updating`);
+        localStorage.removeItem(key);
+        return false;
+      }
+      
+      // Update the data using the provided function
+      const updatedData = updateFn(cacheItem.data);
+      
+      // Create a new cache item with the same expiration time
+      const updatedCacheItem: CacheItem<T> = {
+        data: updatedData,
+        timestamp: cacheItem.timestamp
+      };
+      
+      // Store the updated item
+      localStorage.setItem(key, JSON.stringify(updatedCacheItem));
+      console.log(`[Cache] Updated "${key}" data`);
+      return true;
+    } catch (error) {
+      console.error('[Cache] Error updating cache:', error);
+      return false;
+    }
+  },
+  
+  /**
    * Clear cache for all pools and borrower info
    */
   clearPoolCache(): void {

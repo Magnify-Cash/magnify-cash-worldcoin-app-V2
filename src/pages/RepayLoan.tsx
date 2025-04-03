@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ const RepayLoan = () => {
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
   // hooks
-  const toast = useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
@@ -77,7 +78,7 @@ const RepayLoan = () => {
           const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
 
           if (currentBalance < amountDueFloat) {
-            toast.toast({
+            toast({
               title: "Insufficient USDC",
               description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
               variant: "destructive",
@@ -88,7 +89,7 @@ const RepayLoan = () => {
         }
   
         if (data?.nftInfo?.tokenId) {
-          // Fix: Convert loanAmountDue to string when passing to repayLoanWithPermit2
+          // Convert loanAmountDue to string when passing to repayLoanWithPermit2
           await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
   
           sessionStorage.removeItem("usdcBalance");
@@ -96,7 +97,7 @@ const RepayLoan = () => {
           sessionStorage.removeItem("walletCacheTimestamp");
   
         } else {
-          toast.toast({
+          toast({
             title: "Error",
             description: "Unable to pay back loan.",
             variant: "destructive",
@@ -104,7 +105,7 @@ const RepayLoan = () => {
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
-        toast.toast({
+        toast({
           title: "Error",
           description: error?.message?.includes("user rejected transaction")
             ? "Transaction rejected by user."

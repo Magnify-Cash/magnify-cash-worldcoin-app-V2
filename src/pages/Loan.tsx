@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -37,6 +38,11 @@ const Loan = () => {
   // Filter active pools and pools with enough liquidity
   useEffect(() => {
     if (pools && pools.length > 0) {
+      // Reset borrower info loading state when pools change
+      if (!borrowerInfoLoaded) {
+        setIsLoadingBorrowerInfo(true);
+      }
+      
       const active = pools.filter(pool => 
         pool.status === 'active' && 
         pool.available_liquidity > 0
@@ -50,12 +56,6 @@ const Loan = () => {
       }
       
       console.log(`[Loan] Filtered ${active.length} active pools with liquidity out of ${pools.length} total pools`);
-      
-      // Now that we have filtered pools, we need to load borrower info
-      // But only reset loading state if we don't already have borrower info loaded
-      if (!borrowerInfoLoaded) {
-        setIsLoadingBorrowerInfo(true);
-      }
     } else {
       setFetchError("No lending pools are currently available. Please try again later.");
     }
@@ -183,10 +183,7 @@ const Loan = () => {
     setTimeout(() => navigate("/repay-loan"), 1000);
   }; 
 
-  // Determine if we're in a loading state - only show loading when either:
-  // 1. NFT data is loading, or
-  // 2. Pools are loading, or
-  // 3. Borrower info is still loading and we have filtered pools
+  // Determine if we're in a loading state - make sure we show loading until ALL data is ready
   const isLoading = isLoadingNFT || isLoadingPools || (isLoadingBorrowerInfo && filteredPools.length > 0);
 
   return (
@@ -253,7 +250,7 @@ const Loan = () => {
               </p>
               <Button 
                 onClick={() => {
-                  setHasFetchedBorrowerInfo(false); // Reset so we can fetch again
+                  setBorrowerInfoLoaded(false); // Reset so we can fetch again
                   setFetchError(null);
                 }} 
                 className="mt-4"
@@ -268,10 +265,20 @@ const Loan = () => {
               const borrowerInfo = poolsWithBorrowerInfo[contractAddress];
               const isLoadingData = !borrowerInfo;
               
-              // Use real data from pools data if available, otherwise use loading state
-              const loanAmount = borrowerInfo ? borrowerInfo.loanAmount : 0;
-              const interestRate = borrowerInfo ? borrowerInfo.interestRate : 0;
-              const loanPeriod = borrowerInfo ? borrowerInfo.loanPeriod : 0;
+              // Use real data from borrowerInfo or from pool.borrower_info (if it's been updated correctly)
+              const loanAmount = borrowerInfo ? 
+                borrowerInfo.loanAmount : 
+                typeof pool.borrower_info.loanAmount === 'string' ? 
+                  parseFloat(pool.borrower_info.loanAmount.replace(/[^0-9.]/g, '')) : 0;
+                  
+              const interestRate = borrowerInfo ? 
+                borrowerInfo.interestRate : 
+                typeof pool.borrower_info.interestRate === 'string' ? 
+                  parseFloat(pool.borrower_info.interestRate.replace(/[^0-9.]/g, '')) : 0;
+                  
+              const loanPeriod = borrowerInfo ? 
+                borrowerInfo.loanPeriod : 
+                (pool.borrower_info.loanPeriodDays || 0) * 24 * 60 * 60;
 
               return (
                 <LoanPoolCard

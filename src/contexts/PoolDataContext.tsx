@@ -10,7 +10,6 @@ interface PoolDataContextType {
   refreshPools: (invalidateCache?: boolean) => Promise<void>;
   lastFetched: number | null;
   isPrefetching: boolean;
-  // Add a flag to track if a fetch has ever been started
   hasFetchStarted: boolean;
 }
 
@@ -30,14 +29,21 @@ interface PoolDataProviderProps {
   children: ReactNode;
 }
 
+// Cache key for localStorage
+const POOLS_LAST_FETCHED_KEY = 'pools_last_fetched';
+
 export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   const [pools, setPools] = useState<LiquidityPool[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastFetched, setLastFetched] = useState<number | null>(null);
   const [isPrefetching, setIsPrefetching] = useState(false);
-  // Add state to track if a fetch has ever been started
   const [hasFetchStarted, setHasFetchStarted] = useState(false);
+  
+  // Initialize lastFetched from localStorage if available
+  const [lastFetched, setLastFetched] = useState<number | null>(() => {
+    const storedLastFetched = localStorage.getItem(POOLS_LAST_FETCHED_KEY);
+    return storedLastFetched ? parseInt(storedLastFetched, 10) : null;
+  });
 
   const refreshPools = async (invalidateCache: boolean = false) => {
     // Don't refetch if already fetching
@@ -46,9 +52,14 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       return;
     }
     
-    // Don't refetch if data was fetched within the last minute (unless forced invalidation)
-    if (!invalidateCache && lastFetched && Date.now() - lastFetched < 60 * 1000) {
-      console.log("Pools data already fetched recently, using cached data");
+    // Get the last fetched time from localStorage (which is shared across page navigations)
+    const storedLastFetched = localStorage.getItem(POOLS_LAST_FETCHED_KEY);
+    const lastFetchedTime = storedLastFetched ? parseInt(storedLastFetched, 10) : null;
+    
+    // Don't refetch if data was fetched within the last 5 minutes (unless forced invalidation)
+    const cacheTimeoutMs = 5 * 60 * 1000; // 5 minutes
+    if (!invalidateCache && lastFetchedTime && Date.now() - lastFetchedTime < cacheTimeoutMs) {
+      console.log(`Pools data already fetched recently (${Math.round((Date.now() - lastFetchedTime) / 1000)}s ago), using cached data`);
       return;
     }
     
@@ -58,6 +69,8 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       setHasFetchStarted(true);
       setLoading(true);
       setError(null);
+      
+      console.log(`Fetching pools data. Invalidate cache: ${invalidateCache}`);
       
       if (invalidateCache) {
         invalidatePoolsCache();
@@ -84,7 +97,12 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
         });
         
         setPools(sortedPools);
-        setLastFetched(Date.now());
+        
+        // Update both state and localStorage with the fetch timestamp
+        const now = Date.now();
+        setLastFetched(now);
+        localStorage.setItem(POOLS_LAST_FETCHED_KEY, now.toString());
+        console.log(`Pools data fetched successfully at ${new Date(now).toLocaleTimeString()}`);
       }
     } catch (err) {
       console.error("Error fetching pools:", err);

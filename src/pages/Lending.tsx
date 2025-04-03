@@ -10,8 +10,11 @@ import { usePoolData } from "@/contexts/PoolDataContext";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 
+// Cache timeout threshold
+const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+
 const Lending = () => {
-  const { pools, loading, error: fetchError, refreshPools } = usePoolData();
+  const { pools, loading, error: fetchError, refreshPools, lastFetched } = usePoolData();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -27,16 +30,21 @@ const Lending = () => {
     setWalletAddress(ls_wallet);
   }, [navigate]);
 
+  // Smarter pool data loading logic
   useEffect(() => {
-    const lastRefresh = localStorage.getItem("last_pools_refresh");
-    const refreshThreshold = 5 * 60 * 1000; // 5 minutes
+    console.log("Lending page checking if pool data needs refresh");
     
-    if (!lastRefresh || Date.now() - parseInt(lastRefresh) > refreshThreshold) {
-      console.log("Refreshing pool data from Lending page");
-      refreshPools(true);
-      localStorage.setItem("last_pools_refresh", Date.now().toString());
+    // Use the shared lastFetched timestamp from context
+    // This ensures consistent checking across page navigations
+    if (!lastFetched || Date.now() - lastFetched > REFRESH_THRESHOLD_MS) {
+      console.log(`Refreshing pool data from Lending page (last fetched: ${lastFetched ? new Date(lastFetched).toLocaleTimeString() : 'never'})`);
+      refreshPools(false); // Don't force invalidate cache here, let the cache logic decide
+    } else {
+      // Log that we're using cached data and how old it is
+      const ageSeconds = lastFetched ? Math.round((Date.now() - lastFetched) / 1000) : 0;
+      console.log(`Using cached pool data (${ageSeconds}s old)`);
     }
-  }, [refreshPools]);
+  }, [refreshPools, lastFetched]);
 
   useEffect(() => {
     if (fetchError) {

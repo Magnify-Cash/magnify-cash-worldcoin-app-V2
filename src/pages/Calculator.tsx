@@ -37,35 +37,47 @@ export interface CalculatorInputs {
   utilizationRate: number;
 }
 
+// Constants for calculation boundaries
+const MAX_POOL_SIZE = 1_000_000;
+const MAX_INTEREST_RATE = 100;
+const MAX_LOAN_AMOUNT = 1000;
+const MAX_ORIGINATION_FEE = 100;
+const MAX_DEFAULT_RATE = 100;
+
 const Calculator = () => {
   const [results, setResults] = useState<CalculationResult | null>(null);
 
   const calculateReturns = (inputs: CalculatorInputs) => {
     try {
+      console.log("Raw calculator inputs:", inputs);
+      
       // Ensure all inputs are valid numbers and within reasonable ranges
       const safeInputs = {
         ...inputs,
         investmentAmount: Math.max(0, inputs.investmentAmount),
-        poolSize: Math.max(100, Math.round(inputs.poolSize)), // Ensure whole number
+        poolSize: Math.max(100, Math.min(MAX_POOL_SIZE, Math.round(inputs.poolSize))), // Ensure whole number with reasonable max
         loanPeriod: Math.max(1, Math.min(365, inputs.loanPeriod)),
-        interestRate: Math.max(0, Math.min(100, inputs.interestRate)),
-        originationFee: Math.max(0, Math.min(100, inputs.originationFee)),
-        defaultRate: Math.max(0, Math.min(100, inputs.defaultRate)),
-        loanAmount: Math.max(1, Math.min(1000, inputs.loanAmount)),
+        interestRate: Math.max(0, Math.min(MAX_INTEREST_RATE, inputs.interestRate)),
+        originationFee: Math.max(0, Math.min(MAX_ORIGINATION_FEE, inputs.originationFee)),
+        defaultRate: Math.max(0, Math.min(MAX_DEFAULT_RATE, inputs.defaultRate)),
+        loanAmount: Math.max(1, Math.min(MAX_LOAN_AMOUNT, inputs.loanAmount)),
         utilizationRate: Math.max(0, Math.min(100, inputs.utilizationRate))
       };
       
-      console.log("Calculating returns with inputs:", safeInputs);
+      console.log("Sanitized calculator inputs:", safeInputs);
 
       // Step 1: Calculate actual capital utilized based on utilization rate
       const utilizedCapital = safeInputs.poolSize * (safeInputs.utilizationRate / 100);
+      console.log("Utilized capital:", utilizedCapital);
       
       // Step 2: Calculate total number of loans issued by the pool
-      const totalLoans = safeInputs.loanAmount > 0 ? utilizedCapital / safeInputs.loanAmount : 0;
+      const totalLoans = safeInputs.loanAmount > 0 ? Math.floor(utilizedCapital / safeInputs.loanAmount) : 0;
+      console.log("Total loans:", totalLoans);
       
       // Step 3: Break into successful and defaulted loans
-      const successfulLoans = totalLoans * (1 - safeInputs.defaultRate / 100);
-      const defaultedLoans = totalLoans * (safeInputs.defaultRate / 100);
+      const successfulLoans = Math.floor(totalLoans * (1 - safeInputs.defaultRate / 100));
+      const defaultedLoans = Math.floor(totalLoans * (safeInputs.defaultRate / 100));
+      console.log("Successful loans:", successfulLoans, "Defaulted loans:", defaultedLoans);
       
       // Step 4: Calculate earnings and losses at the pool level
       const effectiveLoan = safeInputs.loanAmount - (safeInputs.originationFee / 100 * safeInputs.loanAmount);
@@ -75,11 +87,22 @@ const Calculator = () => {
       const totalLossesFromDefaults = defaultedLoans * effectiveLoan;
       
       const finalPoolValue = safeInputs.poolSize + totalInterestEarned - totalLossesFromDefaults;
+      console.log("Final pool value components:", {
+        initialPoolSize: safeInputs.poolSize,
+        totalInterestEarned,
+        totalLossesFromDefaults,
+        finalPoolValue
+      });
       
       // Step 5: Calculate the user's share and results
       const userShare = safeInputs.poolSize > 0 ? safeInputs.investmentAmount / safeInputs.poolSize : 0;
       const userFinalValue = finalPoolValue * userShare;
       const userNetGain = userFinalValue - safeInputs.investmentAmount;
+      console.log("User results:", {
+        userShare,
+        userFinalValue,
+        userNetGain
+      });
       
       // Step 6: Calculate annualized return (APY)
       // Ensure we don't divide by zero

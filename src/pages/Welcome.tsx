@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
@@ -20,10 +19,15 @@ const Welcome = () => {
 
   // Prefetch pool data only once
   useEffect(() => {
-    // Only check for prefetch when component mounts, and don't log unnecessarily
-    if (!hasFetchStarted && !lastFetched) {
-      console.log("Welcome page initiating first pools data fetch");
+    if (!hasFetchStarted) {
+      console.log("Welcome page initiating pools data prefetch for better UX");
+      
+      // We don't invalidate cache here, as we want to use cache if it exists
+      // This ensures we don't do unnecessary fetches
       refreshPools(false);
+    } else if (lastFetched) {
+      // If we already fetched, log the time for debugging
+      console.log(`Using previously fetched pool data from ${new Date(lastFetched).toLocaleTimeString()}`);
     }
   }, [refreshPools, lastFetched, hasFetchStarted]);
 

@@ -20,17 +20,23 @@ export interface BorrowerInfo {
 /**
  * Fetches borrower information for a pool from the API or cache
  * @param contractAddress The pool contract address
+ * @param forceRefresh Whether to bypass cache and force a refresh from API
  * @returns Processed borrower information with numeric values
  */
-export const fetchBorrowerInfo = async (contractAddress: string): Promise<BorrowerInfo> => {
+export const fetchBorrowerInfo = async (
+  contractAddress: string, 
+  forceRefresh: boolean = false
+): Promise<BorrowerInfo> => {
   try {
     console.log(`Fetching detailed borrower info for pool contract: ${contractAddress}...`);
     
-    // Check cache first
-    const cachedBorrowerInfo = Cache.get(borrowerInfoCacheKey(contractAddress));
-    if (cachedBorrowerInfo) {
-      console.log(`Using cached borrower info for ${contractAddress}:`, cachedBorrowerInfo);
-      return processBorrowerInfo(cachedBorrowerInfo);
+    // Check cache first (unless force refresh requested)
+    if (!forceRefresh) {
+      const cachedBorrowerInfo = Cache.get(borrowerInfoCacheKey(contractAddress));
+      if (cachedBorrowerInfo) {
+        console.log(`Using cached borrower info for ${contractAddress}:`, cachedBorrowerInfo);
+        return processBorrowerInfo(cachedBorrowerInfo);
+      }
     }
     
     // Fetch all data in parallel for better performance
@@ -44,7 +50,8 @@ export const fetchBorrowerInfo = async (contractAddress: string): Promise<Borrow
     // Create and format the borrower info
     const borrowerInfo = {
       loanPeriodDays: Math.ceil(loanDuration.days),
-      interestRate: interestRate.interestRate ? interestRate.interestRate : '8.5',
+      interestRate: interestRate.interestRate ? 
+        extractNumericValue(interestRate.interestRate, 8.5) : 8.5,
       loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
         loanAmount.loanAmount : 10,
       originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
@@ -65,6 +72,50 @@ export const fetchBorrowerInfo = async (contractAddress: string): Promise<Borrow
       loanAmount: 10,
       originationFee: 10
     };
+  }
+};
+
+/**
+ * Checks if borrower info is available in cache for given contract address
+ * @param contractAddress The pool contract address
+ * @returns True if cache exists, false otherwise
+ */
+export const hasBorrowerInfoCache = (contractAddress: string): boolean => {
+  return Cache.get(borrowerInfoCacheKey(contractAddress)) !== null;
+};
+
+/**
+ * Pre-fetches borrower info for multiple pools in parallel
+ * @param contractAddresses Array of pool contract addresses to prefetch
+ */
+export const prefetchBorrowerInfo = async (contractAddresses: string[]): Promise<void> => {
+  try {
+    console.log(`Pre-fetching borrower info for ${contractAddresses.length} pools...`);
+    
+    // Filter out addresses that already have cached data
+    const addressesToFetch = contractAddresses.filter(address => 
+      !hasBorrowerInfoCache(address) && address && address !== 'custom'
+    );
+    
+    if (addressesToFetch.length === 0) {
+      console.log('All pool data already cached, skipping prefetch');
+      return;
+    }
+    
+    // Fetch in parallel but limit concurrency to 5 at a time to avoid overwhelming the API
+    const fetchPromises = addressesToFetch.map(contractAddress => 
+      () => fetchBorrowerInfo(contractAddress)
+    );
+    
+    const results = await Promise.allSettled(
+      fetchPromises.map(fetchFn => fetchFn())
+    );
+    
+    // Log results
+    const successful = results.filter(r => r.status === 'fulfilled').length;
+    console.log(`Pre-fetched borrower info for ${successful}/${addressesToFetch.length} pools`);
+  } catch (error) {
+    console.error('Error during prefetch of borrower info:', error);
   }
 };
 

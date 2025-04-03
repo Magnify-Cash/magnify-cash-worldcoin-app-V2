@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Calculator, Sliders, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CalculatorInputs } from "@/pages/Calculator";
 import { usePoolData } from "@/contexts/PoolDataContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { fetchBorrowerInfo, BorrowerInfo } from "@/utils/borrowerInfoUtils";
+import { fetchBorrowerInfo, BorrowerInfo, prefetchBorrowerInfo, hasBorrowerInfoCache } from "@/utils/borrowerInfoUtils";
 import { useToast } from "@/hooks/use-toast";
 
 interface CalculatorFormProps {
@@ -34,6 +33,21 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
 
   const [selectedPool, setSelectedPool] = useState<string>("custom");
   const [isLoadingPoolData, setIsLoadingPoolData] = useState(false);
+  const [isFetchingPools, setIsFetchingPools] = useState(false);
+
+  useEffect(() => {
+    if (!loading && pools.length > 0 && !isFetchingPools) {
+      setIsFetchingPools(true);
+      
+      const contractAddresses = pools
+        .filter(pool => pool.contract_address)
+        .map(pool => pool.contract_address as string);
+      
+      console.log(`Prefetching borrower info for ${contractAddresses.length} pools`);
+      prefetchBorrowerInfo(contractAddresses)
+        .finally(() => setIsFetchingPools(false));
+    }
+  }, [pools, loading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -72,32 +86,30 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
     
     if (selectedPoolData) {
       try {
-        setIsLoadingPoolData(true);
+        const hasCache = hasBorrowerInfoCache(value);
+        if (!hasCache) {
+          setIsLoadingPoolData(true);
+        }
         
-        // Get pool size from the selected pool data
         const poolSize = Math.round(selectedPoolData.total_value_locked || 10000);
         console.log(`Selected pool size: ${poolSize}`);
         
-        // Start with updating pool size only
         setInputs(prev => ({
           ...prev,
           poolSize
         }));
         
-        // Fetch borrower info data from API if needed
         if (selectedPoolData.contract_address) {
           console.log(`Fetching borrower info for contract: ${selectedPoolData.contract_address}`);
           
           const borrowerInfo = await fetchBorrowerInfo(selectedPoolData.contract_address);
           console.log("Fetched and processed borrower info:", borrowerInfo);
           
-          // Apply constraints to ensure values are within acceptable ranges
           const loanPeriod = Math.min(Math.max(7, borrowerInfo.loanPeriodDays), 30);
           const interestRate = Math.min(Math.max(1, borrowerInfo.interestRate), 30);
           const loanAmount = Math.min(Math.max(10, borrowerInfo.loanAmount), 50);
           const originationFee = Math.min(Math.max(1, borrowerInfo.originationFee), 30);
           
-          // Update form inputs with the constrained values
           setInputs(prev => ({
             ...prev,
             poolSize,
@@ -131,7 +143,6 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate inputs before calculating
     const validatedInputs = {
       ...inputs,
       investmentAmount: Math.max(10, inputs.investmentAmount),
@@ -148,6 +159,8 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
     onCalculate(validatedInputs);
   };
 
+  const isDropdownDisabled = loading && !pools.length;
+
   return (
     <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-[#8B5CF6]/10">
       <div className="flex items-center gap-2 mb-4 sm:mb-6">
@@ -157,13 +170,12 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
 
       <div className="space-y-4 sm:space-y-6">
         <div className="space-y-4">
-          {/* Pool template selection - Moved to top for better UX */}
           <div className="mb-4">
             <Label htmlFor="poolSelect" className="block text-sm mb-1">Pool Template:</Label>
-            <Select value={selectedPool} onValueChange={handlePoolSelect} disabled={isLoadingPoolData || loading}>
+            <Select value={selectedPool} onValueChange={handlePoolSelect} disabled={isDropdownDisabled}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={
-                  loading ? "Loading pools..." : 
+                  loading && !pools.length ? "Loading pools..." : 
                   isLoadingPoolData ? "Loading pool data..." : 
                   "Select a pool"
                 } />
@@ -179,6 +191,9 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
             </Select>
             {isLoadingPoolData && (
               <p className="text-xs text-[#8B5CF6] mt-1">Loading pool data...</p>
+            )}
+            {isFetchingPools && (
+              <p className="text-xs text-gray-500 mt-1">Pre-fetching pool templates in background...</p>
             )}
           </div>
         

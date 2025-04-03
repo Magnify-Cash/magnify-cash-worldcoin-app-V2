@@ -36,7 +36,8 @@ const Loan = () => {
   const hasActiveLoan = data?.hasActiveLoan ?? false;
   const loanVersion = data?.loan ? data.loan[0] : null;
 
-  console.log(`[Loan] Loan data: ${JSON.stringify(loanData)}`);
+  console.log(`[Loan] Loan data: ${loanData}`);
+  console.log(loanData)
   console.log(`[Loan] Has active loan: ${hasActiveLoan}, version: ${loanVersion}`);
 
   // Filter active pools and pools with enough liquidity
@@ -220,16 +221,13 @@ const Loan = () => {
         </div>
       ) : hasActiveLoan ? (
         <div className="p-6 space-y-6">
-          <div className="glass-card p-6 text-center">
-            <Shield className="w-12 h-12 mx-auto mb-4 text-amber-500" />
-            <h2 className="text-2xl font-semibold mb-2">You Already Have an Active Loan</h2>
+            <h2 className="text-2xl font-semibold mb-2">You already have an active loan</h2>
             <p className="mt-2 mb-6 text-gray-600">
-              You currently have an active loan{loanVersion ? ` in the ${loanVersion} contract` : ''}. Please repay it before applying for a new loan.
+              You currently have an active loan. Please repay it first before applying for a new loan.
             </p>
             <Button onClick={() => navigate("/repay-loan")} className="glass-button w-full sm:w-auto">
               Repay Loan
             </Button>
-          </div>
         </div>
       ) : !data || data?.nftInfo.tokenId === null ? (
         <div className="p-6 space-y-6">

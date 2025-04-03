@@ -1,8 +1,14 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { getSoulboundUserNFT, getSoulboundData } from "@/lib/backendRequests";
-import { MAGNIFY_WORLD_ADDRESS_V3 } from "@/utils/constants";
+import { readContract } from "@wagmi/core";
+import { magnifyworldabi } from "@/utils/magnifyworldabi";
+import { config } from "@/providers/Wagmi";
+import {
+  MAGNIFY_WORLD_ADDRESS_V3,
+  MAGNIFY_WORLD_ADDRESS_V1,
+  MAGNIFY_WORLD_ADDRESS,
+} from "@/utils/constants";
 
 export const VERIFICATION_TIERS: Record<"NONE" | "ORB", VerificationTier> = {
   NONE: {
@@ -71,10 +77,8 @@ export interface ContractData {
   }>;
 }
 
-// Global cache for all components
 let globalCache: Record<string, ContractData> = {};
 
-// Function to invalidate cache for a specific wallet address
 export function invalidateCache(walletAddress: `0x${string}`) {
   delete globalCache[walletAddress];
 }
@@ -95,16 +99,57 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
       return;
     }
 
+    const checkLegacyLoans = async (): Promise<[string, Loan] | null> => {
+      const contracts = [
+        { version: "V1", address: MAGNIFY_WORLD_ADDRESS_V1 },
+        { version: "V2", address: MAGNIFY_WORLD_ADDRESS },
+      ];
+
+      for (const { version, address } of contracts) {
+        try {
+          const loanResult = await readContract(config, {
+            address: address as `0x${string}`,
+            abi: magnifyworldabi,
+            functionName: "fetchLoanByAddress",
+            args: [walletAddress],
+          });
+
+          if (Array.isArray(loanResult) && loanResult[1]?.isActive) {
+            const loan: Loan = {
+              amount: BigInt(loanResult[1].amount),
+              startTime: Number(loanResult[1].startTime),
+              isActive: loanResult[1].isActive,
+              interestRate: BigInt(loanResult[1].interestRate),
+              loanPeriod: BigInt(loanResult[1].loanPeriod),
+            };
+            return [version, loan];
+          }
+        } catch (err) {
+          console.warn(`[useMagnifyWorld] Error checking ${version} loan:`, err);
+        }
+      }
+
+      return null;
+    };
+
     try {
       setIsLoading(true);
       setIsError(false);
-      
-      console.log("[CoT] Fetching soulbound NFT data for wallet:", walletAddress);
-      
-      // Fetch user's NFT data from backend
+
+      let hasActiveLoan = false;
+      let loanData: [string, Loan] | undefined = undefined;
+      let tierData = null;
+
+      // First check legacy loans
+      const legacyLoan = await checkLegacyLoans();
+      if (legacyLoan) {
+        loanData = legacyLoan;
+        hasActiveLoan = true;
+      }
+
+      // Then continue with v3 NFT
       const nftResponse = await getSoulboundUserNFT(walletAddress);
-      console.log("[CoT] NFT Response:", nftResponse);
-      
+
       let soulboundNFT: SoulboundNFT = {
         tokenId: null,
         tier: null,
@@ -115,19 +160,11 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         ongoingLoan: false,
         owner: null,
       };
-      
-      let hasActiveLoan = false;
-      let loanData = undefined;
-      let tierData = null;
-      
+
       if (nftResponse && nftResponse.tokenId !== "0") {
         const tokenId = parseInt(nftResponse.tokenId);
-        console.log("[CoT] User has NFT with token ID:", tokenId);
-        
-        // Fetch detailed data about the NFT
         const nftData = await getSoulboundData(tokenId);
-        console.log("[CoT] NFT Data:", nftData);
-        
+
         soulboundNFT = {
           tokenId: nftResponse.tokenId,
           tier: nftData.tier || null,
@@ -138,50 +175,43 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
           ongoingLoan: nftData.ongoingLoan || false,
           owner: nftData.owner || null,
         };
-        
-        // Check if user has an active loan
-        hasActiveLoan = nftData.hasActiveLoan || nftData.ongoingLoan || false;
-        
-        // Add loan data if available
-        if (nftData.loan) {
-          // Create loan data with version
-          const loanVersion = nftData.loan.version || "V2"; // Default to V2 if not specified
-          
+
+        const nftLoanIsActive = nftData.hasActiveLoan || nftData.ongoingLoan;
+
+        if (!loanData && nftLoanIsActive && nftData.loan) {
           loanData = [
-            loanVersion,
+            nftData.loan.version || "V3",
             {
               amount: BigInt(nftData.loan.amount || 0),
               startTime: nftData.loan.startTime || 0,
-              isActive: nftData.loan.isActive || hasActiveLoan, // Set isActive from either source
+              isActive: nftData.loan.isActive || true,
               interestRate: BigInt(nftData.loan.interestRate || 0),
-              loanPeriod: BigInt(nftData.loan.loanPeriod || 0)
-            }
+              loanPeriod: BigInt(nftData.loan.loanPeriod || 0),
+            },
           ];
+          hasActiveLoan = true;
         }
-        
-        // Add tier data if available
+
         if (nftData.tiers) {
           tierData = nftData.tiers;
         }
       }
-      
+
       const newData: ContractData = {
         nftInfo: soulboundNFT,
-        hasActiveLoan
+        hasActiveLoan,
       };
-      
-      // Add optional data if available
+
       if (loanData) {
         newData.loan = loanData;
       }
-      
+
       if (tierData) {
         newData.allTiers = tierData;
       }
-      
+
       globalCache[walletAddress] = newData;
       setData(newData);
-      
     } catch (error) {
       console.error("Error fetching contract data:", error);
       setIsError(true);
@@ -203,7 +233,6 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
     }
   }, [walletAddress, fetchData]);
 
-  // Refetch function for user action invalidation
   const refetch = useCallback(async (): Promise<void> => {
     invalidateCache(walletAddress);
     return fetchData();

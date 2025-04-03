@@ -140,6 +140,7 @@ export interface SoulboundDataResponse {
   hasActiveLoan: boolean;
   ongoingLoan: boolean;
   loan?: {
+    version: string;
     amount: number;
     startTime: number;
     isActive: boolean;

@@ -8,13 +8,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CalculatorInputs } from "@/pages/Calculator";
 import { usePoolData } from "@/contexts/PoolDataContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Cache } from "@/utils/cacheUtils";
+import { getPoolLoanDuration, getPoolLoanInterestRate, getPoolLoanAmount, getPoolOriginationFee } from "@/lib/backendRequests";
 
 interface CalculatorFormProps {
   onCalculate: (inputs: CalculatorInputs) => void;
 }
 
+const extractNumericValue = (value: string | undefined, defaultValue: number): number => {
+  if (!value) return defaultValue;
+  
+  const numericString = value.replace(/[^0-9.]/g, '');
+  const parsed = parseFloat(numericString);
+  
+  return isNaN(parsed) ? defaultValue : parsed;
+};
+
+const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
+
 export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
-  // Get pool data for the dropdown
   const { pools, loading } = usePoolData();
   const isMobile = useIsMobile();
   
@@ -30,11 +42,11 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
   });
 
   const [selectedPool, setSelectedPool] = useState<string>("custom");
+  const [isLoadingPoolData, setIsLoadingPoolData] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
-    // For poolSize, ensure it's a whole number
     if (name === "poolSize") {
       const parsedValue = Math.round(parseFloat(value) || 0);
       setInputs((prev) => ({
@@ -56,80 +68,105 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
     }));
   };
 
-  const handlePoolSelect = (value: string) => {
+  const fetchBorrowerInfo = async (contractAddress: string) => {
+    try {
+      setIsLoadingPoolData(true);
+      console.log(`Fetching detailed borrower info for pool contract: ${contractAddress}...`);
+      
+      const cachedBorrowerInfo = Cache.get(borrowerInfoCacheKey(contractAddress));
+      if (cachedBorrowerInfo) {
+        console.log(`Using cached borrower info for ${contractAddress}`);
+        return cachedBorrowerInfo;
+      }
+      
+      const [loanDuration, interestRate, loanAmount, originationFee] = await Promise.all([
+        getPoolLoanDuration(contractAddress),
+        getPoolLoanInterestRate(contractAddress),
+        getPoolLoanAmount(contractAddress),
+        getPoolOriginationFee(contractAddress)
+      ]);
+      
+      const borrowerInfo = {
+        loanPeriodDays: Math.ceil(loanDuration.days),
+        interestRate: interestRate.interestRate ? 
+          interestRate.interestRate + '%' : '8.5%',
+        loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
+          `$${loanAmount.loanAmount}` : '$10',
+        originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
+          `${originationFee.originationFee}%` : '10%',
+      };
+      
+      Cache.set(borrowerInfoCacheKey(contractAddress), borrowerInfo, 60);
+      
+      console.log(`Successfully fetched and cached borrower info for ${contractAddress}:`, borrowerInfo);
+      return borrowerInfo;
+    } catch (error) {
+      console.error('Error fetching borrower information:', error);
+      return {
+        loanPeriodDays: 30,
+        interestRate: '8.5%',
+        loanAmount: '$10',
+        originationFee: '10%',
+      };
+    } finally {
+      setIsLoadingPoolData(false);
+    }
+  };
+
+  const handlePoolSelect = async (value: string) => {
     setSelectedPool(value);
     
     if (value === "custom") {
-      return; // Don't change any values if custom is selected
+      return;
     }
 
-    // Find the selected pool
     const selectedPoolData = pools.find(pool => pool.contract_address === value);
     
-    if (selectedPoolData && selectedPoolData.borrower_info) {
+    if (selectedPoolData) {
       try {
-        // Update loan terms based on the selected pool
+        setIsLoadingPoolData(true);
         const poolSize = Math.round(selectedPoolData.total_value_locked || 10000);
         
-        // Safely parse loan period
-        let loanPeriod = 30; // Default value
-        if (selectedPoolData.borrower_info.loanPeriodDays) {
-          const parsedLoanPeriod = parseInt(String(selectedPoolData.borrower_info.loanPeriodDays), 10);
-          if (!isNaN(parsedLoanPeriod) && parsedLoanPeriod > 0) {
-            loanPeriod = Math.min(parsedLoanPeriod, 30); // Cap at 30 days to avoid extreme values
-          }
+        let borrowerInfo = selectedPoolData.borrower_info;
+        
+        if (!borrowerInfo && selectedPoolData.contract_address) {
+          borrowerInfo = await fetchBorrowerInfo(selectedPoolData.contract_address);
         }
         
-        // Safely parse interest rate (removing % symbol if present)
-        let interestRate = 8.5; // Default value
-        if (selectedPoolData.borrower_info.interestRate) {
-          const interestRateStr = String(selectedPoolData.borrower_info.interestRate).replace('%', '');
-          const parsedInterestRate = parseFloat(interestRateStr);
-          if (!isNaN(parsedInterestRate)) {
-            interestRate = Math.min(parsedInterestRate, 30); // Cap at 30% to avoid extreme values
-          }
+        if (borrowerInfo) {
+          const loanPeriod = borrowerInfo.loanPeriodDays ? 
+            Math.min(Math.max(1, extractNumericValue(String(borrowerInfo.loanPeriodDays), 30)), 30) : 30;
+          
+          const interestRate = borrowerInfo.interestRate ? 
+            Math.min(Math.max(1, extractNumericValue(borrowerInfo.interestRate, 8.5)), 30) : 8.5;
+          
+          const loanAmount = borrowerInfo.loanAmount ? 
+            Math.min(Math.max(10, extractNumericValue(borrowerInfo.loanAmount, 10)), 50) : 10;
+          
+          const originationFee = borrowerInfo.originationFee ? 
+            Math.min(Math.max(1, extractNumericValue(borrowerInfo.originationFee, 10)), 30) : 10;
+          
+          setInputs(prev => ({
+            ...prev,
+            poolSize,
+            loanPeriod,
+            interestRate,
+            loanAmount,
+            originationFee
+          }));
+          
+          console.log("Updated inputs from pool template:", {
+            poolSize,
+            loanPeriod,
+            interestRate,
+            loanAmount,
+            originationFee
+          });
         }
-        
-        // Safely parse loan amount (removing $ symbol if present)
-        let loanAmount = 10; // Default value
-        if (selectedPoolData.borrower_info.loanAmount) {
-          const loanAmountStr = String(selectedPoolData.borrower_info.loanAmount).replace('$', '');
-          const parsedLoanAmount = parseFloat(loanAmountStr);
-          if (!isNaN(parsedLoanAmount)) {
-            loanAmount = Math.min(parsedLoanAmount, 50); // Cap at 50 to avoid extreme values
-          }
-        }
-        
-        // Safely parse origination fee (removing % symbol if present)
-        let originationFee = 10; // Default value
-        if (selectedPoolData.borrower_info.originationFee) {
-          const originationFeeStr = String(selectedPoolData.borrower_info.originationFee).replace('%', '');
-          const parsedOriginationFee = parseFloat(originationFeeStr);
-          if (!isNaN(parsedOriginationFee)) {
-            originationFee = Math.min(parsedOriginationFee, 30); // Cap at 30% to avoid extreme values
-          }
-        }
-        
-        // Update the inputs with validated values
-        setInputs(prev => ({
-          ...prev,
-          poolSize,
-          loanPeriod,
-          interestRate,
-          loanAmount,
-          originationFee
-        }));
-        
-        console.log("Updated inputs from pool template:", {
-          poolSize,
-          loanPeriod,
-          interestRate,
-          loanAmount,
-          originationFee
-        });
       } catch (error) {
         console.error("Error parsing pool data:", error);
-        // Keep current values on error
+      } finally {
+        setIsLoadingPoolData(false);
       }
     }
   };
@@ -238,9 +275,9 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
             
             <div className="mb-4">
               <Label htmlFor="poolSelect" className="block text-sm mb-1">Pool Template:</Label>
-              <Select value={selectedPool} onValueChange={handlePoolSelect}>
+              <Select value={selectedPool} onValueChange={handlePoolSelect} disabled={isLoadingPoolData}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a pool" />
+                  <SelectValue placeholder={isLoadingPoolData ? "Loading pool data..." : "Select a pool"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="custom">Custom</SelectItem>
@@ -251,6 +288,9 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                   ))}
                 </SelectContent>
               </Select>
+              {isLoadingPoolData && (
+                <p className="text-xs text-[#8B5CF6] mt-1">Loading pool data...</p>
+              )}
             </div>
           </div>
           

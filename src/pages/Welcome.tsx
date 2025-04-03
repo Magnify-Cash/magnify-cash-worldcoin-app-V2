@@ -24,7 +24,9 @@ const Welcome = () => {
       
       // We don't invalidate cache here, as we want to use cache if it exists
       // This ensures we don't do unnecessary fetches
-      refreshPools(false);
+      refreshPools(false).catch(err => {
+        console.error("Error prefetching pools:", err);
+      });
     } else if (lastFetched) {
       // If we already fetched, log the time for debugging
       console.log(`Using previously fetched pool data from ${new Date(lastFetched).toLocaleTimeString()}`);

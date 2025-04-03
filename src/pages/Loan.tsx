@@ -32,10 +32,13 @@ const Loan = () => {
   const { usdcBalance, refreshBalance } = useUSDCBalance();
   const { pools, loading: isLoadingPools } = usePoolData();
   
+  // Extract loan information from data
   const loanData = data?.loan ? data.loan[1] : null;
-  const hasActiveLoan = loanData?.isActive ?? false;
+  const hasActiveLoan = data?.hasActiveLoan ?? false;
+  const loanVersion = data?.loan ? data.loan[0] : null;
 
   console.log(`[Loan] Loan data: ${JSON.stringify(loanData)}`);
+  console.log(`[Loan] Has active loan: ${hasActiveLoan}, version: ${loanVersion}`);
 
   // Filter active pools and pools with enough liquidity
   useEffect(() => {
@@ -218,10 +221,15 @@ const Loan = () => {
         </div>
       ) : hasActiveLoan ? (
         <div className="p-6 space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold">You already have an active loan</h2>
-            <p className="mt-4 text-gray-600">You currently have an active loan. Please repay it first.</p>
-            <Button onClick={() => navigate("/repay-loan")} className="mt-4 w-full sm:w-auto">
+          <div className="glass-card p-6 text-center">
+            <Shield className="w-12 h-12 mx-auto mb-4 text-amber-500" />
+            <h2 className="text-2xl font-semibold mb-2">You Already Have an Active Loan</h2>
+            <p className="mt-2 mb-6 text-gray-600">
+              {loanVersion ? 
+                `You currently have an active loan in the ${loanVersion} contract. Please repay it before applying for a new loan.` : 
+                "You have an existing loan that needs to be repaid before applying for a new one."}
+            </p>
+            <Button onClick={() => navigate("/repay-loan")} className="glass-button w-full sm:w-auto">
               Repay Loan
             </Button>
           </div>

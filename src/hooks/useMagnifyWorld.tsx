@@ -59,7 +59,7 @@ export interface Loan {
 export interface ContractData {
   nftInfo: SoulboundNFT;
   hasActiveLoan: boolean;
-  loan?: [string, Loan];
+  loan?: [string, Loan]; // [version, loan]
   allTiers?: Array<{
     loanAmount: number;
     interestRate: number;
@@ -139,13 +139,19 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
           owner: nftData.owner || null,
         };
         
-        // Check if user has an active loan
+        // Check if user has an active loan in any version (V1 or V2)
+        // We'll consider a loan active if either:
+        // 1. The backend tells us directly (nftData.hasActiveLoan or nftData.ongoingLoan)
+        // 2. We have loan data and the isActive flag is true
+        
         hasActiveLoan = nftData.hasActiveLoan || nftData.ongoingLoan || false;
         
         // Add loan data if available
         if (nftData.loan) {
+          const version = nftData.loan.version || "V2"; // Default to V2 if not specified
+          
           loanData = [
-            "V2",
+            version,
             {
               amount: BigInt(nftData.loan.amount || 0),
               startTime: nftData.loan.startTime || 0,
@@ -154,6 +160,11 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
               loanPeriod: BigInt(nftData.loan.loanPeriod || 0)
             }
           ];
+          
+          // Update hasActiveLoan based on loan data
+          if (loanData[1].isActive) {
+            hasActiveLoan = true;
+          }
         }
         
         // Add tier data if available

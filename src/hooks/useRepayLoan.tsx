@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
@@ -74,8 +75,15 @@ const useRepayLoan = (): RepayLoanResponse => {
     setLoanDetails(null);
 
     const CONTRACT_ADDRESS = getContractAddress(V1OrV2);
+    
+    if (!CONTRACT_ADDRESS) {
+      setError(`Unsupported contract version: ${V1OrV2}`);
+      return;
+    }
 
     try {
+      console.log(`[RepayLoan] Repaying loan of ${loanAmount} for contract version ${V1OrV2} at address ${CONTRACT_ADDRESS}`);
+      
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
 
       const permitTransfer = {
@@ -187,9 +195,9 @@ const useRepayLoan = (): RepayLoanResponse => {
         setIsConfirming(true);
 
         setLoanDetails({
-          amount: parseInt(loanAmount),
+          amount: typeof loanAmount === 'string' ? parseInt(loanAmount) : Number(loanAmount),
           interest: 0, // Calculate based on contract terms
-          totalDue: parseInt(loanAmount), // Calculate total with interest
+          totalDue: typeof loanAmount === 'string' ? parseInt(loanAmount) : Number(loanAmount), // Calculate total with interest
           transactionId: finalPayload.transaction_id,
         });
       } else {

@@ -1,17 +1,22 @@
 
-import { useState } from "react";
-import { Calculator, Sliders, Calendar, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calculator, Sliders, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalculatorInputs } from "@/pages/Calculator";
+import { usePoolData } from "@/contexts/PoolDataContext";
 
 interface CalculatorFormProps {
   onCalculate: (inputs: CalculatorInputs) => void;
 }
 
 export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
+  // Get pool data for the dropdown
+  const { pools, loading } = usePoolData();
+  
   const [inputs, setInputs] = useState<CalculatorInputs>({
     investmentAmount: 1000,
     poolSize: 10000,
@@ -22,6 +27,8 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
     loanAmount: 10,
     utilizationRate: 80
   });
+
+  const [selectedPool, setSelectedPool] = useState<string>("custom");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,6 +43,44 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
       ...prev,
       [name]: value[0]
     }));
+  };
+
+  const handlePoolSelect = (value: string) => {
+    setSelectedPool(value);
+    
+    if (value === "custom") {
+      return; // Don't change any values if custom is selected
+    }
+
+    // Find the selected pool
+    const selectedPoolData = pools.find(pool => pool.contract_address === value);
+    
+    if (selectedPoolData && selectedPoolData.borrower_info) {
+      // Update loan terms based on the selected pool
+      const poolSize = selectedPoolData.total_value_locked || 10000;
+      const loanPeriod = selectedPoolData.borrower_info.loanPeriodDays || 30;
+      
+      // Parse interest rate (removing % symbol if present)
+      const interestRateStr = selectedPoolData.borrower_info.interestRate || "8.5%";
+      const interestRate = parseFloat(interestRateStr.replace('%', ''));
+      
+      // Parse loan amount (removing $ symbol if present)
+      const loanAmountStr = selectedPoolData.borrower_info.loanAmount || "$10";
+      const loanAmount = parseFloat(loanAmountStr.replace('$', ''));
+      
+      // Parse origination fee (removing % symbol if present)
+      const originationFeeStr = selectedPoolData.borrower_info.originationFee || "10%";
+      const originationFee = parseFloat(originationFeeStr.replace('%', ''));
+      
+      setInputs(prev => ({
+        ...prev,
+        poolSize,
+        loanPeriod,
+        interestRate: isNaN(interestRate) ? 8.5 : interestRate,
+        loanAmount: isNaN(loanAmount) ? 10 : loanAmount,
+        originationFee: isNaN(originationFee) ? 10 : originationFee
+      }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -102,13 +147,60 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
             </div>
             <p className="text-xs text-gray-500 mt-1">Percentage of pool capital being used for loans</p>
           </div>
+          
+          <div>
+            <Label htmlFor="defaultRate" className="flex items-center justify-between">
+              <span>Default Rate (%)</span>
+              <span className="text-xs text-gray-500">% of loans that default</span>
+            </Label>
+            <div className="flex items-center gap-4">
+              <Slider
+                id="defaultRate"
+                min={0}
+                max={100}
+                step={0.1}
+                value={[inputs.defaultRate]}
+                onValueChange={(value) => handleSliderChange("defaultRate", value)}
+                className="flex-1"
+              />
+              <Input
+                name="defaultRate"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={inputs.defaultRate}
+                onChange={handleInputChange}
+                className="w-20 focus-visible:ring-[#8B5CF6]"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="border-t border-gray-200 pt-4">
-          <h3 className="text-md font-medium mb-4 flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-[#8B5CF6]" />
-            Loan Terms
-          </h3>
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <h3 className="text-md font-medium flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-[#8B5CF6]" />
+              Loan Terms
+            </h3>
+            <div className="flex items-center">
+              <Label htmlFor="poolSelect" className="mr-2 text-sm">Pool Template:</Label>
+              <Select value={selectedPool} onValueChange={handlePoolSelect}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select a pool" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom">Custom</SelectItem>
+                  {pools.map((pool) => (
+                    <SelectItem key={pool.id} value={pool.contract_address || `pool-${pool.id}`}>
+                      {pool.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
           <div className="space-y-4">
             <div>
               <Label htmlFor="loanAmount">Loan Amount per Borrower (USDC)</Label>
@@ -203,34 +295,6 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                   max="30"
                   step="0.1"
                   value={inputs.originationFee}
-                  onChange={handleInputChange}
-                  className="w-20 focus-visible:ring-[#8B5CF6]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="defaultRate" className="flex items-center justify-between">
-                <span>Default Rate (%)</span>
-                <span className="text-xs text-gray-500">% of loans that default</span>
-              </Label>
-              <div className="flex items-center gap-4">
-                <Slider
-                  id="defaultRate"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={[inputs.defaultRate]}
-                  onValueChange={(value) => handleSliderChange("defaultRate", value)}
-                  className="flex-1"
-                />
-                <Input
-                  name="defaultRate"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={inputs.defaultRate}
                   onChange={handleInputChange}
                   className="w-20 focus-visible:ring-[#8B5CF6]"
                 />

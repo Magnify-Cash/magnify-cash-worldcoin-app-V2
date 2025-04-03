@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Container } from "@/components/ui/container";
 import { CalculatorForm } from "@/components/calculator/CalculatorForm";
 import { CalculatorResults } from "@/components/calculator/CalculatorResults";
+import { PoolDataProvider } from "@/contexts/PoolDataContext";
 
 export interface CalculationResult {
   // Portfolio values
@@ -112,7 +113,9 @@ const Calculator = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <CalculatorForm onCalculate={calculateReturns} />
+            <PoolDataProvider>
+              <CalculatorForm onCalculate={calculateReturns} />
+            </PoolDataProvider>
           </div>
           <div>
             <CalculatorResults results={results} />

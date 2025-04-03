@@ -44,7 +44,8 @@ export function PoolCard({
   symbol,
   lockDuration = 180,
   startDate,
-  endDate
+  endDate,
+  contract
 }: PoolCardProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -136,6 +137,15 @@ export function PoolCard({
   
   const gradientClass = "from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20";
   
+  const handleViewPool = () => {
+    if (contract) {
+      navigate(`/pool/${contract}`);
+    } else {
+      // Fallback to ID-based routing if no contract is available
+      navigate(`/pool/id/${id}`);
+    }
+  };
+  
   return (
     <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
       <CardHeader className="flex flex-col items-center gap-2 pb-2 pt-3">
@@ -197,7 +207,7 @@ export function PoolCard({
         <Separator className="my-1 bg-gray-200" />
         
         <Button 
-          onClick={() => navigate(`/pool/${id}`)} 
+          onClick={handleViewPool} 
           className="w-full flex items-center justify-center gap-2 bg-[#9b87f5] hover:opacity-90 hover:text-white"
           size={isMobile ? "sm" : "default"}
         >

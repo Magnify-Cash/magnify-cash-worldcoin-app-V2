@@ -54,7 +54,9 @@ function App() {
                 <Route path="/welcome" element={<Welcome />} />
                 <Route path="/announcements" element={<Announcements />} />
                 <Route path="/lending" element={<Lending />} />
-                <Route path="/pool/:id" element={<PoolDetails />} />
+                <Route path="/pool/:contract" element={<PoolDetails />} />
+                {/* Legacy route support */}
+                <Route path="/pool/id/:id" element={<PoolDetails />} />
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/lending-history" element={<LendingHistory />} />
                 <Route path="/calculator" element={<Calculator />} />

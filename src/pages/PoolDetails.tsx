@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getPoolById } from "@/lib/poolRequests";
+import { getPoolById, getPoolByContract } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -41,27 +41,40 @@ import { useUserPoolPosition } from "@/hooks/useUserPoolPosition";
 import { usePoolModals } from "@/hooks/usePoolModals";
 
 const PoolDetails = () => {
-  const { id } = useParams();
+  const { contract, id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
   const [loading, setLoading] = useState(true);
   const [pool, setPool] = useState<LiquidityPool | null>(null);
   const { openSupplyModal, openWithdrawModal } = usePoolModals();
-  const poolId = id ? parseInt(id) : 0;
 
   const userPosition = useUserPoolPosition(pool?.contract_address);
 
   useEffect(() => {
     const fetchPoolData = async () => {
-      if (!poolId) {
+      if (!contract && !id) {
         navigate("/lending");
         return;
       }
       
       try {
         setLoading(true);
-        const poolData = await getPoolById(poolId);
+        let poolData: LiquidityPool | null = null;
+        
+        if (contract) {
+          // Fetch by contract address
+          poolData = await getPoolByContract(contract);
+        } else if (id) {
+          // Fallback for legacy routes - fetch by ID
+          const poolId = parseInt(id);
+          poolData = await getPoolById(poolId);
+          
+          // If we found a pool by ID and it has a contract, redirect to the new URL format
+          if (poolData && poolData.contract_address) {
+            navigate(`/pool/${poolData.contract_address}`, { replace: true });
+          }
+        }
         
         if (!poolData) {
           toast({
@@ -87,7 +100,7 @@ const PoolDetails = () => {
     };
 
     fetchPoolData();
-  }, [poolId, navigate]);
+  }, [contract, id, navigate]);
 
   const getDateFromTimestamp = (timestamp?: string): Date => {
     if (!timestamp) return new Date();

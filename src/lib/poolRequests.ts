@@ -22,7 +22,45 @@ import { Cache } from "@/utils/cacheUtils";
 // Cache keys
 const POOLS_CACHE_KEY = 'pool_data_all';
 const poolCacheKey = (id: number) => `pool_data_${id}`;
+const poolContractCacheKey = (contract: string) => `pool_data_contract_${contract}`;
 const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
+const ID_TO_CONTRACT_CACHE_KEY = 'pool_id_to_contract_map';
+
+// Helper function to create a mapping of pool IDs to contract addresses
+const createIdToContractMapping = (pools: LiquidityPool[]): Record<number, string> => {
+  const mapping: Record<number, string> = {};
+  
+  pools.forEach(pool => {
+    if (pool.id && pool.contract_address) {
+      mapping[pool.id] = pool.contract_address;
+    }
+  });
+  
+  // Cache this mapping for future lookups
+  Cache.set(ID_TO_CONTRACT_CACHE_KEY, mapping, 60); // Cache for 60 minutes
+  
+  return mapping;
+};
+
+// Helper function to get a contract address from a pool ID using the cached mapping
+const getContractAddressFromId = async (id: number): Promise<string | null> => {
+  // Check if we have a cached mapping
+  const cachedMapping = Cache.get<Record<number, string>>(ID_TO_CONTRACT_CACHE_KEY);
+  
+  if (cachedMapping && cachedMapping[id]) {
+    return cachedMapping[id];
+  }
+  
+  // If not found in cache, try to get all pools and create a mapping
+  try {
+    const pools = await getPools();
+    const mapping = createIdToContractMapping(pools);
+    return mapping[id] || null;
+  } catch (error) {
+    console.error(`Failed to get contract address for pool ID ${id}:`, error);
+    return null;
+  }
+};
 
 export const getPools = async (): Promise<LiquidityPool[]> => {
   try {
@@ -49,7 +87,13 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
     // For each pool address, fetch details in parallel
     const poolDataPromises = poolAddresses.map(async (contract, index) => {
       try {
-        // Check for individual pool cache
+        // Check for individual pool cache by contract address
+        const contractCached = Cache.get<LiquidityPool>(poolContractCacheKey(contract));
+        if (contractCached) {
+          return contractCached;
+        }
+        
+        // Check for individual pool cache by ID
         const poolId = index + 1;
         const cachedPool = Cache.get<LiquidityPool>(poolCacheKey(poolId));
         if (cachedPool) {
@@ -173,8 +217,9 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           }
         };
         
-        // Cache the individual pool
+        // Cache the individual pool by both ID and contract
         Cache.set(poolCacheKey(poolId), pool, 15);
+        Cache.set(poolContractCacheKey(contract), pool, 15);
         
         return pool;
       } catch (error) {
@@ -227,6 +272,8 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
     // Cache the complete pools data
     if (validPools.length > 0) {
       Cache.set(POOLS_CACHE_KEY, validPools, 15);
+      // Also create and cache the ID to contract mapping
+      createIdToContractMapping(validPools);
     }
     
     return validPools;
@@ -257,174 +304,191 @@ export const getPoolById = async (id: number): Promise<LiquidityPool | null> => 
   try {
     // Check for individual pool cache first
     const cachedPool = Cache.get<LiquidityPool>(poolCacheKey(id));
-    let pool: LiquidityPool | null = null;
-    
     if (cachedPool) {
       console.log("Using cached pool data for pool ID:", id);
-      pool = { ...cachedPool }; // Create a copy to avoid modifying the cached object directly
-    } else {
-      // If not in cache, get all pools and find by id
-      const pools = await getPools();
-      pool = pools.find(p => p.id === id) || null;
-      
-      // If pool not found, return null
-      if (!pool) {
-        return null;
-      }
+      return enhancePoolWithBorrowerInfo(cachedPool);
     }
     
-    // Fetch borrower information only if the pool is found
-    if (pool && pool.contract_address) {
-      // First check if we have cached borrower info
-      const cachedBorrowerInfo = Cache.get<LiquidityPool['borrower_info']>(
-        borrowerInfoCacheKey(pool.contract_address)
-      );
-      
-      if (cachedBorrowerInfo) {
-        console.log(`Using cached borrower info for pool ID ${id}`);
-        pool.borrower_info = cachedBorrowerInfo;
-      } else {
-        try {
-          console.log(`Fetching detailed borrower info for pool ID ${id}...`);
-          
-          // Fetch loan related data with retry mechanism
-          const loanDuration = await retry(
-            () => getPoolLoanDuration(pool.contract_address!),
-            3,
-            1000,
-            (error, retriesLeft) => console.warn(`Error fetching loan duration, retries left: ${retriesLeft}`, error)
-          );
-          
-          const interestRate = await retry(
-            () => getPoolLoanInterestRate(pool.contract_address!),
-            3,
-            1000,
-            (error, retriesLeft) => console.warn(`Error fetching interest rate, retries left: ${retriesLeft}`, error)
-          );
-          
-          const loanAmount = await retry(
-            () => getPoolLoanAmount(pool.contract_address!),
-            3,
-            1000,
-            (error, retriesLeft) => console.warn(`Error fetching loan amount, retries left: ${retriesLeft}`, error)
-          );
-          
-          const originationFee = await retry(
-            () => getPoolOriginationFee(pool.contract_address!),
-            3,
-            1000,
-            (error, retriesLeft) => console.warn(`Error fetching origination fee, retries left: ${retriesLeft}`, error)
-          );
-          
-          // Fetch warmup period - with retry mechanism
-          const warmupPeriod = await retry(
-            () => getPoolWarmupPeriod(pool.contract_address!),
-            3,
-            1000,
-            (error, retriesLeft) => console.warn(`Error fetching warmup period, retries left: ${retriesLeft}`, error)
-          );
-          
-          // Initialize the borrower_info object with real data from API
-          const borrowerInfo = {
-            loanPeriodDays: Math.ceil(loanDuration.days),
-            interestRate: interestRate.interestRate ? 
-              interestRate.interestRate + '%' : '8.5%', // Add % symbol if needed
-            loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
-              `$${loanAmount.loanAmount}` : '$10', // Format loan amount with $ symbol
-            originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
-              `${originationFee.originationFee}%` : '10%', // Format origination fee with % symbol
-            warmupPeriod: `${warmupPeriod.warmupPeriodDays} days`
-          };
-          
-          // Update the pool object
-          pool.borrower_info = borrowerInfo;
-          
-          // Cache the borrower info separately with a longer expiration (60 minutes since it rarely changes)
-          Cache.set(borrowerInfoCacheKey(pool.contract_address), borrowerInfo, 60);
-          
-          console.log(`Successfully fetched borrower info for pool ID ${id}:`, pool.borrower_info);
-        } catch (error) {
-          console.error('Error fetching borrower information:', error);
-          // Provide fallback values if fetching fails
-          pool.borrower_info = {
-            loanPeriodDays: 30,
-            interestRate: '8.5%',
-            loanAmount: '$10',
-            originationFee: '10%',
-            warmupPeriod: '14 days'
-          };
-        }
-      }
+    // If not in cache, try to get the contract address for this ID
+    const contractAddress = await getContractAddressFromId(id);
+    
+    if (contractAddress) {
+      // If we found a contract address, use getPoolByContract
+      return getPoolByContract(contractAddress);
     }
     
-    // Update timestamps in metadata if they exist
-    if (pool && pool.metadata) {
-      // Make sure we have milliseconds versions of timestamps for easier Date usage
-      if (pool.metadata.activationTimestamp && !pool.metadata.activationTimestampMs) {
-        pool.metadata.activationTimestampMs = (parseInt(pool.metadata.activationTimestamp) * 1000).toString();
-      }
-      
-      if (pool.metadata.deactivationTimestamp && !pool.metadata.deactivationTimestampMs) {
-        pool.metadata.deactivationTimestampMs = (parseInt(pool.metadata.deactivationTimestamp) * 1000).toString();
-      }
-      
-      if (pool.metadata.warmupStartTimestamp && !pool.metadata.warmupStartTimestampMs) {
-        pool.metadata.warmupStartTimestampMs = (parseInt(pool.metadata.warmupStartTimestamp) * 1000).toString();
-      }
-      
-      // Calculate cooldown start time based on deactivation date and loan duration
-      if (pool.metadata.deactivationTimestamp && pool.contract_address) {
-        try {
-          // Get loan duration in seconds
-          const loanDuration = await retry(
-            () => getPoolLoanDuration(pool.contract_address!),
-            3,
-            1000,
-            (error, retriesLeft) => console.warn(`Error fetching loan duration for cooldown, retries left: ${retriesLeft}`, error)
-          );
-          
-          // Convert loan duration from seconds to milliseconds
-          const loanDurationSeconds = parseInt(loanDuration.seconds.toString(), 10);
-          
-          // Get deactivation timestamp in seconds
-          const deactivationTimestampSeconds = parseInt(pool.metadata.deactivationTimestamp);
-          
-          // Calculate cooldown start timestamp (deactivation timestamp - loan duration in seconds)
-          const cooldownStartTimestampSeconds = deactivationTimestampSeconds - loanDurationSeconds;
-          const cooldownStartTimestampMs = cooldownStartTimestampSeconds * 1000;
-          
-          // Format the cooldown start date
-          const cooldownStartDate = new Date(cooldownStartTimestampMs);
-          const cooldownStartFormattedDate = format(cooldownStartDate, 'MMM d, yyyy');
-          
-          // Store all versions of the cooldown timestamp
-          pool.metadata.cooldownStartTimestamp = cooldownStartTimestampSeconds.toString();
-          pool.metadata.cooldownStartTimestampMs = cooldownStartTimestampMs.toString();
-          pool.metadata.cooldownStartFormattedDate = cooldownStartFormattedDate;
-          
-          console.log(`Calculated cooldown start for pool ${id}:`, {
-            deactivationTimestamp: deactivationTimestampSeconds,
-            loanDurationSeconds,
-            cooldownStartTimestamp: cooldownStartTimestampSeconds,
-            formattedDate: cooldownStartFormattedDate
-          });
-        } catch (error) {
-          console.error('Error calculating cooldown start date:', error);
-        }
-      }
+    // If we couldn't find a contract, get all pools and find by id
+    const pools = await getPools();
+    const pool = pools.find(p => p.id === id) || null;
+    
+    // If pool not found, return null
+    if (!pool) {
+      return null;
     }
     
-    // Cache this pool with the enriched data if found (with standard 15 minute expiration)
-    if (pool) {
-      Cache.set(poolCacheKey(id), pool, 15);
-    }
-    
-    return pool;
+    return enhancePoolWithBorrowerInfo(pool);
   } catch (error) {
     console.error(`Error fetching pool with ID ${id}:`, error);
     return null;
   }
 };
+
+export const getPoolByContract = async (contractAddress: string): Promise<LiquidityPool | null> => {
+  try {
+    // Check for individual pool cache by contract address
+    const cachedPool = Cache.get<LiquidityPool>(poolContractCacheKey(contractAddress));
+    if (cachedPool) {
+      console.log("Using cached pool data for contract:", contractAddress);
+      return enhancePoolWithBorrowerInfo(cachedPool);
+    }
+    
+    // If not in cache, get all pools and find by contract
+    const pools = await getPools();
+    const pool = pools.find(p => p.contract_address === contractAddress) || null;
+    
+    // If pool not found, return null
+    if (!pool) {
+      return null;
+    }
+    
+    return enhancePoolWithBorrowerInfo(pool);
+  } catch (error) {
+    console.error(`Error fetching pool with contract ${contractAddress}:`, error);
+    return null;
+  }
+};
+
+// Helper function to fetch and add borrower info to pool data
+async function enhancePoolWithBorrowerInfo(pool: LiquidityPool): Promise<LiquidityPool> {
+  if (!pool.contract_address) {
+    return pool;
+  }
+  
+  // First check if we have cached borrower info
+  const cachedBorrowerInfo = Cache.get<LiquidityPool['borrower_info']>(
+    borrowerInfoCacheKey(pool.contract_address)
+  );
+  
+  if (cachedBorrowerInfo) {
+    console.log(`Using cached borrower info for pool ID ${pool.id}`);
+    return {
+      ...pool,
+      borrower_info: cachedBorrowerInfo
+    };
+  }
+  
+  try {
+    console.log(`Fetching detailed borrower info for pool ID ${pool.id}...`);
+    
+    // Fetch loan related data with retry mechanism
+    const loanDuration = await retry(
+      () => getPoolLoanDuration(pool.contract_address!),
+      3,
+      1000,
+      (error, retriesLeft) => console.warn(`Error fetching loan duration, retries left: ${retriesLeft}`, error)
+    );
+    
+    const interestRate = await retry(
+      () => getPoolLoanInterestRate(pool.contract_address!),
+      3,
+      1000,
+      (error, retriesLeft) => console.warn(`Error fetching interest rate, retries left: ${retriesLeft}`, error)
+    );
+    
+    const loanAmount = await retry(
+      () => getPoolLoanAmount(pool.contract_address!),
+      3,
+      1000,
+      (error, retriesLeft) => console.warn(`Error fetching loan amount, retries left: ${retriesLeft}`, error)
+    );
+    
+    const originationFee = await retry(
+      () => getPoolOriginationFee(pool.contract_address!),
+      3,
+      1000,
+      (error, retriesLeft) => console.warn(`Error fetching origination fee, retries left: ${retriesLeft}`, error)
+    );
+    
+    // Fetch warmup period - with retry mechanism
+    const warmupPeriod = await retry(
+      () => getPoolWarmupPeriod(pool.contract_address!),
+      3,
+      1000,
+      (error, retriesLeft) => console.warn(`Error fetching warmup period, retries left: ${retriesLeft}`, error)
+    );
+    
+    // Initialize the borrower_info object with real data from API
+    const borrowerInfo = {
+      loanPeriodDays: Math.ceil(loanDuration.days),
+      interestRate: interestRate.interestRate ? 
+        interestRate.interestRate + '%' : '8.5%', // Add % symbol if needed
+      loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
+        `$${loanAmount.loanAmount}` : '$10', // Format loan amount with $ symbol
+      originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
+        `${originationFee.originationFee}%` : '10%', // Format origination fee with % symbol
+      warmupPeriod: `${warmupPeriod.warmupPeriodDays} days`
+    };
+    
+    // Create a copy of the pool with updated borrower info
+    const enhancedPool = {
+      ...pool,
+      borrower_info: borrowerInfo
+    };
+    
+    // Cache the borrower info separately with a longer expiration (60 minutes since it rarely changes)
+    Cache.set(borrowerInfoCacheKey(pool.contract_address), borrowerInfo, 60);
+    
+    // Update cooldown start time based on deactivation date and loan duration
+    if (enhancedPool.metadata?.deactivationTimestamp) {
+      try {
+        // Get deactivation timestamp in seconds
+        const deactivationTimestampSeconds = parseInt(enhancedPool.metadata.deactivationTimestamp);
+        
+        // Convert loan duration from seconds to milliseconds
+        const loanDurationSeconds = parseInt(loanDuration.seconds.toString(), 10);
+        
+        // Calculate cooldown start timestamp (deactivation timestamp - loan duration in seconds)
+        const cooldownStartTimestampSeconds = deactivationTimestampSeconds - loanDurationSeconds;
+        const cooldownStartTimestampMs = cooldownStartTimestampSeconds * 1000;
+        
+        // Format the cooldown start date
+        const cooldownStartDate = new Date(cooldownStartTimestampMs);
+        const cooldownStartFormattedDate = format(cooldownStartDate, 'MMM d, yyyy');
+        
+        // Store all versions of the cooldown timestamp in a copy of the metadata to avoid mutation
+        enhancedPool.metadata = {
+          ...enhancedPool.metadata,
+          cooldownStartTimestamp: cooldownStartTimestampSeconds.toString(),
+          cooldownStartTimestampMs: cooldownStartTimestampMs.toString(),
+          cooldownStartFormattedDate: cooldownStartFormattedDate
+        };
+        
+        console.log(`Calculated cooldown start for pool ${pool.id}:`, {
+          deactivationTimestamp: deactivationTimestampSeconds,
+          loanDurationSeconds,
+          cooldownStartTimestamp: cooldownStartTimestampSeconds,
+          formattedDate: cooldownStartFormattedDate
+        });
+      } catch (error) {
+        console.error('Error calculating cooldown start date:', error);
+      }
+    }
+    
+    // Update the cache with the enhanced pool data
+    if (pool.id) {
+      Cache.set(poolCacheKey(pool.id), enhancedPool, 15);
+    }
+    if (pool.contract_address) {
+      Cache.set(poolContractCacheKey(pool.contract_address), enhancedPool, 15);
+    }
+    
+    return enhancedPool;
+  } catch (error) {
+    console.error('Error fetching borrower information:', error);
+    // Return the original pool object if enhancement fails
+    return pool;
+  }
+}
 
 export const getUserPoolPosition = async (poolId: number): Promise<UserPoolPosition | null> => {
   // In a real app, would fetch from backend using:

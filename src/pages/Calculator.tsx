@@ -102,16 +102,16 @@ const Calculator = () => {
       <Header title="Yield Calculator" />
       
       <Container className="max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text">
             Yield Calculator
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm sm:text-base">
             Estimate your potential earnings as a lender in World Chain liquidity pools.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-2">
             <PoolDataProvider>
               <CalculatorForm onCalculate={calculateReturns} />

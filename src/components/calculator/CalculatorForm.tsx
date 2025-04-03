@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalculatorInputs } from "@/pages/Calculator";
 import { usePoolData } from "@/contexts/PoolDataContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CalculatorFormProps {
   onCalculate: (inputs: CalculatorInputs) => void;
@@ -16,6 +17,7 @@ interface CalculatorFormProps {
 export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
   // Get pool data for the dropdown
   const { pools, loading } = usePoolData();
+  const isMobile = useIsMobile();
   
   const [inputs, setInputs] = useState<CalculatorInputs>({
     investmentAmount: 1000,
@@ -89,13 +91,13 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm border border-[#8B5CF6]/10">
-      <div className="flex items-center gap-2 mb-6">
+    <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-[#8B5CF6]/10">
+      <div className="flex items-center gap-2 mb-4 sm:mb-6">
         <Calculator className="w-5 h-5 text-[#8B5CF6]" />
         <h2 className="text-xl font-semibold">Pool Parameters</h2>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div className="space-y-4">
           <div>
             <Label htmlFor="investmentAmount">Your Investment (USDC)</Label>
@@ -178,15 +180,16 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
         </div>
 
         <div className="border-t border-gray-200 pt-4">
-          <div className="flex items-center justify-between gap-2 mb-4">
-            <h3 className="text-md font-medium flex items-center gap-2">
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <Sliders className="w-4 h-4 text-[#8B5CF6]" />
-              Loan Terms
-            </h3>
-            <div className="flex items-center">
-              <Label htmlFor="poolSelect" className="mr-2 text-sm">Pool Template:</Label>
+              <h3 className="text-md font-medium">Loan Terms</h3>
+            </div>
+            
+            <div className="mb-4">
+              <Label htmlFor="poolSelect" className="block text-sm mb-1">Pool Template:</Label>
               <Select value={selectedPool} onValueChange={handlePoolSelect}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a pool" />
                 </SelectTrigger>
                 <SelectContent>

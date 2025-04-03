@@ -148,10 +148,11 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         
         // Add loan data if available
         if (nftData.loan) {
-          const version = nftData.loan.version || "V2"; // Default to V2 if not specified
+          // Check if version is available or default to V2
+          const loanVersion = nftData.loan.version || "V2";
           
           loanData = [
-            version,
+            loanVersion,
             {
               amount: BigInt(nftData.loan.amount || 0),
               startTime: nftData.loan.startTime || 0,

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
@@ -140,7 +139,8 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                     onClick={() => openWithdrawModal({
                       poolId: position.poolId,
                       lpBalance: position.balance,
-                      lpValue: position.currentValue
+                      lpValue: position.currentValue,
+                      poolContractAddress: position.contractAddress
                     })}
                     variant="outline" 
                     size="sm"

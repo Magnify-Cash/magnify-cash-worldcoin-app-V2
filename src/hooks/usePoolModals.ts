@@ -16,6 +16,7 @@ export const usePoolModals = () => {
     poolId?: number;
     lpBalance?: number;
     lpValue?: number;
+    poolContractAddress?: string; // Added poolContractAddress param
   }) => {
     openModal("withdraw", params);
   };

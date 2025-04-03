@@ -277,7 +277,8 @@ const PoolDetails = () => {
       openWithdrawModal({
         poolId: pool.id,
         lpBalance: userPosition.balance,
-        lpValue: userPosition.currentValue
+        lpValue: userPosition.currentValue,
+        poolContractAddress: pool.contract_address
       });
     }
   };

@@ -12,7 +12,7 @@ export const ModalManager: React.FC = () => {
     lpSymbol,
     lpBalance,
     lpValue,
-    walletAddress, // Get wallet address from context
+    walletAddress,
     closeModal,
   } = useModalContext();
 
@@ -25,7 +25,7 @@ export const ModalManager: React.FC = () => {
         onClose={closeModal}
         poolContractAddress={poolContractAddress || undefined}
         lpSymbol={lpSymbol || undefined}
-        walletAddress={walletAddress || undefined} // Pass wallet address
+        walletAddress={walletAddress || undefined}
       />
     );
   }
@@ -37,7 +37,7 @@ export const ModalManager: React.FC = () => {
         onClose={closeModal}
         lpBalance={lpBalance || 0}
         lpValue={lpValue || 0}
-        poolContractAddress={poolContractAddress || undefined}
+        poolContractAddress={poolContractAddress || undefined} // Pass poolContractAddress to WithdrawModal
       />
     );
   }

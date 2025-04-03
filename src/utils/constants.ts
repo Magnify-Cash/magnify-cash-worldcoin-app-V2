@@ -6,10 +6,8 @@ export const MAGNIFY_WORLD_ADDRESS_V1 = "0x4E52d9e8d2F70aD1805084BA4fa849dC991E7
 export const MAGNIFY_WORLD_ADDRESS_V3 = "0x2c3e09032bF439a863FC7E262D24AD45CF7f70EA" as `0x${string}`;
 export const WORLDCHAIN_RPC_URL = "https://worldchain-mainnet.g.alchemy.com/public";
 
-// Use default fallback value for backend URL if environment variable is not available
-// This helps with local development and prevents undefined URLs
-const DEFAULT_BACKEND_URL = "https://dev-magnify-cash-worldid-backend.kevin8396.workers.dev";
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || DEFAULT_BACKEND_URL;
+// Use a single reliable backend URL without fallbacks that could lead to inconsistent data
+export const BACKEND_URL = "https://dev-magnify-cash-worldid-backend.kevin8396.workers.dev";
 
 export const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT || "development";
 export const MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");

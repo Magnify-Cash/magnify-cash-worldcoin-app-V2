@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -10,12 +11,17 @@ import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
 import { usePoolData } from "@/contexts/PoolDataContext";
 import { LoanPoolCard } from "@/components/LoanPoolCard";
 import { LiquidityPool } from "@/types/supabase/liquidity";
+import { fetchBorrowerInfo } from "@/utils/borrowerInfoUtils";
+import { getPoolByContract } from "@/lib/poolRequests";
 
 const Loan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
   const [filteredPools, setFilteredPools] = useState<LiquidityPool[]>([]);
+  const [poolsWithBorrowerInfo, setPoolsWithBorrowerInfo] = useState<Record<string, any>>({});
+  const [isLoadingBorrowerInfo, setIsLoadingBorrowerInfo] = useState<Record<string, boolean>>({});
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Hooks
   const { toast } = useToast();
@@ -39,37 +45,95 @@ const Loan = () => {
       
       if (active.length === 0) {
         console.log("No active pools with liquidity found, using all active pools");
-        // Fallback to all active pools if none have liquidity
         setFilteredPools(pools.filter(pool => pool.status === 'active'));
       } else {
         setFilteredPools(active);
       }
       
       console.log(`Filtered ${active.length} active pools with liquidity out of ${pools.length} total pools`);
-    } else if (pools?.length === 0) {
-      // If pools array is empty, use mock data for development/testing
-      console.log("No pools data available, using mock pool data");
-      
-      const mockPool = {
-        id: 1,
-        contract_address: "0x2c3e09032bF439a863FC7E262D24AD45CF7f70EA",
-        name: "Orb Verified Lending Pool",
-        status: 'active' as 'active',
-        available_liquidity: 25000,
-        borrower_info: {
-          loanAmount: "$1000",
-          interestRate: "8.5%",
-          loanPeriodDays: 30
-        }
-      };
-      
-      setFilteredPools([mockPool as any]);
+    } else {
+      setFetchError("No lending pools are currently available. Please try again later.");
     }
   }, [pools]);
 
+  // Load borrower info for all pools
+  useEffect(() => {
+    if (filteredPools.length > 0) {
+      const loadBorrowerInfo = async () => {
+        const loadingStateUpdates: Record<string, boolean> = {};
+        
+        // Initialize loading state for all pools
+        filteredPools.forEach(pool => {
+          if (pool.contract_address) {
+            loadingStateUpdates[pool.contract_address] = true;
+          }
+        });
+        
+        setIsLoadingBorrowerInfo(loadingStateUpdates);
+        
+        // Reset errors
+        setFetchError(null);
+        
+        // Process each pool
+        const results: Record<string, any> = {};
+        let hasError = false;
+        
+        for (const pool of filteredPools) {
+          if (!pool.contract_address) continue;
+          
+          try {
+            console.log(`Fetching borrower info for pool: ${pool.name}`);
+            
+            // Attempt to load from cache first
+            const enhancedPool = await getPoolByContract(pool.contract_address);
+            
+            if (enhancedPool && 
+                enhancedPool.borrower_info && 
+                !enhancedPool.borrower_info.loanAmount.includes('$100')) {
+              // Use the enhanced pool data if it's valid and not default
+              console.log(`Found valid enhanced pool data for ${pool.name}`);
+              results[pool.contract_address] = {
+                loanAmount: parseInt(enhancedPool.borrower_info.loanAmount.replace(/[^0-9]/g, '')),
+                interestRate: parseFloat(enhancedPool.borrower_info.interestRate.replace(/[^0-9.]/g, '')),
+                loanPeriod: enhancedPool.borrower_info.loanPeriodDays * 24 * 60 * 60
+              };
+            } else {
+              // Fetch fresh data
+              console.log(`Fetching fresh borrower info for ${pool.name}`);
+              const borrowerInfo = await fetchBorrowerInfo(pool.contract_address);
+              
+              results[pool.contract_address] = {
+                loanAmount: borrowerInfo.loanAmount,
+                interestRate: borrowerInfo.interestRate,
+                loanPeriod: borrowerInfo.loanPeriodDays * 24 * 60 * 60
+              };
+            }
+          } catch (error) {
+            console.error(`Failed to fetch borrower info for ${pool.name}:`, error);
+            hasError = true;
+          } finally {
+            // Update loading state for this pool
+            setIsLoadingBorrowerInfo(prev => ({
+              ...prev,
+              [pool.contract_address!]: false
+            }));
+          }
+        }
+        
+        if (Object.keys(results).length === 0 && hasError) {
+          setFetchError("Unable to fetch loan information from lending pools. Please try again later.");
+        }
+        
+        setPoolsWithBorrowerInfo(results);
+      };
+      
+      loadBorrowerInfo();
+    }
+  }, [filteredPools]);
+
   // Refresh pools on component mount
   useEffect(() => {
-    refreshPools();
+    refreshPools(true); // Force refresh to get latest data
   }, [refreshPools]);
 
   // Call refetch after loan is confirmed
@@ -195,20 +259,31 @@ const Loan = () => {
             </p>
           </div>
 
-          {filteredPools.length > 0 ? (
+          {fetchError ? (
+            <div className="glass-card p-6 text-center">
+              <Shield className="w-8 h-8 mx-auto mb-3 text-gray-400" />
+              <h3 className="text-lg font-medium mb-2">Connection Issue</h3>
+              <p className="text-gray-600">
+                {fetchError}
+              </p>
+              <Button 
+                onClick={() => refreshPools(true)} 
+                className="mt-4"
+                variant="outline"
+              >
+                Retry
+              </Button>
+            </div>
+          ) : filteredPools.length > 0 ? (
             filteredPools.map((pool) => {
-              // Parse loan amount from string (remove $ if present) or use default
-              const loanAmount = pool.borrower_info?.loanAmount 
-                ? parseInt(pool.borrower_info.loanAmount.replace(/[^0-9]/g, '')) || 1000
-                : 1000;
+              const contractAddress = pool.contract_address || "";
+              const borrowerInfo = poolsWithBorrowerInfo[contractAddress];
+              const isLoadingData = isLoadingBorrowerInfo[contractAddress] || false;
               
-              // Parse interest rate from string (remove % if present) or use default
-              const interestRate = pool.borrower_info?.interestRate 
-                ? parseFloat(pool.borrower_info.interestRate.replace(/[^0-9.]/g, '')) || 8.5
-                : 8.5;
-              
-              // Parse loan period to days or use fallback
-              const loanPeriod = (pool.borrower_info?.loanPeriodDays || 30) * 24 * 60 * 60; // Convert days to seconds
+              // Use real data from pools data if available, otherwise use loading state
+              const loanAmount = borrowerInfo ? borrowerInfo.loanAmount : 0;
+              const interestRate = borrowerInfo ? borrowerInfo.interestRate : 0;
+              const loanPeriod = borrowerInfo ? borrowerInfo.loanPeriod : 0;
 
               return (
                 <LoanPoolCard
@@ -216,13 +291,14 @@ const Loan = () => {
                   name={pool.name || "Lending Pool"}
                   loanAmount={loanAmount}
                   interestRate={interestRate}
-                  loanPeriod={loanPeriod} // Convert days to seconds
-                  contractAddress={pool.contract_address || ""}
+                  loanPeriod={loanPeriod}
+                  contractAddress={contractAddress}
                   liquidity={pool.available_liquidity || 0}
-                  isLoading={isConfirming && selectedPool === pool.contract_address}
+                  isLoading={isConfirming && selectedPool === contractAddress}
                   onSelect={(contractAddress, tierId) => handleApplyLoan(contractAddress, 3)} // Using tier 3 for Orb verified
                   disabled={isConfirming || isConfirmed}
                   tierId={3}
+                  dataLoading={isLoadingData}
                 />
               );
             })

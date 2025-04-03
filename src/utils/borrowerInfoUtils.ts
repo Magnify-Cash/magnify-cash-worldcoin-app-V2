@@ -1,10 +1,12 @@
-import { Cache } from "@/utils/cacheUtils";
+
 import { 
   getPoolLoanDuration, 
   getPoolLoanInterestRate, 
   getPoolLoanAmount, 
   getPoolOriginationFee 
 } from "@/lib/backendRequests";
+import { Cache } from "@/utils/cacheUtils";
+import { retry } from "@/utils/retryUtils";
 
 // Cache key generator for borrower info
 export const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
@@ -16,19 +18,12 @@ export interface BorrowerInfo {
   originationFee: number;
 }
 
-// Fallback values to use when API calls fail
-const FALLBACK_BORROWER_INFO: BorrowerInfo = {
-  loanPeriodDays: 30,
-  interestRate: 8.5,
-  loanAmount: 1000, // Use a more realistic default loan amount
-  originationFee: 10
-};
-
 /**
  * Fetches borrower information for a pool from the API or cache
  * @param contractAddress The pool contract address
  * @param forceRefresh Whether to bypass cache and force a refresh from API
  * @returns Processed borrower information with numeric values
+ * @throws Error if data cannot be fetched
  */
 export const fetchBorrowerInfo = async (
   contractAddress: string, 
@@ -46,48 +41,46 @@ export const fetchBorrowerInfo = async (
       }
     }
     
-    // Fetch all data in parallel for better performance
-    const results = await Promise.allSettled([
-      getPoolLoanDuration(contractAddress),
-      getPoolLoanInterestRate(contractAddress),
-      getPoolLoanAmount(contractAddress),
-      getPoolOriginationFee(contractAddress)
+    // Fetch all data in parallel with retries for better reliability
+    const results = await Promise.all([
+      retry(() => getPoolLoanDuration(contractAddress), 3),
+      retry(() => getPoolLoanInterestRate(contractAddress), 3),
+      retry(() => getPoolLoanAmount(contractAddress), 3),
+      retry(() => getPoolOriginationFee(contractAddress), 3)
     ]);
     
-    // Extract results, using fallback values for any failed promises
-    const loanDuration = results[0].status === 'fulfilled' ? results[0].value : { days: FALLBACK_BORROWER_INFO.loanPeriodDays };
-    const interestRate = results[1].status === 'fulfilled' ? results[1].value : { interestRate: String(FALLBACK_BORROWER_INFO.interestRate) };
-    const loanAmount = results[2].status === 'fulfilled' ? results[2].value : { loanAmount: FALLBACK_BORROWER_INFO.loanAmount };
-    const originationFee = results[3].status === 'fulfilled' ? results[3].value : { originationFee: FALLBACK_BORROWER_INFO.originationFee };
+    const [loanDuration, interestRate, loanAmount, originationFee] = results;
     
-    // Log which values came from API vs fallbacks
-    console.log('API call results:', {
-      loanDuration: results[0].status,
-      interestRate: results[1].status,
-      loanAmount: results[2].status,
-      originationFee: results[3].status
-    });
+    // Validate that we got actual data for all requests
+    // If any key fields are missing or invalid, throw an error
+    if (!loanDuration?.days || !interestRate?.interestRate || !loanAmount?.loanAmount) {
+      throw new Error("Missing critical borrower information from API response");
+    }
     
     // Create and format the borrower info
     const borrowerInfo = {
       loanPeriodDays: Math.ceil(loanDuration.days),
-      interestRate: interestRate.interestRate ? 
-        extractNumericValue(interestRate.interestRate, FALLBACK_BORROWER_INFO.interestRate) : FALLBACK_BORROWER_INFO.interestRate,
+      interestRate: extractNumericValue(interestRate.interestRate, 0),
       loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
-        loanAmount.loanAmount : FALLBACK_BORROWER_INFO.loanAmount,
+        loanAmount.loanAmount : 0,
       originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
-        originationFee.originationFee : FALLBACK_BORROWER_INFO.originationFee,
+        originationFee.originationFee : 0,
     };
     
-    // Cache the result for future use (60 minute expiration)
-    Cache.set(borrowerInfoCacheKey(contractAddress), borrowerInfo, 60);
+    // Validate that the values make sense
+    if (borrowerInfo.interestRate <= 0 || borrowerInfo.loanAmount <= 0) {
+      throw new Error("Invalid borrower information values from API");
+    }
+    
+    // Cache the result for future use (15 minute expiration to ensure freshness)
+    Cache.set(borrowerInfoCacheKey(contractAddress), borrowerInfo, 15);
     
     console.log(`Successfully fetched and cached borrower info for ${contractAddress}:`, borrowerInfo);
     return processBorrowerInfo(borrowerInfo);
   } catch (error) {
     console.error('Error fetching borrower information:', error);
-    // Return default values if API fails
-    return FALLBACK_BORROWER_INFO;
+    // Instead of returning fallback values, propagate the error
+    throw new Error(`Failed to fetch borrower information: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
@@ -118,18 +111,16 @@ export const prefetchBorrowerInfo = async (contractAddresses: string[]): Promise
       return;
     }
     
-    // Fetch in parallel but limit concurrency to 5 at a time to avoid overwhelming the API
-    const fetchPromises = addressesToFetch.map(contractAddress => 
-      () => fetchBorrowerInfo(contractAddress)
+    // Fetch in parallel but limit concurrency to avoid overwhelming the API
+    const promises = addressesToFetch.map(address => 
+      fetchBorrowerInfo(address).catch(error => {
+        console.error(`Failed to prefetch borrower info for ${address}:`, error);
+        return null;
+      })
     );
     
-    const results = await Promise.allSettled(
-      fetchPromises.map(fetchFn => fetchFn())
-    );
-    
-    // Log results
-    const successful = results.filter(r => r.status === 'fulfilled').length;
-    console.log(`Pre-fetched borrower info for ${successful}/${addressesToFetch.length} pools`);
+    await Promise.all(promises);
+    console.log(`Prefetch complete for borrower info`);
   } catch (error) {
     console.error('Error during prefetch of borrower info:', error);
   }
@@ -142,10 +133,10 @@ export const prefetchBorrowerInfo = async (contractAddresses: string[]): Promise
  */
 export const processBorrowerInfo = (rawInfo: any): BorrowerInfo => {
   return {
-    loanPeriodDays: extractNumericValue(rawInfo.loanPeriodDays, 30),
-    interestRate: extractNumericValue(rawInfo.interestRate, 8.5),
-    loanAmount: extractNumericValue(rawInfo.loanAmount, 10),
-    originationFee: extractNumericValue(rawInfo.originationFee, 10)
+    loanPeriodDays: extractNumericValue(rawInfo.loanPeriodDays, 0),
+    interestRate: extractNumericValue(rawInfo.interestRate, 0),
+    loanAmount: extractNumericValue(rawInfo.loanAmount, 0),
+    originationFee: extractNumericValue(rawInfo.originationFee, 0)
   };
 };
 

@@ -8,7 +8,7 @@ async function backendRequest<T>(
   paramsOrBody: RequestParams = {},
   options: { retries?: number; retryDelay?: number } = {}
 ): Promise<BackendResponse<T>> {
-  const { retries = 0, retryDelay = 1000 } = options;
+  const { retries = 2, retryDelay = 1000 } = options;
   let lastError: Error | null = null;
   let attempt = 0;
   
@@ -44,7 +44,8 @@ async function backendRequest<T>(
       const response = await fetch(url, requestOptions);
       
       if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`HTTP error ${response.status}: ${response.statusText}${errorText ? ' - ' + errorText : ''}`);
       }
       
       // Log the content type to help diagnose response parsing issues

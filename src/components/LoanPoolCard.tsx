@@ -1,3 +1,4 @@
+
 import { Shield, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -5,6 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LoanPoolCardProps {
   name: string;
@@ -17,6 +19,7 @@ interface LoanPoolCardProps {
   onSelect: (contractAddress: string, tierId: number) => void;
   disabled?: boolean;
   tierId: number;
+  dataLoading?: boolean;
 }
 
 export const LoanPoolCard = ({
@@ -30,6 +33,7 @@ export const LoanPoolCard = ({
   onSelect,
   disabled = false,
   tierId,
+  dataLoading = false,
 }: LoanPoolCardProps) => {
   const handleSelectPool = () => {
     onSelect(contractAddress, tierId);
@@ -70,7 +74,7 @@ export const LoanPoolCard = ({
           <Shield className="w-6 h-6 mr-2 text-[#5A1A8F]" />
           <h3 className="text-lg font-medium">{name}</h3>
         </div>
-        {!hasEnoughLiquidity && (
+        {!hasEnoughLiquidity && !dataLoading && (
           <Popover>
             <PopoverTrigger>
               <Info className="w-5 h-5 text-amber-500" />
@@ -87,28 +91,44 @@ export const LoanPoolCard = ({
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
           <p className="text-gray-600 text-sm">Loan Amount</p>
-          <p className="font-medium">${loanAmount.toLocaleString()}</p>
+          {dataLoading ? (
+            <Skeleton className="h-6 w-24" />
+          ) : (
+            <p className="font-medium">${loanAmount.toLocaleString()}</p>
+          )}
         </div>
         <div>
           <p className="text-gray-600 text-sm">Interest Rate</p>
-          <p className="font-medium">{formattedInterestRate}</p>
+          {dataLoading ? (
+            <Skeleton className="h-6 w-16" />
+          ) : (
+            <p className="font-medium">{formattedInterestRate}</p>
+          )}
         </div>
         <div>
           <p className="text-gray-600 text-sm">Duration</p>
-          <p className="font-medium">{formattedLoanPeriod} days</p>
+          {dataLoading ? (
+            <Skeleton className="h-6 w-20" />
+          ) : (
+            <p className="font-medium">{formattedLoanPeriod} days</p>
+          )}
         </div>
         <div>
           <p className="text-gray-600 text-sm">Available Liquidity</p>
-          <p className="font-medium">${liquidity.toLocaleString()}</p>
+          {dataLoading ? (
+            <Skeleton className="h-6 w-24" />
+          ) : (
+            <p className="font-medium">${liquidity.toLocaleString()}</p>
+          )}
         </div>
       </div>
       
       <Button 
         onClick={handleSelectPool} 
-        disabled={isLoading || disabled || !hasEnoughLiquidity} 
+        disabled={isLoading || disabled || !hasEnoughLiquidity || dataLoading} 
         className="w-full"
       >
-        {isLoading ? "Loading..." : !hasEnoughLiquidity ? "Insufficient Liquidity" : "Apply for Loan"}
+        {isLoading ? "Loading..." : dataLoading ? "Loading Pool Data..." : !hasEnoughLiquidity ? "Insufficient Liquidity" : "Apply for Loan"}
       </Button>
     </div>
   );

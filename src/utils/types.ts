@@ -137,7 +137,24 @@ export interface SoulboundDataResponse {
   loansDefaulted: string;
   owner: string;
   tier: number;
+  hasActiveLoan: boolean;
   ongoingLoan: boolean;
+  loan?: {
+    amount: number;
+    startTime: number;
+    isActive: boolean;
+    interestRate: number;
+    loanPeriod: number;
+  };
+  tiers?: Array<{
+    loanAmount: number;
+    interestRate: number;
+    loanPeriod: number;
+    tierId: number;
+    verificationStatus?: {
+      description: string;
+    };
+  }>;
 }
 
 export interface SoulboundTokenURIResponse {

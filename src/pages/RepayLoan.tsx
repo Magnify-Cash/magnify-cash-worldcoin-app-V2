@@ -21,7 +21,7 @@ const RepayLoan = () => {
   const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const loan = data?.loan;
-  const loanData: Loan = loan && loan[1];
+  const loanData: Loan | undefined = loan && loan[1];
 
   // Update USDC balance on page load
   useEffect(() => {
@@ -42,10 +42,11 @@ const RepayLoan = () => {
   // loan repayment
   const loanAmountDue = useMemo(() => {
     if (loanData) {
-      return loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
+      return loanData.amount + (loanData.amount * loanData.interestRate) / BigInt(10000);
     }
-    return 0n; // Default value if loanData is not available
+    return BigInt(0); // Default value if loanData is not available
   }, [loanData]);
+  
   const loanVersion = useMemo(() => {
     if (loan) {
       return loan[0];
@@ -54,13 +55,13 @@ const RepayLoan = () => {
   }, [loan]);
 
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
+  
   const handleApplyLoan = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
       if (isClicked) return;
   
       setIsClicked(true);
-
 
       if(sessionStorage.getItem("usdcBalance") === null) {
         const balance = await getUSDCBalance(ls_wallet as string);
@@ -108,7 +109,7 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast, ls_wallet, refetch]
+    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast, ls_wallet]
   );
   
   // Call refetch after loan repayment is confirmed
@@ -149,7 +150,7 @@ const RepayLoan = () => {
   }
 
   // Check if user has an active loan
-  if (!isLoading && (!loan || loanData?.amount === 0n || !loanData?.isActive)) {
+  if (!isLoading && (!loan || loanData?.amount === BigInt(0) || !loanData?.isActive)) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -172,9 +173,9 @@ const RepayLoan = () => {
   if (!isLoading && loan[0] !== "") {
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
       loanData.startTime,
-      loanData.loanPeriod,
+      Number(loanData.loanPeriod),
     );
-    const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
+    const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / BigInt(10000);
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />

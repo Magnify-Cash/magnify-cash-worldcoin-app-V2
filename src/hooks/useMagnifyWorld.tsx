@@ -44,21 +44,25 @@ export interface SoulboundNFT {
 }
 
 export interface Loan {
-  amount: number;
+  amount: bigint;
   startTime: number;
   isActive: boolean;
-  interestRate: number;
-  loanPeriod: number;
+  interestRate: bigint;
+  loanPeriod: bigint;
 }
 
 export interface ContractData {
   nftInfo: SoulboundNFT;
   hasActiveLoan: boolean;
-  loan?: Loan;
+  loan?: [string, Loan];
   allTiers?: Array<{
     loanAmount: number;
     interestRate: number;
     loanPeriod: number;
+    tierId: number;
+    verificationStatus?: {
+      description: string;
+    };
   }>;
 }
 
@@ -121,17 +125,20 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         };
         
         // Check if user has an active loan
-        hasActiveLoan = nftData.hasActiveLoan || false;
+        hasActiveLoan = nftData.hasActiveLoan || nftData.ongoingLoan || false;
         
         // Add loan data if available
         if (nftData.loan) {
-          loanData = {
-            amount: nftData.loan.amount,
-            startTime: nftData.loan.startTime,
-            isActive: nftData.loan.isActive,
-            interestRate: nftData.loan.interestRate,
-            loanPeriod: nftData.loan.loanPeriod
-          };
+          loanData = [
+            "V2",
+            {
+              amount: BigInt(nftData.loan.amount || 0),
+              startTime: nftData.loan.startTime || 0,
+              isActive: nftData.loan.isActive || false,
+              interestRate: BigInt(nftData.loan.interestRate || 0),
+              loanPeriod: BigInt(nftData.loan.loanPeriod || 0)
+            }
+          ];
         }
         
         // Add tier data if available

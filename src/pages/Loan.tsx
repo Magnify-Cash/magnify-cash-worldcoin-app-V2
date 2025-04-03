@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { formatUnits } from "viem";
 import { Shield } from "lucide-react";
@@ -37,7 +38,7 @@ const Loan = () => {
   
   // Handle loan application
   const handleApplyLoan = useCallback(
-    async (event: React.FormEvent, requestedTierId: bigint) => {
+    async (event: React.FormEvent, requestedTierId: number) => {
       event.preventDefault();
       if (isClicked) return;
       setIsClicked(true);
@@ -56,7 +57,7 @@ const Loan = () => {
         }
   
         if (data?.nftInfo?.tokenId) {
-          await requestNewLoan(requestedTierId);
+          await requestNewLoan(BigInt(requestedTierId));
   
           sessionStorage.removeItem("usdcBalance");
           sessionStorage.removeItem("walletTokens");
@@ -125,7 +126,7 @@ const Loan = () => {
             </Button>
           </div>
         </div> 
-      ) : data?.nftInfo?.tier?.verificationStatus?.verification_level === "device" ? (
+      ) : data?.nftInfo?.tier?.toString() === "0" ? (
         <div className="p-6 space-y-6">
           <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
             <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
@@ -141,19 +142,19 @@ const Loan = () => {
         <div className="p-6 space-y-6">
           <div className="glass-card p-6">
             <h2 className="text-lg font-semibold text-center">Current Loan Eligibility</h2>
-            {data.allTiers[3] && (
+            {data.allTiers && data.allTiers[3] && (
               <div className="mt-10">
                 <div className="flex items-center">
                   <Shield className="w-6 h-6 mr-2" />
-                  <span>{data.allTiers[3].verificationStatus.description}</span>
+                  <span>{data.allTiers[3].verificationStatus?.description || "Orb Verified"}</span>
                 </div>
                 <div className="flex flex-col items-start space-y-3 my-3">
-                  <p className="text-gray-600">Loan Amount: ${formatUnits(data.allTiers[3].loanAmount, 6)}</p>
+                  <p className="text-gray-600">Loan Amount: ${data.allTiers[3].loanAmount}</p>
                   <p className="text-gray-600">
-                    Interest Rate: {((data.allTiers[3].interestRate || BigInt(0)) / BigInt(100)).toString()}%
+                    Interest Rate: {((data.allTiers[3].interestRate) / 100).toString()}%
                   </p>
                   <p className="text-gray-600">
-                    Duration: {((data.allTiers[3].loanPeriod || BigInt(0)) / BigInt(60 * 24 * 60)).toString()} days
+                    Duration: {((data.allTiers[3].loanPeriod) / (60 * 24 * 60)).toString()} days
                   </p>
                 </div>
                 <Button

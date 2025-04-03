@@ -31,7 +31,7 @@ async function backendRequest<T>(
         url += `?${queryParams.toString()}`;
       }
 
-      console.log(`Making ${method} request to: ${url}`);
+      console.log(`[Network] ${method} request to: ${url}`);
 
       const requestOptions: RequestInit = {
         method,
@@ -50,7 +50,6 @@ async function backendRequest<T>(
       
       // Log the content type to help diagnose response parsing issues
       const contentType = response.headers.get('content-type');
-      console.log(`Response content type: ${contentType}`);
       
       if (!contentType || !contentType.includes('application/json')) {
         console.warn(`Expected JSON response but got ${contentType}`);
@@ -66,15 +65,16 @@ async function backendRequest<T>(
         throw new Error(`API Error: ${response.status} - ${result?.message || "Unknown error"}`);
       }
 
+      console.log(`[Network] Success response from ${path}`);
       return result;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       attempt++;
       
-      console.error(`Request to ${path} failed (attempt ${attempt}/${retries + 1}):`, lastError);
+      console.error(`[Network] Request to ${path} failed (attempt ${attempt}/${retries + 1}):`, lastError);
       
       if (attempt <= retries) {
-        console.warn(`Retrying in ${retryDelay}ms...`);
+        console.warn(`[Network] Retrying in ${retryDelay}ms...`);
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
     }

@@ -11,6 +11,9 @@ import { retry } from "@/utils/retryUtils";
 // Cache key generator for borrower info
 export const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
 
+// Longer cache duration for borrower info (in minutes) - This data rarely changes
+const BORROWER_INFO_CACHE_DURATION = 30;
+
 export interface BorrowerInfo {
   loanPeriodDays: number;
   interestRate: number;
@@ -30,13 +33,13 @@ export const fetchBorrowerInfo = async (
   forceRefresh: boolean = false
 ): Promise<BorrowerInfo> => {
   try {
-    console.log(`Fetching detailed borrower info for pool contract: ${contractAddress}...`);
+    console.log(`[BorrowerInfo] Fetching detailed borrower info for pool contract: ${contractAddress}`);
     
     // Check cache first (unless force refresh requested)
     if (!forceRefresh) {
       const cachedBorrowerInfo = Cache.get(borrowerInfoCacheKey(contractAddress));
       if (cachedBorrowerInfo) {
-        console.log(`Using cached borrower info for ${contractAddress}:`, cachedBorrowerInfo);
+        console.log(`[BorrowerInfo] Using cached borrower info for ${contractAddress}`);
         return processBorrowerInfo(cachedBorrowerInfo);
       }
     }
@@ -72,13 +75,13 @@ export const fetchBorrowerInfo = async (
       throw new Error("Invalid borrower information values from API");
     }
     
-    // Cache the result for future use (15 minute expiration to ensure freshness)
-    Cache.set(borrowerInfoCacheKey(contractAddress), borrowerInfo, 15);
+    // Cache the result for future use (with longer expiration since this data rarely changes)
+    Cache.set(borrowerInfoCacheKey(contractAddress), borrowerInfo, BORROWER_INFO_CACHE_DURATION);
     
-    console.log(`Successfully fetched and cached borrower info for ${contractAddress}:`, borrowerInfo);
+    console.log(`[BorrowerInfo] Successfully fetched and cached borrower info for ${contractAddress}:`, borrowerInfo);
     return processBorrowerInfo(borrowerInfo);
   } catch (error) {
-    console.error('Error fetching borrower information:', error);
+    console.error('[BorrowerInfo] Error fetching borrower information:', error);
     // Instead of returning fallback values, propagate the error
     throw new Error(`Failed to fetch borrower information: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
@@ -99,7 +102,7 @@ export const hasBorrowerInfoCache = (contractAddress: string): boolean => {
  */
 export const prefetchBorrowerInfo = async (contractAddresses: string[]): Promise<void> => {
   try {
-    console.log(`Pre-fetching borrower info for ${contractAddresses.length} pools...`);
+    console.log(`[BorrowerInfo] Pre-fetching borrower info for ${contractAddresses.length} pools...`);
     
     // Filter out addresses that already have cached data
     const addressesToFetch = contractAddresses.filter(address => 
@@ -107,22 +110,30 @@ export const prefetchBorrowerInfo = async (contractAddresses: string[]): Promise
     );
     
     if (addressesToFetch.length === 0) {
-      console.log('All pool data already cached, skipping prefetch');
+      console.log('[BorrowerInfo] All pool data already cached, skipping prefetch');
       return;
     }
     
-    // Fetch in parallel but limit concurrency to avoid overwhelming the API
-    const promises = addressesToFetch.map(address => 
-      fetchBorrowerInfo(address).catch(error => {
-        console.error(`Failed to prefetch borrower info for ${address}:`, error);
-        return null;
-      })
-    );
+    // Fetch in parallel but limit concurrency to avoid overwhelming the API (max 3 at a time)
+    const batchSize = 3;
+    for (let i = 0; i < addressesToFetch.length; i += batchSize) {
+      const batch = addressesToFetch.slice(i, i + batchSize);
+      
+      console.log(`[BorrowerInfo] Fetching batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(addressesToFetch.length/batchSize)}`);
+      
+      const batchPromises = batch.map(address => 
+        fetchBorrowerInfo(address).catch(error => {
+          console.error(`[BorrowerInfo] Failed to prefetch borrower info for ${address}:`, error);
+          return null;
+        })
+      );
+      
+      await Promise.all(batchPromises);
+    }
     
-    await Promise.all(promises);
-    console.log(`Prefetch complete for borrower info`);
+    console.log(`[BorrowerInfo] Prefetch complete for borrower info`);
   } catch (error) {
-    console.error('Error during prefetch of borrower info:', error);
+    console.error('[BorrowerInfo] Error during prefetch of borrower info:', error);
   }
 };
 

@@ -21,8 +21,9 @@ export const Cache = {
         timestamp: Date.now() + expirationMinutes * 60 * 1000
       };
       localStorage.setItem(key, JSON.stringify(cacheItem));
+      console.log(`[Cache] Set "${key}" with ${expirationMinutes}min expiration`);
     } catch (error) {
-      console.error('Error setting cache:', error);
+      console.error('[Cache] Error setting cache:', error);
     }
   },
 
@@ -40,13 +41,17 @@ export const Cache = {
       
       // Check if cache is expired
       if (Date.now() > cacheItem.timestamp) {
+        console.log(`[Cache] "${key}" has expired, removing from cache`);
         localStorage.removeItem(key);
         return null;
       }
       
+      // Calculate remaining time in seconds for debugging
+      const remainingSecs = Math.round((cacheItem.timestamp - Date.now()) / 1000);
+      console.log(`[Cache] Found "${key}" (expires in ${remainingSecs}s)`);
       return cacheItem.data;
     } catch (error) {
-      console.error('Error getting cache:', error);
+      console.error('[Cache] Error getting cache:', error);
       return null;
     }
   },
@@ -57,6 +62,7 @@ export const Cache = {
    */
   remove(key: string): void {
     localStorage.removeItem(key);
+    console.log(`[Cache] Removed "${key}" from cache`);
   },
   
   /**
@@ -71,10 +77,12 @@ export const Cache = {
         const key = localStorage.key(i);
         if (key && (key.startsWith(poolCachePrefix) || key.startsWith(borrowerInfoPrefix))) {
           localStorage.removeItem(key);
+          console.log(`[Cache] Cleared ${key}`);
         }
       }
+      console.log('[Cache] Pool cache cleared');
     } catch (error) {
-      console.error('Error clearing pool cache:', error);
+      console.error('[Cache] Error clearing pool cache:', error);
     }
   }
 };

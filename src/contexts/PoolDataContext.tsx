@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getPools, invalidatePoolsCache } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
@@ -30,6 +31,8 @@ interface PoolDataProviderProps {
 
 // Cache key for localStorage
 const POOLS_LAST_FETCHED_KEY = 'pools_last_fetched';
+// Cache timeout - 5 minutes in milliseconds
+const CACHE_TIMEOUT_MS = 5 * 60 * 1000;
 
 export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   const [pools, setPools] = useState<LiquidityPool[]>([]);
@@ -56,19 +59,19 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
           try {
             const parsed = JSON.parse(cachedPoolsData);
             if (parsed.data && Array.isArray(parsed.data) && parsed.data.length > 0) {
-              console.log("Found cached pools data on initial load, using it");
+              console.log("[PoolDataContext] Found cached pools data on initial load");
               setPools(parsed.data);
               setLoading(false);
               setHasFetchStarted(true); // Mark as fetch started since we have data
               return true;
             }
           } catch (e) {
-            console.error("Error parsing cached pools:", e);
+            console.error("[PoolDataContext] Error parsing cached pools:", e);
           }
         }
         return false;
       } catch (e) {
-        console.error("Error checking localStorage for cached pools:", e);
+        console.error("[PoolDataContext] Error checking localStorage for cached pools:", e);
         return false;
       }
     };
@@ -86,7 +89,7 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   const refreshPools = async (invalidateCache: boolean = false) => {
     // Don't refetch if already fetching
     if (isPrefetching) {
-      console.log("Already prefetching pool data, skipping duplicate request");
+      console.log("[PoolDataContext] Already prefetching pool data, skipping duplicate request");
       return;
     }
     
@@ -94,10 +97,9 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
     const storedLastFetched = localStorage.getItem(POOLS_LAST_FETCHED_KEY);
     const lastFetchedTime = storedLastFetched ? parseInt(storedLastFetched, 10) : null;
     
-    // Don't refetch if data was fetched within the last 5 minutes (unless forced invalidation)
-    const cacheTimeoutMs = 5 * 60 * 1000; // 5 minutes
-    if (!invalidateCache && lastFetchedTime && Date.now() - lastFetchedTime < cacheTimeoutMs) {
-      console.log(`Pools data already fetched recently (${Math.round((Date.now() - lastFetchedTime) / 1000)}s ago), using cached data`);
+    // Don't refetch if data was fetched within the cache timeout (unless forced invalidation)
+    if (!invalidateCache && lastFetchedTime && Date.now() - lastFetchedTime < CACHE_TIMEOUT_MS) {
+      console.log(`[PoolDataContext] Pools data fetched recently (${Math.round((Date.now() - lastFetchedTime) / 1000)}s ago), using cached data`);
       
       // Make sure loading is false if we're using cached data and we already have pools
       if (pools.length > 0) {
@@ -119,7 +121,7 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       
       setError(null);
       
-      console.log(`Fetching pools data. Invalidate cache: ${invalidateCache}`);
+      console.log(`[PoolDataContext] Fetching pools data. Invalidate cache: ${invalidateCache}`);
       
       if (invalidateCache) {
         invalidatePoolsCache();
@@ -151,10 +153,10 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
         const now = Date.now();
         setLastFetched(now);
         localStorage.setItem(POOLS_LAST_FETCHED_KEY, now.toString());
-        console.log(`Pools data fetched successfully at ${new Date(now).toLocaleTimeString()}`);
+        console.log(`[PoolDataContext] Pools data fetched successfully at ${new Date(now).toLocaleTimeString()}`);
       }
     } catch (err) {
-      console.error("Error fetching pools:", err);
+      console.error("[PoolDataContext] Error fetching pools:", err);
       setError("Failed to load pool data. Please try again later.");
     } finally {
       setLoading(false);
@@ -166,14 +168,14 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   useEffect(() => {
     // Only fetch if no fetch has been started yet
     if (!hasFetchStarted) {
-      console.log("Initial pools data fetch triggered from PoolDataContext");
+      console.log("[PoolDataContext] Initial pools data fetch triggered");
       refreshPools();
       
-      // Set up background refresh every 5 minutes
+      // Set up background refresh every 5 minutes (matching cache timeout)
       const refreshInterval = setInterval(() => {
-        console.log("Background refreshing pools data...");
+        console.log("[PoolDataContext] Background refreshing pools data...");
         refreshPools(true);
-      }, 5 * 60 * 1000);
+      }, CACHE_TIMEOUT_MS);
       
       return () => clearInterval(refreshInterval);
     }

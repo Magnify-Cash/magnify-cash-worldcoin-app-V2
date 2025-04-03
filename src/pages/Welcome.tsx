@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
 import { ArrowRight, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePoolData } from "@/contexts/PoolDataContext";
+import { prefetchBorrowerInfo } from "@/utils/borrowerInfoUtils";
 
 type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
   address: string;
@@ -12,26 +14,37 @@ type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
 const Welcome = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { refreshPools, lastFetched, hasFetchStarted } = usePoolData();
+  const { pools, refreshPools, lastFetched, hasFetchStarted } = usePoolData();
   
   const [loadingLoan, setLoadingLoan] = useState(false);
   const [loadingLender, setLoadingLender] = useState(false);
 
-  // Prefetch pool data only once
+  // Prefetch pool data and borrower info only once
   useEffect(() => {
     if (!hasFetchStarted) {
-      console.log("Welcome page initiating pools data prefetch for better UX");
+      console.log("[Welcome] Initiating pools data prefetch with borrower info");
       
-      // We don't invalidate cache here, as we want to use cache if it exists
-      // This ensures we don't do unnecessary fetches
-      refreshPools(false).catch(err => {
-        console.error("Error prefetching pools:", err);
+      // First, ensure we have the basic pool data
+      refreshPools(false).then(() => {
+        // After pools are fetched, prefetch borrower info for all pools in parallel
+        if (pools && pools.length > 0) {
+          const contractAddresses = pools
+            .filter(pool => pool.contract_address && pool.status === 'active')
+            .map(pool => pool.contract_address!);
+          
+          if (contractAddresses.length > 0) {
+            console.log(`[Welcome] Prefetching borrower info for ${contractAddresses.length} active pools`);
+            prefetchBorrowerInfo(contractAddresses);
+          }
+        }
+      }).catch(err => {
+        console.error("[Welcome] Error prefetching pools:", err);
       });
     } else if (lastFetched) {
       // If we already fetched, log the time for debugging
-      console.log(`Using previously fetched pool data from ${new Date(lastFetched).toLocaleTimeString()}`);
+      console.log(`[Welcome] Using previously fetched pool data from ${new Date(lastFetched).toLocaleTimeString()}`);
     }
-  }, [refreshPools, lastFetched, hasFetchStarted]);
+  }, [refreshPools, lastFetched, hasFetchStarted, pools]);
 
   const signInUser = async (redirectTo: string, isLenderFlow: boolean = false) => {
     const wallet_address = localStorage.getItem("ls_wallet_address");

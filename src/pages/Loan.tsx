@@ -11,8 +11,7 @@ import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
 import { usePoolData } from "@/contexts/PoolDataContext";
 import { LoanPoolCard } from "@/components/LoanPoolCard";
 import { LiquidityPool } from "@/types/supabase/liquidity";
-import { fetchBorrowerInfo } from "@/utils/borrowerInfoUtils";
-import { getPoolByContract } from "@/lib/poolRequests";
+import { fetchBorrowerInfo, hasBorrowerInfoCache } from "@/utils/borrowerInfoUtils";
 
 const Loan = () => {
   // States
@@ -22,6 +21,7 @@ const Loan = () => {
   const [poolsWithBorrowerInfo, setPoolsWithBorrowerInfo] = useState<Record<string, any>>({});
   const [isLoadingBorrowerInfo, setIsLoadingBorrowerInfo] = useState<Record<string, boolean>>({});
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [hasFetchedBorrowerInfo, setHasFetchedBorrowerInfo] = useState(false);
 
   // Hooks
   const { toast } = useToast();
@@ -30,7 +30,7 @@ const Loan = () => {
   const { data, isLoading: isLoadingNFT, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const { requestNewLoan, isConfirming, isConfirmed, transactionId } = useRequestLoan();
   const { usdcBalance, refreshBalance } = useUSDCBalance();
-  const { pools, loading: isLoadingPools, refreshPools } = usePoolData();
+  const { pools, loading: isLoadingPools } = usePoolData();
   
   const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = loanData?.isActive ?? false;
@@ -44,28 +44,33 @@ const Loan = () => {
       );
       
       if (active.length === 0) {
-        console.log("No active pools with liquidity found, using all active pools");
+        console.log("[Loan] No active pools with liquidity found, using all active pools");
         setFilteredPools(pools.filter(pool => pool.status === 'active'));
       } else {
         setFilteredPools(active);
       }
       
-      console.log(`Filtered ${active.length} active pools with liquidity out of ${pools.length} total pools`);
+      console.log(`[Loan] Filtered ${active.length} active pools with liquidity out of ${pools.length} total pools`);
     } else {
       setFetchError("No lending pools are currently available. Please try again later.");
     }
   }, [pools]);
 
-  // Load borrower info for all pools
+  // Load borrower info for all pools - but only if we haven't loaded it already
   useEffect(() => {
-    if (filteredPools.length > 0) {
+    if (filteredPools.length > 0 && !hasFetchedBorrowerInfo) {
       const loadBorrowerInfo = async () => {
+        // Prevent duplicate fetches by setting this flag
+        setHasFetchedBorrowerInfo(true);
+        
         const loadingStateUpdates: Record<string, boolean> = {};
         
-        // Initialize loading state for all pools
+        // Initialize loading state for all pools that don't already have cached data
         filteredPools.forEach(pool => {
           if (pool.contract_address) {
-            loadingStateUpdates[pool.contract_address] = true;
+            // Only mark as loading if we don't have cached data
+            const hasCache = hasBorrowerInfoCache(pool.contract_address);
+            loadingStateUpdates[pool.contract_address] = !hasCache;
           }
         });
         
@@ -82,34 +87,17 @@ const Loan = () => {
           if (!pool.contract_address) continue;
           
           try {
-            console.log(`Fetching borrower info for pool: ${pool.name}`);
+            // Try to fetch borrower info - it will use cache if available
+            console.log(`[Loan] Fetching borrower info for pool: ${pool.name}`);
+            const borrowerInfo = await fetchBorrowerInfo(pool.contract_address);
             
-            // Attempt to load from cache first
-            const enhancedPool = await getPoolByContract(pool.contract_address);
-            
-            if (enhancedPool && 
-                enhancedPool.borrower_info && 
-                !enhancedPool.borrower_info.loanAmount.includes('$100')) {
-              // Use the enhanced pool data if it's valid and not default
-              console.log(`Found valid enhanced pool data for ${pool.name}`);
-              results[pool.contract_address] = {
-                loanAmount: parseInt(enhancedPool.borrower_info.loanAmount.replace(/[^0-9]/g, '')),
-                interestRate: parseFloat(enhancedPool.borrower_info.interestRate.replace(/[^0-9.]/g, '')),
-                loanPeriod: enhancedPool.borrower_info.loanPeriodDays * 24 * 60 * 60
-              };
-            } else {
-              // Fetch fresh data
-              console.log(`Fetching fresh borrower info for ${pool.name}`);
-              const borrowerInfo = await fetchBorrowerInfo(pool.contract_address);
-              
-              results[pool.contract_address] = {
-                loanAmount: borrowerInfo.loanAmount,
-                interestRate: borrowerInfo.interestRate,
-                loanPeriod: borrowerInfo.loanPeriodDays * 24 * 60 * 60
-              };
-            }
+            results[pool.contract_address] = {
+              loanAmount: borrowerInfo.loanAmount,
+              interestRate: borrowerInfo.interestRate,
+              loanPeriod: borrowerInfo.loanPeriodDays * 24 * 60 * 60
+            };
           } catch (error) {
-            console.error(`Failed to fetch borrower info for ${pool.name}:`, error);
+            console.error(`[Loan] Failed to fetch borrower info for ${pool.name}:`, error);
             hasError = true;
           } finally {
             // Update loading state for this pool
@@ -129,12 +117,7 @@ const Loan = () => {
       
       loadBorrowerInfo();
     }
-  }, [filteredPools]);
-
-  // Refresh pools on component mount
-  useEffect(() => {
-    refreshPools(true); // Force refresh to get latest data
-  }, [refreshPools]);
+  }, [filteredPools, hasFetchedBorrowerInfo]);
 
   // Call refetch after loan is confirmed
   useEffect(() => {
@@ -267,7 +250,10 @@ const Loan = () => {
                 {fetchError}
               </p>
               <Button 
-                onClick={() => refreshPools(true)} 
+                onClick={() => {
+                  setHasFetchedBorrowerInfo(false); // Reset so we can fetch again
+                  setFetchError(null);
+                }} 
                 className="mt-4"
                 variant="outline"
               >

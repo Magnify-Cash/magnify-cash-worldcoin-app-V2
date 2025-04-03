@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,7 @@ const RepayLoan = () => {
     if (loan) {
       return loan[0];
     }
-    return ""; // Default value if loanData is not available
+    return ""; // Default value if loan is not available
   }, [loan]);
 
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
@@ -130,7 +131,7 @@ const RepayLoan = () => {
   }, [isConfirmed, refetch]);
 
   // Loading & error states - include balance loading in the loading state
-  if (isLoading || isLoadingBalance || !loan) {
+  if (isLoading || isLoadingBalance || !data) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -156,7 +157,7 @@ const RepayLoan = () => {
   }
 
   // Check if user has an active loan
-  if (!isLoading && (!loan || loanData?.amount === BigInt(0) || !loanData?.isActive)) {
+  if (!isLoading && (!data.hasActiveLoan || !loan)) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -176,12 +177,12 @@ const RepayLoan = () => {
   }
 
   // active loan
-  if (!isLoading && loan[0] !== "") {
+  if (data.hasActiveLoan && loan) {
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
-      loanData.startTime,
-      Number(loanData.loanPeriod),
+      loanData!.startTime,
+      Number(loanData!.loanPeriod),
     );
-    const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / BigInt(10000);
+    const amountDue = loanData!.amount + (loanData!.amount * loanData!.interestRate) / BigInt(10000);
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -190,11 +191,11 @@ const RepayLoan = () => {
             <div className="flex items-center justify-between">
               <span
                 className={`px-3 py-1 rounded-full ${
-                  loanData.isActive ? "bg-green-300" : "bg-red-300"
+                  loanData!.isActive ? "bg-green-300" : "bg-red-300"
                 } text-black text-sm`}
               >
-                {loanData.isActive
-                  ? "Active Loan"
+                {loanData!.isActive
+                  ? `Active Loan (${loanVersion})`
                   : "Defaulted Loan"}
               </span>
             </div>
@@ -204,7 +205,7 @@ const RepayLoan = () => {
                 <DollarSign className="w-5 h-5 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
-                  <p className="text-start font-semibold">${formatUnits(loanData.amount, 6)} </p>
+                  <p className="text-start font-semibold">${formatUnits(loanData!.amount, 6)} </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -281,6 +282,24 @@ const RepayLoan = () => {
       </div>
     );
   }
+
+  // Fallback if data structure doesn't match expected format
+  return (
+    <div className="min-h-screen">
+      <Header title="Loan Status" />
+      <div className="container max-w-2xl mx-auto p-6 space-y-6">
+        <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
+          <h3 className="text-lg font-semibold text-center">Loan Information Unavailable</h3>
+          <p className="text-center text-muted-foreground">
+            We're having trouble retrieving your loan information. Please try again later.
+          </p>
+          <Button onClick={() => navigate("/loan")} className="w-full mt-4">
+            Back to Loans
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default RepayLoan;

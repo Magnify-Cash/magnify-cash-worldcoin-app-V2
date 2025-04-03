@@ -117,7 +117,7 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
       };
       
       let hasActiveLoan = false;
-      let loanData = null;
+      let loanData = undefined;
       let tierData = null;
       
       if (nftResponse && nftResponse.tokenId !== "0") {
@@ -139,33 +139,24 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
           owner: nftData.owner || null,
         };
         
-        // Check if user has an active loan in any version (V1 or V2)
-        // We'll consider a loan active if either:
-        // 1. The backend tells us directly (nftData.hasActiveLoan or nftData.ongoingLoan)
-        // 2. We have loan data and the isActive flag is true
-        
+        // Check if user has an active loan
         hasActiveLoan = nftData.hasActiveLoan || nftData.ongoingLoan || false;
         
-        // Add loan data if available
-        if (nftData.loan) {
-          // Check if version is available or default to V2
-          const loanVersion = nftData.loan.version || "V2";
+        // Add loan data if available and active
+        if (nftData.loan && (nftData.loan.isActive || hasActiveLoan)) {
+          // Create loan data with version
+          const loanVersion = nftData.loan.version || "V2"; // Default to V2 if not specified
           
           loanData = [
             loanVersion,
             {
               amount: BigInt(nftData.loan.amount || 0),
               startTime: nftData.loan.startTime || 0,
-              isActive: nftData.loan.isActive || false,
+              isActive: nftData.loan.isActive || hasActiveLoan, // Set isActive from either source
               interestRate: BigInt(nftData.loan.interestRate || 0),
               loanPeriod: BigInt(nftData.loan.loanPeriod || 0)
             }
           ];
-          
-          // Update hasActiveLoan based on loan data
-          if (loanData[1].isActive) {
-            hasActiveLoan = true;
-          }
         }
         
         // Add tier data if available

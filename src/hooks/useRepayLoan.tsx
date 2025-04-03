@@ -33,7 +33,7 @@ const getContractAddress = (contract_version: string) => {
   } else if (contract_version === "V2") {
     return MAGNIFY_WORLD_ADDRESS_V2;
   } else {
-    return "";
+    return MAGNIFY_WORLD_ADDRESS_V2; // Default to V2 if unspecified
   }
 };
 
@@ -74,15 +74,17 @@ const useRepayLoan = (): RepayLoanResponse => {
     setIsConfirmed(false);
     setLoanDetails(null);
 
-    const CONTRACT_ADDRESS = getContractAddress(V1OrV2);
+    // Normalize version string for consistency
+    const contractVersion = V1OrV2?.toUpperCase() || "V2";
+    const CONTRACT_ADDRESS = getContractAddress(contractVersion);
     
     if (!CONTRACT_ADDRESS) {
-      setError(`Unsupported contract version: ${V1OrV2}`);
+      setError(`Unsupported contract version: ${contractVersion}`);
       return;
     }
 
     try {
-      console.log(`[RepayLoan] Repaying loan of ${loanAmount} for contract version ${V1OrV2} at address ${CONTRACT_ADDRESS}`);
+      console.log(`[RepayLoan] Repaying loan of ${loanAmount} for contract version ${contractVersion} at address ${CONTRACT_ADDRESS}`);
       
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
 
@@ -194,10 +196,15 @@ const useRepayLoan = (): RepayLoanResponse => {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
 
+        // Parse loan amount for display
+        const parsedAmount = typeof loanAmount === 'string' ? 
+          parseFloat(loanAmount) : 
+          Number(loanAmount);
+
         setLoanDetails({
-          amount: typeof loanAmount === 'string' ? parseInt(loanAmount) : Number(loanAmount),
-          interest: 0, // Calculate based on contract terms
-          totalDue: typeof loanAmount === 'string' ? parseInt(loanAmount) : Number(loanAmount), // Calculate total with interest
+          amount: parsedAmount,
+          interest: 0, // Calculate based on contract terms if available
+          totalDue: parsedAmount, // Set to same value as amount for now
           transactionId: finalPayload.transaction_id,
         });
       } else {

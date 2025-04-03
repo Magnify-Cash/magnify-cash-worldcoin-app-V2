@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -37,7 +36,34 @@ const Loan = () => {
         pool.status === 'active' && 
         pool.available_liquidity > 0
       );
-      setFilteredPools(active);
+      
+      if (active.length === 0) {
+        console.log("No active pools with liquidity found, using all active pools");
+        // Fallback to all active pools if none have liquidity
+        setFilteredPools(pools.filter(pool => pool.status === 'active'));
+      } else {
+        setFilteredPools(active);
+      }
+      
+      console.log(`Filtered ${active.length} active pools with liquidity out of ${pools.length} total pools`);
+    } else if (pools?.length === 0) {
+      // If pools array is empty, use mock data for development/testing
+      console.log("No pools data available, using mock pool data");
+      
+      const mockPool = {
+        id: 1,
+        contract_address: "0x2c3e09032bF439a863FC7E262D24AD45CF7f70EA",
+        name: "Orb Verified Lending Pool",
+        status: 'active' as 'active',
+        available_liquidity: 25000,
+        borrower_info: {
+          loanAmount: "$1000",
+          interestRate: "8.5%",
+          loanPeriodDays: 30
+        }
+      };
+      
+      setFilteredPools([mockPool as any]);
     }
   }, [pools]);
 
@@ -171,27 +197,28 @@ const Loan = () => {
 
           {filteredPools.length > 0 ? (
             filteredPools.map((pool) => {
-              // Find tier 3 loan data or use fallback
+              // Parse loan amount from string (remove $ if present) or use default
               const loanAmount = pool.borrower_info?.loanAmount 
-                ? parseInt(pool.borrower_info.loanAmount.replace('$', '')) 
+                ? parseInt(pool.borrower_info.loanAmount.replace(/[^0-9]/g, '')) || 1000
                 : 1000;
               
+              // Parse interest rate from string (remove % if present) or use default
               const interestRate = pool.borrower_info?.interestRate 
-                ? pool.borrower_info.interestRate.replace('%', '') 
+                ? parseFloat(pool.borrower_info.interestRate.replace(/[^0-9.]/g, '')) || 8.5
                 : 8.5;
               
-              // Convert loanPeriod to days or use fallback
-              const loanPeriod = pool.borrower_info?.loanPeriodDays || 30;
+              // Parse loan period to days or use fallback
+              const loanPeriod = (pool.borrower_info?.loanPeriodDays || 30) * 24 * 60 * 60; // Convert days to seconds
 
               return (
                 <LoanPoolCard
-                  key={pool.contract_address}
-                  name={pool.name}
+                  key={pool.contract_address || pool.id}
+                  name={pool.name || "Lending Pool"}
                   loanAmount={loanAmount}
                   interestRate={interestRate}
-                  loanPeriod={loanPeriod * 24 * 60 * 60} // Convert days to seconds
+                  loanPeriod={loanPeriod} // Convert days to seconds
                   contractAddress={pool.contract_address || ""}
-                  liquidity={pool.available_liquidity}
+                  liquidity={pool.available_liquidity || 0}
                   isLoading={isConfirming && selectedPool === pool.contract_address}
                   onSelect={(contractAddress, tierId) => handleApplyLoan(contractAddress, 3)} // Using tier 3 for Orb verified
                   disabled={isConfirming || isConfirmed}

@@ -1,4 +1,3 @@
-
 import { Shield, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,17 +35,30 @@ export const LoanPoolCard = ({
     onSelect(contractAddress, tierId);
   };
 
-  // Format the loan period in days
+  // Format the loan period in days, ensuring it's a reasonable number
   const formattedLoanPeriod = typeof loanPeriod === 'number' 
-    ? Math.ceil(loanPeriod / (60 * 60 * 24)) 
-    : 0;
+    ? Math.max(1, Math.min(365, Math.ceil(loanPeriod / (60 * 60 * 24))))
+    : 30; // Default 30 days if invalid
 
-  // Format interest rate
-  const formattedInterestRate = typeof interestRate === 'number'
-    ? `${(interestRate / 100).toFixed(2)}%`
-    : typeof interestRate === 'string' && interestRate.includes('%')
-      ? interestRate
-      : `${interestRate}%`;
+  // Format interest rate to always show as percentage with proper decimal places
+  const formattedInterestRate = (() => {
+    if (typeof interestRate === 'number') {
+      return `${interestRate.toFixed(2)}%`;
+    }
+    
+    if (typeof interestRate === 'string') {
+      // If it already contains %, return it
+      if (interestRate.includes('%')) {
+        return interestRate;
+      }
+      
+      // Otherwise, parse it and add %
+      const numericRate = parseFloat(interestRate);
+      return isNaN(numericRate) ? '8.5%' : `${numericRate.toFixed(2)}%`;
+    }
+    
+    return '8.5%'; // Default fallback
+  })();
 
   // Check if pool has enough liquidity
   const hasEnoughLiquidity = liquidity >= loanAmount;
@@ -75,7 +87,7 @@ export const LoanPoolCard = ({
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
           <p className="text-gray-600 text-sm">Loan Amount</p>
-          <p className="font-medium">${loanAmount}</p>
+          <p className="font-medium">${loanAmount.toLocaleString()}</p>
         </div>
         <div>
           <p className="text-gray-600 text-sm">Interest Rate</p>

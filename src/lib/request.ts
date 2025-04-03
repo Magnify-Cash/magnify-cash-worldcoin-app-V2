@@ -14,7 +14,14 @@ async function backendRequest<T>(
   
   while (attempt <= retries) {
     try {
-      let url = `${BACKEND_URL}/${path}`;
+      // Check if BACKEND_URL is defined and not empty
+      if (!BACKEND_URL) {
+        console.error("BACKEND_URL is not defined. Check your environment variables.");
+        throw new Error("Backend URL is not configured properly");
+      }
+      
+      // Use correct URL format, ensuring no double slashes between base URL and path
+      let url = `${BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL}/${path}`;
 
       if (method === "GET" && Object.keys(paramsOrBody).length) {
         const queryParams = new URLSearchParams();
@@ -23,6 +30,8 @@ async function backendRequest<T>(
         });
         url += `?${queryParams.toString()}`;
       }
+
+      console.log(`Making ${method} request to: ${url}`);
 
       const requestOptions: RequestInit = {
         method,
@@ -38,6 +47,18 @@ async function backendRequest<T>(
         throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
       }
       
+      // Log the content type to help diagnose response parsing issues
+      const contentType = response.headers.get('content-type');
+      console.log(`Response content type: ${contentType}`);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn(`Expected JSON response but got ${contentType}`);
+        // Try to get the text response for debugging
+        const textResponse = await response.text();
+        console.error('Non-JSON response:', textResponse.substring(0, 200) + '...');
+        throw new Error(`API returned non-JSON response with content type: ${contentType}`);
+      }
+      
       const result: BackendResponse<T> = await response.json();
 
       if (result.status < 200 || result.status >= 300) {
@@ -49,8 +70,10 @@ async function backendRequest<T>(
       lastError = error instanceof Error ? error : new Error(String(error));
       attempt++;
       
+      console.error(`Request to ${path} failed (attempt ${attempt}/${retries + 1}):`, lastError);
+      
       if (attempt <= retries) {
-        console.warn(`Request to ${path} failed (attempt ${attempt}/${retries + 1}). Retrying in ${retryDelay}ms...`);
+        console.warn(`Retrying in ${retryDelay}ms...`);
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
     }

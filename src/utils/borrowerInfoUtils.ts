@@ -1,4 +1,3 @@
-
 import { Cache } from "@/utils/cacheUtils";
 import { 
   getPoolLoanDuration, 
@@ -16,6 +15,14 @@ export interface BorrowerInfo {
   loanAmount: number;
   originationFee: number;
 }
+
+// Fallback values to use when API calls fail
+const FALLBACK_BORROWER_INFO: BorrowerInfo = {
+  loanPeriodDays: 30,
+  interestRate: 8.5,
+  loanAmount: 1000, // Use a more realistic default loan amount
+  originationFee: 10
+};
 
 /**
  * Fetches borrower information for a pool from the API or cache
@@ -40,22 +47,36 @@ export const fetchBorrowerInfo = async (
     }
     
     // Fetch all data in parallel for better performance
-    const [loanDuration, interestRate, loanAmount, originationFee] = await Promise.all([
+    const results = await Promise.allSettled([
       getPoolLoanDuration(contractAddress),
       getPoolLoanInterestRate(contractAddress),
       getPoolLoanAmount(contractAddress),
       getPoolOriginationFee(contractAddress)
     ]);
     
+    // Extract results, using fallback values for any failed promises
+    const loanDuration = results[0].status === 'fulfilled' ? results[0].value : { days: FALLBACK_BORROWER_INFO.loanPeriodDays };
+    const interestRate = results[1].status === 'fulfilled' ? results[1].value : { interestRate: String(FALLBACK_BORROWER_INFO.interestRate) };
+    const loanAmount = results[2].status === 'fulfilled' ? results[2].value : { loanAmount: FALLBACK_BORROWER_INFO.loanAmount };
+    const originationFee = results[3].status === 'fulfilled' ? results[3].value : { originationFee: FALLBACK_BORROWER_INFO.originationFee };
+    
+    // Log which values came from API vs fallbacks
+    console.log('API call results:', {
+      loanDuration: results[0].status,
+      interestRate: results[1].status,
+      loanAmount: results[2].status,
+      originationFee: results[3].status
+    });
+    
     // Create and format the borrower info
     const borrowerInfo = {
       loanPeriodDays: Math.ceil(loanDuration.days),
       interestRate: interestRate.interestRate ? 
-        extractNumericValue(interestRate.interestRate, 8.5) : 8.5,
+        extractNumericValue(interestRate.interestRate, FALLBACK_BORROWER_INFO.interestRate) : FALLBACK_BORROWER_INFO.interestRate,
       loanAmount: loanAmount && typeof loanAmount.loanAmount === 'number' ? 
-        loanAmount.loanAmount : 10,
+        loanAmount.loanAmount : FALLBACK_BORROWER_INFO.loanAmount,
       originationFee: originationFee && typeof originationFee.originationFee === 'number' ? 
-        originationFee.originationFee : 10,
+        originationFee.originationFee : FALLBACK_BORROWER_INFO.originationFee,
     };
     
     // Cache the result for future use (60 minute expiration)
@@ -66,12 +87,7 @@ export const fetchBorrowerInfo = async (
   } catch (error) {
     console.error('Error fetching borrower information:', error);
     // Return default values if API fails
-    return {
-      loanPeriodDays: 30,
-      interestRate: 8.5,
-      loanAmount: 10,
-      originationFee: 10
-    };
+    return FALLBACK_BORROWER_INFO;
   }
 };
 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Calculator, Sliders, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -91,13 +92,14 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
           setIsLoadingPoolData(true);
         }
         
-        const poolSize = Math.round(selectedPoolData.total_value_locked || 10000);
-        console.log(`Selected pool size: ${poolSize}`);
+        // Don't update pool size when selecting a preset
+        // const poolSize = Math.round(selectedPoolData.total_value_locked || 10000);
+        // console.log(`Selected pool size: ${poolSize}`);
         
-        setInputs(prev => ({
-          ...prev,
-          poolSize
-        }));
+        // setInputs(prev => ({
+        //   ...prev,
+        //   poolSize
+        // }));
         
         if (selectedPoolData.contract_address) {
           console.log(`Fetching borrower info for contract: ${selectedPoolData.contract_address}`);
@@ -112,7 +114,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
           
           setInputs(prev => ({
             ...prev,
-            poolSize,
+            // Remove poolSize from here
             loanPeriod,
             interestRate,
             loanAmount,
@@ -120,7 +122,6 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
           }));
           
           console.log("Updated inputs from pool template:", {
-            poolSize,
             loanPeriod,
             interestRate,
             loanAmount,
@@ -170,33 +171,6 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
 
       <div className="space-y-4 sm:space-y-6">
         <div className="space-y-4">
-          <div className="mb-4">
-            <Label htmlFor="poolSelect" className="block text-sm mb-1">Pool Template:</Label>
-            <Select value={selectedPool} onValueChange={handlePoolSelect} disabled={isDropdownDisabled}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={
-                  loading && !pools.length ? "Loading pools..." : 
-                  isLoadingPoolData ? "Loading pool data..." : 
-                  "Select a pool"
-                } />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="custom">Custom</SelectItem>
-                {pools.map((pool) => (
-                  <SelectItem key={pool.id} value={pool.contract_address || `pool-${pool.id}`}>
-                    {pool.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {isLoadingPoolData && (
-              <p className="text-xs text-[#8B5CF6] mt-1">Loading pool data...</p>
-            )}
-            {isFetchingPools && (
-              <p className="text-xs text-gray-500 mt-1">Pre-fetching pool templates in background...</p>
-            )}
-          </div>
-        
           <div>
             <Label htmlFor="investmentAmount">Your Investment (USDC)</Label>
             <Input
@@ -284,6 +258,34 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               <Sliders className="w-4 h-4 text-[#8B5CF6]" />
               <h3 className="text-md font-medium">Loan Terms</h3>
             </div>
+          </div>
+          
+          {/* Moved Pool Template select here, under Loan Terms */}
+          <div className="mb-4">
+            <Label htmlFor="poolSelect" className="block text-sm mb-1">Pool Template:</Label>
+            <Select value={selectedPool} onValueChange={handlePoolSelect} disabled={isDropdownDisabled}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={
+                  loading && !pools.length ? "Loading pools..." : 
+                  isLoadingPoolData ? "Loading pool data..." : 
+                  "Select a pool"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="custom">Custom</SelectItem>
+                {pools.map((pool) => (
+                  <SelectItem key={pool.id} value={pool.contract_address || `pool-${pool.id}`}>
+                    {pool.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isLoadingPoolData && (
+              <p className="text-xs text-[#8B5CF6] mt-1">Loading pool data...</p>
+            )}
+            {isFetchingPools && (
+              <p className="text-xs text-gray-500 mt-1">Pre-fetching pool templates in background...</p>
+            )}
           </div>
           
           <div className="space-y-4">

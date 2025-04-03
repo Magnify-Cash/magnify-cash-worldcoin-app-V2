@@ -15,13 +15,15 @@ import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { previewDeposit } from "@/lib/backendRequests";
 import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
+import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
+import { MiniKit } from "@worldcoin/minikit-js";
 
 interface SupplyModalProps {
   isOpen: boolean;
   onClose: () => void;
   poolContractAddress?: string;
   lpSymbol?: string;
-  walletAddress?: string; // Add wallet address prop
+  walletAddress?: string;
 }
 
 export function SupplyModal({ 
@@ -96,18 +98,122 @@ export function SupplyModal({
     return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
   };
 
-  const handleSupply = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      toast({
-        title: "Supply initiated",
-        description: `You have successfully supplied ${amount} USDC`,
+  const handleSupply = async () => {
+    try {
+      if (!walletAddress || !poolContractAddress || !amount) return;
+  
+      setIsLoading(true);
+  
+      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 min
+      const loanAmount = parseFloat(amount);
+      const loanAmountBaseUnits = BigInt(Math.floor(loanAmount * 1_000_000)); // 6 decimals
+  
+      const permitTransfer = {
+        permitted: {
+          token: WORLDCOIN_TOKEN_COLLATERAL,
+          amount: loanAmountBaseUnits.toString(),
+        },
+        nonce: Date.now().toString(),
+        deadline,
+      };
+  
+      const transferDetails = {
+        to: poolContractAddress,
+        requestedAmount: loanAmountBaseUnits.toString(),
+      };
+  
+      const permitTransferArgsForm = [
+        [permitTransfer.permitted.token, permitTransfer.permitted.amount],
+        permitTransfer.nonce,
+        permitTransfer.deadline,
+      ];
+  
+      const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
+  
+      const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+        transaction: [
+          {
+            address: poolContractAddress,
+            abi: [
+              {
+                name: "depositWithPermit2",
+                type: "function",
+                stateMutability: "nonpayable",
+                inputs: [
+                  { name: "amount", type: "uint256" },
+                  { name: "receiver", type: "address" },
+                  {
+                    name: "permitTransferFrom",
+                    type: "tuple",
+                    components: [
+                      {
+                        name: "permitted",
+                        type: "tuple",
+                        components: [
+                          { name: "token", type: "address" },
+                          { name: "amount", type: "uint256" },
+                        ],
+                      },
+                      { name: "nonce", type: "uint256" },
+                      { name: "deadline", type: "uint256" },
+                    ],
+                  },
+                  {
+                    name: "transferDetails",
+                    type: "tuple",
+                    components: [
+                      { name: "to", type: "address" },
+                      { name: "requestedAmount", type: "uint256" },
+                    ],
+                  },
+                  { name: "signature", type: "bytes" },
+                ],
+                outputs: [],
+              },
+            ],
+            functionName: "depositWithPermit2",
+            args: [
+              loanAmountBaseUnits.toString(),
+              walletAddress,
+              permitTransferArgsForm,
+              transferDetailsArgsForm,
+              "PERMIT2_SIGNATURE_PLACEHOLDER_0",
+            ],
+          },
+        ],
+        permit2: [
+          {
+            ...permitTransfer,
+            spender: poolContractAddress,
+          },
+        ],
       });
+  
+      if (finalPayload.status === "success") {
+        toast({
+          title: "Supply successful",
+          description: `Tx ID: ${finalPayload.transaction_id}`,
+        });
+        onClose();
+        setAmount("");
+      } else {
+        toast({
+          title: "Transaction failed",
+          description: finalPayload.error_code === "user_rejected"
+            ? "User rejected the transaction"
+            : "Something went wrong",
+        });
+      }
+    } catch (err: any) {
+      console.error("Deposit failed", err);
+      toast({
+        title: "Error",
+        description: err.message ?? "Something went wrong",
+      });
+    } finally {
       setIsLoading(false);
-      onClose();
-      setAmount("");
-    }, 1500);
-  };
+    }
+  };  
 
   const calculateLPTokens = () => {
     const numAmount = parseFloat(amount);

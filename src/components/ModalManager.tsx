@@ -37,6 +37,7 @@ export const ModalManager: React.FC = () => {
         onClose={closeModal}
         lpBalance={lpBalance || 0}
         lpValue={lpValue || 0}
+        poolContractAddress={poolContractAddress || undefined}
       />
     );
   }

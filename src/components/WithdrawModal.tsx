@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,41 +12,59 @@ import {
 import { AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MiniKit } from "@worldcoin/minikit-js";
+import { previewRedeem } from "@/lib/backendRequests";
 
 interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
   lpBalance: number;
   lpValue: number;
+  poolContractAddress: string;
 }
 
-export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawModalProps) {
+export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue, poolContractAddress }: WithdrawModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState<number>(0);
+  const [rateError, setRateError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
-  
-  // Exchange rate - in a real app, this would come from a contract or API
-  const exchangeRate = lpValue / lpBalance; // Value per LP token in USDC
-  
-  // Reset form when modal is opened
+  const walletAddress = localStorage.getItem("ls_wallet_address") || null;
+
+  // Fetch accurate exchange rate from backend
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      try {
+        const res = await previewRedeem(1, poolContractAddress);
+        setExchangeRate(res.usdcAmount);
+        setRateError(null);
+      } catch (err) {
+        console.error("Error fetching exchange rate", err);
+        setExchangeRate(0);
+        setRateError("Unable to load exchange rate.");
+      }
+    };
+
+    if (isOpen && poolContractAddress) {
+      fetchExchangeRate();
+    }
+  }, [isOpen, poolContractAddress]);
+
+  // Reset modal state when opened
   useEffect(() => {
     if (isOpen) {
       setAmount("");
       setIsLoading(false);
-      
-      // Focus the input when the modal opens
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   }, [isOpen]);
-  
+
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
     return !isNaN(numAmount) && numAmount > 0 && numAmount <= lpValue;
   };
-  
+
   const calculateRemainingUsdcBalance = () => {
     const numAmount = parseFloat(amount);
     if (!isNaN(numAmount) && numAmount > 0) {
@@ -55,38 +72,84 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
     }
     return lpValue.toFixed(2);
   };
-  
+
   const calculateLpTokenAmount = () => {
     const numAmount = parseFloat(amount);
     if (!isNaN(numAmount) && numAmount > 0 && exchangeRate > 0) {
       return (numAmount / exchangeRate).toFixed(4);
     }
-    return "0.00";
+    return "0.0000";
   };
+
+  const handleWithdraw = async () => {
+    try {
+      if (!amount || !walletAddress || !poolContractAddress) return;
   
-  const handleWithdraw = () => {
-    setIsLoading(true);
-    
-    // Here you would integrate with the world app transaction modal
-    // For now, we'll simply mock this with a timeout
-    setTimeout(() => {
-      toast({
-        title: "Withdrawal initiated",
-        description: `You have successfully withdrawn ${amount} USDC (${calculateLpTokenAmount()} LP tokens)`,
+      setIsLoading(true);
+  
+      const estimatedLpAmount = parseFloat(calculateLpTokenAmount());
+      const lpTokenAmountWithDecimals = BigInt(Math.floor(estimatedLpAmount * 1_000_000));
+  
+      const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+        transaction: [
+          {
+            address: poolContractAddress,
+            abi: [
+              {
+                name: "redeem",
+                type: "function",
+                stateMutability: "nonpayable",
+                inputs: [
+                  { name: "shares", type: "uint256" },
+                  { name: "receiver", type: "address" },
+                  { name: "owner", type: "address" },
+                ],
+                outputs: [{ type: "uint256" }],
+              },
+            ],
+            functionName: "redeem",
+            args: [
+              lpTokenAmountWithDecimals.toString(),
+              walletAddress,
+              walletAddress,
+            ],
+          },
+        ],
       });
-      setIsLoading(false);
-      onClose();
-      setAmount("");
-    }, 1500);
-  };
   
+      if (finalPayload.status === "success") {
+        toast({
+          title: "Withdrawal successful",
+          description: `Tx ID: ${finalPayload.transaction_id}`,
+        });
+        onClose();
+        setAmount("");
+      } else {
+        toast({
+          title: "Withdrawal failed",
+          description: finalPayload.error_code === "user_rejected"
+            ? "User rejected the transaction"
+            : "Something went wrong",
+        });
+      }
+    } catch (err: any) {
+      console.error("Withdraw error:", err);
+      toast({
+        title: "Transaction error",
+        description: err.message ?? "Something went wrong",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
+      <DialogContent
         className={`sm:max-w-[425px] ${isMobile ? 'max-w-[90%] p-4' : ''} rounded-lg`}
-        style={{ 
+        style={{
           position: 'fixed',
-          left: '50%', 
+          left: '50%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
           maxHeight: isMobile ? "90vh" : "auto",
@@ -99,7 +162,7 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
             Withdraw USDC from your LP position
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className={`grid gap-3 py-2 ${isMobile ? 'py-2' : 'py-4'}`}>
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
@@ -137,13 +200,13 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
                 MAX
               </Button>
             </div>
-            
-            {amount && (
+
+            {amount && exchangeRate > 0 && (
               <div className="text-xs text-gray-500 mt-1">
                 You will withdraw approximately {calculateLpTokenAmount()} LP tokens
               </div>
             )}
-            
+
             {amount && !isAmountValid() && (
               <p className="text-xs text-red-500">
                 {parseFloat(amount) > lpValue
@@ -151,8 +214,12 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
                   : "Please enter a valid amount"}
               </p>
             )}
+
+            {rateError && (
+              <p className="text-xs text-red-500 mt-1">{rateError}</p>
+            )}
           </div>
-          
+
           <div className="border rounded-md p-3 mt-1">
             <h4 className="text-sm font-medium mb-2">Withdrawal Summary</h4>
             <div className="space-y-1.5 text-xs">
@@ -175,33 +242,33 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue }: WithdrawM
               </div>
             </div>
           </div>
-          
+
           <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? 'p-2 my-1' : 'mt-2'}`}>
             <div className="flex items-start">
               <AlertTriangle className="mr-2 h-5 w-5 text-amber-600 flex-shrink-0 mt-0" />
               <div className="text-xs text-amber-800">
                 <p className="font-medium mb-1">Important:</p>
                 <p>
-                  Withdrawals may be subject to pool liquidity. Large withdrawals might experience slippage. 
+                  Withdrawals may be subject to pool liquidity. Large withdrawals might experience slippage.
                   The final USDC amount may vary slightly from the estimate shown above.
                 </p>
               </div>
             </div>
           </div>
         </div>
-        
+
         <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
-          <Button 
-            onClick={handleWithdraw} 
-            disabled={!amount || !isAmountValid() || isLoading}
+          <Button
+            onClick={handleWithdraw}
+            disabled={!amount || !isAmountValid() || isLoading || exchangeRate <= 0}
             className="bg-[#8B5CF6] hover:bg-[#7c50e6] text-white w-full py-6"
           >
             {isLoading ? "Processing..." : "Withdraw"}
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={onClose} 
-            disabled={isLoading} 
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isLoading}
             className="w-full py-6"
           >
             Cancel

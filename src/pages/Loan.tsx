@@ -35,6 +35,8 @@ const Loan = () => {
   const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = loanData?.isActive ?? false;
 
+  console.log(`[Loan] Loan data: ${JSON.stringify(loanData)}`);
+
   // Filter active pools and pools with enough liquidity
   useEffect(() => {
     if (pools && pools.length > 0) {
@@ -130,7 +132,7 @@ const Loan = () => {
   
   // Handle loan application
   const handleApplyLoan = useCallback(
-    async (contractAddress: string, requestedTierId: number) => {
+    async (contractAddress: string) => {
       if (isClicked) return;
       setIsClicked(true);
       setSelectedPool(contractAddress);
@@ -139,7 +141,7 @@ const Loan = () => {
         await refreshBalance();
         const latestBalance = usdcBalance ?? 0;
   
-        if (latestBalance < 10) {
+        if (latestBalance < loanData?.amount) {
           toast({
             title: "Loan Unavailable",
             description: "Our lending pool is temporarily depleted. Please try again later.",
@@ -149,7 +151,7 @@ const Loan = () => {
         }
   
         if (data?.nftInfo?.tokenId) {
-          await requestNewLoan(BigInt(requestedTierId), contractAddress);
+          await requestNewLoan(contractAddress);
   
           sessionStorage.removeItem("usdcBalance");
           sessionStorage.removeItem("walletTokens");
@@ -290,7 +292,7 @@ const Loan = () => {
                   contractAddress={contractAddress}
                   liquidity={pool.available_liquidity || 0}
                   isLoading={isConfirming && selectedPool === contractAddress}
-                  onSelect={(contractAddress, tierId) => handleApplyLoan(contractAddress, 3)} // Using tier 3 for Orb verified
+                  onSelect={(contractAddress) => handleApplyLoan(contractAddress)}
                   disabled={isConfirming || isConfirmed}
                   tierId={3}
                   dataLoading={isLoadingData}

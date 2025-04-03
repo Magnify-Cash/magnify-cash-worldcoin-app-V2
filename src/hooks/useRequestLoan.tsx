@@ -1,24 +1,17 @@
 
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { MAGNIFY_WORLD_ADDRESS, WORLDCOIN_CLIENT_ID } from "@/utils/constants";
+import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
 
-export type LoanDetails = {
-  amount: number;
-  duration: number;
-  transactionId: string;
-};
-
 export type RequestLoanResponse = {
-  requestNewLoan: (requestedTierId: bigint, poolAddress?: string) => Promise<void>;
+  requestNewLoan: (poolAddress: string) => Promise<void>;
   error: string | null;
   transactionId: string | null;
   isConfirming: boolean;
   isConfirmed: boolean;
-  loanDetails: LoanDetails | null;
 };
 
 const useRequestLoan = (): RequestLoanResponse => {
@@ -26,7 +19,6 @@ const useRequestLoan = (): RequestLoanResponse => {
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
-  const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
 
   const client = createPublicClient({
     chain: worldchain,
@@ -43,7 +35,6 @@ const useRequestLoan = (): RequestLoanResponse => {
     });
     
 
-  // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
     if (isConfirmingTransaction) {
       setIsConfirming(true);
@@ -54,31 +45,26 @@ const useRequestLoan = (): RequestLoanResponse => {
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
-  const requestNewLoan = useCallback(async (requestedTierId: bigint, poolAddress?: string) => {
+  const requestNewLoan = useCallback(async (poolAddress: string) => {
     setError(null);
     setTransactionId(null);
     setIsConfirmed(false);
-    setLoanDetails(null);
 
     try {
-      // Use the provided pool address or fall back to the default address
-      const contractAddress = poolAddress || MAGNIFY_WORLD_ADDRESS;
+      if(!poolAddress) {
+        console.error("No pool address provided");
+        return;
+      }
       
-      console.log(`[CoT] Requesting loan with tierId: ${requestedTierId.toString()} from pool: ${contractAddress}`);
+      console.log(`[CoT] Requesting loan with from pool: ${poolAddress}`);
       
       const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: contractAddress as `0x${string}`,
+            address: poolAddress as `0x${string}`,
             abi: [
               {
-                inputs: [
-                  {
-                    internalType: "uint256",
-                    name: "requestedTierId",
-                    type: "uint256",
-                  },
-                ],
+                inputs: [],
                 name: "requestLoan",
                 outputs: [],
                 stateMutability: "nonpayable",
@@ -86,20 +72,15 @@ const useRequestLoan = (): RequestLoanResponse => {
               },
             ],
             functionName: "requestLoan",
-            args: [requestedTierId.toString()],
+            args: [],
           },
         ],
       });
+      
 
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
-        
-        setLoanDetails({
-          amount: 1000, // Replace with actual logic if amount comes from transaction or another source
-          duration: 30, // Replace with actual logic for duration
-          transactionId: finalPayload.transaction_id,
-        });
       } else {
         console.error("Error sending transaction", finalPayload);
         setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
@@ -112,7 +93,7 @@ const useRequestLoan = (): RequestLoanResponse => {
     }
   }, []);
 
-  return { requestNewLoan, error, transactionId, isConfirming, isConfirmed, loanDetails };
+  return { requestNewLoan, error, transactionId, isConfirming, isConfirmed };
 };
 
 export default useRequestLoan;

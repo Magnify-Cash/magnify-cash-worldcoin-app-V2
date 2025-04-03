@@ -41,6 +41,11 @@ export interface SoulboundNFT {
   tokenId: string | null;
   tier: number | null;
   verificationStatus: VerificationTier;
+  interestPaid: string;
+  loansDefaulted: string;
+  loansRepaid: string;
+  ongoingLoan: boolean;
+  owner: string | null;
 }
 
 export interface Loan {
@@ -103,7 +108,12 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
       let soulboundNFT: SoulboundNFT = {
         tokenId: null,
         tier: null,
-        verificationStatus: VERIFICATION_TIERS.NONE
+        verificationStatus: VERIFICATION_TIERS.NONE,
+        interestPaid: "0",
+        loansDefaulted: "0",
+        loansRepaid: "0",
+        ongoingLoan: false,
+        owner: null,
       };
       
       let hasActiveLoan = false;
@@ -121,7 +131,12 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         soulboundNFT = {
           tokenId: nftResponse.tokenId,
           tier: nftData.tier || null,
-          verificationStatus: VERIFICATION_TIERS.ORB
+          verificationStatus: VERIFICATION_TIERS.ORB,
+          interestPaid: nftData.interestPaid || "0",
+          loansDefaulted: nftData.loansDefaulted || "0",
+          loansRepaid: nftData.loansRepaid || "0",
+          ongoingLoan: nftData.ongoingLoan || false,
+          owner: nftData.owner || null,
         };
         
         // Check if user has an active loan

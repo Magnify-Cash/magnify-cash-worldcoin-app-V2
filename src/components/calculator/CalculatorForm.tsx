@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Calculator, Sliders, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -34,10 +33,20 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setInputs((prev) => ({
-      ...prev,
-      [name]: parseFloat(value) || 0
-    }));
+    
+    // For poolSize, ensure it's a whole number
+    if (name === "poolSize") {
+      const parsedValue = Math.round(parseFloat(value) || 0);
+      setInputs((prev) => ({
+        ...prev,
+        [name]: parsedValue
+      }));
+    } else {
+      setInputs((prev) => ({
+        ...prev,
+        [name]: parseFloat(value) || 0
+      }));
+    }
   };
 
   const handleSliderChange = (name: keyof CalculatorInputs, value: number[]) => {
@@ -58,30 +67,70 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
     const selectedPoolData = pools.find(pool => pool.contract_address === value);
     
     if (selectedPoolData && selectedPoolData.borrower_info) {
-      // Update loan terms based on the selected pool
-      const poolSize = selectedPoolData.total_value_locked || 10000;
-      const loanPeriod = selectedPoolData.borrower_info.loanPeriodDays || 30;
-      
-      // Parse interest rate (removing % symbol if present)
-      const interestRateStr = selectedPoolData.borrower_info.interestRate || "8.5%";
-      const interestRate = parseFloat(interestRateStr.replace('%', ''));
-      
-      // Parse loan amount (removing $ symbol if present)
-      const loanAmountStr = selectedPoolData.borrower_info.loanAmount || "$10";
-      const loanAmount = parseFloat(loanAmountStr.replace('$', ''));
-      
-      // Parse origination fee (removing % symbol if present)
-      const originationFeeStr = selectedPoolData.borrower_info.originationFee || "10%";
-      const originationFee = parseFloat(originationFeeStr.replace('%', ''));
-      
-      setInputs(prev => ({
-        ...prev,
-        poolSize,
-        loanPeriod,
-        interestRate: isNaN(interestRate) ? 8.5 : interestRate,
-        loanAmount: isNaN(loanAmount) ? 10 : loanAmount,
-        originationFee: isNaN(originationFee) ? 10 : originationFee
-      }));
+      try {
+        // Update loan terms based on the selected pool
+        const poolSize = Math.round(selectedPoolData.total_value_locked || 10000);
+        
+        // Safely parse loan period
+        let loanPeriod = 30; // Default value
+        if (selectedPoolData.borrower_info.loanPeriodDays) {
+          const parsedLoanPeriod = parseInt(String(selectedPoolData.borrower_info.loanPeriodDays), 10);
+          if (!isNaN(parsedLoanPeriod) && parsedLoanPeriod > 0) {
+            loanPeriod = Math.min(parsedLoanPeriod, 30); // Cap at 30 days to avoid extreme values
+          }
+        }
+        
+        // Safely parse interest rate (removing % symbol if present)
+        let interestRate = 8.5; // Default value
+        if (selectedPoolData.borrower_info.interestRate) {
+          const interestRateStr = String(selectedPoolData.borrower_info.interestRate).replace('%', '');
+          const parsedInterestRate = parseFloat(interestRateStr);
+          if (!isNaN(parsedInterestRate)) {
+            interestRate = Math.min(parsedInterestRate, 30); // Cap at 30% to avoid extreme values
+          }
+        }
+        
+        // Safely parse loan amount (removing $ symbol if present)
+        let loanAmount = 10; // Default value
+        if (selectedPoolData.borrower_info.loanAmount) {
+          const loanAmountStr = String(selectedPoolData.borrower_info.loanAmount).replace('$', '');
+          const parsedLoanAmount = parseFloat(loanAmountStr);
+          if (!isNaN(parsedLoanAmount)) {
+            loanAmount = Math.min(parsedLoanAmount, 50); // Cap at 50 to avoid extreme values
+          }
+        }
+        
+        // Safely parse origination fee (removing % symbol if present)
+        let originationFee = 10; // Default value
+        if (selectedPoolData.borrower_info.originationFee) {
+          const originationFeeStr = String(selectedPoolData.borrower_info.originationFee).replace('%', '');
+          const parsedOriginationFee = parseFloat(originationFeeStr);
+          if (!isNaN(parsedOriginationFee)) {
+            originationFee = Math.min(parsedOriginationFee, 30); // Cap at 30% to avoid extreme values
+          }
+        }
+        
+        // Update the inputs with validated values
+        setInputs(prev => ({
+          ...prev,
+          poolSize,
+          loanPeriod,
+          interestRate,
+          loanAmount,
+          originationFee
+        }));
+        
+        console.log("Updated inputs from pool template:", {
+          poolSize,
+          loanPeriod,
+          interestRate,
+          loanAmount,
+          originationFee
+        });
+      } catch (error) {
+        console.error("Error parsing pool data:", error);
+        // Keep current values on error
+      }
     }
   };
 
@@ -119,6 +168,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               name="poolSize"
               type="number"
               min="100"
+              step="1"
               value={inputs.poolSize}
               onChange={handleInputChange}
               className="mt-1 focus-visible:ring-[#8B5CF6]"

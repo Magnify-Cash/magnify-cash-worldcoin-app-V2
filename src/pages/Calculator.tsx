@@ -41,60 +41,86 @@ const Calculator = () => {
   const [results, setResults] = useState<CalculationResult | null>(null);
 
   const calculateReturns = (inputs: CalculatorInputs) => {
-    const {
-      investmentAmount,
-      poolSize,
-      loanPeriod,
-      interestRate,
-      originationFee,
-      defaultRate,
-      loanAmount,
-      utilizationRate
-    } = inputs;
+    try {
+      // Ensure all inputs are valid numbers and within reasonable ranges
+      const safeInputs = {
+        ...inputs,
+        investmentAmount: Math.max(0, inputs.investmentAmount),
+        poolSize: Math.max(100, Math.round(inputs.poolSize)), // Ensure whole number
+        loanPeriod: Math.max(1, Math.min(365, inputs.loanPeriod)),
+        interestRate: Math.max(0, Math.min(100, inputs.interestRate)),
+        originationFee: Math.max(0, Math.min(100, inputs.originationFee)),
+        defaultRate: Math.max(0, Math.min(100, inputs.defaultRate)),
+        loanAmount: Math.max(1, Math.min(1000, inputs.loanAmount)),
+        utilizationRate: Math.max(0, Math.min(100, inputs.utilizationRate))
+      };
+      
+      console.log("Calculating returns with inputs:", safeInputs);
 
-    // Step 1: Calculate actual capital utilized based on utilization rate
-    const utilizedCapital = poolSize * (utilizationRate / 100);
-    
-    // Step 2: Calculate total number of loans issued by the pool
-    const totalLoans = utilizedCapital / loanAmount;
-    
-    // Step 3: Break into successful and defaulted loans
-    const successfulLoans = totalLoans * (1 - defaultRate / 100);
-    const defaultedLoans = totalLoans * (defaultRate / 100);
-    
-    // Step 4: Calculate earnings and losses at the pool level
-    const effectiveLoan = loanAmount - (originationFee / 100 * loanAmount);
-    const interestPerLoan = loanAmount * (interestRate / 100);
-    
-    const totalInterestEarned = successfulLoans * interestPerLoan;
-    const totalLossesFromDefaults = defaultedLoans * effectiveLoan;
-    
-    const finalPoolValue = poolSize + totalInterestEarned - totalLossesFromDefaults;
-    
-    // Step 5: Calculate the user's share and results
-    const userShare = investmentAmount / poolSize;
-    const userFinalValue = finalPoolValue * userShare;
-    const userNetGain = userFinalValue - investmentAmount;
-    
-    // Step 6: Calculate annualized return (APY)
-    const netGainPerCycle = userNetGain / investmentAmount;
-    // Convert days to years for APY calculation
-    const apy = Math.pow(1 + netGainPerCycle, 365 / loanPeriod) - 1;
-    
-    setResults({
-      userFinalValue,
-      userNetGain,
-      apy,
-      totalLoans,
-      successfulLoans,
-      defaultedLoans,
-      totalInterestEarned,
-      totalLossesFromDefaults,
-      finalPoolValue,
-      effectiveLoan,
-      interestPerLoan,
-      userShare
-    });
+      // Step 1: Calculate actual capital utilized based on utilization rate
+      const utilizedCapital = safeInputs.poolSize * (safeInputs.utilizationRate / 100);
+      
+      // Step 2: Calculate total number of loans issued by the pool
+      const totalLoans = safeInputs.loanAmount > 0 ? utilizedCapital / safeInputs.loanAmount : 0;
+      
+      // Step 3: Break into successful and defaulted loans
+      const successfulLoans = totalLoans * (1 - safeInputs.defaultRate / 100);
+      const defaultedLoans = totalLoans * (safeInputs.defaultRate / 100);
+      
+      // Step 4: Calculate earnings and losses at the pool level
+      const effectiveLoan = safeInputs.loanAmount - (safeInputs.originationFee / 100 * safeInputs.loanAmount);
+      const interestPerLoan = safeInputs.loanAmount * (safeInputs.interestRate / 100);
+      
+      const totalInterestEarned = successfulLoans * interestPerLoan;
+      const totalLossesFromDefaults = defaultedLoans * effectiveLoan;
+      
+      const finalPoolValue = safeInputs.poolSize + totalInterestEarned - totalLossesFromDefaults;
+      
+      // Step 5: Calculate the user's share and results
+      const userShare = safeInputs.poolSize > 0 ? safeInputs.investmentAmount / safeInputs.poolSize : 0;
+      const userFinalValue = finalPoolValue * userShare;
+      const userNetGain = userFinalValue - safeInputs.investmentAmount;
+      
+      // Step 6: Calculate annualized return (APY)
+      // Ensure we don't divide by zero
+      let apy = 0;
+      if (safeInputs.investmentAmount > 0 && safeInputs.loanPeriod > 0) {
+        const netGainPerCycle = userNetGain / safeInputs.investmentAmount;
+        // Convert days to years for APY calculation (prevent negative or infinite values)
+        apy = Math.max(0, Math.pow(1 + netGainPerCycle, 365 / safeInputs.loanPeriod) - 1);
+      }
+      
+      console.log("Calculation results:", {
+        userFinalValue,
+        userNetGain,
+        apy,
+        totalLoans,
+        successfulLoans,
+        defaultedLoans,
+        totalInterestEarned,
+        totalLossesFromDefaults,
+        finalPoolValue
+      });
+      
+      setResults({
+        userFinalValue,
+        userNetGain,
+        apy,
+        totalLoans,
+        successfulLoans,
+        defaultedLoans,
+        totalInterestEarned,
+        totalLossesFromDefaults,
+        finalPoolValue,
+        effectiveLoan,
+        interestPerLoan,
+        userShare
+      });
+    } catch (error) {
+      console.error("Error in calculation:", error);
+      // Provide fallback results or show error to user
+      setResults(null);
+    }
   };
 
   return (

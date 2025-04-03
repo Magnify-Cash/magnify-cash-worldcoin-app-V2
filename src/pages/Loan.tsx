@@ -140,8 +140,24 @@ const Loan = () => {
       try {
         await refreshBalance();
         const latestBalance = usdcBalance ?? 0;
+        
+        // Get the borrower info for this specific pool
+        const poolBorrowerInfo = poolsWithBorrowerInfo[contractAddress];
+        
+        if (!poolBorrowerInfo) {
+          console.error(`No borrower info found for pool ${contractAddress}`);
+          toast({
+            title: "Error",
+            description: "Failed to get loan information. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Use the pool's specific loan amount instead of the generic loanData amount
+        const poolLoanAmount = poolBorrowerInfo.loanAmount;
   
-        if (latestBalance < loanData?.amount) {
+        if (latestBalance < poolLoanAmount) {
           toast({
             title: "Loan Unavailable",
             description: "Our lending pool is temporarily depleted. Please try again later.",
@@ -176,7 +192,7 @@ const Loan = () => {
         setIsClicked(false);
       }
     },
-    [data, requestNewLoan, toast, usdcBalance, refreshBalance, isClicked]
+    [data, requestNewLoan, toast, usdcBalance, refreshBalance, isClicked, poolsWithBorrowerInfo]
   );
   
   // Handle navigation after claiming loan

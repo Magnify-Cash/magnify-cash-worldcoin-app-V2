@@ -1,6 +1,5 @@
 
 import { useState, useCallback, useEffect } from "react";
-import { formatUnits } from "viem";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -9,39 +8,61 @@ import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import useRequestLoan from "@/hooks/useRequestLoan";
 import { Button } from "@/components/ui/button";
 import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
+import { usePoolData } from "@/contexts/PoolDataContext";
+import { LoanPoolCard } from "@/components/LoanPoolCard";
+import { LiquidityPool } from "@/types/supabase/liquidity";
 
 const Loan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
+  const [selectedPool, setSelectedPool] = useState<string | null>(null);
+  const [filteredPools, setFilteredPools] = useState<LiquidityPool[]>([]);
 
   // Hooks
   const { toast } = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
-  const { data, isLoading, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const { data, isLoading: isLoadingNFT, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const { requestNewLoan, isConfirming, isConfirmed, transactionId } = useRequestLoan();
   const { usdcBalance, refreshBalance } = useUSDCBalance();
+  const { pools, loading: isLoadingPools, refreshPools } = usePoolData();
   
   const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = loanData?.isActive ?? false;
 
-    // Call refetch after loan is confirmed
-    useEffect(() => {
-      if (isConfirmed) {
-        const timeout = setTimeout(async () => {
-          await refetch();
-        }, 1000);
-  
-        return () => clearTimeout(timeout);
-      }
-    }, [isConfirmed, refetch]);
+  // Filter active pools and pools with enough liquidity
+  useEffect(() => {
+    if (pools && pools.length > 0) {
+      const active = pools.filter(pool => 
+        pool.status === 'active' && 
+        pool.available_liquidity > 0
+      );
+      setFilteredPools(active);
+    }
+  }, [pools]);
+
+  // Refresh pools on component mount
+  useEffect(() => {
+    refreshPools();
+  }, [refreshPools]);
+
+  // Call refetch after loan is confirmed
+  useEffect(() => {
+    if (isConfirmed) {
+      const timeout = setTimeout(async () => {
+        await refetch();
+      }, 1000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isConfirmed, refetch]);
   
   // Handle loan application
   const handleApplyLoan = useCallback(
-    async (event: React.FormEvent, requestedTierId: number) => {
-      event.preventDefault();
+    async (contractAddress: string, requestedTierId: number) => {
       if (isClicked) return;
       setIsClicked(true);
+      setSelectedPool(contractAddress);
   
       try {
         await refreshBalance();
@@ -57,12 +78,11 @@ const Loan = () => {
         }
   
         if (data?.nftInfo?.tokenId) {
-          await requestNewLoan(BigInt(requestedTierId));
+          await requestNewLoan(BigInt(requestedTierId), contractAddress);
   
           sessionStorage.removeItem("usdcBalance");
           sessionStorage.removeItem("walletTokens");
           sessionStorage.removeItem("walletCacheTimestamp");
-  
         } else {
           toast({
             title: "Error",
@@ -76,7 +96,7 @@ const Loan = () => {
           title: "Error",
           description: error?.message?.includes("user rejected transaction")
             ? "Transaction rejected by user."
-            : error?.message || "Unable to pay back loan.",
+            : error?.message || "Unable to apply for loan.",
           variant: "destructive",
         });
       } finally {
@@ -91,6 +111,8 @@ const Loan = () => {
     await refetch();
     setTimeout(() => navigate("/repay-loan"), 1000);
   }; 
+
+  const isLoading = isLoadingNFT || isLoadingPools;
 
   return (
     <div className="min-h-screen">
@@ -126,7 +148,7 @@ const Loan = () => {
             </Button>
           </div>
         </div> 
-      ) : data?.nftInfo?.tier?.toString() === "0" ? (
+      ) : data?.nftInfo?.tier === 0 ? (
         <div className="p-6 space-y-6">
           <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
             <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
@@ -140,66 +162,85 @@ const Loan = () => {
         </div> 
       ) : (
         <div className="p-6 space-y-6">
-          <div className="glass-card p-6">
-            <h2 className="text-lg font-semibold text-center">Current Loan Eligibility</h2>
-            {data.allTiers && data.allTiers[3] && (
-              <div className="mt-10">
-                <div className="flex items-center">
-                  <Shield className="w-6 h-6 mr-2" />
-                  <span>{data.allTiers[3].verificationStatus?.description || "Orb Verified"}</span>
-                </div>
-                <div className="flex flex-col items-start space-y-3 my-3">
-                  <p className="text-gray-600">Loan Amount: ${data.allTiers[3].loanAmount}</p>
-                  <p className="text-gray-600">
-                    Interest Rate: {((data.allTiers[3].interestRate) / 100).toString()}%
-                  </p>
-                  <p className="text-gray-600">
-                    Duration: {((data.allTiers[3].loanPeriod) / (60 * 24 * 60)).toString()} days
-                  </p>
-                </div>
-                <Button
-                  onClick={(event) => handleApplyLoan(event, data.allTiers[3].tierId)}
-                  disabled={isClicked || isConfirming || isConfirmed}
-                  className="w-full"
-                >
-                  {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Apply Now"}
-                </Button>
-                <hr className="border-t border-gray-300 mt-4" />
-              </div>
-            )}
-            {transactionId && (
-              <div className="mt-4">
-                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
-                  Transaction ID:{" "}
-                  <span title={transactionId}>
-                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-                  </span>
-                </p>
-                {isConfirming && (
-                  <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-                    <div className="flex justify-center">
-                      <div className="orbit-spinner">
-                        <div className="orbit"></div>
-                        <div className="orbit"></div>
-                        <div className="center"></div>
-                      </div>
-                    </div>
-                    <p className="text-white text-center max-w-md px-4 text-lg font-medium">
-                      Confirming transaction, please do not leave this page until confirmation is complete.
-                    </p>
-                  </div>
-                )}
-                {isConfirmed && (
-                  <>
-                    <p>Transaction confirmed!</p>
-                    <Button type="button" onClick={handleNavigateAfterTransaction} className="mt-2 w-full">
-                      View Loan Details
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
+          <div className="mb-4 text-center">
+            <h2 className="text-xl font-semibold">Available Loan Pools</h2>
+            <p className="text-gray-600 text-sm mt-1">
+              Select a lending pool below to apply for your loan
+            </p>
           </div>
+
+          {filteredPools.length > 0 ? (
+            filteredPools.map((pool) => {
+              // Find tier 3 loan data or use fallback
+              const loanAmount = pool.borrower_info?.loanAmount 
+                ? parseInt(pool.borrower_info.loanAmount.replace('$', '')) 
+                : 1000;
+              
+              const interestRate = pool.borrower_info?.interestRate 
+                ? pool.borrower_info.interestRate.replace('%', '') 
+                : 8.5;
+              
+              // Convert loanPeriod to days or use fallback
+              const loanPeriod = pool.borrower_info?.loanPeriodDays || 30;
+
+              return (
+                <LoanPoolCard
+                  key={pool.contract_address}
+                  name={pool.name}
+                  loanAmount={loanAmount}
+                  interestRate={interestRate}
+                  loanPeriod={loanPeriod * 24 * 60 * 60} // Convert days to seconds
+                  contractAddress={pool.contract_address || ""}
+                  liquidity={pool.available_liquidity}
+                  isLoading={isConfirming && selectedPool === pool.contract_address}
+                  onSelect={(contractAddress, tierId) => handleApplyLoan(contractAddress, 3)} // Using tier 3 for Orb verified
+                  disabled={isConfirming || isConfirmed}
+                  tierId={3}
+                />
+              );
+            })
+          ) : (
+            <div className="glass-card p-6 text-center">
+              <Shield className="w-8 h-8 mx-auto mb-3 text-gray-400" />
+              <h3 className="text-lg font-medium mb-2">No Active Loan Pools Available</h3>
+              <p className="text-gray-600">
+                There are currently no active lending pools available for loans. Please check back later.
+              </p>
+            </div>
+          )}
+
+          {transactionId && (
+            <div className="glass-card p-4 mt-4">
+              <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+                Transaction ID:{" "}
+                <span title={transactionId}>
+                  {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+                </span>
+              </p>
+              {isConfirming && (
+                <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+                  <div className="flex justify-center">
+                    <div className="orbit-spinner">
+                      <div className="orbit"></div>
+                      <div className="orbit"></div>
+                      <div className="center"></div>
+                    </div>
+                  </div>
+                  <p className="text-white text-center max-w-md px-4 text-lg font-medium">
+                    Confirming transaction, please do not leave this page until confirmation is complete.
+                  </p>
+                </div>
+              )}
+              {isConfirmed && (
+                <>
+                  <p>Transaction confirmed!</p>
+                  <Button type="button" onClick={handleNavigateAfterTransaction} className="mt-2 w-full">
+                    View Loan Details
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

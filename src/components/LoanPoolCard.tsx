@@ -1,0 +1,103 @@
+
+import { Shield, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+interface LoanPoolCardProps {
+  name: string;
+  loanAmount: number;
+  interestRate: number | string;
+  loanPeriod: number;
+  contractAddress: string;
+  liquidity: number;
+  isLoading?: boolean;
+  onSelect: (contractAddress: string, tierId: number) => void;
+  disabled?: boolean;
+  tierId: number;
+}
+
+export const LoanPoolCard = ({
+  name,
+  loanAmount,
+  interestRate,
+  loanPeriod,
+  contractAddress,
+  liquidity,
+  isLoading = false,
+  onSelect,
+  disabled = false,
+  tierId,
+}: LoanPoolCardProps) => {
+  const handleSelectPool = () => {
+    onSelect(contractAddress, tierId);
+  };
+
+  // Format the loan period in days
+  const formattedLoanPeriod = typeof loanPeriod === 'number' 
+    ? Math.ceil(loanPeriod / (60 * 60 * 24)) 
+    : 0;
+
+  // Format interest rate
+  const formattedInterestRate = typeof interestRate === 'number'
+    ? `${(interestRate / 100).toFixed(2)}%`
+    : typeof interestRate === 'string' && interestRate.includes('%')
+      ? interestRate
+      : `${interestRate}%`;
+
+  // Check if pool has enough liquidity
+  const hasEnoughLiquidity = liquidity >= loanAmount;
+
+  return (
+    <div className="glass-card p-6 mb-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <Shield className="w-6 h-6 mr-2 text-[#5A1A8F]" />
+          <h3 className="text-lg font-medium">{name}</h3>
+        </div>
+        {!hasEnoughLiquidity && (
+          <Popover>
+            <PopoverTrigger>
+              <Info className="w-5 h-5 text-amber-500" />
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <p className="text-sm">
+                This pool currently doesn't have enough liquidity for your loan amount.
+              </p>
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <p className="text-gray-600 text-sm">Loan Amount</p>
+          <p className="font-medium">${loanAmount}</p>
+        </div>
+        <div>
+          <p className="text-gray-600 text-sm">Interest Rate</p>
+          <p className="font-medium">{formattedInterestRate}</p>
+        </div>
+        <div>
+          <p className="text-gray-600 text-sm">Duration</p>
+          <p className="font-medium">{formattedLoanPeriod} days</p>
+        </div>
+        <div>
+          <p className="text-gray-600 text-sm">Available Liquidity</p>
+          <p className="font-medium">${liquidity.toLocaleString()}</p>
+        </div>
+      </div>
+      
+      <Button 
+        onClick={handleSelectPool} 
+        disabled={isLoading || disabled || !hasEnoughLiquidity} 
+        className="w-full"
+      >
+        {isLoading ? "Loading..." : !hasEnoughLiquidity ? "Insufficient Liquidity" : "Apply for Loan"}
+      </Button>
+    </div>
+  );
+};

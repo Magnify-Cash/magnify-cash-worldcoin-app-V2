@@ -13,7 +13,7 @@ export type LoanDetails = {
 };
 
 export type RequestLoanResponse = {
-  requestNewLoan: (requestedTierId: bigint) => Promise<void>;
+  requestNewLoan: (requestedTierId: bigint, poolAddress?: string) => Promise<void>;
   error: string | null;
   transactionId: string | null;
   isConfirming: boolean;
@@ -54,17 +54,22 @@ const useRequestLoan = (): RequestLoanResponse => {
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
-  const requestNewLoan = useCallback(async (requestedTierId: bigint) => {
+  const requestNewLoan = useCallback(async (requestedTierId: bigint, poolAddress?: string) => {
     setError(null);
     setTransactionId(null);
     setIsConfirmed(false);
     setLoanDetails(null);
 
     try {
+      // Use the provided pool address or fall back to the default address
+      const contractAddress = poolAddress || MAGNIFY_WORLD_ADDRESS;
+      
+      console.log(`[CoT] Requesting loan with tierId: ${requestedTierId.toString()} from pool: ${contractAddress}`);
+      
       const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: MAGNIFY_WORLD_ADDRESS,
+            address: contractAddress as `0x${string}`,
             abi: [
               {
                 inputs: [

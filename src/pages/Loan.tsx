@@ -312,7 +312,7 @@ const Loan = () => {
                   liquidity={pool.available_liquidity || 0}
                   isLoading={isConfirming && selectedPool === contractAddress}
                   onSelect={(contractAddress) => handleApplyLoan(contractAddress)}
-                  disabled={isConfirming || isConfirmed}
+                  disabled={isConfirming && selectedPool === contractAddress}
                   tierId={3}
                   dataLoading={isLoadingData}
                 />

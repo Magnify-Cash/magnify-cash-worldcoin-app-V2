@@ -2,13 +2,16 @@ import { useEffect, useState, useCallback } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { getSoulboundUserNFT, getSoulboundData } from "@/lib/backendRequests";
 import { readContract } from "@wagmi/core";
-import { magnifyworldabi } from "@/utils/magnifyworldabi";
 import { config } from "@/providers/Wagmi";
 import {
   MAGNIFY_WORLD_ADDRESS_V3,
   MAGNIFY_WORLD_ADDRESS_V1,
   MAGNIFY_WORLD_ADDRESS,
 } from "@/utils/constants";
+
+import { magnifyV1Abi } from "@/utils/magnifyV1Abi";
+import { magnifyV2Abi } from "@/utils/magnifyV2Abi";
+import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
 
 export const VERIFICATION_TIERS: Record<"NONE" | "ORB", VerificationTier> = {
   NONE: {
@@ -65,7 +68,7 @@ export interface Loan {
 export interface ContractData {
   nftInfo: SoulboundNFT;
   hasActiveLoan: boolean;
-  loan?: [string, Loan]; // [version, loan]
+  loan?: [string, Loan];
   allTiers?: Array<{
     loanAmount: number;
     interestRate: number;
@@ -94,43 +97,58 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
   const [isError, setIsError] = useState<boolean>(false);
 
   const fetchData = useCallback(async () => {
-    if (!walletAddress) {
-      console.log("No wallet address provided");
-      return;
-    }
+    if (!walletAddress) return;
+
+    let loanData: [string, Loan] | undefined = undefined;
 
     const checkLegacyLoans = async (): Promise<[string, Loan] | null> => {
-      const contracts = [
-        { version: "V1", address: MAGNIFY_WORLD_ADDRESS_V1 },
-        { version: "V2", address: MAGNIFY_WORLD_ADDRESS },
-      ];
+      try {
+        const loanIds = (await readContract(config, {
+          address: MAGNIFY_WORLD_ADDRESS_V1,
+          abi: magnifyV1Abi,
+          functionName: "fetchLoansByAddress",
+          args: [walletAddress],
+        })) as bigint[];
 
-      for (const { version, address } of contracts) {
-        try {
-          const result = await readContract(config, {
-            address: address as `0x${string}`,
-            abi: magnifyworldabi,
-            functionName: "fetchLoanByAddress",
-            args: [walletAddress],
-          });
+        if (loanIds.length > 0) {
+          return [
+            "V1",
+            {
+              amount: BigInt(0),
+              startTime: 0,
+              isActive: true,
+              interestRate: BigInt(0),
+              loanPeriod: BigInt(0),
+            },
+          ];
+        }
+      } catch (err) {
+        console.warn("[useMagnifyWorld] Error checking V1 loan:", err);
+      }
 
-          console.log(`[useMagnifyWorld] Raw loan result from ${version}:`, result);
+      try {
+        const result = await readContract(config, {
+          address: MAGNIFY_WORLD_ADDRESS,
+          abi: magnifyV2Abi,
+          functionName: "fetchLoanByAddress",
+          args: [walletAddress],
+        });
 
-          const rawLoan = Array.isArray(result) ? result[1] : result;
-
-          if (rawLoan?.isActive) {
-            const loan: Loan = {
+        const [loanVersion, rawLoan] = result as [string, any];
+        if (rawLoan?.isActive === true) {
+          return [
+            loanVersion,
+            {
               amount: BigInt(rawLoan.amount),
               startTime: Number(rawLoan.startTime),
               isActive: rawLoan.isActive,
               interestRate: BigInt(rawLoan.interestRate),
               loanPeriod: BigInt(rawLoan.loanPeriod),
-            };
-            return [version, loan];
-          }
-        } catch (err) {
-          console.warn(`[useMagnifyWorld] Error checking ${version} loan:`, err);
+            },
+          ];
         }
+      } catch (err) {
+        console.warn("[useMagnifyWorld] Error checking V2 loan:", err);
       }
 
       return null;
@@ -140,18 +158,11 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
       setIsLoading(true);
       setIsError(false);
 
-      let hasActiveLoan = false;
-      let loanData: [string, Loan] | undefined = undefined;
       let tierData = null;
 
-      // Check V1/V2 first
       const legacyLoan = await checkLegacyLoans();
-      if (legacyLoan) {
-        loanData = legacyLoan;
-        hasActiveLoan = true;
-      }
+      if (legacyLoan) loanData = legacyLoan;
 
-      // Now fetch NFT info (V3)
       const nftResponse = await getSoulboundUserNFT(walletAddress);
 
       let soulboundNFT: SoulboundNFT = {
@@ -180,56 +191,28 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
           owner: nftData.owner || null,
         };
 
-        const nftLoanIsActive = nftData.hasActiveLoan || nftData.ongoingLoan;
-
-        if (nftLoanIsActive) {
-          hasActiveLoan = true;
-
-          if (!loanData && nftData.loan) {
-            loanData = [
-              nftData.loan.version || "V3",
-              {
-                amount: BigInt(nftData.loan.amount || 0),
-                startTime: nftData.loan.startTime || 0,
-                isActive: nftData.loan.isActive ?? true,
-                interestRate: BigInt(nftData.loan.interestRate || 0),
-                loanPeriod: BigInt(nftData.loan.loanPeriod || 0),
-              },
-            ];
-          }
-
-          // Fallback even if loan object is missing
-          if (!loanData) {
-            loanData = [
-              "V3",
-              {
-                amount: BigInt(0),
-                startTime: 0,
-                isActive: true,
-                interestRate: BigInt(0),
-                loanPeriod: BigInt(0),
-              },
-            ];
-          }
+        if ((nftData.hasActiveLoan || nftData.ongoingLoan) && !loanData) {
+          loanData = [
+            nftData.loan?.version || "V3",
+            {
+              amount: BigInt(nftData.loan?.amount || 0),
+              startTime: nftData.loan?.startTime || 0,
+              isActive: nftData.loan?.isActive ?? true,
+              interestRate: BigInt(nftData.loan?.interestRate || 0),
+              loanPeriod: BigInt(nftData.loan?.loanPeriod || 0),
+            },
+          ];
         }
 
-        if (nftData.tiers) {
-          tierData = nftData.tiers;
-        }
+        if (nftData.tiers) tierData = nftData.tiers;
       }
 
       const newData: ContractData = {
         nftInfo: soulboundNFT,
-        hasActiveLoan,
+        hasActiveLoan: Boolean(loanData?.[1]?.isActive),
+        loan: loanData,
+        allTiers: tierData || undefined,
       };
-
-      if (loanData) {
-        newData.loan = loanData;
-      }
-
-      if (tierData) {
-        newData.allTiers = tierData;
-      }
 
       globalCache[walletAddress] = newData;
       setData(newData);
@@ -247,11 +230,8 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
   }, [walletAddress]);
 
   useEffect(() => {
-    if (!globalCache[walletAddress]) {
-      fetchData();
-    } else {
-      setData(globalCache[walletAddress]);
-    }
+    if (!globalCache[walletAddress]) fetchData();
+    else setData(globalCache[walletAddress]);
   }, [walletAddress, fetchData]);
 
   const refetch = useCallback(async (): Promise<void> => {

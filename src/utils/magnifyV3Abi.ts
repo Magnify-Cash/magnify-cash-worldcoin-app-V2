@@ -1,4 +1,4 @@
-export const MAGNIFY_V3_ABI = [
+export const magnifyV3Abi = [
     {
       "inputs": [],
       "name": "AlreadySetup",

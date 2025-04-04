@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
@@ -11,20 +10,11 @@ import {
   WORLDCOIN_TOKEN_COLLATERAL,
 } from "@/utils/constants";
 
-export type LoanDetails = {
+type LoanDetails = {
   amount: number;
   interest: number;
   totalDue: number;
   transactionId: string;
-};
-
-export type RepayLoanResponse = {
-  repayLoanWithPermit2: (loanAmount: string, V1OrV2: string) => Promise<void>;
-  error: string | null;
-  transactionId: string | null;
-  isConfirming: boolean;
-  isConfirmed: boolean;
-  loanDetails: LoanDetails | null;
 };
 
 const getContractAddress = (contract_version: string) => {
@@ -33,11 +23,11 @@ const getContractAddress = (contract_version: string) => {
   } else if (contract_version === "V2") {
     return MAGNIFY_WORLD_ADDRESS_V2;
   } else {
-    return MAGNIFY_WORLD_ADDRESS_V2; // Default to V2 if unspecified
+    return "";
   }
 };
 
-const useRepayLoan = (): RepayLoanResponse => {
+const useRepayLoan = () => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
@@ -51,13 +41,14 @@ const useRepayLoan = (): RepayLoanResponse => {
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      client: client as any,
+      client: client,
       transactionId: transactionId || "",
       appConfig: {
         app_id: WORLDCOIN_CLIENT_ID,
       },
     });
 
+  // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
     if (isConfirmingTransaction) {
       setIsConfirming(true);
@@ -74,18 +65,9 @@ const useRepayLoan = (): RepayLoanResponse => {
     setIsConfirmed(false);
     setLoanDetails(null);
 
-    // Normalize version string for consistency
-    const contractVersion = V1OrV2?.toUpperCase() || "V2";
-    const CONTRACT_ADDRESS = getContractAddress(contractVersion);
-    
-    if (!CONTRACT_ADDRESS) {
-      setError(`Unsupported contract version: ${contractVersion}`);
-      return;
-    }
+    const CONTRACT_ADDRESS = getContractAddress(V1OrV2);
 
     try {
-      console.log(`[RepayLoan] Repaying loan of ${loanAmount} for contract version ${contractVersion} at address ${CONTRACT_ADDRESS}`);
-      
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
 
       const permitTransfer = {
@@ -196,15 +178,10 @@ const useRepayLoan = (): RepayLoanResponse => {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
 
-        // Parse loan amount for display
-        const parsedAmount = typeof loanAmount === 'string' ? 
-          parseFloat(loanAmount) : 
-          Number(loanAmount);
-
         setLoanDetails({
-          amount: parsedAmount,
-          interest: 0, // Calculate based on contract terms if available
-          totalDue: parsedAmount, // Set to same value as amount for now
+          amount: parseInt(loanAmount),
+          interest: 0, // Calculate based on contract terms
+          totalDue: parseInt(loanAmount), // Calculate total with interest
           transactionId: finalPayload.transaction_id,
         });
       } else {

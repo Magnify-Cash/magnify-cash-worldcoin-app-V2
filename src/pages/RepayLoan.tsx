@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Calendar, DollarSign, Clock, Shield } from "lucide-react";
+import { Calendar, DollarSign, Clock } from "lucide-react";
 import { Loan, useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import { calculateRemainingTime } from "@/utils/timeinfo";
 import useRepayLoan from "@/hooks/useRepayLoan";
@@ -14,28 +14,24 @@ import { getUSDCBalance } from "@/lib/backendRequests";
 const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
   // hooks
-  const { toast } = useToast();
+  const toast = useToast();
   const navigate = useNavigate();
-  const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
+  const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const loan = data?.loan;
-  const loanData: Loan | undefined = loan && loan[1];
+  const loanData: Loan = loan && loan[1];
 
   // Update USDC balance on page load
   useEffect(() => {
     const updateUSDCBalance = async () => {
       if (ls_wallet) {
         try {
-          setIsLoadingBalance(true);
           const balance = await getUSDCBalance(ls_wallet);
           sessionStorage.setItem("usdcBalance", balance.toString());
         } catch (error) {
           console.error("Failed to fetch USDC balance:", error);
-        } finally {
-          setIsLoadingBalance(false);
         }
       }
     };
@@ -46,20 +42,18 @@ const RepayLoan = () => {
   // loan repayment
   const loanAmountDue = useMemo(() => {
     if (loanData) {
-      return loanData.amount + (loanData.amount * loanData.interestRate) / BigInt(10000);
+      return loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
     }
-    return BigInt(0); // Default value if loanData is not available
+    return 0n; // Default value if loanData is not available
   }, [loanData]);
-  
   const loanVersion = useMemo(() => {
     if (loan) {
       return loan[0];
     }
-    return "V2"; // Default to V2 if not available
+    return ""; // Default value if loanData is not available
   }, [loan]);
 
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
-  
   const handleApplyLoan = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
@@ -67,29 +61,27 @@ const RepayLoan = () => {
   
       setIsClicked(true);
 
-      try {
-        if (ls_wallet) {
-          if (sessionStorage.getItem("usdcBalance") === null) {
-            const balance = await getUSDCBalance(ls_wallet);
-            sessionStorage.setItem("usdcBalance", balance.toString());
-          }
 
-          const currentBalance = Number(sessionStorage.getItem("usdcBalance") || "0");
-          const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
+      if(sessionStorage.getItem("usdcBalance") === null) {
+        const balance = await getUSDCBalance(ls_wallet as string);
+        sessionStorage.setItem("usdcBalance", balance.toString());
+      }
 
-          if (currentBalance < amountDueFloat) {
-            toast({
-              title: "Insufficient USDC",
-              description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
-              variant: "destructive",
-            });
-            setIsClicked(false);
-            return;
-          }
-        }
+      const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
+      const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
+
+      if (currentBalance < amountDueFloat) {
+        toast.toast({
+          title: "Insufficient USDC",
+          description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
+          variant: "destructive",
+        });
+        setIsClicked(false);
+        return;
+      }
   
+      try {
         if (data?.nftInfo?.tokenId) {
-          // Convert loanAmountDue to string when passing to repayLoanWithPermit2
           await repayLoanWithPermit2(loanAmountDue.toString(), loanVersion);
   
           sessionStorage.removeItem("usdcBalance");
@@ -97,7 +89,7 @@ const RepayLoan = () => {
           sessionStorage.removeItem("walletCacheTimestamp");
   
         } else {
-          toast({
+          toast.toast({
             title: "Error",
             description: "Unable to pay back loan.",
             variant: "destructive",
@@ -105,7 +97,7 @@ const RepayLoan = () => {
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
-        toast({
+        toast.toast({
           title: "Error",
           description: error?.message?.includes("user rejected transaction")
             ? "Transaction rejected by user."
@@ -116,7 +108,7 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast, ls_wallet]
+    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast, ls_wallet, refetch]
   );
   
   // Call refetch after loan repayment is confirmed
@@ -130,8 +122,8 @@ const RepayLoan = () => {
     }
   }, [isConfirmed, refetch]);
 
-  // Loading & error states - include balance loading in the loading state
-  if (isLoading || isLoadingBalance || !data) {
+  // Loading & error states
+  if (isLoading || !loan) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -157,7 +149,7 @@ const RepayLoan = () => {
   }
 
   // Check if user has an active loan
-  if (!isLoading && (!data.hasActiveLoan || !loan)) {
+  if (!isLoading && (!loan || loanData?.amount === 0n || !loanData?.isActive)) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -177,12 +169,12 @@ const RepayLoan = () => {
   }
 
   // active loan
-  if (data.hasActiveLoan && loan) {
+  if (!isLoading && loan[0] !== "") {
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
-      loanData!.startTime,
-      Number(loanData!.loanPeriod),
+      loanData.startTime,
+      loanData.loanPeriod,
     );
-    const amountDue = loanData!.amount + (loanData!.amount * loanData!.interestRate) / BigInt(10000);
+    const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -191,11 +183,11 @@ const RepayLoan = () => {
             <div className="flex items-center justify-between">
               <span
                 className={`px-3 py-1 rounded-full ${
-                  loanData!.isActive ? "bg-green-300" : "bg-red-300"
+                  loanData.isActive ? "bg-green-300" : "bg-red-300"
                 } text-black text-sm`}
               >
-                {loanData!.isActive
-                  ? `Active Loan (${loanVersion})`
+                {loanData.isActive
+                  ? "Active Loan"
                   : "Defaulted Loan"}
               </span>
             </div>
@@ -205,7 +197,7 @@ const RepayLoan = () => {
                 <DollarSign className="w-5 h-5 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
-                  <p className="text-start font-semibold">${formatUnits(loanData!.amount, 6)} </p>
+                  <p className="text-start font-semibold">${formatUnits(loanData.amount, 6)} </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -279,27 +271,8 @@ const RepayLoan = () => {
             )}
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // Fallback if data structure doesn't match expected format
-  return (
-    <div className="min-h-screen">
-      <Header title="Loan Status" />
-      <div className="container max-w-2xl mx-auto p-6 space-y-6">
-        <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-          <h3 className="text-lg font-semibold text-center">Loan Information Unavailable</h3>
-          <p className="text-center text-muted-foreground">
-            We're having trouble retrieving your loan information. Please try again later.
-          </p>
-          <Button onClick={() => navigate("/loan")} className="w-full mt-4">
-            Back to Loans
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };
-
+};
 export default RepayLoan;

@@ -32,12 +32,10 @@ const Loan = () => {
   const { pools, loading: isLoadingPools } = usePoolData();
   
   // Extract loan information from data
-  const loanData = data?.loan ? data.loan[1] : null;
   const hasActiveLoan = data?.hasActiveLoan ?? false;
   const loanVersion = data?.loan ? data.loan[0] : null;
 
-  console.log(`[Loan] Loan data: ${loanData}`);
-  console.log(loanData)
+  console.log(data)
   console.log(`[Loan] Has active loan: ${hasActiveLoan}, version: ${loanVersion}`);
 
   // Filter active pools and pools with enough liquidity

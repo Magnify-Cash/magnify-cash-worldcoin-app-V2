@@ -107,20 +107,24 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
 
       for (const { version, address } of contracts) {
         try {
-          const loanResult = await readContract(config, {
+          const result = await readContract(config, {
             address: address as `0x${string}`,
             abi: magnifyworldabi,
             functionName: "fetchLoanByAddress",
             args: [walletAddress],
           });
 
-          if (Array.isArray(loanResult) && loanResult[1]?.isActive) {
+          console.log(`[useMagnifyWorld] Raw loan result from ${version}:`, result);
+
+          const rawLoan = Array.isArray(result) ? result[1] : result;
+
+          if (rawLoan?.isActive) {
             const loan: Loan = {
-              amount: BigInt(loanResult[1].amount),
-              startTime: Number(loanResult[1].startTime),
-              isActive: loanResult[1].isActive,
-              interestRate: BigInt(loanResult[1].interestRate),
-              loanPeriod: BigInt(loanResult[1].loanPeriod),
+              amount: BigInt(rawLoan.amount),
+              startTime: Number(rawLoan.startTime),
+              isActive: rawLoan.isActive,
+              interestRate: BigInt(rawLoan.interestRate),
+              loanPeriod: BigInt(rawLoan.loanPeriod),
             };
             return [version, loan];
           }
@@ -140,14 +144,14 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
       let loanData: [string, Loan] | undefined = undefined;
       let tierData = null;
 
-      // First check legacy loans
+      // Check V1/V2 first
       const legacyLoan = await checkLegacyLoans();
       if (legacyLoan) {
         loanData = legacyLoan;
         hasActiveLoan = true;
       }
 
-      // Then continue with v3 NFT
+      // Now fetch NFT info (V3)
       const nftResponse = await getSoulboundUserNFT(walletAddress);
 
       let soulboundNFT: SoulboundNFT = {
@@ -178,18 +182,35 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
 
         const nftLoanIsActive = nftData.hasActiveLoan || nftData.ongoingLoan;
 
-        if (!loanData && nftLoanIsActive && nftData.loan) {
-          loanData = [
-            nftData.loan.version || "V3",
-            {
-              amount: BigInt(nftData.loan.amount || 0),
-              startTime: nftData.loan.startTime || 0,
-              isActive: nftData.loan.isActive || true,
-              interestRate: BigInt(nftData.loan.interestRate || 0),
-              loanPeriod: BigInt(nftData.loan.loanPeriod || 0),
-            },
-          ];
+        if (nftLoanIsActive) {
           hasActiveLoan = true;
+
+          if (!loanData && nftData.loan) {
+            loanData = [
+              nftData.loan.version || "V3",
+              {
+                amount: BigInt(nftData.loan.amount || 0),
+                startTime: nftData.loan.startTime || 0,
+                isActive: nftData.loan.isActive ?? true,
+                interestRate: BigInt(nftData.loan.interestRate || 0),
+                loanPeriod: BigInt(nftData.loan.loanPeriod || 0),
+              },
+            ];
+          }
+
+          // Fallback even if loan object is missing
+          if (!loanData) {
+            loanData = [
+              "V3",
+              {
+                amount: BigInt(0),
+                startTime: 0,
+                isActive: true,
+                interestRate: BigInt(0),
+                loanPeriod: BigInt(0),
+              },
+            ];
+          }
         }
 
         if (nftData.tiers) {

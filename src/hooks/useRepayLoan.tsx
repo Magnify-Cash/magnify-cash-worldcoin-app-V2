@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
@@ -6,8 +7,10 @@ import { worldchain } from "wagmi/chains";
 import {
   MAGNIFY_WORLD_ADDRESS as MAGNIFY_WORLD_ADDRESS_V2,
   MAGNIFY_WORLD_ADDRESS_V1,
+  MAGNIFY_WORLD_ADDRESS_V3,
   WORLDCOIN_CLIENT_ID,
   WORLDCOIN_TOKEN_COLLATERAL,
+  WORLDCHAIN_RPC_URL,
 } from "@/utils/constants";
 
 type LoanDetails = {
@@ -22,6 +25,8 @@ const getContractAddress = (contract_version: string) => {
     return MAGNIFY_WORLD_ADDRESS_V1;
   } else if (contract_version === "V2") {
     return MAGNIFY_WORLD_ADDRESS_V2;
+  } else if (contract_version === "V3") {
+    return MAGNIFY_WORLD_ADDRESS_V3;
   } else {
     return "";
   }
@@ -36,7 +41,7 @@ const useRepayLoan = () => {
 
   const client = createPublicClient({
     chain: worldchain,
-    transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
+    transport: http(WORLDCHAIN_RPC_URL),
   });
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
@@ -59,13 +64,20 @@ const useRepayLoan = () => {
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
-  const repayLoanWithPermit2 = useCallback(async (loanAmount: string, V1OrV2: string) => {
+  const repayLoanWithPermit2 = useCallback(async (loanAmount: string | bigint, V1OrV2OrV3: string) => {
     setError(null);
     setTransactionId(null);
     setIsConfirmed(false);
     setLoanDetails(null);
 
-    const CONTRACT_ADDRESS = getContractAddress(V1OrV2);
+    // Convert bigint to string if needed
+    const loanAmountString = typeof loanAmount === 'bigint' ? loanAmount.toString() : loanAmount;
+    
+    const CONTRACT_ADDRESS = getContractAddress(V1OrV2OrV3);
+    if (!CONTRACT_ADDRESS) {
+      setError("Invalid contract version");
+      return;
+    }
 
     try {
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
@@ -73,7 +85,7 @@ const useRepayLoan = () => {
       const permitTransfer = {
         permitted: {
           token: WORLDCOIN_TOKEN_COLLATERAL,
-          amount: loanAmount,
+          amount: loanAmountString,
         },
         nonce: Date.now().toString(),
         deadline,
@@ -81,7 +93,7 @@ const useRepayLoan = () => {
 
       const transferDetails = {
         to: CONTRACT_ADDRESS,
-        requestedAmount: loanAmount,
+        requestedAmount: loanAmountString,
       };
 
       const permitTransferArgsForm = [
@@ -178,10 +190,14 @@ const useRepayLoan = () => {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
 
+        const loanAmountNumber = Number(typeof loanAmountString === 'string' 
+          ? loanAmountString 
+          : loanAmountString.toString());
+
         setLoanDetails({
-          amount: parseInt(loanAmount),
+          amount: loanAmountNumber,
           interest: 0, // Calculate based on contract terms
-          totalDue: parseInt(loanAmount), // Calculate total with interest
+          totalDue: loanAmountNumber, // Calculate total with interest
           transactionId: finalPayload.transaction_id,
         });
       } else {

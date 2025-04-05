@@ -149,15 +149,73 @@ const RepayLoan = () => {
 
   // No NFT but has an active loan case (V1 or V2 loan)
   if (data && (!data.nftInfo?.tokenId || data.nftInfo.tokenId === "0") && data.hasActiveLoan && loan) {
+    // For user with no NFT but with active loan, show loan details card
+    const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
+      BigInt(loanData?.startTime || 0), 
+      BigInt(loanData?.loanPeriod || 0)
+    );
+    
+    const amountDue = loanData?.amount ? 
+      loanData.amount + (loanData.amount * (loanData?.interestRate || 0n)) / 10000n : 0n;
+
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-            <h3 className="text-lg font-semibold text-center">You already have an active loan</h3>
-            <p className="text-center text-muted-foreground">
-              You currently have an active loan. Please repay it first.
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <span className="px-3 py-1 rounded-full bg-green-300 text-black text-sm">
+                Active Loan
+              </span>
+              {loanVersion && (
+                <span className="px-3 py-1 rounded-full bg-blue-200 text-black text-sm">
+                  {loanVersion}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
+                  <p className="text-start font-semibold">${formatUnits(loanData?.amount || 0n, 6)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground text-start">Repayment Amount</p>
+                  <p className="text-start font-semibold">${formatUnits(amountDue, 6)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground text-start">Due Date</p>
+                  <p className="text-start font-semibold">
+                    {new Date(dueDate).toLocaleDateString("en-US", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZoneName: "short", 
+                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground text-start">Time Remaining</p>
+                  <p className="text-start font-semibold">
+                    {`${daysRemaining}d ${hoursRemaining}hr ${minutesRemaining}m`}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <Button onClick={handleApplyLoan} className="w-full mt-4 primary-button" disabled={isClicked || isConfirming || isConfirmed}>
               {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
             </Button>
@@ -216,7 +274,7 @@ const RepayLoan = () => {
     );
   }
 
-  // active loan
+  // Active loan with NFT case
   const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
     loanData.startTime,
     loanData.loanPeriod,

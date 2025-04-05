@@ -39,6 +39,7 @@ const useRepayLoan = () => {
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
 
+  // Create a public client with explicit typing
   const client = createPublicClient({
     chain: worldchain,
     transport: http(WORLDCHAIN_RPC_URL),
@@ -46,7 +47,7 @@ const useRepayLoan = () => {
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      client: client,
+      client,
       hash: transactionId ? transactionId as `0x${string}` : undefined,
       appConfig: {
         app_id: WORLDCOIN_CLIENT_ID,
@@ -64,13 +65,13 @@ const useRepayLoan = () => {
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
-  const repayLoanWithPermit2 = useCallback(async (loanAmount: string | bigint, V1OrV2OrV3: string) => {
+  const repayLoanWithPermit2 = useCallback(async (loanAmount: bigint | string, V1OrV2OrV3: string) => {
     setError(null);
     setTransactionId(null);
     setIsConfirmed(false);
     setLoanDetails(null);
 
-    // Convert bigint to string if needed
+    // Convert to string if it's bigint
     const loanAmountString = typeof loanAmount === 'bigint' ? loanAmount.toString() : loanAmount;
     
     const CONTRACT_ADDRESS = getContractAddress(V1OrV2OrV3);
@@ -190,6 +191,7 @@ const useRepayLoan = () => {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
 
+        // Convert loan amount to number for display
         const loanAmountNumber = Number(typeof loanAmountString === 'string' 
           ? loanAmountString 
           : loanAmountString.toString());

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getPoolById, getPoolByContract } from "@/lib/poolRequests";
+import { getPoolById, getPoolByContract, invalidatePoolsCache } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -49,58 +49,95 @@ const PoolDetails = () => {
   const [pool, setPool] = useState<LiquidityPool | null>(null);
   const { openSupplyModal, openWithdrawModal } = usePoolModals();
 
-  const userPosition = useUserPoolPosition(pool?.contract_address);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [optimisticUpdates, setOptimisticUpdates] = useState<{
+    totalValueLocked?: number;
+    availableLiquidity?: number;
+  } | null>(null);
 
-  useEffect(() => {
-    const fetchPoolData = async () => {
-      if (!contract && !id) {
+  const userPosition = useUserPoolPosition(pool?.contract_address, refreshTrigger);
+
+  const fetchPoolData = useCallback(async () => {
+    if (!contract && !id) {
+      navigate("/lending");
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      let poolData: LiquidityPool | null = null;
+      
+      if (contract) {
+        poolData = await getPoolByContract(contract);
+      } else if (id) {
+        const poolId = parseInt(id);
+        poolData = await getPoolById(poolId);
+        
+        if (poolData && poolData.contract_address) {
+          navigate(`/pool/${poolData.contract_address}`, { replace: true });
+        }
+      }
+      
+      if (!poolData) {
+        toast({
+          title: "Pool not found",
+          description: "The requested pool does not exist.",
+          variant: "destructive",
+        });
         navigate("/lending");
         return;
       }
       
-      try {
-        setLoading(true);
-        let poolData: LiquidityPool | null = null;
-        
-        if (contract) {
-          // Fetch by contract address
-          poolData = await getPoolByContract(contract);
-        } else if (id) {
-          // Fallback for legacy routes - fetch by ID
-          const poolId = parseInt(id);
-          poolData = await getPoolById(poolId);
-          
-          // If we found a pool by ID and it has a contract, redirect to the new URL format
-          if (poolData && poolData.contract_address) {
-            navigate(`/pool/${poolData.contract_address}`, { replace: true });
-          }
-        }
-        
-        if (!poolData) {
-          toast({
-            title: "Pool not found",
-            description: "The requested pool does not exist.",
-            variant: "destructive",
-          });
-          navigate("/lending");
-          return;
-        }
-        
-        setPool(poolData);
-      } catch (error) {
-        console.error("Error fetching pool data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load pool data. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+      if (optimisticUpdates) {
+        poolData = {
+          ...poolData,
+          total_value_locked: optimisticUpdates.totalValueLocked ?? poolData.total_value_locked,
+          available_liquidity: optimisticUpdates.availableLiquidity ?? poolData.available_liquidity,
+        };
       }
-    };
+      
+      setPool(poolData);
+    } catch (error) {
+      console.error("Error fetching pool data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load pool data. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [contract, id, navigate, optimisticUpdates]);
 
+  useEffect(() => {
     fetchPoolData();
-  }, [contract, id, navigate]);
+  }, [fetchPoolData, refreshTrigger]);
+
+  const handleSuccessfulSupply = useCallback((amount: number) => {
+    if (pool) {
+      const updatedTotalValueLocked = pool.total_value_locked + amount;
+      const updatedAvailableLiquidity = pool.available_liquidity + amount;
+      
+      setOptimisticUpdates({
+        totalValueLocked: updatedTotalValueLocked,
+        availableLiquidity: updatedAvailableLiquidity,
+      });
+      
+      setPool({
+        ...pool,
+        total_value_locked: updatedTotalValueLocked,
+        available_liquidity: updatedAvailableLiquidity,
+      });
+    }
+    
+    setRefreshTrigger(prev => prev + 1);
+    
+    setTimeout(() => {
+      invalidatePoolsCache();
+      setOptimisticUpdates(null);
+      fetchPoolData();
+    }, 3000);
+  }, [pool, fetchPoolData]);
 
   const getDateFromTimestamp = (timestamp?: string): Date => {
     if (!timestamp) return new Date();
@@ -281,7 +318,7 @@ const PoolDetails = () => {
         poolId: pool.id,
         poolContractAddress: pool.contract_address,
         lpSymbol: pool.metadata?.symbol || "LP",
-        
+        onSuccessfulSupply: handleSuccessfulSupply
       });
     }
   };

@@ -1,79 +1,80 @@
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
-
-type ModalType = "supply" | "withdraw" | null;
+import { createContext, useContext, useState, ReactNode } from "react";
 
 interface ModalContextState {
   isOpen: boolean;
-  modalType: ModalType;
-  poolId: number | null;
-  poolContractAddress: string | null;
-  lpSymbol: string | null;
-  lpBalance: number | null;
-  lpValue: number | null;
-  walletAddress: string | null; // Add wallet address to context
-  openModal: (type: ModalType, params: ModalParams) => void;
-  closeModal: () => void;
-}
-
-interface ModalParams {
+  modalType: "supply" | "withdraw" | null;
   poolId?: number;
   poolContractAddress?: string;
   lpSymbol?: string;
   lpBalance?: number;
   lpValue?: number;
-  walletAddress?: string; // Add wallet address to params
+  walletAddress?: string;
+  onSuccessfulSupply?: (amount: number) => void;
+  openModal: (type: "supply" | "withdraw", params: any) => void;
+  closeModal: () => void;
 }
 
-const initialState: ModalContextState = {
+const ModalContext = createContext<ModalContextState>({
   isOpen: false,
   modalType: null,
-  poolId: null,
-  poolContractAddress: null,
-  lpSymbol: null,
-  lpBalance: null,
-  lpValue: null,
-  walletAddress: null, // Initialize wallet address
   openModal: () => {},
   closeModal: () => {},
-};
-
-export const ModalContext = createContext<ModalContextState>(initialState);
+});
 
 export const useModalContext = () => useContext(ModalContext);
 
-export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [modalType, setModalType] = useState<ModalType>(null);
-  const [poolId, setPoolId] = useState<number | null>(null);
-  const [poolContractAddress, setPoolContractAddress] = useState<string | null>(null);
-  const [lpSymbol, setLpSymbol] = useState<string | null>(null);
-  const [lpBalance, setLpBalance] = useState<number | null>(null);
-  const [lpValue, setLpValue] = useState<number | null>(null);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null); // Add state for wallet address
+interface ModalProviderProps {
+  children: ReactNode;
+}
 
-  const openModal = (type: ModalType, params: ModalParams) => {
+export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [modalType, setModalType] = useState<"supply" | "withdraw" | null>(null);
+  const [poolId, setPoolId] = useState<number | undefined>(undefined);
+  const [poolContractAddress, setPoolContractAddress] = useState<string | undefined>(undefined);
+  const [lpSymbol, setLpSymbol] = useState<string | undefined>(undefined);
+  const [lpBalance, setLpBalance] = useState<number | undefined>(undefined);
+  const [lpValue, setLpValue] = useState<number | undefined>(undefined);
+  const [walletAddress, setWalletAddress] = useState<string | undefined>(
+    localStorage.getItem("ls_wallet_address") || undefined
+  );
+  const [onSuccessfulSupply, setOnSuccessfulSupply] = useState<((amount: number) => void) | undefined>(undefined);
+
+  const openModal = (
+    type: "supply" | "withdraw",
+    params: {
+      poolId?: number;
+      poolContractAddress?: string;
+      lpSymbol?: string;
+      lpBalance?: number;
+      lpValue?: number;
+      onSuccessfulSupply?: (amount: number) => void;
+    }
+  ) => {
     setModalType(type);
-    setPoolId(params.poolId || null);
-    setPoolContractAddress(params.poolContractAddress || null);
-    setLpSymbol(params.lpSymbol || null);
-    setLpBalance(params.lpBalance || null);
-    setLpValue(params.lpValue || null);
-    setWalletAddress(params.walletAddress || null); // Set wallet address
+    setPoolId(params.poolId);
+    setPoolContractAddress(params.poolContractAddress);
+    setLpSymbol(params.lpSymbol);
+    setLpBalance(params.lpBalance);
+    setLpValue(params.lpValue);
+    setOnSuccessfulSupply(params.onSuccessfulSupply);
     setIsOpen(true);
   };
 
   const closeModal = () => {
     setIsOpen(false);
+    
+    // Reset the context's state after a slight delay to allow animation to complete
     setTimeout(() => {
       setModalType(null);
-      setPoolId(null);
-      setPoolContractAddress(null);
-      setLpSymbol(null);
-      setLpBalance(null);
-      setLpValue(null);
-      setWalletAddress(null); // Reset wallet address
-    }, 200); // Small delay to allow animation to complete
+      setPoolId(undefined);
+      setPoolContractAddress(undefined);
+      setLpSymbol(undefined);
+      setLpBalance(undefined);
+      setLpValue(undefined);
+      setOnSuccessfulSupply(undefined);
+    }, 300);
   };
 
   return (
@@ -86,7 +87,8 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         lpSymbol,
         lpBalance,
         lpValue,
-        walletAddress, // Include wallet address in context value
+        walletAddress,
+        onSuccessfulSupply,
         openModal,
         closeModal,
       }}

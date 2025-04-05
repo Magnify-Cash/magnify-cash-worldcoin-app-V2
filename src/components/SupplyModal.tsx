@@ -17,6 +17,8 @@ import { previewDeposit } from "@/lib/backendRequests";
 import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
 import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 import { MiniKit } from "@worldcoin/minikit-js";
+import { invalidatePoolsCache } from "@/lib/poolRequests";
+import { Cache } from "@/utils/cacheUtils";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -24,6 +26,7 @@ interface SupplyModalProps {
   poolContractAddress?: string;
   lpSymbol?: string;
   walletAddress?: string;
+  onSuccessfulSupply?: (amount: number) => void;
 }
 
 export function SupplyModal({ 
@@ -32,6 +35,7 @@ export function SupplyModal({
   poolContractAddress, 
   lpSymbol = "LP",
   walletAddress = localStorage.getItem("ls_wallet_address") || "",
+  onSuccessfulSupply,
 }: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -96,6 +100,22 @@ export function SupplyModal({
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
     return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
+  };
+
+  // Function to refresh cache after successful supply
+  const invalidateCacheAfterSupply = (supplyAmount: number) => {
+    // Clear the pool and position cache to force a refresh
+    invalidatePoolsCache();
+    
+    // Call the onSuccessfulSupply callback if provided
+    if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
+      onSuccessfulSupply(supplyAmount);
+    }
+    
+    // Refresh the wallet balance
+    setTimeout(() => {
+      refreshBalance();
+    }, 1000);
   };
 
   const handleSupply = async () => {
@@ -190,10 +210,16 @@ export function SupplyModal({
       });
   
       if (finalPayload.status === "success") {
+        // Notify the user with a simpler success message
         toast({
           title: "Supply successful",
-          description: `Tx ID: ${finalPayload.transaction_id}`,
+          description: "Your assets have been successfully supplied to the pool.",
         });
+        
+        // Invalidate cache and update UI
+        invalidateCacheAfterSupply(loanAmount);
+        
+        // Close the modal and reset state
         onClose();
         setAmount("");
       } else {

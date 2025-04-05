@@ -8,6 +8,7 @@ export const usePoolModals = () => {
     poolId?: number;
     poolContractAddress?: string;
     lpSymbol?: string;
+    onSuccessfulSupply?: (amount: number) => void;
   }) => {
     openModal("supply", params);
   };
@@ -16,7 +17,7 @@ export const usePoolModals = () => {
     poolId?: number;
     lpBalance?: number;
     lpValue?: number;
-    poolContractAddress?: string; // Added poolContractAddress param
+    poolContractAddress?: string;
   }) => {
     openModal("withdraw", params);
   };

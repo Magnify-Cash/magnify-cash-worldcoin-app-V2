@@ -14,6 +14,7 @@ export const ModalManager: React.FC = () => {
     lpValue,
     walletAddress,
     closeModal,
+    onSuccessfulSupply,
   } = useModalContext();
 
   if (!isOpen || !modalType) return null;
@@ -26,6 +27,7 @@ export const ModalManager: React.FC = () => {
         poolContractAddress={poolContractAddress || undefined}
         lpSymbol={lpSymbol || undefined}
         walletAddress={walletAddress || undefined}
+        onSuccessfulSupply={onSuccessfulSupply}
       />
     );
   }
@@ -37,7 +39,7 @@ export const ModalManager: React.FC = () => {
         onClose={closeModal}
         lpBalance={lpBalance || 0}
         lpValue={lpValue || 0}
-        poolContractAddress={poolContractAddress || undefined} // Pass poolContractAddress to WithdrawModal
+        poolContractAddress={poolContractAddress || undefined}
       />
     );
   }

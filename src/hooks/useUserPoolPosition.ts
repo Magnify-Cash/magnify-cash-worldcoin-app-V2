@@ -30,7 +30,10 @@ const initialState: UserPositionData = {
   error: null
 };
 
-export const useUserPoolPosition = (poolContractAddress: string | undefined): UserPositionData => {
+export const useUserPoolPosition = (
+  poolContractAddress: string | undefined,
+  refreshTrigger: number = 0
+): UserPositionData => {
   const [positionData, setPositionData] = useState<UserPositionData>(initialState);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   
@@ -94,7 +97,7 @@ export const useUserPoolPosition = (poolContractAddress: string | undefined): Us
     };
 
     fetchUserPosition();
-  }, [poolContractAddress, walletAddress]);
+  }, [poolContractAddress, walletAddress, refreshTrigger]);
 
   return positionData;
 };

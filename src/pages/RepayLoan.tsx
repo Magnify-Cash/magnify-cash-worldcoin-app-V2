@@ -167,11 +167,6 @@ const RepayLoan = () => {
               <span className="px-3 py-1 rounded-full bg-green-300 text-black text-sm">
                 Active Loan
               </span>
-              {loanVersion && (
-                <span className="px-3 py-1 rounded-full bg-blue-200 text-black text-sm">
-                  {loanVersion}
-                </span>
-              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 mb-4">
@@ -296,12 +291,6 @@ const RepayLoan = () => {
                 ? "Active Loan"
                 : "Defaulted Loan"}
             </span>
-            
-            {loanVersion && (
-              <span className="px-3 py-1 rounded-full bg-blue-200 text-black text-sm">
-                {loanVersion}
-              </span>
-            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4">

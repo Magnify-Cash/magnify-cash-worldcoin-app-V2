@@ -81,7 +81,7 @@ const RepayLoan = () => {
         // If we have a loan and a version, proceed with repayment
         if (loanData && loanVersion) {
           // Fix: Pass BigInt directly without conversion to number
-          await repayLoanWithPermit2(loanAmountDue, loanVersion);
+          await repayLoanWithPermit2(BigInt(loanAmountDue), loanVersion);
   
           // Clear session storage
           sessionStorage.removeItem("usdcBalance");

@@ -129,13 +129,14 @@ const PoolDetails = () => {
         available_liquidity: updatedAvailableLiquidity,
       });
       
+      setRefreshTrigger(prev => prev + 1);
+      
       setTimeout(() => {
         setRefreshTrigger(prev => prev + 1);
-      }, 500);
+      }, 1000);
       
       setTimeout(() => {
         setOptimisticUpdates(null);
-        setRefreshTrigger(prev => prev + 1);
         fetchPoolData();
       }, 3000);
     }

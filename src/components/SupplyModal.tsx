@@ -104,7 +104,7 @@ export function SupplyModal({
     
     const poolContractCacheKey = `pool_data_contract_${poolContractAddress}`;
     
-    Cache.update<LiquidityPool>(poolContractCacheKey, (pool) => {
+    Cache.update<LiquidityPool>(poolContractCacheKey, (pool: LiquidityPool | null) => {
       if (!pool) return pool;
       
       return {
@@ -117,7 +117,7 @@ export function SupplyModal({
     });
     
     const allPoolsCacheKey = 'pool_data_all';
-    Cache.update<LiquidityPool[]>(allPoolsCacheKey, (pools) => {
+    Cache.update<LiquidityPool[]>(allPoolsCacheKey, (pools: LiquidityPool[] | null) => {
       if (!Array.isArray(pools)) return pools;
       
       return pools.map(pool => {

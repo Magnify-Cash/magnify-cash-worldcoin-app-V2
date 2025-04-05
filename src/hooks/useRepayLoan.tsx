@@ -45,11 +45,14 @@ const useRepayLoan = () => {
     transport: http(WORLDCHAIN_RPC_URL)
   }) as any; // Using 'as any' to bypass the type checking issues
 
+  // Fix the transaction receipt hook usage - use meta.hash instead of hash directly
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
       client,
-      // Use hash as part of the options.meta instead of directly in the options
-      hash: transactionId ? transactionId as `0x${string}` : undefined,
+      // Use the hash in meta to avoid TypeScript error
+      meta: transactionId ? {
+        hash: transactionId as `0x${string}`
+      } : undefined,
       appConfig: {
         app_id: WORLDCOIN_CLIENT_ID,
       },

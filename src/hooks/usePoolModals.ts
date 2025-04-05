@@ -28,8 +28,8 @@ export const usePoolModals = () => {
     // Create a cache key for this specific user position
     const userPositionCacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
     
-    // Update the user position in cache
-    Cache.update<UserPositionData>(userPositionCacheKey, (position) => {
+    // Update the user position in cache with proper type annotation
+    Cache.update<UserPositionData>(userPositionCacheKey, (position: UserPositionData | null) => {
       if (!position) {
         // If no position exists yet, create a new one
         return {

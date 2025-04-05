@@ -59,13 +59,28 @@ export const useUserPoolPosition = (
       if (cachedPosition) {
         console.log(`[useUserPoolPosition] Using cached position data for ${poolContractAddress}`);
         setPositionData(cachedPosition);
+        
+        // Even with cached data, let's refresh in the background for the latest values
+        // This ensures the UI stays responsive while getting fresh data
+        setTimeout(() => {
+          fetchFreshPositionData(poolContractAddress, walletAddress, cacheKey);
+        }, 300);
         return;
       }
 
+      // No cache available, fetch fresh data
+      fetchFreshPositionData(poolContractAddress, walletAddress, cacheKey);
+    };
+
+    const fetchFreshPositionData = async (
+      poolAddress: string, 
+      userWallet: string, 
+      cacheKey: string
+    ) => {
       try {
         // Make all API calls in parallel for optimization
         const [lpBalanceResponse, depositedValueResponse] = await Promise.all([
-          getUserLPBalance(walletAddress, poolContractAddress),
+          getUserLPBalance(userWallet, poolAddress),
           getMockDepositedValue()
         ]);
 
@@ -75,7 +90,7 @@ export const useUserPoolPosition = (
         // If user has a balance, get the current value via previewRedeem
         let currentValue = 0;
         if (balance > 0) {
-          const redeemPreview = await previewRedeem(balance, poolContractAddress);
+          const redeemPreview = await previewRedeem(balance, poolAddress);
           currentValue = redeemPreview.usdcAmount;
         }
 

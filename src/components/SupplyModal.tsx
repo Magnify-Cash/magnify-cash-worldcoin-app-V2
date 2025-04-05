@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
 import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { Cache } from "@/utils/cacheUtils";
+import { LiquidityPool } from "@/types/supabase/liquidity";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -44,7 +44,6 @@ export function SupplyModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   
-  // Get the wallet's USDC balance using our new hook
   const { 
     balance: usdcBalance, 
     loading: balanceLoading, 
@@ -59,7 +58,6 @@ export function SupplyModal({
       setPreviewLpAmount(null);
       setPreviewRequested(false);
       
-      // Refresh the USDC balance when the modal opens
       refreshBalance();
       
       setTimeout(() => {
@@ -101,15 +99,12 @@ export function SupplyModal({
     return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
   };
 
-  // Function to update the pool cache with new values after successful supply
   const updatePoolCache = (supplyAmount: number) => {
     if (!poolContractAddress) return;
     
-    // Get the pool contract cache key
     const poolContractCacheKey = `pool_data_contract_${poolContractAddress}`;
     
-    // Try to update the specific pool in the cache
-    Cache.update(poolContractCacheKey, (pool) => {
+    Cache.update<LiquidityPool>(poolContractCacheKey, (pool) => {
       if (!pool) return pool;
       
       return {
@@ -121,9 +116,8 @@ export function SupplyModal({
       };
     });
     
-    // Also update the pool in the all pools cache if it exists
     const allPoolsCacheKey = 'pool_data_all';
-    Cache.update(allPoolsCacheKey, (pools) => {
+    Cache.update<LiquidityPool[]>(allPoolsCacheKey, (pools) => {
       if (!Array.isArray(pools)) return pools;
       
       return pools.map(pool => {
@@ -235,26 +229,21 @@ export function SupplyModal({
       });
   
       if (finalPayload.status === "success") {
-        // First, update the cache immediately for a responsive UI
         updatePoolCache(loanAmount);
         
-        // Notify the user with a simpler success message
         toast({
           title: "Supply successful",
           description: "Your assets have been successfully supplied to the pool.",
         });
         
-        // Call the onSuccessfulSupply callback if provided
         if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
           onSuccessfulSupply(loanAmount);
         }
         
-        // Refresh the wallet balance
         setTimeout(() => {
           refreshBalance();
         }, 1000);
         
-        // Close the modal and reset state
         onClose();
         setAmount("");
       } else {
@@ -292,7 +281,6 @@ export function SupplyModal({
       : "0.0000";
   };
 
-  // Display a formatted balance or loading state
   const displayBalance = () => {
     if (balanceLoading) return "Loading...";
     if (balanceError) return "Error loading balance";

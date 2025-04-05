@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -81,6 +80,7 @@ const RepayLoan = () => {
       try {
         // If we have a loan and a version, proceed with repayment
         if (loanData && loanVersion) {
+          // Fix: Pass BigInt directly without conversion to number
           await repayLoanWithPermit2(loanAmountDue, loanVersion);
   
           // Clear session storage

@@ -2,6 +2,17 @@
 import { useModalContext } from "@/contexts/ModalContext";
 import { Cache } from "@/utils/cacheUtils";
 
+// Define the UserPositionData type for typesafety
+interface UserPositionData {
+  balance: number;
+  depositedValue: number;
+  currentValue: number;
+  yield: number;
+  yieldPercentage: number;
+  loading: boolean;
+  error: string | null;
+}
+
 export const usePoolModals = () => {
   const { openModal, closeModal } = useModalContext();
 
@@ -18,7 +29,7 @@ export const usePoolModals = () => {
     const userPositionCacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
     
     // Update the user position in cache
-    Cache.update(userPositionCacheKey, (position) => {
+    Cache.update<UserPositionData>(userPositionCacheKey, (position) => {
       if (!position) {
         // If no position exists yet, create a new one
         return {

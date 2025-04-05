@@ -17,7 +17,6 @@ import { previewDeposit } from "@/lib/backendRequests";
 import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
 import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { invalidatePoolsCache } from "@/lib/poolRequests";
 import { Cache } from "@/utils/cacheUtils";
 
 interface SupplyModalProps {
@@ -102,20 +101,46 @@ export function SupplyModal({
     return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
   };
 
-  // Function to refresh cache after successful supply
-  const invalidateCacheAfterSupply = (supplyAmount: number) => {
-    // Clear the pool and position cache to force a refresh
-    invalidatePoolsCache();
+  // Function to update the pool cache with new values after successful supply
+  const updatePoolCache = (supplyAmount: number) => {
+    if (!poolContractAddress) return;
     
-    // Call the onSuccessfulSupply callback if provided
-    if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
-      onSuccessfulSupply(supplyAmount);
-    }
+    // Get the pool contract cache key
+    const poolContractCacheKey = `pool_data_contract_${poolContractAddress}`;
     
-    // Refresh the wallet balance
-    setTimeout(() => {
-      refreshBalance();
-    }, 1000);
+    // Try to update the specific pool in the cache
+    Cache.update(poolContractCacheKey, (pool) => {
+      if (!pool) return pool;
+      
+      return {
+        ...pool,
+        total_value_locked: pool.total_value_locked + supplyAmount,
+        available_liquidity: pool.available_liquidity + supplyAmount,
+        token_a_amount: pool.token_a_amount + supplyAmount,
+        token_b_amount: pool.token_b_amount + supplyAmount
+      };
+    });
+    
+    // Also update the pool in the all pools cache if it exists
+    const allPoolsCacheKey = 'pool_data_all';
+    Cache.update(allPoolsCacheKey, (pools) => {
+      if (!Array.isArray(pools)) return pools;
+      
+      return pools.map(pool => {
+        if (pool.contract_address === poolContractAddress) {
+          return {
+            ...pool,
+            total_value_locked: pool.total_value_locked + supplyAmount,
+            available_liquidity: pool.available_liquidity + supplyAmount,
+            token_a_amount: pool.token_a_amount + supplyAmount,
+            token_b_amount: pool.token_b_amount + supplyAmount
+          };
+        }
+        return pool;
+      });
+    });
+    
+    console.log(`[SupplyModal] Updated pool cache for ${poolContractAddress} after supply of ${supplyAmount}`);
   };
 
   const handleSupply = async () => {
@@ -210,14 +235,24 @@ export function SupplyModal({
       });
   
       if (finalPayload.status === "success") {
+        // First, update the cache immediately for a responsive UI
+        updatePoolCache(loanAmount);
+        
         // Notify the user with a simpler success message
         toast({
           title: "Supply successful",
           description: "Your assets have been successfully supplied to the pool.",
         });
         
-        // Invalidate cache and update UI
-        invalidateCacheAfterSupply(loanAmount);
+        // Call the onSuccessfulSupply callback if provided
+        if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
+          onSuccessfulSupply(loanAmount);
+        }
+        
+        // Refresh the wallet balance
+        setTimeout(() => {
+          refreshBalance();
+        }, 1000);
         
         // Close the modal and reset state
         onClose();

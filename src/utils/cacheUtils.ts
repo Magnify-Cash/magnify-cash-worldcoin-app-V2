@@ -74,13 +74,33 @@ export const Cache = {
   update<T>(key: string, updateFn: (currentValue: T) => T): boolean {
     try {
       const item = localStorage.getItem(key);
-      if (!item) return false;
       
-      const cacheItem: CacheItem<T> = JSON.parse(item);
+      // If item doesn't exist in cache, try to set it with the result of updateFn(null)
+      if (!item) {
+        try {
+          // @ts-ignore - We're intentionally passing null here to create a new item
+          const initialData = updateFn(null);
+          if (initialData !== null) {
+            this.set(key, initialData, 15); // Default to 15 minutes
+            return true;
+          }
+          return false;
+        } catch (e) {
+          return false;
+        }
+      }
+      
+      let cacheItem: CacheItem<T>;
+      try {
+        cacheItem = JSON.parse(item);
+      } catch (e) {
+        console.error('[Cache] Error parsing cache item:', e);
+        return false;
+      }
       
       // Check if cache is expired
       if (Date.now() > cacheItem.timestamp) {
-        console.log(`[Cache] "${key}" has expired, not updating`);
+        console.log(`[Cache] "${key}" has expired, removing from cache`);
         localStorage.removeItem(key);
         return false;
       }
@@ -128,6 +148,39 @@ export const Cache = {
       console.log('[Cache] Pool cache cleared');
     } catch (error) {
       console.error('[Cache] Error clearing pool cache:', error);
+    }
+  },
+  
+  /**
+   * Clear user position caches for a specific wallet or pool
+   */
+  clearUserPositionCache(walletAddress?: string, poolContractAddress?: string): void {
+    const userPositionPrefix = 'user_position_';
+    
+    try {
+      // Find and remove user position cache items based on filters
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        
+        if (key && key.startsWith(userPositionPrefix)) {
+          // If wallet specified, clear only that wallet's positions
+          if (walletAddress && !key.includes(walletAddress)) {
+            continue;
+          }
+          
+          // If pool specified, clear only that pool's positions
+          if (poolContractAddress && !key.includes(poolContractAddress)) {
+            continue;
+          }
+          
+          localStorage.removeItem(key);
+          console.log(`[Cache] Cleared ${key}`);
+        }
+      }
+      
+      console.log('[Cache] User position cache cleared');
+    } catch (error) {
+      console.error('[Cache] Error clearing user position cache:', error);
     }
   },
   

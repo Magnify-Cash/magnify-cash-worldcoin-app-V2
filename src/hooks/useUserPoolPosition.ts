@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getUserLPBalance, previewRedeem } from '@/lib/backendRequests';
 import { toast } from '@/components/ui/use-toast';
+import { Cache } from '@/utils/cacheUtils';
 
 // Mock API for deposited value (as requested)
 const getMockDepositedValue = async (): Promise<number> => {
@@ -50,6 +51,17 @@ export const useUserPoolPosition = (
         return;
       }
 
+      // Generate a cache key for this specific user position
+      const cacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
+      
+      // Check if we have a cached position first
+      const cachedPosition = Cache.get<UserPositionData>(cacheKey);
+      if (cachedPosition) {
+        console.log(`[useUserPoolPosition] Using cached position data for ${poolContractAddress}`);
+        setPositionData(cachedPosition);
+        return;
+      }
+
       try {
         // Make all API calls in parallel for optimization
         const [lpBalanceResponse, depositedValueResponse] = await Promise.all([
@@ -71,7 +83,7 @@ export const useUserPoolPosition = (
         const yieldValue = currentValue - depositedValue;
         const yieldPercentage = depositedValue > 0 ? (yieldValue / depositedValue) * 100 : 0;
 
-        setPositionData({
+        const newPositionData = {
           balance,
           depositedValue,
           currentValue,
@@ -79,7 +91,14 @@ export const useUserPoolPosition = (
           yieldPercentage,
           loading: false,
           error: null
-        });
+        };
+        
+        // Update state with fetched data
+        setPositionData(newPositionData);
+        
+        // Cache the position data for faster access next time
+        Cache.set(cacheKey, newPositionData, 5); // Cache for 5 minutes
+        
       } catch (error) {
         console.error('Error fetching user position data:', error);
         setPositionData({

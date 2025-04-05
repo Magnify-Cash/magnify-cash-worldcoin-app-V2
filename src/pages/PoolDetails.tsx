@@ -128,15 +128,17 @@ const PoolDetails = () => {
         total_value_locked: updatedTotalValueLocked,
         available_liquidity: updatedAvailableLiquidity,
       });
+      
+      setTimeout(() => {
+        setRefreshTrigger(prev => prev + 1);
+      }, 500);
+      
+      setTimeout(() => {
+        setOptimisticUpdates(null);
+        setRefreshTrigger(prev => prev + 1);
+        fetchPoolData();
+      }, 3000);
     }
-    
-    setRefreshTrigger(prev => prev + 1);
-    
-    setTimeout(() => {
-      invalidatePoolsCache();
-      setOptimisticUpdates(null);
-      fetchPoolData();
-    }, 3000);
   }, [pool, fetchPoolData]);
 
   const getDateFromTimestamp = (timestamp?: string): Date => {

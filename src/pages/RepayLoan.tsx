@@ -16,13 +16,16 @@ const RepayLoan = () => {
   const [isClicked, setIsClicked] = useState(false);
 
   // hooks
-  const toast = useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const loan = data?.loan;
   const loanData: Loan | undefined = loan && loan[1];
   const loanVersion = loan ? loan[0] : "";
+
+  console.log("[RepayLoan] Loan data:", loanData);
+  console.log("[RepayLoan] Loan version:", loanVersion);
 
   // Update USDC balance on page load
   useEffect(() => {
@@ -57,7 +60,7 @@ const RepayLoan = () => {
   
       setIsClicked(true);
 
-      if(sessionStorage.getItem("usdcBalance") === null) {
+      if(!sessionStorage.getItem("usdcBalance")) {
         const balance = await getUSDCBalance(ls_wallet as string);
         sessionStorage.setItem("usdcBalance", balance.toString());
       }
@@ -66,7 +69,7 @@ const RepayLoan = () => {
       const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
 
       if (currentBalance < amountDueFloat) {
-        toast.toast({
+        toast({
           title: "Insufficient USDC",
           description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
           variant: "destructive",
@@ -85,7 +88,7 @@ const RepayLoan = () => {
           sessionStorage.removeItem("walletTokens");
           sessionStorage.removeItem("walletCacheTimestamp");
         } else {
-          toast.toast({
+          toast({
             title: "Error",
             description: "Unable to pay back loan. No active loan found.",
             variant: "destructive",
@@ -93,7 +96,7 @@ const RepayLoan = () => {
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
-        toast.toast({
+        toast({
           title: "Error",
           description: error?.message?.includes("user rejected transaction")
             ? "Transaction rejected by user."
@@ -104,7 +107,7 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [data, repayLoanWithPermit2, loanAmountDue, loanVersion, toast, ls_wallet]
+    [loanData, loanVersion, repayLoanWithPermit2, loanAmountDue, toast, ls_wallet]
   );
   
   // Call refetch after loan repayment is confirmed
@@ -235,6 +238,12 @@ const RepayLoan = () => {
                 ? "Active Loan"
                 : "Defaulted Loan"}
             </span>
+            
+            {loanVersion && (
+              <span className="px-3 py-1 rounded-full bg-blue-200 text-black text-sm">
+                {loanVersion}
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4">

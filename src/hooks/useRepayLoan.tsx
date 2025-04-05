@@ -47,7 +47,7 @@ const useRepayLoan = () => {
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
       client: client,
-      transactionId: transactionId || "",
+      hash: transactionId ? transactionId as `0x${string}` : undefined,
       appConfig: {
         app_id: WORLDCOIN_CLIENT_ID,
       },

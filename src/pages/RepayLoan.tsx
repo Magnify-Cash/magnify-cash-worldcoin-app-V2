@@ -16,7 +16,7 @@ const RepayLoan = () => {
   const [isClicked, setIsClicked] = useState(false);
 
   // hooks
-  const toast = useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address");
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
@@ -43,9 +43,9 @@ const RepayLoan = () => {
   // loan repayment
   const loanAmountDue = useMemo(() => {
     if (loanData) {
-      return loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
+      return loanData.amount + (loanData.amount * loanData.interestRate) / BigInt(10000);
     }
-    return 0n; // Default value if loanData is not available
+    return BigInt(0); // Default value if loanData is not available
   }, [loanData]);
 
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
@@ -66,7 +66,7 @@ const RepayLoan = () => {
       const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
 
       if (currentBalance < amountDueFloat) {
-        toast.toast({
+        toast({
           title: "Insufficient USDC",
           description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
           variant: "destructive",
@@ -85,7 +85,7 @@ const RepayLoan = () => {
           sessionStorage.removeItem("walletTokens");
           sessionStorage.removeItem("walletCacheTimestamp");
         } else {
-          toast.toast({
+          toast({
             title: "Error",
             description: "Unable to pay back loan. No active loan found.",
             variant: "destructive",
@@ -93,7 +93,7 @@ const RepayLoan = () => {
         }
       } catch (error: any) {
         console.error("Loan repayment error:", error);
-        toast.toast({
+        toast({
           title: "Error",
           description: error?.message?.includes("user rejected transaction")
             ? "Transaction rejected by user."
@@ -194,7 +194,7 @@ const RepayLoan = () => {
   }
 
   // Check if user has an active loan
-  if (!loan || !loanData || loanData.amount === 0n || !loanData.isActive) {
+  if (!loan || !loanData || loanData.amount === BigInt(0) || !loanData.isActive) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -215,10 +215,10 @@ const RepayLoan = () => {
 
   // active loan
   const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
-    loanData.startTime,
+    Number(loanData.startTime),
     loanData.loanPeriod,
   );
-  const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
+  const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / BigInt(10000);
   
   return (
     <div className="min-h-screen bg-background">

@@ -7,9 +7,6 @@ export const useWalletUSDCBalance = (walletAddress?: string) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  console.log("useWalletUSDCBalance", walletAddress);
-  console.log("useWalletUSDCBalance balance", balance);
-
   const fetchBalance = useCallback(async () => {
     if (!walletAddress) {
       setBalance(null);

@@ -31,7 +31,7 @@ export function SupplyModal({
   onClose, 
   poolContractAddress, 
   lpSymbol = "LP",
-  walletAddress 
+  walletAddress = localStorage.getItem("ls_wallet_address") || "",
 }: SupplyModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);

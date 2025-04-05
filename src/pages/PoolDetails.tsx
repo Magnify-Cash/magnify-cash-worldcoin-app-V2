@@ -280,7 +280,8 @@ const PoolDetails = () => {
       openSupplyModal({
         poolId: pool.id,
         poolContractAddress: pool.contract_address,
-        lpSymbol: pool.metadata?.symbol || "LP"
+        lpSymbol: pool.metadata?.symbol || "LP",
+        
       });
     }
   };

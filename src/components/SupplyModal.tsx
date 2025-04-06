@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import { previewDeposit } from "@/lib/backendRequests";
 import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
 import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { Cache } from "@/utils/cacheUtils";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { useModalContext } from "@/contexts/ModalContext";
 
@@ -99,34 +99,6 @@ export function SupplyModal({
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
     return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
-  };
-
-  const waitForTransactionConfirmation = async (txHash: string, network: string, maxAttempts = 30) => {
-    let attempts = 0;
-    
-    while (attempts < maxAttempts) {
-      try {
-        setTransactionMessage(`Waiting for transaction confirmation (${attempts + 1}/${maxAttempts})...`);
-        
-        // This is a simulated wait in our demo
-        // In a real implementation, you would check the blockchain for confirmation
-        await new Promise(resolve => setTimeout(resolve, 1000)); 
-        
-        // For demo purposes, we'll simulate successful confirmation after a few attempts
-        if (attempts >= 2) {
-          console.log(`Transaction ${txHash} confirmed on ${network}`);
-          return true;
-        }
-        
-        attempts++;
-      } catch (error) {
-        console.error("Error checking transaction status:", error);
-        attempts++;
-      }
-    }
-    
-    console.error(`Transaction ${txHash} could not be confirmed after ${maxAttempts} attempts`);
-    return false;
   };
 
   const handleSupply = async () => {
@@ -240,41 +212,24 @@ export function SupplyModal({
       if (finalPayload.status === "success") {
         // Transaction was sent successfully
         const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        setTransactionMessage("Transaction sent! Waiting for confirmation...");
         
-        // In a real implementation, this would be a call to check the transaction status on-chain
-        const confirmed = await waitForTransactionConfirmation(
-          transactionId, // Use the actual transaction ID
-          "Ethereum"
-        );
+        // Skip the waiting for transaction confirmation - remove the loading state immediately
+        toast({
+          title: "Supply successful",
+          description: "Your assets have been successfully supplied to the pool.",
+        });
         
-        if (confirmed) {
-          // IMPORTANT: We're not updating the cache or emitting events here anymore
-          // This is now centralized in usePoolModals
-          
-          toast({
-            title: "Supply successful",
-            description: "Your assets have been successfully supplied to the pool.",
-          });
-          
-          if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
-            onSuccessfulSupply(loanAmount, expectedLpAmount, transactionId);
-          }
-          
-          setTimeout(() => {
-            refreshBalance();
-          }, 1000);
-          
-          onClose();
-          setAmount("");
-        } else {
-          toast({
-            title: "Transaction timeout",
-            description: "Your transaction was sent but could not be confirmed in time. Please check your wallet for status.",
-            variant: "destructive",
-          });
-          setTransactionPending(false);
+        if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
+          onSuccessfulSupply(loanAmount, expectedLpAmount, transactionId);
         }
+        
+        setTimeout(() => {
+          refreshBalance();
+        }, 1000);
+        
+        onClose();
+        setAmount("");
+        setTransactionPending(false);
       } else {
         toast({
           title: "Transaction failed",

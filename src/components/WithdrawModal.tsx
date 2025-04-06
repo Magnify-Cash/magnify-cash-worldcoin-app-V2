@@ -14,6 +14,7 @@ import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useModalContext } from "@/contexts/ModalContext";
+import { previewRedeem } from "@/lib/backendRequests";
 
 interface WithdrawModalProps {
   isOpen: boolean;

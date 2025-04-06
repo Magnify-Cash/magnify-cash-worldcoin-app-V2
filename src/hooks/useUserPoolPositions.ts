@@ -33,9 +33,10 @@ export const useUserPoolPositions = (
   // Forward the portfolio context data
   const { positions, totalValue, loading, error, hasPositions } = state;
   
-  // Call refreshPortfolio when updateTrigger changes
+  // Call refreshPortfolio when updateTrigger changes, but not on initial render
   useCallback(() => {
     if (updateTrigger > 0) {
+      console.log('[useUserPoolPositions] Refresh triggered by updateTrigger:', updateTrigger);
       refreshPortfolio();
     }
   }, [updateTrigger, refreshPortfolio]);
@@ -46,6 +47,7 @@ export const useUserPoolPositions = (
     amount: number, 
     isWithdrawal: boolean = false
   ) => {
+    console.log(`[useUserPoolPositions] Optimistically updating pool ${poolId} with amount ${amount}, isWithdrawal: ${isWithdrawal}`);
     updatePositionOptimistically(poolId, amount, isWithdrawal);
   }, [updatePositionOptimistically]);
 

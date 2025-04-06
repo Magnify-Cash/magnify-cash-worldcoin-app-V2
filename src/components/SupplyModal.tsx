@@ -216,16 +216,27 @@ export function SupplyModal({
           description: "Your assets have been successfully supplied to the pool.",
         });
         
+        // Call the onSuccessfulSupply callback first, before closing modal
         if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
+          console.log("[SupplyModal] Calling onSuccessfulSupply with:", {
+            amount: loanAmount,
+            lpAmount: expectedLpAmount,
+            transactionId
+          });
           onSuccessfulSupply(loanAmount, expectedLpAmount, transactionId);
         }
         
+        // Close the modal after the optimistic update is applied
+        setTimeout(() => {
+          onClose();
+          setAmount("");
+        }, 100);
+        
+        // Also refresh balance after a short delay
         setTimeout(() => {
           refreshBalance();
         }, 1000);
         
-        onClose();
-        setAmount("");
         setTransactionPending(false);
       } else {
         toast({
@@ -248,7 +259,7 @@ export function SupplyModal({
     } finally {
       setIsLoading(false);
     }
-  };  
+  };
 
   const calculateLPTokens = () => {
     const numAmount = parseFloat(amount);

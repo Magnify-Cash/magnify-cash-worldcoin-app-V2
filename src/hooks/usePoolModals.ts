@@ -214,9 +214,18 @@ export const usePoolModals = () => {
       setTransactionMessage(undefined);
       
       const walletAddress = localStorage.getItem("ls_wallet_address");
+      
+      console.log("[usePoolModals] Supply success callback triggered:", {
+        amount,
+        lpAmount,
+        transactionId,
+        poolId: params.poolId,
+        hasUpdateFn: !!params.updateUserPositionOptimistically
+      });
   
       // Optimistically update the user's position
       if (params.poolId && params.updateUserPositionOptimistically) {
+        console.log("[usePoolModals] Calling optimistic update function");
         params.updateUserPositionOptimistically(params.poolId, amount);
       }
   
@@ -234,9 +243,13 @@ export const usePoolModals = () => {
         params.onSuccessfulSupply(amount, lpAmount);
       }
   
-      // Trigger refreshPositions to fetch updated data
+      // Trigger refreshPositions to fetch updated data but with a delay
+      // to avoid overwriting our optimistic update
       if (params.refreshPositions) {
-        params.refreshPositions();
+        console.log("[usePoolModals] Scheduling delayed refresh");
+        setTimeout(() => {
+          params.refreshPositions?.();
+        }, 5000);
       }
     };
   

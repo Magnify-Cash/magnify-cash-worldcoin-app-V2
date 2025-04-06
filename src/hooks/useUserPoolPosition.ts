@@ -19,6 +19,16 @@ export const useUserPoolPosition = (
   const [positionData, setPositionData] = useState<UserPositionData>(initialState);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const processedTransactions = useRef<Set<string>>(new Set());
+  const lastFetchTimeRef = useRef<number>(0);
+  const optimisticUpdatesRef = useRef<{
+    pending: boolean;
+    data: UserPositionData | null;
+    timestamp: number;
+  }>({
+    pending: false,
+    data: null,
+    timestamp: 0
+  });
   
   // Get wallet address from localStorage
   useEffect(() => {
@@ -32,6 +42,11 @@ export const useUserPoolPosition = (
   ) => {
     try {
       console.log(`[useUserPoolPosition] Fetching fresh position data for ${poolAddress}`);
+      
+      // Set a timestamp for this fetch to prevent race conditions
+      const fetchTimestamp = Date.now();
+      lastFetchTimeRef.current = fetchTimestamp;
+      
       const { balance } = await getUserLPBalance(userWallet, poolAddress);
 
       let currentValue = 0;
@@ -40,27 +55,44 @@ export const useUserPoolPosition = (
         currentValue = usdcAmount;
       }
 
-      const newPositionData = {
-        balance,
-        currentValue,
-        loading: false,
-        error: null
-      };
+      // Only update if this is still the latest fetch or if there's no pending optimistic update
+      if (fetchTimestamp >= lastFetchTimeRef.current) {
+        // If there's a more recent optimistic update, don't overwrite it
+        if (optimisticUpdatesRef.current.pending && 
+            optimisticUpdatesRef.current.timestamp > fetchTimestamp) {
+          console.log("[useUserPoolPosition] Skipping update as there's a more recent optimistic update");
+          return;
+        }
+        
+        const newPositionData = {
+          balance,
+          currentValue,
+          loading: false,
+          error: null
+        };
 
-      setPositionData(newPositionData);
+        setPositionData(newPositionData);
+        console.log("[useUserPoolPosition] Updated position with fresh data:", newPositionData);
+      } else {
+        console.log("[useUserPoolPosition] Ignoring outdated fetch result");
+      }
     } catch (error) {
       console.error('Error fetching user position data:', error);
-      setPositionData({
-        ...initialState,
-        loading: false,
-        error: 'Failed to load your position data'
-      });
+      
+      // Only update error state if there's no pending optimistic update
+      if (!optimisticUpdatesRef.current.pending) {
+        setPositionData({
+          ...initialState,
+          loading: false,
+          error: 'Failed to load your position data'
+        });
 
-      toast({
-        title: "Error",
-        description: "Failed to load your position data. Please try again later.",
-        variant: "destructive",
-      });
+        toast({
+          title: "Error",
+          description: "Failed to load your position data. Please try again later.",
+          variant: "destructive",
+        });
+      }
     }
   }, []);
 
@@ -85,19 +117,30 @@ export const useUserPoolPosition = (
     
     // Only process if it's a user-initiated supply or withdraw transaction 
     if ((data.type === 'supply' || data.type === 'withdraw') && data.amount && data.isUserAction) {
-      console.log("[useUserPoolPosition] Received user transaction event, refreshing position data:", data);
+      console.log("[useUserPoolPosition] Received user transaction event, optimistically updating position data:", data);
+      
+      // Mark that we have a pending optimistic update
+      const updateTimestamp = Date.now();
+      optimisticUpdatesRef.current = {
+        pending: true,
+        data: null,
+        timestamp: updateTimestamp
+      };
       
       // For immediate UI feedback, create an optimistic update
       if (data.type === 'supply' && data.amount) {
         setPositionData(current => {
           if (!current) {
             // If no position exists yet, create a new one
-            return {
+            const newPosition = {
               balance: data.lpAmount || data.amount * 0.95,
               currentValue: data.amount,
               loading: false,
               error: null
             };
+            
+            optimisticUpdatesRef.current.data = newPosition;
+            return newPosition;
           }
           
           // Use actual LP amount if available
@@ -113,11 +156,14 @@ export const useUserPoolPosition = (
             actualLpAmount: data.lpAmount
           });
           
-          return {
+          const updatedPosition = {
             ...current,
             balance: newBalance,
             currentValue: newValue
           };
+          
+          optimisticUpdatesRef.current.data = updatedPosition;
+          return updatedPosition;
         });
       } else if (data.type === 'withdraw' && data.amount) {
         setPositionData(current => {
@@ -135,20 +181,29 @@ export const useUserPoolPosition = (
             newValue
           });
           
-          return {
+          const updatedPosition = {
             ...current,
             balance: newBalance,
             currentValue: newValue
           };
+          
+          optimisticUpdatesRef.current.data = updatedPosition;
+          return updatedPosition;
         });
       }
       
-      // Get latest data after a short delay to allow blockchain to update
+      // After the optimistic update is applied, we can fetch the real data
+      // but we'll do it with a longer delay to avoid race conditions
       setTimeout(() => {
-        if (poolContractAddress && walletAddress) {
-          fetchPositionData(poolContractAddress, walletAddress);
+        // Only fetch if this is still the most recent update
+        if (optimisticUpdatesRef.current.timestamp === updateTimestamp) {
+          optimisticUpdatesRef.current.pending = false;
+          if (poolContractAddress && walletAddress) {
+            console.log("[useUserPoolPosition] Fetching actual data after optimistic update");
+            fetchPositionData(poolContractAddress, walletAddress);
+          }
         }
-      }, 1000); // Slightly longer delay for blockchain confirmation
+      }, 3000); // Wait longer before fetching real data
     }
   });
 
@@ -156,6 +211,12 @@ export const useUserPoolPosition = (
     const fetchUserPosition = async () => {
       if (!poolContractAddress || !walletAddress) {
         setPositionData({ ...initialState, loading: false });
+        return;
+      }
+
+      // If we have a pending optimistic update, don't overwrite it
+      if (optimisticUpdatesRef.current.pending) {
+        console.log("[useUserPoolPosition] Skipping fetch as there's a pending optimistic update");
         return;
       }
 

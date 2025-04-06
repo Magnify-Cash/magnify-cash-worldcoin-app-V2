@@ -41,6 +41,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const processedTransactions = useRef<Set<string>>(new Set());
   const refreshTimeoutRef = useRef<number | null>(null);
   const positionsCache = useRef<Record<number, UserPoolPosition>>({});
+  const optimisticUpdateTimestampRef = useRef<number>(0);
+  const isFetchingRef = useRef<boolean>(false);
   
   // Get user's wallet address from localStorage
   useEffect(() => {
@@ -54,11 +56,23 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   }, [navigate]);
 
   // Fetch portfolio data - without caching
-  const fetchPortfolio = useCallback(async () => {
+  const fetchPortfolio = useCallback(async (avoidOptimisticOverwrite = false) => {
     if (!walletAddress) {
       setState(prev => ({ ...prev, loading: false, positions: [], hasPositions: false }));
       return;
     }
+    
+    // Prevent multiple concurrent fetches
+    if (isFetchingRef.current) {
+      console.log('[PortfolioProvider] Already fetching data, skipping this request');
+      return;
+    }
+    
+    // Set the fetching flag
+    isFetchingRef.current = true;
+    
+    // Record fetch start time to avoid race conditions
+    const fetchStartTime = Date.now();
 
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
@@ -72,8 +86,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           positions: [],
           totalValue: 0,
           hasPositions: false,
-          lastUpdated: Date.now()
+          lastUpdated: fetchStartTime
         }));
+        isFetchingRef.current = false;
         return;
       }
 
@@ -118,13 +133,22 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       console.log('[PortfolioProvider] Fetched positions:', validPositions);
       console.log('[PortfolioProvider] New total value:', newTotalValue);
       
+      // Check if we should avoid overwriting optimistic updates
+      // Only apply the fetched data if it's newer than the last optimistic update
+      // or if we explicitly want to overwrite optimistic updates
+      if (!avoidOptimisticOverwrite && fetchStartTime < optimisticUpdateTimestampRef.current) {
+        console.log('[PortfolioProvider] Skipping update as there was a more recent optimistic update');
+        isFetchingRef.current = false;
+        return;
+      }
+      
       setState({
         positions: validPositions,
         totalValue: newTotalValue,
         loading: false,
         error: null,
         hasPositions: validPositions.length > 0,
-        lastUpdated: Date.now()
+        lastUpdated: fetchStartTime
       });
     } catch (err) {
       console.error("Error fetching portfolio data:", err);
@@ -132,13 +156,15 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         loading: false,
         error: "Failed to load your portfolio data. Please try again later.",
-        lastUpdated: Date.now()
+        lastUpdated: fetchStartTime
       }));
       toast({
         title: "Error",
         description: "Failed to load your portfolio data. Please try again later.",
         variant: "destructive",
       });
+    } finally {
+      isFetchingRef.current = false;
     }
   }, [walletAddress, navigate]);
 
@@ -166,7 +192,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     
     // Set a short timeout to avoid multiple rapid refreshes
     refreshTimeoutRef.current = window.setTimeout(() => {
-      fetchPortfolio();
+      fetchPortfolio(true); // Force overwrite any optimistic updates
       refreshTimeoutRef.current = null;
     }, 100);
   }, [fetchPortfolio]);
@@ -180,91 +206,144 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   ) => {
     console.log(`[PortfolioProvider] Optimistically updating poolId ${poolId} with amount ${amount}, isWithdrawal: ${isWithdrawal}`);
     
+    // Set the optimistic update timestamp
+    optimisticUpdateTimestampRef.current = Date.now();
+    
     setState(currentState => {
+      // Find the position to update
       const position = currentState.positions.find(p => p.poolId === poolId);
-      if (!position) {
-        console.log(`[PortfolioProvider] Position not found for poolId ${poolId}`);
+      
+      // If the position doesn't exist and we're trying to withdraw, nothing to do
+      if (!position && isWithdrawal) {
+        console.log(`[PortfolioProvider] Position not found for withdrawal from poolId ${poolId}`);
         return currentState;
       }
       
-      let updatedPosition: UserPoolPosition;
+      let updatedPositions = [...currentState.positions];
       let updatedTotalValue = currentState.totalValue;
       
-      if (isWithdrawal) {
-        // For withdrawals
-        // Calculate LP amount using the position's current ratio or use provided lpAmount
-        const estimatedLpAmount = lpAmount || (position.balance > 0 ? 
-          (amount / position.currentValue) * position.balance : amount * 0.95);
-        
-        const newBalance = Math.max(0, position.balance - estimatedLpAmount);
-        const newValue = Math.max(0, position.currentValue - amount);
-        
-        console.log(`[PortfolioProvider] Optimistically updating position ${poolId} for withdrawal:`, {
-          oldBalance: position.balance,
-          newBalance,
-          oldValue: position.currentValue,
-          newValue,
-          estimatedLpAmount
-        });
-        
-        updatedPosition = {
-          ...position,
-          balance: newBalance,
-          currentValue: newValue
-        };
-        
-        updatedTotalValue = currentState.totalValue - amount;
-      } else {
-        // For deposits
-        // Use provided LP amount or estimate based on the current ratio
-        const estimatedLpAmount = lpAmount || (position.balance > 0 && position.currentValue > 0 ?
-          (amount / position.currentValue) * position.balance : amount * 0.95);
+      if (position) {
+        // Update existing position
+        if (isWithdrawal) {
+          // For withdrawals
+          // Calculate LP amount using the position's current ratio or use provided lpAmount
+          const estimatedLpAmount = lpAmount || (position.balance > 0 ? 
+            (amount / position.currentValue) * position.balance : amount * 0.95);
           
-        const newBalance = position.balance + estimatedLpAmount;
-        const newValue = position.currentValue + amount;
-        
-        console.log(`[PortfolioProvider] Optimistically updating position ${poolId} for deposit:`, {
-          oldBalance: position.balance,
-          newBalance,
-          oldValue: position.currentValue,
-          newValue,
-          estimatedLpAmount
+          const newBalance = Math.max(0, position.balance - estimatedLpAmount);
+          const newValue = Math.max(0, position.currentValue - amount);
+          
+          console.log(`[PortfolioProvider] Optimistically updating position ${poolId} for withdrawal:`, {
+            oldBalance: position.balance,
+            newBalance,
+            oldValue: position.currentValue,
+            newValue,
+            estimatedLpAmount
+          });
+          
+          const updatedPosition = {
+            ...position,
+            balance: newBalance,
+            currentValue: newValue
+          };
+          
+          // Update position in state
+          updatedPositions = currentState.positions.map(p => 
+            p.poolId === poolId ? updatedPosition : p
+          );
+          
+          updatedTotalValue = currentState.totalValue - amount;
+        } else {
+          // For deposits to existing positions
+          // Use provided LP amount or estimate based on the current ratio
+          const estimatedLpAmount = lpAmount || (position.balance > 0 && position.currentValue > 0 ?
+            (amount / position.currentValue) * position.balance : amount * 0.95);
+            
+          const newBalance = position.balance + estimatedLpAmount;
+          const newValue = position.currentValue + amount;
+          
+          console.log(`[PortfolioProvider] Optimistically updating position ${poolId} for deposit:`, {
+            oldBalance: position.balance,
+            newBalance,
+            oldValue: position.currentValue,
+            newValue,
+            estimatedLpAmount
+          });
+          
+          const updatedPosition = {
+            ...position,
+            balance: newBalance,
+            currentValue: newValue
+          };
+          
+          // Update position in state
+          updatedPositions = currentState.positions.map(p => 
+            p.poolId === poolId ? updatedPosition : p
+          );
+          
+          updatedTotalValue = currentState.totalValue + amount;
+        }
+      } else {
+        // Position doesn't exist, creating a new one for a deposit
+        // We need to find the pool details first
+        getPools().then(pools => {
+          const pool = pools.find(p => p.id === poolId);
+          if (pool && pool.contract_address) {
+            const estimatedLpAmount = lpAmount || amount * 0.95;
+            
+            const newPosition: UserPoolPosition = {
+              poolId: pool.id,
+              poolName: pool.name,
+              symbol: pool.metadata?.symbol || 'LP',
+              contractAddress: pool.contract_address,
+              balance: estimatedLpAmount,
+              currentValue: amount,
+              status: pool.status as 'warm-up' | 'active' | 'cooldown' | 'withdrawal',
+              apy: pool.apy
+            };
+            
+            console.log(`[PortfolioProvider] Adding new position for poolId ${poolId}:`, newPosition);
+            
+            // Update state with the new position
+            setState(prevState => ({
+              ...prevState,
+              positions: [...prevState.positions, newPosition],
+              totalValue: prevState.totalValue + amount,
+              hasPositions: true,
+              lastUpdated: Date.now()
+            }));
+          }
+        }).catch(err => {
+          console.error(`Error creating new position for pool ${poolId}:`, err);
         });
-        
-        updatedPosition = {
-          ...position,
-          balance: newBalance,
-          currentValue: newValue
-        };
-        
-        updatedTotalValue = currentState.totalValue + amount;
       }
       
-      // Update position in state
-      const updatedPositions = currentState.positions.map(p => 
-        p.poolId === poolId ? updatedPosition : p
-      );
-      
-      // Also simulate transaction event
+      // Create and emit transaction event
       const transactionId = `manual-tx-${Date.now()}`;
-      emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
-        type: isWithdrawal ? TRANSACTION_TYPES.WITHDRAW : TRANSACTION_TYPES.SUPPLY,
-        amount: amount,
-        lpAmount: lpAmount || (amount * 0.95),
-        poolContractAddress: position.contractAddress,
-        timestamp: Date.now(),
-        isUserAction: true,
-        transactionId
-      });
+      const poolAddress = position?.contractAddress;
+      
+      if (poolAddress) {
+        emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
+          type: isWithdrawal ? TRANSACTION_TYPES.WITHDRAW : TRANSACTION_TYPES.SUPPLY,
+          amount: amount,
+          lpAmount: lpAmount || (amount * 0.95),
+          poolContractAddress: poolAddress,
+          timestamp: Date.now(),
+          isUserAction: true,
+          transactionId
+        });
+      }
       
       // Schedule a fresh data fetch after a delay
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
+      
       refreshTimeoutRef.current = window.setTimeout(() => {
+        console.log(`[PortfolioProvider] Fetching real data after optimistic update delay`);
         fetchPortfolio();
         refreshTimeoutRef.current = null;
-      }, 1000);
+      }, 5000); // Longer delay before fetching the real data
       
       return {
         ...currentState,
@@ -301,6 +380,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       );
       
       if (!affectedPosition) return currentState;
+      
+      // Set the optimistic update timestamp
+      optimisticUpdateTimestampRef.current = Date.now();
       
       let updatedPosition: UserPoolPosition;
       let updatedTotalValue = currentState.totalValue;
@@ -361,10 +443,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
+      
       refreshTimeoutRef.current = window.setTimeout(() => {
+        console.log(`[PortfolioProvider] Fetching real data after transaction delay`);
         fetchPortfolio();
         refreshTimeoutRef.current = null;
-      }, 1000);
+      }, 5000); // Longer delay before fetching the real data
       
       return {
         ...currentState,

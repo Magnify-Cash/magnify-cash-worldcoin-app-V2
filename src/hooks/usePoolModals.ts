@@ -5,9 +5,11 @@ import { UserPositionData } from "@/types/user";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { emitCacheUpdate, EVENTS, TRANSACTION_TYPES } from "@/hooks/useCacheListener";
 import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
+import { useRef } from "react";
 
 export const usePoolModals = () => {
   const { openModal, closeModal, setTransactionPending, setTransactionMessage } = useModalContext();
+  const processedTransactions = useRef<Set<string>>(new Set());
 
   // Function to update user position data in cache after a successful supply
   const updateUserPositionCache = (
@@ -25,6 +27,20 @@ export const usePoolModals = () => {
         lpAmount
       });
       return;
+    }
+    
+    // Prevent duplicate transaction processing
+    if (transactionId && processedTransactions.current.has(transactionId)) {
+      console.log(`[usePoolModals] Skipping duplicate transaction in updateUserPositionCache: ${transactionId}`);
+      return;
+    }
+    
+    if (transactionId) {
+      processedTransactions.current.add(transactionId);
+      // Clear from set after some time to prevent memory leaks
+      setTimeout(() => {
+        processedTransactions.current.delete(transactionId);
+      }, 10000);
     }
     
     console.log("[usePoolModals] Updating user position cache after supply:", {
@@ -92,6 +108,20 @@ export const usePoolModals = () => {
         lpAmount
       });
       return;
+    }
+    
+    // Prevent duplicate transaction processing
+    if (transactionId && processedTransactions.current.has(transactionId)) {
+      console.log(`[usePoolModals] Skipping duplicate transaction in updateUserPositionCacheAfterWithdraw: ${transactionId}`);
+      return;
+    }
+    
+    if (transactionId) {
+      processedTransactions.current.add(transactionId);
+      // Clear from set after some time to prevent memory leaks
+      setTimeout(() => {
+        processedTransactions.current.delete(transactionId);
+      }, 10000);
     }
     
     console.log("[usePoolModals] Updating user position cache after withdrawal:", {
@@ -204,12 +234,15 @@ export const usePoolModals = () => {
     poolId?: number;
     poolContractAddress?: string;
     lpSymbol?: string;
-    transactionId?: string; // Add transaction ID param
+    transactionId?: string;
     onSuccessfulSupply?: (amount: number, lpAmount: number) => void;
     refreshPositions?: () => void;
-    updateUserPositionOptimistically?: (poolId: number, amount: number) => void;
+    updateUserPositionOptimistically?: ((poolId: number, amount: number) => void) | null;
   }) => {
+    // Always ensure we have a transaction ID
     const transactionId = params.transactionId || `modal-tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    console.log(`[usePoolModals] Opening supply modal with transaction ID: ${transactionId}`);
     
     const wrappedOnSuccessfulSupply = (amount: number, lpAmount: number) => {
       // Clear the transaction pending state
@@ -226,10 +259,14 @@ export const usePoolModals = () => {
         hasUpdateFn: !!params.updateUserPositionOptimistically
       });
   
-      // Optimistically update the user's position if there's a poolId and updateFn
+      // Only use updateUserPositionOptimistically if explicitly provided (not null)
+      // This helps avoid double optimistic updates when using from ActivePositions
       if (params.poolId && params.updateUserPositionOptimistically) {
         console.log("[usePoolModals] Calling optimistic update function");
         params.updateUserPositionOptimistically(params.poolId, amount);
+      } else if (params.poolId) {
+        // For Portfolio page, we're depending on the transaction event listener in PortfolioContext
+        console.log("[usePoolModals] Not calling optimistic update directly - using context event listener instead");
       }
   
       // Update the user position cache
@@ -249,6 +286,7 @@ export const usePoolModals = () => {
   
     openModal("supply", {
       ...params,
+      transactionId, // Ensure transaction ID is passed through
       onSuccessfulSupply: wrappedOnSuccessfulSupply,
     });
   };
@@ -258,10 +296,13 @@ export const usePoolModals = () => {
     lpBalance?: number;
     lpValue?: number;
     poolContractAddress?: string;
-    transactionId?: string; // Add transaction ID param
-    onSuccessfulWithdraw?: (amount: number, lpAmount: number) => void;
+    transactionId?: string;
+    onSuccessfulWithdraw?: ((amount: number, lpAmount: number) => void) | null;
   }) => {
+    // Always ensure we have a transaction ID
     const transactionId = params.transactionId || `modal-tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    console.log(`[usePoolModals] Opening withdraw modal with transaction ID: ${transactionId}`);
     
     // Wrap to handle cache updates on successful withdrawal
     const wrappedOnSuccessfulWithdraw = (amount: number, lpAmount: number) => {
@@ -288,6 +329,7 @@ export const usePoolModals = () => {
     
     openModal("withdraw", {
       ...params,
+      transactionId, // Ensure transaction ID is passed through
       onSuccessfulWithdraw: wrappedOnSuccessfulWithdraw
     });
   };

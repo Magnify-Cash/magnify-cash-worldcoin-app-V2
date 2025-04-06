@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
@@ -21,6 +22,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   const [renderKey, setRenderKey] = useState<number>(0);
   const previousPositionsRef = useRef<UserPoolPosition[]>([]);
   const processedTransactionsRef = useRef<Set<string>>(new Set());
+  const clickTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
 
   // Force re-render of positions when they change
   useEffect(() => {
@@ -33,6 +35,15 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
       setRenderKey(prev => prev + 1);
     }
   }, [positions]);
+
+  // Clear any remaining timeouts when unmounting
+  useEffect(() => {
+    return () => {
+      Object.values(clickTimeoutsRef.current).forEach(timeout => {
+        clearTimeout(timeout);
+      });
+    };
+  }, []);
 
   const getStatusColor = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
     switch (status) {
@@ -93,6 +104,65 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
     return `portfolio-tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   };
 
+  const handleSupplyClick = (position: UserPoolPosition) => {
+    // Check for existing timeout for this pool to prevent double clicks
+    const actionKey = `supply-${position.poolId}`;
+    if (clickTimeoutsRef.current[actionKey]) {
+      console.log(`[ActivePositions] Preventing duplicate supply action for pool ${position.poolId}`);
+      return;
+    }
+    
+    // Create a unique transaction ID that will be consistent throughout the flow
+    const transactionId = generateTransactionId();
+    
+    // Set a timeout to prevent multiple clicks
+    clickTimeoutsRef.current[actionKey] = setTimeout(() => {
+      delete clickTimeoutsRef.current[actionKey];
+    }, 2000);
+    
+    console.log(`[ActivePositions] Opening supply modal for pool ${position.poolId} with transaction ID ${transactionId}`);
+    
+    openSupplyModal({
+      poolId: position.poolId,
+      poolContractAddress: position.contractAddress,
+      lpSymbol: position.symbol,
+      transactionId: transactionId,
+      // Pass a callback but don't call updatePositionOptimistically directly here
+      // The PoolModals will handle the optimistic update
+      updateUserPositionOptimistically: null
+    });
+  };
+  
+  const handleWithdrawClick = (position: UserPoolPosition) => {
+    // Check for existing timeout for this pool to prevent double clicks
+    const actionKey = `withdraw-${position.poolId}`;
+    if (clickTimeoutsRef.current[actionKey]) {
+      console.log(`[ActivePositions] Preventing duplicate withdraw action for pool ${position.poolId}`);
+      return;
+    }
+    
+    // Create a unique transaction ID that will be consistent throughout the flow
+    const transactionId = generateTransactionId();
+    
+    // Set a timeout to prevent multiple clicks
+    clickTimeoutsRef.current[actionKey] = setTimeout(() => {
+      delete clickTimeoutsRef.current[actionKey];
+    }, 2000);
+    
+    console.log(`[ActivePositions] Opening withdraw modal for pool ${position.poolId} with transaction ID ${transactionId}`);
+    
+    openWithdrawModal({
+      poolId: position.poolId,
+      lpBalance: position.balance,
+      lpValue: position.currentValue,
+      poolContractAddress: position.contractAddress,
+      transactionId: transactionId,
+      // Not calling onSuccessfulWithdraw directly with updatePositionOptimistically
+      // The PoolModals will handle the optimistic update
+      onSuccessfulWithdraw: null
+    });
+  };
+
   return (
     <div className="space-y-5" key={`positions-list-${renderKey}`}>
       {positions.map((position) => {
@@ -146,29 +216,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                 <div className="flex gap-2">
                   {showSupplyButton(position.status) && (
                     <Button 
-                      onClick={() => {
-                        const transactionId = generateTransactionId();
-                        if (processedTransactionsRef.current.has(`supply-${position.poolId}`)) {
-                          console.log(`[ActivePositions] Skipping duplicate supply action for pool ${position.poolId}`);
-                          return;
-                        }
-                        
-                        processedTransactionsRef.current.add(`supply-${position.poolId}`);
-                        setTimeout(() => {
-                          processedTransactionsRef.current.delete(`supply-${position.poolId}`);
-                        }, 2000);
-                        
-                        openSupplyModal({
-                          poolId: position.poolId,
-                          poolContractAddress: position.contractAddress,
-                          lpSymbol: position.symbol,
-                          transactionId: transactionId,
-                          updateUserPositionOptimistically: (poolId, amount) => {
-                            console.log(`[ActivePositions] Calling updatePositionOptimistically for pool ${poolId} with amount ${amount}`);
-                            updatePositionOptimistically(poolId, amount, false);
-                          }
-                        });
-                      }}
+                      onClick={() => handleSupplyClick(position)}
                       size="sm"
                       className="flex-1 bg-[#8B5CF6] hover:bg-[#7c4df3]"
                     >
@@ -178,30 +226,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                   
                   {showWithdrawButton(position.status) && (
                     <Button 
-                      onClick={() => {
-                        const transactionId = generateTransactionId();
-                        if (processedTransactionsRef.current.has(`withdraw-${position.poolId}`)) {
-                          console.log(`[ActivePositions] Skipping duplicate withdraw action for pool ${position.poolId}`);
-                          return;
-                        }
-                        
-                        processedTransactionsRef.current.add(`withdraw-${position.poolId}`);
-                        setTimeout(() => {
-                          processedTransactionsRef.current.delete(`withdraw-${position.poolId}`);
-                        }, 2000);
-                        
-                        openWithdrawModal({
-                          poolId: position.poolId,
-                          lpBalance: position.balance,
-                          lpValue: position.currentValue,
-                          poolContractAddress: position.contractAddress,
-                          transactionId: transactionId,
-                          onSuccessfulWithdraw: (amount, lpAmount) => {
-                            console.log(`[ActivePositions] Withdraw success callback for pool ${position.poolId} with amount ${amount}`);
-                            updatePositionOptimistically(position.poolId, amount, true, lpAmount);
-                          }
-                        });
-                      }}
+                      onClick={() => handleWithdrawClick(position)}
                       variant="outline" 
                       size="sm"
                       className="flex-1 border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/20 hover:text-[#8B5CF6] hover:font-medium"

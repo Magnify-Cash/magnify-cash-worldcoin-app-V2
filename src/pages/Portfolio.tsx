@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Header } from "@/components/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PortfolioHeader } from "@/components/portfolio/PortfolioHeader";
@@ -9,7 +9,7 @@ import { ActivePositions } from "@/components/portfolio/ActivePositions";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
 import { useNavigate } from "react-router-dom";
-import { useCacheListener, EVENTS } from '@/hooks/useCacheListener';
+import { useCacheListener, EVENTS, TRANSACTION_TYPES } from '@/hooks/useCacheListener';
 import { toast } from '@/components/ui/use-toast';
 
 const Portfolio = () => {
@@ -18,6 +18,8 @@ const Portfolio = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [updateTrigger, setUpdateTrigger] = useState<number>(0);
   const [positionUpdateKey, setPositionUpdateKey] = useState<number>(0);
+  const [portfolioTotalKey, setPortfolioTotalKey] = useState<number>(0);
+  const processedTransactions = useRef<Set<string>>(new Set());
   
   // Get user's wallet address from localStorage
   useEffect(() => {
@@ -41,15 +43,32 @@ const Portfolio = () => {
     console.log('[Portfolio] Force updating position UI');
     setPositionUpdateKey(prev => prev + 1);
   }, []);
+  
+  // Handle portfolio total updates - this will force a re-render of the summary component
+  const forcePortfolioTotalUpdate = useCallback(() => {
+    console.log('[Portfolio] Force updating portfolio total');
+    setPortfolioTotalKey(prev => prev + 1);
+  }, []);
 
   // Listen for transaction events to update UI immediately
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
     if (!data) return;
     
-    console.log('[Portfolio] Transaction event detected:', data.type, data.transactionId);
+    // Skip if we've already processed this transaction
+    if (data.transactionId && processedTransactions.current.has(data.transactionId)) {
+      console.log('[Portfolio] Skipping already processed transaction:', data.transactionId);
+      return;
+    }
     
-    // Update the UI immediately
+    // Track processed transactions
+    if (data.transactionId) {
+      console.log('[Portfolio] Processing transaction:', data.transactionId, data.type);
+      processedTransactions.current.add(data.transactionId);
+    }
+    
+    // Update UI components independently
     forcePositionUpdate();
+    forcePortfolioTotalUpdate();
     
     // Also queue a background refresh after a short delay
     setTimeout(() => {
@@ -105,7 +124,7 @@ const Portfolio = () => {
             />
 
             <PortfolioSummary
-              key={`summary-${positionUpdateKey}-${updateTrigger}`}
+              key={`summary-${portfolioTotalKey}-${updateTrigger}-${positionUpdateKey}`}
               totalValue={totalValue}
               isMobile={isMobile}
             />

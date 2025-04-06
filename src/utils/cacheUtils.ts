@@ -1,4 +1,3 @@
-
 import eventEmitter from './eventEmitter';
 import { EVENTS } from '@/hooks/useCacheListener';
 
@@ -17,8 +16,9 @@ export class Cache {
    * @param key The key to store the value under.
    * @param value The value to store in the cache.
    * @param expirationTimeInMinutes Optional expiration time in minutes. If not provided, the value will not expire.
+   * @param isUserAction Whether this cache update is the result of a user action.
    */
-  static set<T>(key: string, value: T, expirationTimeInMinutes?: number): void {
+  static set<T>(key: string, value: T, expirationTimeInMinutes?: number, isUserAction: boolean = false): void {
     const oldValue = cache[key];
     
     if (expirationTimeInMinutes) {
@@ -37,7 +37,7 @@ export class Cache {
         oldValue,
         action: 'set',
         poolContractAddress,
-        isUserAction: false // Flag to indicate this is not directly from a user action
+        isUserAction // Pass the flag
       });
     } else if (key.startsWith('user_position_')) {
       const parts = key.split('_');
@@ -51,7 +51,7 @@ export class Cache {
         action: 'set',
         walletAddress,
         poolAddress,
-        isUserAction: false // Flag to indicate this is not directly from a user action
+        isUserAction // Pass the flag
       });
     }
   }
@@ -86,8 +86,9 @@ export class Cache {
    * Updates a value in the cache using a callback function.
    * @param key The key of the value to update.
    * @param updateFn A function that takes the current value (or undefined if it doesn't exist) and returns the new value.
+   * @param isUserAction Whether this update is the result of a user action.
    */
-  static update<T>(key: string, updateFn: (currentValue: T | undefined) => T | undefined): void {
+  static update<T>(key: string, updateFn: (currentValue: T | undefined) => T | undefined, isUserAction: boolean = true): void {
     const currentValue = Cache.get<T>(key);
     const newValue = updateFn(currentValue);
     
@@ -102,9 +103,6 @@ export class Cache {
         // Additional context for events
         const isPoolData = key.startsWith('pool_data_');
         const isUserPosition = key.startsWith('user_position_');
-        const eventContext = {
-          isUserAction: true, // Default assumption that updates are from user actions
-        };
         
         // Store value in cache
         cache[key] = newValue;
@@ -118,7 +116,7 @@ export class Cache {
             oldValue: currentValue,
             action: 'update',
             poolContractAddress,
-            ...eventContext
+            isUserAction
           });
         } else if (isUserPosition) {
           const parts = key.split('_');
@@ -132,7 +130,7 @@ export class Cache {
             action: 'update',
             walletAddress,
             poolAddress,
-            ...eventContext
+            isUserAction
           });
         }
       } else {

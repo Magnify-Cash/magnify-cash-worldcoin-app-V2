@@ -18,7 +18,7 @@ import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { Cache } from "@/utils/cacheUtils";
 import { LiquidityPool } from "@/types/supabase/liquidity";
-import { emitCacheUpdate, EVENTS } from "@/hooks/useCacheListener";
+import { emitCacheUpdate, EVENTS, TRANSACTION_TYPES } from "@/hooks/useCacheListener";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -100,10 +100,10 @@ export function SupplyModal({
     return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
   };
 
-  const updatePoolCache = (supplyAmount: number) => {
+  const updatePoolCache = (supplyAmount: number, actualLpAmount: number) => {
     if (!poolContractAddress) return;
     
-    console.log(`[SupplyModal] Updating pool cache for ${poolContractAddress} after supply of ${supplyAmount}`);
+    console.log(`[SupplyModal] Updating pool cache for ${poolContractAddress} after supply of ${supplyAmount} USDC / ${actualLpAmount} LP`);
     
     const poolContractCacheKey = `pool_data_contract_${poolContractAddress}`;
     
@@ -123,6 +123,8 @@ export function SupplyModal({
         value: updatedPool,
         action: 'update',
         supplyAmount,
+        lpAmount: actualLpAmount,
+        isUserAction: true,
         poolContractAddress
       });
       
@@ -151,17 +153,39 @@ export function SupplyModal({
         value: updatedPools,
         action: 'update',
         supplyAmount,
+        lpAmount: actualLpAmount,
+        isUserAction: true,
         poolContractAddress
       });
       
       return updatedPools;
     });
     
+    const userPositionCacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
+    Cache.update<any>(userPositionCacheKey, (position) => {
+      if (!position) {
+        return {
+          balance: actualLpAmount,
+          currentValue: supplyAmount,
+          loading: false,
+          error: null
+        };
+      }
+      return {
+        ...position,
+        balance: position.balance + actualLpAmount,
+        currentValue: position.currentValue + supplyAmount,
+      };
+    });
+    
     emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
-      type: 'supply',
+      type: TRANSACTION_TYPES.SUPPLY,
       amount: supplyAmount,
+      lpAmount: actualLpAmount,
       poolContractAddress,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      action: 'deposit',
+      isUserAction: true
     });
     
     console.log(`[SupplyModal] Finished updating cache and emitting events for ${poolContractAddress} supply of ${supplyAmount}`);
@@ -172,6 +196,19 @@ export function SupplyModal({
       if (!walletAddress || !poolContractAddress || !amount) return;
   
       setIsLoading(true);
+      
+      let expectedLpAmount = previewLpAmount;
+      if (!expectedLpAmount && parseFloat(amount) >= 10) {
+        try {
+          const preview = await previewDeposit(parseFloat(amount), poolContractAddress);
+          expectedLpAmount = preview.lpAmount;
+        } catch (e) {
+          console.error("Failed to get final LP preview:", e);
+          expectedLpAmount = parseFloat(amount) * 0.95;
+        }
+      } else if (!expectedLpAmount) {
+        expectedLpAmount = parseFloat(amount) * 0.95;
+      }
   
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 min
       const loanAmount = parseFloat(amount);
@@ -259,7 +296,7 @@ export function SupplyModal({
       });
   
       if (finalPayload.status === "success") {
-        updatePoolCache(loanAmount);
+        updatePoolCache(loanAmount, expectedLpAmount);
         
         toast({
           title: "Supply successful",

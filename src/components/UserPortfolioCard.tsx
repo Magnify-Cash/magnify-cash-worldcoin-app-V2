@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,57 +38,51 @@ export function UserPortfolioCard({
   const [balance, setBalance] = useState(initialBalance);
   const [currentValue, setCurrentValue] = useState(initialCurrentValue);
   
-  // Update local state when props change
   useEffect(() => {
     setBalance(initialBalance);
     setCurrentValue(initialCurrentValue);
   }, [initialBalance, initialCurrentValue]);
   
-  // Listen for transaction events that might affect this portfolio card
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
-    if (data && poolContractAddress && data.poolContractAddress === poolContractAddress) {
-      console.log("[UserPortfolioCard] Transaction event detected:", data);
+    if (data && poolContractAddress && data.poolContractAddress === poolContractAddress && data.isUserAction) {
+      console.log("[UserPortfolioCard] User transaction event detected:", data);
       
-      // Only update UI for supply or withdraw transactions
       if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
-        // Apply optimistic update to the UI for better UX
         if (data.type === 'supply') {
-          const approximateLpIncrease = data.amount * 0.95; 
+          const lpIncrease = data.lpAmount || data.amount * 0.95; 
           
           console.log("[UserPortfolioCard] Applying optimistic supply update:", {
             oldBalance: balance,
-            newBalance: balance + approximateLpIncrease,
+            newBalance: balance + lpIncrease,
             oldValue: currentValue,
             newValue: currentValue + data.amount
           });
           
-          setBalance(prevBalance => prevBalance + approximateLpIncrease);
+          setBalance(prevBalance => prevBalance + lpIncrease);
           setCurrentValue(prevValue => prevValue + data.amount);
         } else if (data.type === 'withdraw') {
-          const approximateLpDecrease = data.lpAmount || data.amount * 0.95;
+          const lpDecrease = data.lpAmount || data.amount * 0.95;
           
           console.log("[UserPortfolioCard] Applying optimistic withdraw update:", {
             oldBalance: balance,
-            newBalance: balance - approximateLpDecrease,
+            newBalance: balance - lpDecrease,
             oldValue: currentValue,
             newValue: currentValue - data.amount
           });
           
-          setBalance(prevBalance => Math.max(0, prevBalance - approximateLpDecrease));
+          setBalance(prevBalance => Math.max(0, prevBalance - lpDecrease));
           setCurrentValue(prevValue => Math.max(0, prevValue - data.amount));
         }
       }
     }
   });
   
-  // Listen for user position cache updates
   useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
     if (poolContractAddress) {
       const walletAddress = localStorage.getItem("ls_wallet_address");
       const expectedCacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
       
-      if (data && data.key === expectedCacheKey && data.value) {
-        // Only update if this is an actual change in data
+      if (data && data.key === expectedCacheKey && data.value && data.isUserAction) {
         const hasBalanceChanged = data.value.balance !== balance;
         const hasValueChanged = data.value.currentValue !== currentValue;
         
@@ -108,7 +101,6 @@ export function UserPortfolioCard({
     }
   });
 
-  // Determine the appropriate message for empty balance
   const getEmptyBalanceMessage = () => {
     if (poolStatus === 'active' || poolStatus === 'withdrawal') {
       return "You haven't supplied any assets";

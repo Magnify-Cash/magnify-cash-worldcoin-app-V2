@@ -3,7 +3,7 @@ import { useModalContext } from "@/contexts/ModalContext";
 import { Cache } from "@/utils/cacheUtils";
 import { UserPositionData } from "@/types/user";
 import { LiquidityPool } from "@/types/supabase/liquidity";
-import { emitCacheUpdate, EVENTS } from "@/hooks/useCacheListener";
+import { emitCacheUpdate, EVENTS, TRANSACTION_TYPES } from "@/hooks/useCacheListener";
 
 export const usePoolModals = () => {
   const { openModal, closeModal } = useModalContext();
@@ -47,19 +47,20 @@ export const usePoolModals = () => {
         balance: position.balance + lpAmount,
         currentValue: position.currentValue + supplyAmount,
       };
-    });
+    }, true); // Mark as user action
     
     // Also update the pool data to reflect the new deposit
     updatePoolCache(poolContractAddress, supplyAmount);
     
     // Emit a clear transaction event with detailed information
     emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
-      type: 'supply',
+      type: TRANSACTION_TYPES.SUPPLY,
       amount: supplyAmount,
       lpAmount: lpAmount,
       poolContractAddress: poolContractAddress,
       timestamp: Date.now(),
-      action: 'deposit'
+      action: 'deposit',
+      isUserAction: true
     });
   };
   
@@ -92,19 +93,20 @@ export const usePoolModals = () => {
         balance: Math.max(0, position.balance - lpAmount),
         currentValue: Math.max(0, position.currentValue - withdrawAmount),
       };
-    });
+    }, true); // Mark as user action
     
     // Also update the pool data to reflect the withdrawal
     updatePoolCache(poolContractAddress, -withdrawAmount);
     
     // Emit a clear transaction event with detailed information
     emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
-      type: 'withdraw',
+      type: TRANSACTION_TYPES.WITHDRAW,
       amount: withdrawAmount,
       lpAmount: lpAmount,
       poolContractAddress: poolContractAddress,
       timestamp: Date.now(),
-      action: 'withdrawal'
+      action: 'withdrawal',
+      isUserAction: true
     });
   };
   
@@ -130,11 +132,12 @@ export const usePoolModals = () => {
         value: updatedPool,
         action: 'update',
         supplyAmount,
-        transactionType: supplyAmount > 0 ? 'supply' : 'withdraw'
+        transactionType: supplyAmount > 0 ? 'supply' : 'withdraw',
+        isUserAction: true
       });
       
       return updatedPool;
-    });
+    }, true); // Mark as user action
     
     // Also update the pool in the all pools cache
     const allPoolsCacheKey = 'pool_data_all';
@@ -158,11 +161,12 @@ export const usePoolModals = () => {
         value: updatedPools,
         action: 'update',
         supplyAmount,
-        transactionType: supplyAmount > 0 ? 'supply' : 'withdraw'
+        transactionType: supplyAmount > 0 ? 'supply' : 'withdraw',
+        isUserAction: true
       });
       
       return updatedPools;
-    });
+    }, true); // Mark as user action
   };
 
   const openSupplyModal = (params: {

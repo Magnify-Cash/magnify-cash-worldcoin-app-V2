@@ -25,6 +25,7 @@ export interface TransactionEventData {
   poolContractAddress?: string;
   timestamp: number;
   action?: 'deposit' | 'withdrawal';
+  isUserAction?: boolean; // Flag to indicate whether this was triggered by a user action
 }
 
 export function useCacheListener(

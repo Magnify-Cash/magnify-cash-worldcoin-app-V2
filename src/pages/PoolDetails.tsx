@@ -62,7 +62,8 @@ const PoolDetails = () => {
     if (pool && pool.contract_address && data.key && data.key.includes(pool.contract_address)) {
       console.log("[PoolDetails] Received pool data cache update:", data);
       
-      if (data.action === 'update' && data.supplyAmount && typeof data.supplyAmount === 'number') {
+      if (data.action === 'update' && data.isUserAction && 
+          data.supplyAmount && typeof data.supplyAmount === 'number') {
         const updatedTVL = (pool.total_value_locked || 0) + data.supplyAmount;
         const updatedLiquidity = (pool.available_liquidity || 0) + data.supplyAmount;
         
@@ -97,12 +98,15 @@ const PoolDetails = () => {
       const walletAddress = localStorage.getItem("ls_wallet_address");
       const expectedCacheKey = `user_position_${walletAddress}_${pool.contract_address}`;
       
-      if (data.key === expectedCacheKey) {
+      if (data.key === expectedCacheKey && data.isUserAction) {
         console.log("[PoolDetails] Received user position cache update:", data);
         
-        if (data.action === 'set' && (data.value?.balance !== data.oldValue?.balance)) {
-          console.log("[PoolDetails] Position changed, refreshing data");
-          setRefreshTrigger(prev => prev + 1);
+        if (data.action === 'set' || data.action === 'update') {
+          if ((data.value?.balance !== data.oldValue?.balance) || 
+              (data.value?.currentValue !== data.oldValue?.currentValue)) {
+            console.log("[PoolDetails] Position changed, refreshing data");
+            setRefreshTrigger(prev => prev + 1);
+          }
         }
       }
     }
@@ -110,32 +114,34 @@ const PoolDetails = () => {
 
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
     if (pool && pool.contract_address && data.poolContractAddress === pool.contract_address) {
-      console.log("[PoolDetails] Transaction event detected:", data);
-      
-      if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
-        const multiplier = data.type === 'supply' ? 1 : -1;
-        const updatedTVL = (pool.total_value_locked || 0) + (data.amount * multiplier);
-        const updatedLiquidity = (pool.available_liquidity || 0) + (data.amount * multiplier);
+      if (data.isUserAction) {
+        console.log("[PoolDetails] User transaction event detected:", data);
         
-        console.log("[PoolDetails] Applying transaction-based update:", {
-          type: data.type,
-          amount: data.amount,
-          oldTVL: pool.total_value_locked,
-          newTVL: updatedTVL
-        });
-        
-        setPool(prevPool => {
-          if (!prevPool) return prevPool;
-          return {
-            ...prevPool,
-            total_value_locked: updatedTVL,
-            available_liquidity: updatedLiquidity,
-          };
-        });
-        
-        setTimeout(() => {
-          setRefreshTrigger(prev => prev + 1);
-        }, 500);
+        if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
+          const multiplier = data.type === 'supply' ? 1 : -1;
+          const updatedTVL = (pool.total_value_locked || 0) + (data.amount * multiplier);
+          const updatedLiquidity = (pool.available_liquidity || 0) + (data.amount * multiplier);
+          
+          console.log("[PoolDetails] Applying transaction-based update:", {
+            type: data.type,
+            amount: data.amount,
+            oldTVL: pool.total_value_locked,
+            newTVL: updatedTVL
+          });
+          
+          setPool(prevPool => {
+            if (!prevPool) return prevPool;
+            return {
+              ...prevPool,
+              total_value_locked: updatedTVL,
+              available_liquidity: updatedLiquidity,
+            };
+          });
+          
+          setTimeout(() => {
+            setRefreshTrigger(prev => prev + 1);
+          }, 500);
+        }
       }
     }
   });
@@ -649,7 +655,8 @@ const PoolDetails = () => {
                 showWithdrawButton={shouldShowWithdrawButton}
                 poolStatus={pool.status}
                 symbol={poolSymbol}
-                key={refreshTrigger}
+                poolContractAddress={pool.contract_address}
+                key={`position-${refreshTrigger}`}
               />
             </div>
 

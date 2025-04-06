@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -98,10 +98,10 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   };
 
   return (
-    <div className="space-y-5" key={positionsKey}>
+    <div className="space-y-5" key={`positions-list-${positionsKey}`}>
       {positions.map((position) => (
         <div 
-          key={`${position.poolId}-${position.balance}-${position.currentValue}`} 
+          key={`${position.poolId}-${position.balance}-${position.currentValue}-${positionsKey}`} 
           className="rounded-lg bg-white shadow-md overflow-hidden"
         >
           <div className="p-4">

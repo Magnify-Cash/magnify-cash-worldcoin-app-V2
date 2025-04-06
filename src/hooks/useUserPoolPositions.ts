@@ -27,7 +27,8 @@ interface UseUserPoolPositionsResult {
 }
 
 export const useUserPoolPositions = (
-  walletAddress: string
+  walletAddress: string,
+  updateTrigger: number = 0
 ): UseUserPoolPositionsResult => {
   const [positions, setPositions] = useState<UserPoolPosition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +86,7 @@ export const useUserPoolPositions = (
         (position): position is UserPoolPosition => position !== null
       );
 
+      console.log('[useUserPoolPositions] Fetched positions:', validPositions);
       setPositions(validPositions);
     } catch (err) {
       console.error("Error fetching user positions:", err);
@@ -99,10 +101,10 @@ export const useUserPoolPositions = (
     }
   }, [walletAddress]);
 
-  // Initial data fetch
+  // Initial data fetch when component mounts or dependencies change
   useEffect(() => {
     fetchPositions();
-  }, [fetchPositions, refreshTrigger]);
+  }, [fetchPositions, refreshTrigger, updateTrigger]);
 
   // Listen for transaction events to update positions optimistically
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {

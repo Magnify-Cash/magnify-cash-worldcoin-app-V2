@@ -10,12 +10,14 @@ import { LoadingState } from "@/components/portfolio/LoadingState";
 import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
 import { useNavigate } from "react-router-dom";
 import { useCacheListener, EVENTS } from '@/hooks/useCacheListener';
+import { toast } from '@/components/ui/use-toast';
 
 const Portfolio = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [updateTrigger, setUpdateTrigger] = useState<number>(0);
+  const [processedTransactions] = useState<Set<string>>(new Set());
   
   // Get user's wallet address from localStorage
   useEffect(() => {
@@ -29,7 +31,16 @@ const Portfolio = () => {
   }, [navigate]);
   
   // Listen for transaction events to force refresh
-  useCacheListener(EVENTS.TRANSACTION_COMPLETED, () => {
+  useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
+    if (!data || (data.transactionId && processedTransactions.has(data.transactionId))) {
+      return;
+    }
+    
+    // Track processed transaction to avoid duplicates
+    if (data.transactionId) {
+      processedTransactions.add(data.transactionId);
+    }
+    
     console.log('[Portfolio] Transaction event detected, triggering update');
     setUpdateTrigger(prev => prev + 1);
   });
@@ -42,7 +53,7 @@ const Portfolio = () => {
     hasPositions,
     refreshPositions,
     updateUserPositionOptimistically
-  } = useUserPoolPositions(walletAddress || "");
+  } = useUserPoolPositions(walletAddress || "", updateTrigger);
 
   // Don't render anything until we've checked for wallet address
   if (!walletAddress) {
@@ -72,7 +83,7 @@ const Portfolio = () => {
             </button>
           </div>
         ) : hasPositions ? (
-          <div className="space-y-5">
+          <div className="space-y-5" key={`portfolio-content-${updateTrigger}`}>
             <ActivePositions 
               positions={positions}
               isMobile={isMobile}

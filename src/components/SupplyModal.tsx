@@ -347,7 +347,7 @@ export function SupplyModal({
               </Button>
             </div>
 
-            {amount && parseFloat(amount) >= 10 && (
+            {amount && parseFloat(amount) >= 1 && (
               <div className="text-xs text-gray-500 mt-1">
                 You will receive {calculateLPTokens()} {lpSymbol} tokens
               </div>

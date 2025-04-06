@@ -39,6 +39,7 @@ import { PoolPriceGraph } from "@/components/PoolPriceGraph";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 import { useUserPoolPosition } from "@/hooks/useUserPoolPosition";
 import { usePoolModals } from "@/hooks/usePoolModals";
+import { useCacheListener, EVENTS } from "@/hooks/useCacheListener";
 
 const PoolDetails = () => {
   const { contract, id } = useParams();
@@ -56,6 +57,20 @@ const PoolDetails = () => {
   } | null>(null);
 
   const userPosition = useUserPoolPosition(pool?.contract_address, refreshTrigger);
+
+  useCacheListener(EVENTS.POOL_DATA_UPDATED, (data) => {
+    if (pool && data.key && data.key.includes(pool.contract_address)) {
+      console.log("[PoolDetails] Received pool data cache update:", data);
+      setRefreshTrigger(prev => prev + 1);
+    }
+  });
+
+  useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
+    if (pool && data.key && data.key.includes(pool.contract_address)) {
+      console.log("[PoolDetails] Received user position cache update:", data);
+      setRefreshTrigger(prev => prev + 1);
+    }
+  });
 
   const fetchPoolData = useCallback(async () => {
     if (!contract && !id) {
@@ -113,7 +128,6 @@ const PoolDetails = () => {
     fetchPoolData();
   }, [fetchPoolData, refreshTrigger]);
   
-
   const handleSuccessfulSupply = useCallback((amount: number) => {
     if (pool) {
       const updatedTotalValueLocked = pool.total_value_locked + amount;
@@ -131,10 +145,6 @@ const PoolDetails = () => {
       });
       
       setRefreshTrigger(prev => prev + 1);
-      
-      setTimeout(() => {
-        setRefreshTrigger(prev => prev + 1);
-      }, 1000);
       
       setTimeout(() => {
         setOptimisticUpdates(null);

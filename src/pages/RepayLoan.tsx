@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coins } from "lucide-react";
+import { Coins, CheckCircle } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getLoanById } from "@/lib/loanRequests";
@@ -17,17 +17,23 @@ import { format } from 'date-fns';
 
 const RepayLoan = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
 
   const [loading, setLoading] = useState(true);
   const [loanData, setLoanData] = useState<Loan | null>(null);
+  
+  // State for optimistic UI updates
+  const [isRepaid, setIsRepaid] = useState(false);
+  const [repaidAmount, setRepaidAmount] = useState<number | null>(null);
 
   const {
     repayLoan,
     error: repayError,
     isLoading: isRepaying,
     isConfirming,
-    transactionHash
+    transactionHash,
+    loanDetails
   } = useRepayLoan();
 
   useEffect(() => {
@@ -40,58 +46,62 @@ const RepayLoan = () => {
     }
   }, [repayError]);
 
-  // useEffect(() => {
-  //   if (receipt?.status === 1) {
-  //     toast({
-  //       title: "Loan Repaid Successfully",
-  //       description: `Transaction Hash: ${transactionHash}`,
-  //     });
-  //   } else if (receipt?.status === 0) {
-  //     toast({
-  //       title: "Loan Repayment Failed",
-  //       description: `Transaction Hash: ${transactionHash}`,
-  //       variant: "destructive",
-  //     });
-  //   }
-  // }, [receipt, transactionHash]);
-
   useEffect(() => {
-    const fetchLoanData = async () => {
-      if (!id) {
+    if (transactionHash && !isConfirming && loanDetails) {
+      // Transaction confirmed, show success and update UI optimistically
+      setIsRepaid(true);
+      setRepaidAmount(loanDetails.amount);
+      toast({
+        title: "Loan Repaid Successfully",
+        description: `Transaction completed with hash: ${transactionHash?.substring(0, 8)}...`,
+      });
+      
+      // Refresh the loan data after a short delay to reflect server state
+      setTimeout(() => {
+        fetchLoanData();
+      }, 2000);
+    }
+  }, [transactionHash, isConfirming, loanDetails]);
+
+  const fetchLoanData = async () => {
+    if (!id) {
+      toast({
+        title: "Loan ID not found",
+        description: "Please provide a valid loan ID.",
+        variant: "destructive",
+      });
+      navigate("/loans");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const loan = await getLoanById(parseInt(id));
+
+      if (!loan) {
         toast({
-          title: "Loan ID not found",
-          description: "Please provide a valid loan ID.",
+          title: "Loan not found",
+          description: "The requested loan does not exist.",
           variant: "destructive",
         });
+        navigate("/loans");
         return;
       }
 
-      try {
-        setLoading(true);
-        const loan = await getLoanById(parseInt(id));
+      setLoanData(loan);
+    } catch (error) {
+      console.error("Error fetching loan data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load loan data. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (!loan) {
-          toast({
-            title: "Loan not found",
-            description: "The requested loan does not exist.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        setLoanData(loan);
-      } catch (error) {
-        console.error("Error fetching loan data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load loan data. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchLoanData();
   }, [id]);
 
@@ -108,6 +118,14 @@ const RepayLoan = () => {
     return format(new Date(date), 'MMM dd, yyyy');
   };
 
+  const handleRepayLoan = async () => {
+    if (!loanData) return;
+    
+    // Convert number to BigInt for loanAmountDue
+    const loanAmountDue = BigInt(Math.round(loanData.amount_due));
+    await repayLoan(loanAmountDue);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -118,9 +136,6 @@ const RepayLoan = () => {
       </div>
     );
   }
-
-  // Convert number to BigInt for loanAmountDue
-  const loanAmountDue = loanData ? BigInt(Math.round(loanData.amount_due)) : BigInt(0);
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -150,6 +165,16 @@ const RepayLoan = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
+                  {isRepaid && (
+                    <div className="bg-green-100 text-green-800 p-4 rounded-md mb-4 flex items-center">
+                      <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                      <div>
+                        <p className="font-medium">Loan Repayment Successful</p>
+                        <p className="text-sm">Amount repaid: {repaidAmount ? formatValue(repaidAmount) : ''}</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs sm:text-sm text-gray-500">Loan Amount</p>
@@ -171,17 +196,25 @@ const RepayLoan = () => {
                       <p className="text-xs sm:text-sm text-gray-500">Loan End Date</p>
                       <p className="text-sm sm:text-lg font-semibold">{formatDate(loanData.loan_end_date)}</p>
                     </div>
+                    {isRepaid && (
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500">Status</p>
+                        <p className="text-sm sm:text-lg font-semibold text-green-600">Repaid</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Button
-                onClick={() => repayLoan(loanAmountDue)}
-                disabled={isRepaying || isConfirming}
-                className="w-full"
-              >
-                {isRepaying ? "Processing..." : isConfirming ? "Confirming..." : "Repay Loan"}
-              </Button>
+              {!isRepaid && (
+                <Button
+                  onClick={handleRepayLoan}
+                  disabled={isRepaying || isConfirming}
+                  className="w-full"
+                >
+                  {isRepaying ? "Processing..." : isConfirming ? "Confirming..." : "Repay Loan"}
+                </Button>
+              )}
             </div>
           </>
         )}

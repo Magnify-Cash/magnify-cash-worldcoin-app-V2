@@ -18,6 +18,7 @@ import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { Cache } from "@/utils/cacheUtils";
 import { LiquidityPool } from "@/types/supabase/liquidity";
+import { emitCacheUpdate, EVENTS } from "@/hooks/useCacheListener";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -107,20 +108,29 @@ export function SupplyModal({
     Cache.update<LiquidityPool>(poolContractCacheKey, (pool: LiquidityPool | null) => {
       if (!pool) return pool;
       
-      return {
+      const updatedPool = {
         ...pool,
         total_value_locked: pool.total_value_locked + supplyAmount,
         available_liquidity: pool.available_liquidity + supplyAmount,
         token_a_amount: pool.token_a_amount + supplyAmount,
         token_b_amount: pool.token_b_amount + supplyAmount
       };
+      
+      emitCacheUpdate(EVENTS.POOL_DATA_UPDATED, {
+        key: poolContractCacheKey,
+        value: updatedPool,
+        action: 'update',
+        supplyAmount
+      });
+      
+      return updatedPool;
     });
     
     const allPoolsCacheKey = 'pool_data_all';
     Cache.update<LiquidityPool[]>(allPoolsCacheKey, (pools: LiquidityPool[] | null) => {
       if (!Array.isArray(pools)) return pools;
       
-      return pools.map(pool => {
+      const updatedPools = pools.map(pool => {
         if (pool.contract_address === poolContractAddress) {
           return {
             ...pool,
@@ -132,9 +142,25 @@ export function SupplyModal({
         }
         return pool;
       });
+      
+      emitCacheUpdate(EVENTS.POOL_DATA_UPDATED, {
+        key: allPoolsCacheKey,
+        value: updatedPools,
+        action: 'update',
+        supplyAmount
+      });
+      
+      return updatedPools;
     });
     
     console.log(`[SupplyModal] Updated pool cache for ${poolContractAddress} after supply of ${supplyAmount}`);
+    
+    emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
+      type: 'supply',
+      amount: supplyAmount,
+      poolContractAddress,
+      timestamp: Date.now()
+    });
   };
 
   const handleSupply = async () => {

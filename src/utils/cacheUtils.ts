@@ -1,3 +1,5 @@
+import eventEmitter from './eventEmitter';
+import { EVENTS } from '@/hooks/useCacheListener';
 
 // Define a generic type for the cache data
 type CacheData<T> = {
@@ -16,11 +18,20 @@ export class Cache {
    * @param expirationTimeInMinutes Optional expiration time in minutes. If not provided, the value will not expire.
    */
   static set<T>(key: string, value: T, expirationTimeInMinutes?: number): void {
+    const oldValue = cache[key];
+    
     if (expirationTimeInMinutes) {
       const expirationTime = new Date().getTime() + expirationTimeInMinutes * 60 * 1000;
       cache[key] = { value, expirationTime };
     } else {
       cache[key] = value;
+    }
+    
+    // Emit events based on key patterns to notify components
+    if (key.startsWith('pool_data_')) {
+      eventEmitter.emit(EVENTS.POOL_DATA_UPDATED, { key, value, oldValue });
+    } else if (key.startsWith('user_position_')) {
+      eventEmitter.emit(EVENTS.USER_POSITION_UPDATED, { key, value, oldValue });
     }
   }
 
@@ -59,6 +70,8 @@ export class Cache {
     const currentValue = Cache.get<T>(key);
     const newValue = updateFn(currentValue);
     Cache.set(key, newValue);
+    
+    // We don't need to emit events here since set() will handle that
   }
 
   /**
@@ -66,7 +79,15 @@ export class Cache {
    * @param key The key of the value to delete.
    */
   static delete(key: string): void {
+    const oldValue = cache[key];
     delete cache[key];
+    
+    // Notify components about the deleted cache entry
+    if (key.startsWith('pool_data_')) {
+      eventEmitter.emit(EVENTS.POOL_DATA_UPDATED, { key, value: undefined, oldValue, action: 'delete' });
+    } else if (key.startsWith('user_position_')) {
+      eventEmitter.emit(EVENTS.USER_POSITION_UPDATED, { key, value: undefined, oldValue, action: 'delete' });
+    }
   }
 
   /**

@@ -1,8 +1,10 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Wallet, Loader2 } from "lucide-react";
+import { useCacheListener, EVENTS } from "@/hooks/useCacheListener";
 
 interface UserPortfolioCardProps {
   balance: number;
@@ -16,11 +18,12 @@ interface UserPortfolioCardProps {
   showWithdrawButton?: boolean;
   poolStatus?: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
   symbol?: string;
+  poolContractAddress?: string;
 }
 
 export function UserPortfolioCard({
-  balance,
-  currentValue,
+  balance: initialBalance,
+  currentValue: initialCurrentValue,
   isLoading = false,
   onSupply,
   onWithdraw,
@@ -29,9 +32,25 @@ export function UserPortfolioCard({
   showSupplyButton = true,
   showWithdrawButton = true,
   poolStatus,
-  symbol = "LP"
+  symbol = "LP",
+  poolContractAddress
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
+  const [balance, setBalance] = useState(initialBalance);
+  const [currentValue, setCurrentValue] = useState(initialCurrentValue);
+  
+  // Update local state when props change
+  useEffect(() => {
+    setBalance(initialBalance);
+    setCurrentValue(initialCurrentValue);
+  }, [initialBalance, initialCurrentValue]);
+  
+  // Listen for transaction events that might affect this portfolio card
+  useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
+    if (data && poolContractAddress && data.poolContractAddress === poolContractAddress) {
+      console.log("[UserPortfolioCard] Transaction event detected:", data);
+    }
+  });
 
   // Determine the appropriate message for empty balance
   const getEmptyBalanceMessage = () => {

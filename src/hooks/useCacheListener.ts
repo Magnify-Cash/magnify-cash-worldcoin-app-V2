@@ -9,6 +9,24 @@ export const EVENTS = {
   TRANSACTION_COMPLETED: 'transaction_completed'
 };
 
+// Transaction types
+export const TRANSACTION_TYPES = {
+  SUPPLY: 'supply',
+  WITHDRAW: 'withdraw'
+};
+
+/**
+ * Interface for transaction event data
+ */
+export interface TransactionEventData {
+  type: typeof TRANSACTION_TYPES.SUPPLY | typeof TRANSACTION_TYPES.WITHDRAW;
+  amount: number;
+  lpAmount?: number;
+  poolContractAddress?: string;
+  timestamp: number;
+  action?: 'deposit' | 'withdrawal';
+}
+
 export function useCacheListener(
   eventName: string, 
   callback: (data?: any) => void

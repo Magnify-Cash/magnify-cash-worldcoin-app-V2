@@ -51,6 +51,61 @@ export const usePoolModals = () => {
     
     // Also update the pool data to reflect the new deposit
     updatePoolCache(poolContractAddress, supplyAmount);
+    
+    // Emit a clear transaction event with detailed information
+    emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
+      type: 'supply',
+      amount: supplyAmount,
+      lpAmount: lpAmount,
+      poolContractAddress: poolContractAddress,
+      timestamp: Date.now(),
+      action: 'deposit'
+    });
+  };
+  
+  // Function to update user position data in cache after a successful withdrawal
+  const updateUserPositionCacheAfterWithdraw = (
+    poolContractAddress: string | undefined,
+    walletAddress: string | undefined,
+    withdrawAmount: number,
+    lpAmount: number
+  ) => {
+    if (!poolContractAddress || !walletAddress) return;
+    
+    console.log("[usePoolModals] Updating user position cache after withdrawal:", {
+      poolContractAddress,
+      walletAddress,
+      withdrawAmount,
+      lpAmount
+    });
+    
+    // Create a cache key for this specific user position
+    const userPositionCacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
+    
+    // Update the user position in cache with proper type annotation
+    Cache.update<UserPositionData>(userPositionCacheKey, (position) => {
+      if (!position) return position; // Should not happen in withdrawal case
+      
+      // Update existing position
+      return {
+        ...position,
+        balance: Math.max(0, position.balance - lpAmount),
+        currentValue: Math.max(0, position.currentValue - withdrawAmount),
+      };
+    });
+    
+    // Also update the pool data to reflect the withdrawal
+    updatePoolCache(poolContractAddress, -withdrawAmount);
+    
+    // Emit a clear transaction event with detailed information
+    emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
+      type: 'withdraw',
+      amount: withdrawAmount,
+      lpAmount: lpAmount,
+      poolContractAddress: poolContractAddress,
+      timestamp: Date.now(),
+      action: 'withdrawal'
+    });
   };
   
   // Function to update pool data in cache after a successful supply
@@ -74,7 +129,8 @@ export const usePoolModals = () => {
         key: poolContractCacheKey,
         value: updatedPool,
         action: 'update',
-        supplyAmount
+        supplyAmount,
+        transactionType: supplyAmount > 0 ? 'supply' : 'withdraw'
       });
       
       return updatedPool;
@@ -101,7 +157,8 @@ export const usePoolModals = () => {
         key: allPoolsCacheKey,
         value: updatedPools,
         action: 'update',
-        supplyAmount
+        supplyAmount,
+        transactionType: supplyAmount > 0 ? 'supply' : 'withdraw'
       });
       
       return updatedPools;
@@ -128,15 +185,6 @@ export const usePoolModals = () => {
         approximateLpAmount
       );
       
-      // Emit a transaction completed event
-      emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
-        type: 'supply',
-        amount: amount,
-        lpAmount: approximateLpAmount,
-        poolContractAddress: params.poolContractAddress,
-        timestamp: Date.now()
-      });
-      
       // Call the original callback if provided
       if (params.onSuccessfulSupply) {
         params.onSuccessfulSupply(amount);
@@ -155,7 +203,23 @@ export const usePoolModals = () => {
     lpValue?: number;
     poolContractAddress?: string;
   }) => {
-    openModal("withdraw", params);
+    // Wrap to handle cache updates on successful withdrawal
+    const wrappedOnSuccessfulWithdraw = (amount: number, lpAmount: number) => {
+      const walletAddress = localStorage.getItem("ls_wallet_address");
+      
+      // Update the user position cache for withdrawal
+      updateUserPositionCacheAfterWithdraw(
+        params.poolContractAddress,
+        walletAddress || undefined,
+        amount,
+        lpAmount
+      );
+    };
+    
+    openModal("withdraw", {
+      ...params,
+      onSuccessfulWithdraw: wrappedOnSuccessfulWithdraw
+    });
   };
 
   return {

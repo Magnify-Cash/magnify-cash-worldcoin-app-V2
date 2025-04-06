@@ -62,7 +62,6 @@ const PoolDetails = () => {
     if (pool && pool.contract_address && data.key && data.key.includes(pool.contract_address)) {
       console.log("[PoolDetails] Received pool data cache update:", data);
       
-      // Apply optimistic updates for immediate UI feedback
       if (data.action === 'update' && data.supplyAmount && typeof data.supplyAmount === 'number') {
         const updatedTVL = (pool.total_value_locked || 0) + data.supplyAmount;
         const updatedLiquidity = (pool.available_liquidity || 0) + data.supplyAmount;
@@ -79,7 +78,6 @@ const PoolDetails = () => {
           availableLiquidity: updatedLiquidity,
         });
         
-        // Apply update to current pool data for immediate UI reflection
         setPool(prevPool => {
           if (!prevPool) return prevPool;
           return {
@@ -88,10 +86,9 @@ const PoolDetails = () => {
             available_liquidity: updatedLiquidity,
           };
         });
+        
+        setRefreshTrigger(prev => prev + 1);
       }
-      
-      // Trigger a refresh to get latest data
-      setRefreshTrigger(prev => prev + 1);
     }
   });
 
@@ -103,8 +100,10 @@ const PoolDetails = () => {
       if (data.key === expectedCacheKey) {
         console.log("[PoolDetails] Received user position cache update:", data);
         
-        // Trigger a refresh of the user position data
-        setRefreshTrigger(prev => prev + 1);
+        if (data.action === 'set' && (data.value?.balance !== data.oldValue?.balance)) {
+          console.log("[PoolDetails] Position changed, refreshing data");
+          setRefreshTrigger(prev => prev + 1);
+        }
       }
     }
   });
@@ -113,10 +112,10 @@ const PoolDetails = () => {
     if (pool && pool.contract_address && data.poolContractAddress === pool.contract_address) {
       console.log("[PoolDetails] Transaction event detected:", data);
       
-      // For immediate UI feedback
-      if (data.type === 'supply' && data.amount) {
-        const updatedTVL = (pool.total_value_locked || 0) + data.amount;
-        const updatedLiquidity = (pool.available_liquidity || 0) + data.amount;
+      if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
+        const multiplier = data.type === 'supply' ? 1 : -1;
+        const updatedTVL = (pool.total_value_locked || 0) + (data.amount * multiplier);
+        const updatedLiquidity = (pool.available_liquidity || 0) + (data.amount * multiplier);
         
         console.log("[PoolDetails] Applying transaction-based update:", {
           type: data.type,
@@ -134,7 +133,6 @@ const PoolDetails = () => {
           };
         });
         
-        // Trigger a refresh after a short delay to get confirmed data
         setTimeout(() => {
           setRefreshTrigger(prev => prev + 1);
         }, 500);

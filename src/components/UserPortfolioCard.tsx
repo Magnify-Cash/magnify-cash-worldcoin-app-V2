@@ -50,20 +50,34 @@ export function UserPortfolioCard({
     if (data && poolContractAddress && data.poolContractAddress === poolContractAddress) {
       console.log("[UserPortfolioCard] Transaction event detected:", data);
       
-      // For immediate UI feedback on supply transaction
-      if (data.type === 'supply' && data.amount) {
+      // Only update UI for supply or withdraw transactions
+      if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
         // Apply optimistic update to the UI for better UX
-        const approximateLpIncrease = data.amount * 0.95; 
-        
-        console.log("[UserPortfolioCard] Applying optimistic update:", {
-          oldBalance: balance,
-          newBalance: balance + approximateLpIncrease,
-          oldValue: currentValue,
-          newValue: currentValue + data.amount
-        });
-        
-        setBalance(prevBalance => prevBalance + approximateLpIncrease);
-        setCurrentValue(prevValue => prevValue + data.amount);
+        if (data.type === 'supply') {
+          const approximateLpIncrease = data.amount * 0.95; 
+          
+          console.log("[UserPortfolioCard] Applying optimistic supply update:", {
+            oldBalance: balance,
+            newBalance: balance + approximateLpIncrease,
+            oldValue: currentValue,
+            newValue: currentValue + data.amount
+          });
+          
+          setBalance(prevBalance => prevBalance + approximateLpIncrease);
+          setCurrentValue(prevValue => prevValue + data.amount);
+        } else if (data.type === 'withdraw') {
+          const approximateLpDecrease = data.lpAmount || data.amount * 0.95;
+          
+          console.log("[UserPortfolioCard] Applying optimistic withdraw update:", {
+            oldBalance: balance,
+            newBalance: balance - approximateLpDecrease,
+            oldValue: currentValue,
+            newValue: currentValue - data.amount
+          });
+          
+          setBalance(prevBalance => Math.max(0, prevBalance - approximateLpDecrease));
+          setCurrentValue(prevValue => Math.max(0, prevValue - data.amount));
+        }
       }
     }
   });
@@ -75,13 +89,19 @@ export function UserPortfolioCard({
       const expectedCacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
       
       if (data && data.key === expectedCacheKey && data.value) {
-        console.log("[UserPortfolioCard] Position update detected:", data.value);
+        // Only update if this is an actual change in data
+        const hasBalanceChanged = data.value.balance !== balance;
+        const hasValueChanged = data.value.currentValue !== currentValue;
         
-        // Only update if values are different to avoid unnecessary re-renders
-        if (data.value.balance !== balance) {
+        if (hasBalanceChanged || hasValueChanged) {
+          console.log("[UserPortfolioCard] Position update detected with changes:", {
+            oldBalance: balance,
+            newBalance: data.value.balance,
+            oldValue: currentValue,
+            newValue: data.value.currentValue
+          });
+          
           setBalance(data.value.balance);
-        }
-        if (data.value.currentValue !== currentValue) {
           setCurrentValue(data.value.currentValue);
         }
       }

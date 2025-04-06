@@ -1,3 +1,4 @@
+
 import eventEmitter from './eventEmitter';
 import { EVENTS } from '@/hooks/useCacheListener';
 
@@ -35,17 +36,22 @@ export class Cache {
         value, 
         oldValue,
         action: 'set',
-        poolContractAddress
+        poolContractAddress,
+        isUserAction: false // Flag to indicate this is not directly from a user action
       });
     } else if (key.startsWith('user_position_')) {
-      const [_, walletAddress, poolAddress] = key.split('_');
+      const parts = key.split('_');
+      const walletAddress = parts.length > 2 ? parts[2] : undefined;
+      const poolAddress = parts.length > 3 ? parts[3] : undefined;
+      
       eventEmitter.emit(EVENTS.USER_POSITION_UPDATED, { 
         key, 
         value, 
         oldValue,
         action: 'set',
         walletAddress,
-        poolAddress
+        poolAddress,
+        isUserAction: false // Flag to indicate this is not directly from a user action
       });
     }
   }
@@ -92,7 +98,43 @@ export class Cache {
       // Only update cache and emit events if there was a real change
       if (isChanged) {
         console.log(`[Cache] Updating ${key} with new value:`, newValue);
-        Cache.set(key, newValue);
+        
+        // Additional context for events
+        const isPoolData = key.startsWith('pool_data_');
+        const isUserPosition = key.startsWith('user_position_');
+        const eventContext = {
+          isUserAction: true, // Default assumption that updates are from user actions
+        };
+        
+        // Store value in cache
+        cache[key] = newValue;
+        
+        // Emit specific update events based on the key type
+        if (isPoolData) {
+          const poolContractAddress = key.replace('pool_data_contract_', '');
+          eventEmitter.emit(EVENTS.POOL_DATA_UPDATED, { 
+            key, 
+            value: newValue, 
+            oldValue: currentValue,
+            action: 'update',
+            poolContractAddress,
+            ...eventContext
+          });
+        } else if (isUserPosition) {
+          const parts = key.split('_');
+          const walletAddress = parts.length > 2 ? parts[2] : undefined;
+          const poolAddress = parts.length > 3 ? parts[3] : undefined;
+          
+          eventEmitter.emit(EVENTS.USER_POSITION_UPDATED, { 
+            key, 
+            value: newValue, 
+            oldValue: currentValue,
+            action: 'update',
+            walletAddress,
+            poolAddress,
+            ...eventContext
+          });
+        }
       } else {
         console.log(`[Cache] No change detected for ${key}, skipping update`);
       }

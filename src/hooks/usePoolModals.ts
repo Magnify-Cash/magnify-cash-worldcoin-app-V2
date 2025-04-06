@@ -204,11 +204,14 @@ export const usePoolModals = () => {
     poolId?: number;
     poolContractAddress?: string;
     lpSymbol?: string;
+    transactionId?: string; // Add transaction ID param
     onSuccessfulSupply?: (amount: number, lpAmount: number) => void;
     refreshPositions?: () => void;
     updateUserPositionOptimistically?: (poolId: number, amount: number) => void;
   }) => {
-    const wrappedOnSuccessfulSupply = (amount: number, lpAmount: number, transactionId: string) => {
+    const transactionId = params.transactionId || `modal-tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    const wrappedOnSuccessfulSupply = (amount: number, lpAmount: number) => {
       // Clear the transaction pending state
       setTransactionPending(false);
       setTransactionMessage(undefined);
@@ -242,8 +245,6 @@ export const usePoolModals = () => {
       if (params.onSuccessfulSupply) {
         params.onSuccessfulSupply(amount, lpAmount);
       }
-      
-      // We don't trigger a refreshPositions here anymore - rely on our optimistic update
     };
   
     openModal("supply", {
@@ -257,10 +258,13 @@ export const usePoolModals = () => {
     lpBalance?: number;
     lpValue?: number;
     poolContractAddress?: string;
+    transactionId?: string; // Add transaction ID param
     onSuccessfulWithdraw?: (amount: number, lpAmount: number) => void;
   }) => {
+    const transactionId = params.transactionId || `modal-tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
     // Wrap to handle cache updates on successful withdrawal
-    const wrappedOnSuccessfulWithdraw = (amount: number, lpAmount: number, transactionId: string) => {
+    const wrappedOnSuccessfulWithdraw = (amount: number, lpAmount: number) => {
       // Clear the transaction pending state
       setTransactionPending(false);
       setTransactionMessage(undefined);
@@ -280,8 +284,6 @@ export const usePoolModals = () => {
       if (params.onSuccessfulWithdraw) {
         params.onSuccessfulWithdraw(amount, lpAmount);
       }
-      
-      // We don't trigger any refreshes here - rely on our optimistic update
     };
     
     openModal("withdraw", {

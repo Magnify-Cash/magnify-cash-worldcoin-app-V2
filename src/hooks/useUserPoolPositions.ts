@@ -20,7 +20,7 @@ interface UseUserPoolPositionsResult {
   error: string | null;
   hasPositions: boolean;
   refreshPositions: () => void;
-  updateUserPositionOptimistically: (poolId: number, amount: number, isWithdrawal?: boolean) => void;
+  updateUserPositionOptimistically: (poolId: number, amount: number, isWithdrawal?: boolean, lpAmount?: number) => void;
 }
 
 // This hook now serves as a compatibility layer that uses the PortfolioContext under the hood
@@ -41,14 +41,17 @@ export const useUserPoolPositions = (
     }
   }, [updateTrigger, refreshPortfolio]);
   
-  // Adapter for the old API
+  // Adapter for the old API - make sure we only emit once
   const updateUserPositionOptimistically = useCallback((
     poolId: number, 
     amount: number, 
-    isWithdrawal: boolean = false
+    isWithdrawal: boolean = false,
+    lpAmount?: number
   ) => {
     console.log(`[useUserPoolPositions] Optimistically updating pool ${poolId} with amount ${amount}, isWithdrawal: ${isWithdrawal}`);
-    updatePositionOptimistically(poolId, amount, isWithdrawal);
+    
+    // We delegate to the central implementation in PortfolioContext
+    updatePositionOptimistically(poolId, amount, isWithdrawal, lpAmount);
   }, [updatePositionOptimistically]);
 
   return { 

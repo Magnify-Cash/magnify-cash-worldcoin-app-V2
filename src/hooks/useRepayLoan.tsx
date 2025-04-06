@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { MiniKit } from "@worldcoin/minikit-js";
@@ -233,8 +232,8 @@ export function useRepayLoan() {
           });
         }
       } else {
-        const errorMessage = finalPayload.status === "error" && finalPayload.error === "user_rejected"
-          ? "Transaction rejected by user"
+        const errorMessage = finalPayload.status === "error" && finalPayload.error_message
+          ? finalPayload.error_message
           : "Transaction failed. Please try again.";
           
         setTransactionStatus({

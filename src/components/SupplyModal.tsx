@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -369,8 +368,8 @@ export function SupplyModal({
       } else {
         toast({
           title: "Transaction failed",
-          description: finalPayload.status === "error" && finalPayload.error === "user_rejected"
-            ? "User rejected the transaction"
+          description: finalPayload.status === "error" && finalPayload.error_message
+            ? finalPayload.error_message 
             : "Something went wrong",
         });
         setTransactionPending(false);

@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import LoanCard from "@/components/LoanCard";
-import { useRequestLoan } from "@/hooks/useRequestLoan";
+import { LoanCard } from "@/components/LoanCard";
+import useRequestLoan from "@/hooks/useRequestLoan";
 import { TransactionOverlay } from "@/components/TransactionOverlay";
-import { useRepayLoan } from "@/hooks/useRepayLoan"; // Fixed import
+import { useRepayLoan } from "@/hooks/useRepayLoan";
 
 export default function RepayLoan() {
   const navigate = useNavigate();

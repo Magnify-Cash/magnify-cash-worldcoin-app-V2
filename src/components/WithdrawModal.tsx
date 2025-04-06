@@ -21,9 +21,10 @@ interface WithdrawModalProps {
   lpBalance: number;
   lpValue: number;
   poolContractAddress: string;
+  onSuccessfulWithdraw?: (amount: number, lpAmount: number) => void;
 }
 
-export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue, poolContractAddress }: WithdrawModalProps) {
+export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue, poolContractAddress, onSuccessfulWithdraw }: WithdrawModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
@@ -32,7 +33,6 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue, poolContrac
   const isMobile = useIsMobile();
   const walletAddress = localStorage.getItem("ls_wallet_address") || null;
 
-  // Fetch accurate exchange rate from backend
   useEffect(() => {
     const fetchExchangeRate = async () => {
       try {
@@ -51,7 +51,6 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue, poolContrac
     }
   }, [isOpen, poolContractAddress]);
 
-  // Reset modal state when opened
   useEffect(() => {
     if (isOpen) {
       setAmount("");
@@ -122,13 +121,19 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue, poolContrac
           title: "Withdrawal successful",
           description: `Tx ID: ${finalPayload.transaction_id}`,
         });
+        
+        if (onSuccessfulWithdraw && typeof onSuccessfulWithdraw === 'function') {
+          const withdrawAmount = parseFloat(amount);
+          onSuccessfulWithdraw(withdrawAmount, estimatedLpAmount);
+        }
+        
         onClose();
         setAmount("");
       } else {
         toast({
           title: "Withdrawal failed",
-          description: finalPayload.error_code === "user_rejected"
-            ? "User rejected the transaction"
+          description: finalPayload.status === "error" && finalPayload.error_message
+            ? finalPayload.error_message
             : "Something went wrong",
         });
       }

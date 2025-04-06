@@ -1,18 +1,18 @@
-
 import { useEffect } from 'react';
 import eventEmitter from '@/utils/eventEmitter';
 
 // Event names
 export const EVENTS = {
-  POOL_DATA_UPDATED: 'pool_data_updated',
-  USER_POSITION_UPDATED: 'user_position_updated',
-  TRANSACTION_COMPLETED: 'transaction_completed'
+  POOL_DATA_UPDATED: "POOL_DATA_UPDATED",
+  USER_POSITION_UPDATED: "USER_POSITION_UPDATED",
+  TRANSACTION_COMPLETED: "TRANSACTION_COMPLETED",
 };
 
 // Transaction types
 export const TRANSACTION_TYPES = {
-  SUPPLY: 'supply',
-  WITHDRAW: 'withdraw'
+  SUPPLY: "SUPPLY",
+  WITHDRAW: "WITHDRAW",
+  REPAY_LOAN: "REPAY_LOAN"
 };
 
 /**
@@ -42,6 +42,6 @@ export function useCacheListener(
 }
 
 // Helper to emit cache update events
-export function emitCacheUpdate(eventName: string, data?: any) {
-  eventEmitter.emit(eventName, data);
+export const emitCacheUpdate = (eventType: string, data: any) => {
+  eventEmitter.emit(eventType, data);
 }

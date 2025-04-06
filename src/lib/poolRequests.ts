@@ -131,7 +131,10 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           const activationDate = new Date(activationTimestamp);
           const deactivationDate = new Date(deactivationTimestamp);
           
-          lockDurationDays = differenceInDays(deactivationDate, activationDate);
+          const msDiff = deactivationDate.getTime() - activationDate.getTime();
+          const fractionalDays = msDiff / (1000 * 60 * 60 * 24); 
+          lockDurationDays = Math.round(fractionalDays * 10) / 10;
+          
           if (isNaN(lockDurationDays) || lockDurationDays <= 0) {
             console.log("Invalid lock duration calculation", { 
               activationTimestamp, 

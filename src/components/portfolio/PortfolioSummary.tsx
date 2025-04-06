@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Info } from "lucide-react";
+import { Info, TrendingUp, Wallet } from "lucide-react";
 
 interface PortfolioSummaryProps {
   totalValue: number;
@@ -46,11 +46,25 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
       </div>
       
       <div className="p-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-lg bg-gray-50">
-            <p className="text-xs text-gray-500 mb-1">Total Value</p>
-            <p className="text-base sm:text-lg font-semibold">${totalValue.toFixed(2)}</p>
+        <div className="grid grid-cols-1 gap-3">
+          <div className="p-3 rounded-lg bg-gray-50 flex items-center">
+            <div className="flex-grow">
+              <p className="text-xs text-gray-500 mb-1">Total Portfolio Value</p>
+              <p className="text-base sm:text-xl font-semibold">${totalValue.toFixed(2)}</p>
+            </div>
+            <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-[#9b87f5] opacity-70" />
           </div>
+          
+          {/* Additional statistics can be added here if needed */}
+          {/* For example:
+          <div className="p-3 rounded-lg bg-gray-50 flex items-center">
+            <div className="flex-grow">
+              <p className="text-xs text-gray-500 mb-1">Average APY</p>
+              <p className="text-base sm:text-xl font-semibold">12.5%</p>
+            </div>
+            <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-[#9b87f5] opacity-70" />
+          </div>
+          */}
         </div>
       </div>
     </div>

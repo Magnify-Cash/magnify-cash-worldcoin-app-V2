@@ -112,6 +112,7 @@ const PoolDetails = () => {
   useEffect(() => {
     fetchPoolData();
   }, [fetchPoolData, refreshTrigger]);
+  
 
   const handleSuccessfulSupply = useCallback((amount: number) => {
     if (pool) {
@@ -561,10 +562,7 @@ const PoolDetails = () => {
 
               <UserPortfolioCard
                 balance={userPosition.balance}
-                depositedValue={userPosition.depositedValue}
                 currentValue={userPosition.currentValue}
-                earnings={userPosition.yield}
-                percentageChange={userPosition.yieldPercentage}
                 isLoading={userPosition.loading}
                 onSupply={handleSupply}
                 onWithdraw={handleWithdraw}
@@ -573,6 +571,7 @@ const PoolDetails = () => {
                 showWithdrawButton={shouldShowWithdrawButton}
                 poolStatus={pool.status}
                 symbol={poolSymbol}
+                key={refreshTrigger}
               />
             </div>
 

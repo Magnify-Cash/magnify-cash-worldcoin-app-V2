@@ -29,7 +29,6 @@ const Portfolio = () => {
   const { 
     positions, 
     totalValue, 
-    totalEarnings, 
     loading, 
     error, 
     hasPositions,
@@ -72,7 +71,6 @@ const Portfolio = () => {
 
             <PortfolioSummary
               totalValue={totalValue}
-              totalEarnings={totalEarnings}
               isMobile={isMobile}
             />
           </div>

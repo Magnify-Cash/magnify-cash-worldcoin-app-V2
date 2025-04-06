@@ -1,9 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { getPools } from '@/lib/poolRequests';
 import { getUserLPBalance, previewRedeem } from '@/lib/backendRequests';
 import { toast } from '@/components/ui/use-toast';
-import { LiquidityPool } from '@/types/supabase/liquidity';
 
 export interface UserPoolPosition {
   poolId: number;
@@ -11,9 +9,7 @@ export interface UserPoolPosition {
   symbol: string;
   contractAddress: string;
   balance: number;
-  depositedValue: number;
   currentValue: number;
-  earnings: number;
   status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
   apy: number;
 }
@@ -21,21 +17,11 @@ export interface UserPoolPosition {
 interface UseUserPoolPositionsResult {
   positions: UserPoolPosition[];
   totalValue: number;
-  totalEarnings: number;
   loading: boolean;
   error: string | null;
   hasPositions: boolean;
   refreshPositions: () => void;
 }
-
-// Mock deposited values for now (real API would track this)
-const mockDepositedValues: Record<number, number> = {
-  1: 1200,
-  2: 500,
-  3: 300,
-  4: 800,
-  5: 600
-};
 
 export const useUserPoolPositions = (
   walletAddress: string
@@ -47,62 +33,40 @@ export const useUserPoolPositions = (
 
   useEffect(() => {
     const fetchPositions = async () => {
-      // Skip fetching if we don't have a wallet address
       if (!walletAddress) {
         setPositions([]);
         setLoading(false);
         return;
       }
-      
+
       try {
         setLoading(true);
         setError(null);
-        
-        // First, fetch all pools
+
         const pools = await getPools();
         if (!pools || pools.length === 0) {
-          console.log("No pools available");
           setPositions([]);
           setLoading(false);
           return;
         }
 
-        // For each pool, check if user has a position
         const positionPromises = pools.map(async (pool) => {
-          if (!pool.contract_address) {
-            console.log(`Pool ${pool.id} has no contract address`);
-            return null;
-          }
+          if (!pool.contract_address) return null;
 
           try {
-            // Get LP balance
             const lpBalance = await getUserLPBalance(walletAddress, pool.contract_address);
-            
-            // If user doesn't have any LP tokens, they don't have a position
-            if (lpBalance.balance <= 0) {
-              return null;
-            }
-            
-            // Use the mock deposited value for now
-            const depositedValue = mockDepositedValues[pool.id] || lpBalance.balance;
-            
-            // Get the current value by previewing redemption
+
+            if (lpBalance.balance <= 0) return null;
+
             const redeemPreview = await previewRedeem(lpBalance.balance, pool.contract_address);
-            const currentValue = redeemPreview.usdcAmount;
-            
-            // Calculate earnings
-            const earnings = currentValue - depositedValue;
-            
-            // Create the position object
+
             return {
               poolId: pool.id,
               poolName: pool.name,
               symbol: pool.metadata?.symbol || 'LP',
               contractAddress: pool.contract_address,
               balance: lpBalance.balance,
-              depositedValue,
-              currentValue,
-              earnings,
+              currentValue: redeemPreview.usdcAmount,
               status: pool.status,
               apy: pool.apy
             };
@@ -112,14 +76,11 @@ export const useUserPoolPositions = (
           }
         });
 
-        // Wait for all position promises to resolve
         const resolvedPositions = await Promise.all(positionPromises);
-        
-        // Filter out null positions (where user doesn't have a balance)
         const validPositions = resolvedPositions.filter(
           (position): position is UserPoolPosition => position !== null
         );
-        
+
         setPositions(validPositions);
       } catch (err) {
         console.error("Error fetching user positions:", err);
@@ -137,9 +98,7 @@ export const useUserPoolPositions = (
     fetchPositions();
   }, [walletAddress, refreshTrigger]);
 
-  // Calculate totals
   const totalValue = positions.reduce((sum, position) => sum + position.currentValue, 0);
-  const totalEarnings = positions.reduce((sum, position) => sum + position.earnings, 0);
   const hasPositions = positions.length > 0;
 
   const refreshPositions = () => {
@@ -149,7 +108,6 @@ export const useUserPoolPositions = (
   return { 
     positions, 
     totalValue, 
-    totalEarnings, 
     loading, 
     error, 
     hasPositions,

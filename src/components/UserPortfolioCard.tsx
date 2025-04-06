@@ -6,10 +6,7 @@ import { Wallet, Loader2 } from "lucide-react";
 
 interface UserPortfolioCardProps {
   balance: number;
-  depositedValue: number;
   currentValue: number;
-  earnings: number;
-  percentageChange?: number;
   isLoading?: boolean;
   onSupply?: () => void;
   onWithdraw?: () => void;
@@ -23,10 +20,7 @@ interface UserPortfolioCardProps {
 
 export function UserPortfolioCard({
   balance,
-  depositedValue,
   currentValue,
-  earnings,
-  percentageChange,
   isLoading = false,
   onSupply,
   onWithdraw,
@@ -38,13 +32,6 @@ export function UserPortfolioCard({
   symbol = "LP"
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
-
-  // Calculate percentage change if not provided
-  const calculatedPercentage = percentageChange !== undefined ? 
-    percentageChange : 
-    (depositedValue > 0 ? (earnings / depositedValue * 100) : 0);
-  
-  const isPositive = calculatedPercentage >= 0;
 
   // Determine the appropriate message for empty balance
   const getEmptyBalanceMessage = () => {

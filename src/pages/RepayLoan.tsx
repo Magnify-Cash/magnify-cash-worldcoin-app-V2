@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, ChevronsLeft, ChevronsRight, Coins } from "lucide-react";
+import { Coins } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getLoanById } from "@/lib/loanRequests";
@@ -11,7 +12,7 @@ import { Loan } from "@/types/supabase/loan";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { LoadingState } from "@/components/portfolio/LoadingState";
-import { useRepayLoan } from "@/hooks/useRepayLoan";
+import useRepayLoan from "@/hooks/useRepayLoan";
 import { format } from 'date-fns';
 
 const RepayLoan = () => {
@@ -22,11 +23,12 @@ const RepayLoan = () => {
   const [loanData, setLoanData] = useState<Loan | null>(null);
 
   const {
-    transactionHash,
-    isLoading: isRepaying,
-    error: repayError,
     repayLoan,
-    receipt
+    error: repayError,
+    isLoading: isRepaying,
+    isConfirming,
+    receipt,
+    transactionHash
   } = useRepayLoan();
 
   useEffect(() => {
@@ -119,7 +121,7 @@ const RepayLoan = () => {
   }
 
   // Convert number to BigInt for loanAmountDue
-  const loanAmountDue = BigInt(loanData?.amount_due || 0);
+  const loanAmountDue = loanData ? BigInt(Math.round(loanData.amount_due)) : BigInt(0);
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -176,10 +178,10 @@ const RepayLoan = () => {
 
               <Button
                 onClick={() => repayLoan(loanAmountDue)}
-                disabled={isRepaying}
+                disabled={isRepaying || isConfirming}
                 className="w-full"
               >
-                {isRepaying ? "Repaying..." : "Repay Loan"}
+                {isRepaying ? "Processing..." : isConfirming ? "Confirming..." : "Repay Loan"}
               </Button>
             </div>
           </>

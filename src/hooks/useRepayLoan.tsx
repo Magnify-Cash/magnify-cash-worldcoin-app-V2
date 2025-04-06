@@ -1,4 +1,5 @@
-import { useCallback, useState, useEffect } from "react";
+
+import { useCallback, useState } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "wagmi";
 import { createPublicClient, http } from "viem";
@@ -32,49 +33,39 @@ const getContractAddress = (contract_version: string) => {
 };
 
 const useRepayLoan = () => {
-  const [error, setError] = useState<string | null>(null);
-  const [transactionId, setTransactionId] = useState<string | null>(null);
-  const [isConfirming, setIsConfirming] = useState<boolean>(false);
-  const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
 
   const client = createPublicClient({
     chain: worldchain,
     transport: http(WORLDCHAIN_RPC_URL)
-  }) as any;
+  });
 
-  const receipt = useWaitForTransactionReceipt({
-    hash: transactionId as `0x${string}`,
-    appConfig: {
+  const { data: receipt, isLoading: isConfirming } = useWaitForTransactionReceipt({
+    hash: transactionHash as `0x${string}`,
+    config: {
       app_id: WORLDCOIN_CLIENT_ID,
     },
   });
 
-  useEffect(() => {
-    if (receipt.isLoading) {
-      setIsConfirming(true);
-    }
-    if (receipt.isSuccess) {
-      setIsConfirming(false);
-      setIsConfirmed(true);
-    }
-  }, [receipt.isLoading, receipt.isSuccess]);
-
-  const repayLoanWithPermit2 = useCallback(async (loanAmount: bigint | string, V1OrV2OrV3: string) => {
+  const repayLoan = useCallback(async (loanAmount: bigint) => {
     setError(null);
-    setTransactionId(null);
-    setIsConfirmed(false);
+    setTransactionHash(null);
+    setIsLoading(true);
     setLoanDetails(null);
 
-    const loanAmountString = typeof loanAmount === 'bigint' ? loanAmount.toString() : loanAmount;
-    
-    const CONTRACT_ADDRESS = getContractAddress(V1OrV2OrV3);
-    if (!CONTRACT_ADDRESS) {
-      setError("Invalid contract version");
-      return;
-    }
-
     try {
+      // For simplicity, we're using V2 contract by default
+      const CONTRACT_VERSION = "V2";
+      const CONTRACT_ADDRESS = getContractAddress(CONTRACT_VERSION);
+      
+      if (!CONTRACT_ADDRESS) {
+        throw new Error("Invalid contract version");
+      }
+
+      const loanAmountString = loanAmount.toString();
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
 
       const permitTransfer = {
@@ -99,7 +90,7 @@ const useRepayLoan = () => {
 
       const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
 
-      const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+      const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
             address: CONTRACT_ADDRESS,
@@ -182,35 +173,37 @@ const useRepayLoan = () => {
       });
 
       if (finalPayload.status === "success") {
-        setTransactionId(finalPayload.transaction_id);
-        setIsConfirming(true);
-
+        setTransactionHash(finalPayload.transaction_id);
+        
+        // Convert the loan amount string back to a number for state
         const loanAmountNumber = Number(loanAmountString);
-
         setLoanDetails({
           amount: loanAmountNumber,
-          interest: 0,
+          interest: 0, // We'd calculate this from contract in a real implementation
           totalDue: loanAmountNumber,
           transactionId: finalPayload.transaction_id,
         });
       } else {
-        console.error("Error sending transaction", finalPayload, commandPayload);
-        setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
-        setIsConfirming(false);
+        const errorMessage = finalPayload.error_code === "user_rejected" 
+          ? "User rejected transaction" 
+          : "Transaction failed";
+        throw new Error(errorMessage);
       }
     } catch (err) {
       console.error("Error sending transaction", err);
-      setError(`Transaction failed: ${(err as Error).message}`);
-      setIsConfirming(false);
+      setError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   return {
-    repayLoanWithPermit2,
+    repayLoan,
     error,
-    transactionId,
+    transactionHash,
+    isLoading,
     isConfirming,
-    isConfirmed,
+    receipt,
     loanDetails,
   };
 };

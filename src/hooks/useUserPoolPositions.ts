@@ -33,6 +33,13 @@ export const useUserPoolPositions = (
   // Forward the portfolio context data
   const { positions, totalValue, loading, error, hasPositions } = state;
   
+  // Call refreshPortfolio when updateTrigger changes
+  useCallback(() => {
+    if (updateTrigger > 0) {
+      refreshPortfolio();
+    }
+  }, [updateTrigger, refreshPortfolio]);
+  
   // Adapter for the old API
   const updateUserPositionOptimistically = useCallback((
     poolId: number, 

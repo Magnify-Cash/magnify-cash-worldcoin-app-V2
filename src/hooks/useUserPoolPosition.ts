@@ -1,7 +1,7 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getUserLPBalance, previewRedeem } from '@/lib/backendRequests';
 import { toast } from '@/components/ui/use-toast';
-import { Cache } from '@/utils/cacheUtils';
 import { useCacheListener, EVENTS } from './useCacheListener';
 import { UserPositionData } from '@/types/user';
 
@@ -28,8 +28,7 @@ export const useUserPoolPosition = (
 
   const fetchPositionData = useCallback(async (
     poolAddress: string,
-    userWallet: string,
-    cacheKey: string
+    userWallet: string
   ) => {
     try {
       console.log(`[useUserPoolPosition] Fetching fresh position data for ${poolAddress}`);
@@ -49,7 +48,6 @@ export const useUserPoolPosition = (
       };
 
       setPositionData(newPositionData);
-      Cache.set(cacheKey, newPositionData, 5);
     } catch (error) {
       console.error('Error fetching user position data:', error);
       setPositionData({
@@ -88,11 +86,10 @@ export const useUserPoolPosition = (
     // Only process if it's a user-initiated supply or withdraw transaction 
     if ((data.type === 'supply' || data.type === 'withdraw') && data.amount && data.isUserAction) {
       console.log("[useUserPoolPosition] Received user transaction event, refreshing position data:", data);
-      const cacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
       
       // For immediate UI feedback, create an optimistic update
       if (data.type === 'supply' && data.amount) {
-        Cache.update<UserPositionData>(cacheKey, (current) => {
+        setPositionData(current => {
           if (!current) {
             // If no position exists yet, create a new one
             return {
@@ -123,7 +120,7 @@ export const useUserPoolPosition = (
           };
         });
       } else if (data.type === 'withdraw' && data.amount) {
-        Cache.update<UserPositionData>(cacheKey, (current) => {
+        setPositionData(current => {
           if (!current) return current;
           
           // Use provided LP amount or approximate it
@@ -148,23 +145,10 @@ export const useUserPoolPosition = (
       
       // Get latest data after a short delay to allow blockchain to update
       setTimeout(() => {
-        fetchPositionData(poolContractAddress, walletAddress, cacheKey);
+        if (poolContractAddress && walletAddress) {
+          fetchPositionData(poolContractAddress, walletAddress);
+        }
       }, 1000); // Slightly longer delay for blockchain confirmation
-    }
-  });
-
-  // Listen for user position cache updates with improved logging
-  useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
-    if (walletAddress && poolContractAddress && 
-        data.key === `user_position_${walletAddress}_${poolContractAddress}` &&
-        data.isUserAction) {
-      // Only log and update if there's an actual change in the position data
-      if (data.value && 
-          (data.value.balance !== positionData.balance || 
-           data.value.currentValue !== positionData.currentValue)) {
-        console.log("[useUserPoolPosition] Received user position cache update:", data);
-        setPositionData(data.value);
-      }
     }
   });
 
@@ -175,24 +159,9 @@ export const useUserPoolPosition = (
         return;
       }
 
-      const cacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
-      
-      const cachedPosition = Cache.get<UserPositionData>(cacheKey);
-      if (cachedPosition) {
-        console.log(`[useUserPoolPosition] Using cached position data for ${poolContractAddress}`);
-        setPositionData(cachedPosition);
-
-        // Only refresh in background if this wasn't triggered by a user action (refreshTrigger)
-        // This avoids double-fetching when a transaction just occurred
-        if (refreshTrigger === 0) {
-          setTimeout(() => {
-            fetchPositionData(poolContractAddress, walletAddress, cacheKey);
-          }, 300);
-        }
-        return;
-      }
-
-      fetchPositionData(poolContractAddress, walletAddress, cacheKey);
+      // Always fetch fresh data
+      setPositionData(prev => ({ ...prev, loading: true }));
+      fetchPositionData(poolContractAddress, walletAddress);
     };
 
     fetchUserPosition();

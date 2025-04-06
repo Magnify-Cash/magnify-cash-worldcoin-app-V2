@@ -53,7 +53,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     setWalletAddress(ls_wallet);
   }, [navigate]);
 
-  // Fetch portfolio data
+  // Fetch portfolio data - without caching
   const fetchPortfolio = useCallback(async () => {
     if (!walletAddress) {
       setState(prev => ({ ...prev, loading: false, positions: [], hasPositions: false }));
@@ -81,14 +81,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         if (!pool.contract_address) return null;
 
         try {
-          // Use cache key for each position
-          const cacheKey = `user_position_${walletAddress}_${pool.contract_address}`;
-          
-          // Check for balance first
+          // Always fetch fresh data - no caching
           const lpBalance = await getUserLPBalance(walletAddress, pool.contract_address);
           if (lpBalance.balance <= 0) return null;
 
-          // Then get value
           const redeemPreview = await previewRedeem(lpBalance.balance, pool.contract_address);
           
           const position = {
@@ -102,13 +98,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             apy: pool.apy
           };
           
-          // Update cache
-          Cache.set(cacheKey, { 
-            balance: position.balance, 
-            currentValue: position.currentValue 
-          }, 5, true);
-          
-          // Update local cache reference
+          // Update local reference only (no cache)
           positionsCache.current[pool.id] = position;
 
           return position;
@@ -267,14 +257,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         transactionId
       });
       
-      // Update cache for the position
-      if (walletAddress) {
-        const cacheKey = `user_position_${walletAddress}_${position.contractAddress}`;
-        Cache.set(cacheKey, { 
-          balance: updatedPosition.balance, 
-          currentValue: updatedPosition.currentValue 
-        }, 5, true);
+      // Schedule a fresh data fetch after a delay
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
       }
+      refreshTimeoutRef.current = window.setTimeout(() => {
+        fetchPortfolio();
+        refreshTimeoutRef.current = null;
+      }, 1000);
       
       return {
         ...currentState,
@@ -284,7 +274,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         lastUpdated: Date.now()
       };
     });
-  }, [walletAddress]);
+  }, [fetchPortfolio]);
 
   // Listen for transaction events
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
@@ -367,13 +357,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         p.poolId === affectedPosition.poolId ? updatedPosition : p
       );
       
-      // Update cache
-      const cacheKey = `user_position_${walletAddress}_${affectedPosition.contractAddress}`;
-      Cache.set(cacheKey, { 
-        balance: updatedPosition.balance, 
-        currentValue: updatedPosition.currentValue 
-      }, 5, true);
-      
       // Schedule a fresh data fetch after a delay
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
@@ -381,7 +364,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       refreshTimeoutRef.current = window.setTimeout(() => {
         fetchPortfolio();
         refreshTimeoutRef.current = null;
-      }, 3000);
+      }, 1000);
       
       return {
         ...currentState,

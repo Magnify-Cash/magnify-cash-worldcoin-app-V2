@@ -71,7 +71,7 @@ export function SupplyModal({
   useEffect(() => {
     const fetchPreviewAmount = async () => {
       const numAmount = parseFloat(amount);
-      if (!isNaN(numAmount) && numAmount >= 10 && poolContractAddress) {
+      if (!isNaN(numAmount) && numAmount >= 1 && poolContractAddress) {
         setIsPreviewLoading(true);
         setPreviewRequested(true);
         try {
@@ -84,7 +84,7 @@ export function SupplyModal({
           setIsPreviewLoading(false);
         }
       } else {
-        setPreviewRequested(numAmount >= 10);
+        setPreviewRequested(numAmount >= 1);
         setPreviewLpAmount(null);
       }
     };
@@ -138,7 +138,7 @@ export function SupplyModal({
       setTransactionMessage("Preparing transaction...");
       
       let expectedLpAmount = previewLpAmount;
-      if (!expectedLpAmount && parseFloat(amount) >= 10) {
+      if (!expectedLpAmount && parseFloat(amount) >= 1) {
         try {
           const preview = await previewDeposit(parseFloat(amount), poolContractAddress);
           expectedLpAmount = preview.lpAmount;

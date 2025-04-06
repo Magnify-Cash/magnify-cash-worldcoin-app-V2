@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { safeParseDate, formatToLocalTime } from "@/utils/dateUtils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PoolCardProps {
   id: number;
@@ -32,6 +33,7 @@ interface PoolCardProps {
   startDate?: string;
   endDate?: string;
   contract?: string;
+  isLoading?: boolean;
 }
 
 export function PoolCard({ 
@@ -42,61 +44,28 @@ export function PoolCard({
   availableLiquidity,
   status,
   symbol,
-  lockDuration = 180,
+  lockDuration,
   startDate,
   endDate,
-  contract
+  contract,
+  isLoading = false
 }: PoolCardProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const getLockDuration = () => {
-    if (lockDuration) {
-      return `${lockDuration} days`;
-    }
-    // Fallback to the old logic if lockDuration is not provided
-    switch (id) {
-      case 1:
-        return "180 days";
-      case 2:
-        return "365 days";
-      case 3:
-        return "90 days";
-      case 4:
-        return "30 days";
-      default:
-        return "180 days";
-    }
-  };
-
   const formatDate = (dateStr?: string): string => {
-    if (!dateStr) {
-      // Fallback to old logic if no date provided
-      const today = new Date();
-      if (status === 'warm-up') {
-        const startDate = new Date(today);
-        startDate.setDate(today.getDate() + 15);
-        return format(startDate, 'MMM d, yyyy');
-      } else {
-        let daysToAdd = lockDuration || 180;
-        const endDate = new Date(today);
-        endDate.setDate(today.getDate() + daysToAdd);
-        return format(endDate, 'MMM d, yyyy');
-      }
-    }
-    
+    if (!dateStr) return '';
     return formatToLocalTime(dateStr, 'MMM d, yyyy');
   };
 
   const getLockPeriodDate = () => {
+    if (isLoading) return '';
     if (status === 'warm-up' && startDate) {
       return formatDate(startDate);
     } else if (endDate) {
       return formatDate(endDate);
     }
-    
-    // Fallback to the old mock data logic with the new format
-    return formatDate();
+    return '';
   };
 
   const getLockPeriodLabel = () => {
@@ -149,16 +118,24 @@ export function PoolCard({
   return (
     <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
       <CardHeader className="flex flex-col items-center gap-2 pb-2 pt-3">
-        <h3 className="font-semibold text-lg sm:text-xl leading-tight text-center">
-          {title}
-        </h3>
+        {isLoading ? (
+          <Skeleton className="h-6 w-40" />
+        ) : (
+          <h3 className="font-semibold text-lg sm:text-xl leading-tight text-center">
+            {title}
+          </h3>
+        )}
         
-        <Badge variant="outline" className={`inline-flex items-center ${getStatusColor()} py-0.5 px-2`}>
-          <span className="flex items-center">
-            {getStatusIcon()}
-            <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-          </span>
-        </Badge>
+        {isLoading ? (
+          <Skeleton className="h-5 w-24" />
+        ) : (
+          <Badge variant="outline" className={`inline-flex items-center ${getStatusColor()} py-0.5 px-2`}>
+            <span className="flex items-center">
+              {getStatusIcon()}
+              <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+            </span>
+          </Badge>
+        )}
       </CardHeader>
       
       <CardContent className="px-3 sm:px-4 pt-2 pb-4 space-y-3 sm:space-y-4">
@@ -178,9 +155,13 @@ export function PoolCard({
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="font-bold text-lg sm:text-xl text-[#8B5CF6]">
-              {apy}%
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-6 w-20" />
+            ) : (
+              <div className="font-bold text-lg sm:text-xl text-[#8B5CF6]">
+                {apy}%
+              </div>
+            )}
           </div>
           
           <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3">
@@ -188,9 +169,13 @@ export function PoolCard({
               <Lock className="h-3 w-3 flex-shrink-0" />
               <span className="whitespace-nowrap">Lock Duration</span>
             </div>
-            <div className="font-bold text-lg sm:text-xl text-gray-800">
-              {getLockDuration()}
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-6 w-20" />
+            ) : (
+              <div className="font-bold text-lg sm:text-xl text-gray-800">
+                {lockDuration ? `${lockDuration} days` : ''}
+              </div>
+            )}
           </div>
         </div>
         
@@ -199,9 +184,13 @@ export function PoolCard({
             <Calendar className="h-3 w-3 flex-shrink-0" />
             <span>{getLockPeriodLabel()}</span>
           </div>
-          <div className="font-bold text-sm sm:text-base text-gray-800">
-            {getLockPeriodDate()}
-          </div>
+          {isLoading ? (
+            <Skeleton className="h-5 w-32" />
+          ) : (
+            <div className="font-bold text-sm sm:text-base text-gray-800">
+              {getLockPeriodDate()}
+            </div>
+          )}
         </div>
         
         <Separator className="my-1 bg-gray-200" />
@@ -210,8 +199,9 @@ export function PoolCard({
           onClick={handleViewPool} 
           className="w-full flex items-center justify-center gap-2 bg-[#9b87f5] hover:opacity-90 hover:text-white"
           size={isMobile ? "sm" : "default"}
+          disabled={isLoading}
         >
-          View Pool <ExternalLink className="h-4 w-4" />
+          {isLoading ? "Loading..." : "View Pool"} {!isLoading && <ExternalLink className="h-4 w-4" />}
         </Button>
       </CardContent>
     </Card>

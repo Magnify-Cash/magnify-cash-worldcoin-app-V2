@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { usePoolData } from "@/contexts/PoolDataContext";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/portfolio/LoadingState";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Cache timeout threshold
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
@@ -68,9 +69,6 @@ const Lending = () => {
     return null;
   }
 
-  // Check if we have pools data from cache, don't show loading if we do
-  const shouldShowLoading = loading && (!pools || pools.length === 0);
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header title="Lending Dashboard" />
@@ -88,10 +86,11 @@ const Lending = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
-          {shouldShowLoading ? (
-            <div className="col-span-full">
-              <LoadingState message="Loading Liquidity Pools" />
-            </div>
+          {loading ? (
+            <>
+              <PoolCardSkeleton />
+              <PoolCardSkeleton />
+            </>
           ) : fetchError ? (
             <div className="py-8 text-center text-gray-500 col-span-full">{fetchError}</div>
           ) : pools.length > 0 ? (
@@ -111,6 +110,7 @@ const Lending = () => {
                   pool.metadata?.warmupStartTimestampMs}
                 endDate={pool.metadata?.deactivationTimestampMs}
                 contract={pool.contract_address}
+                isLoading={loading}
               />
             ))
           ) : (
@@ -152,6 +152,41 @@ const Lending = () => {
         </Card>
       </main>
     </div>
+  );
+};
+
+// Loading placeholder for Pool Cards
+const PoolCardSkeleton = () => {
+  const gradientClass = "from-[#8B5CF6]/5 via-[#7E69AB]/10 to-[#6E59A5]/5 border-[#8B5CF6]/20";
+  
+  return (
+    <Card className={`overflow-hidden border bg-gradient-to-r ${gradientClass}`}>
+      <CardHeader className="flex flex-col items-center gap-2 pb-2 pt-3">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-5 w-24" />
+      </CardHeader>
+      
+      <CardContent className="px-3 sm:px-4 pt-2 pb-4 space-y-3 sm:space-y-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4">
+          <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3">
+            <div className="text-xs text-gray-500">APY</div>
+            <Skeleton className="h-6 w-20" />
+          </div>
+          
+          <div className="space-y-1 bg-white/30 rounded-lg p-2 sm:p-3">
+            <div className="text-xs text-gray-500">Lock Duration</div>
+            <Skeleton className="h-6 w-20" />
+          </div>
+        </div>
+        
+        <div className="bg-white/30 rounded-lg p-2 sm:p-3">
+          <div className="text-xs text-gray-500 mb-1">Date</div>
+          <Skeleton className="h-5 w-32" />
+        </div>
+        
+        <Skeleton className="h-10" />
+      </CardContent>
+    </Card>
   );
 };
 

@@ -44,6 +44,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const optimisticUpdateTimestampRef = useRef<number>(0);
   const isFetchingRef = useRef<boolean>(false);
   const optimisticUpdatesActive = useRef<Set<number>>(new Set());
+  const disableAutoRefresh = useRef<boolean>(false);
   
   // Get user's wallet address from localStorage
   useEffect(() => {
@@ -70,9 +71,19 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     }
     
     // Skip fetching if we have recent optimistic updates (unless forced)
-    if (!forceRefresh && Date.now() - optimisticUpdateTimestampRef.current < 10000 && optimisticUpdatesActive.current.size > 0) {
-      console.log('[PortfolioProvider] Skipping fetch due to recent optimistic updates');
-      return;
+    if (!forceRefresh) {
+      // Enhanced cooldown logic - don't auto-refresh for a longer period after optimistic updates
+      if (Date.now() - optimisticUpdateTimestampRef.current < 30000 && 
+          optimisticUpdatesActive.current.size > 0) {
+        console.log('[PortfolioProvider] Skipping fetch due to recent optimistic updates');
+        return;
+      }
+      
+      // Also respect the global auto-refresh disable flag
+      if (disableAutoRefresh.current) {
+        console.log('[PortfolioProvider] Skipping fetch due to disabled auto-refresh');
+        return;
+      }
     }
     
     // Set the fetching flag
@@ -145,9 +156,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       );
       
       const newTotalValue = validPositions.reduce((sum, position) => sum + position.currentValue, 0);
-
-      console.log('[PortfolioProvider] Fetched positions:', validPositions);
-      console.log('[PortfolioProvider] New total value:', newTotalValue);
       
       // Don't apply the fetched data if it's older than the last optimistic update
       // or if there's an active optimistic update and we're not forcing a refresh
@@ -206,10 +214,26 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(refreshTimeoutRef.current);
     }
     
+    // If it's a force refresh, temporarily allow it regardless of auto-refresh setting
+    if (forceRefresh) {
+      disableAutoRefresh.current = false;
+    }
+    
     // Set a short timeout to avoid multiple rapid refreshes
     refreshTimeoutRef.current = window.setTimeout(() => {
       fetchPortfolio(forceRefresh);
       refreshTimeoutRef.current = null;
+      
+      // If it was a force refresh, restore the auto-refresh setting
+      if (forceRefresh) {
+        disableAutoRefresh.current = true;
+        
+        // Re-enable auto-refresh after a long period (5 minutes)
+        setTimeout(() => {
+          console.log('[PortfolioProvider] Re-enabling auto-refresh after timeout');
+          disableAutoRefresh.current = false;
+        }, 300000); // 5 minutes
+      }
     }, 100);
   }, [fetchPortfolio]);
 
@@ -225,6 +249,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // Set the optimistic update timestamp and mark this pool as having an active update
     optimisticUpdateTimestampRef.current = Date.now();
     optimisticUpdatesActive.current.add(poolId);
+    
+    // Disable auto-refresh for a longer period after manual updates
+    disableAutoRefresh.current = true;
     
     setState(currentState => {
       // Find the position to update
@@ -367,14 +394,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         console.log(`[PortfolioProvider] Clearing optimistic update flag for pool ${poolId}`);
         optimisticUpdatesActive.current.delete(poolId);
         
-        // Only fetch real data if all optimistic updates have been cleared
+        // Only reset auto-refresh disable if all optimistic updates are done
         if (optimisticUpdatesActive.current.size === 0) {
-          console.log(`[PortfolioProvider] All optimistic updates cleared, fetching real data`);
-          fetchPortfolio(true);
+          console.log(`[PortfolioProvider] All optimistic updates cleared, re-enabling auto-refresh`);
+          // Wait 5 minutes before re-enabling auto-refresh
+          setTimeout(() => {
+            disableAutoRefresh.current = false;
+          }, 300000); // 5 minutes
         }
         
         refreshTimeoutRef.current = null;
-      }, 15000); // Longer delay before clearing optimistic state
+      }, 30000); // Longer delay before clearing optimistic state
       
       return {
         ...currentState,
@@ -384,7 +414,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         lastUpdated: Date.now()
       };
     });
-  }, [fetchPortfolio]);
+  }, []);
 
   // Listen for transaction events
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
@@ -400,6 +430,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     if (data.transactionId) {
       console.log('[PortfolioProvider] Processing transaction:', data.transactionId);
       processedTransactions.current.add(data.transactionId);
+      
+      // Disable auto-refresh when processing a transaction
+      disableAutoRefresh.current = true;
     }
     
     console.log('[PortfolioProvider] Transaction event received:', data);
@@ -489,14 +522,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         console.log(`[PortfolioProvider] Clearing optimistic update flag for pool ${poolId}`);
         optimisticUpdatesActive.current.delete(poolId);
         
-        // Only fetch real data if all optimistic updates have been cleared
+        // Only re-enable auto-refresh if all optimistic updates are done
         if (optimisticUpdatesActive.current.size === 0) {
-          console.log(`[PortfolioProvider] All optimistic updates cleared, fetching real data`);
-          fetchPortfolio(true);
+          console.log(`[PortfolioProvider] All optimistic updates cleared, scheduling re-enabling of auto-refresh`);
+          // Wait 5 minutes before re-enabling auto-refresh
+          setTimeout(() => {
+            disableAutoRefresh.current = false;
+          }, 300000); // 5 minutes
         }
         
         refreshTimeoutRef.current = null;
-      }, 15000); // Longer delay before clearing optimistic state
+      }, 30000); // Longer delay before clearing optimistic state
       
       return {
         ...currentState,

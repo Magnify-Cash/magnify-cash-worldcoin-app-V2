@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import { Info } from "lucide-react";
 
@@ -13,15 +12,28 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
 }) => {
   const renderCount = useRef(0);
   const previousValueRef = useRef(totalValue);
+  const skipRenderLogRef = useRef(false);
 
   // Track when we render and value changes to help with debugging
   useEffect(() => {
     renderCount.current++;
     
+    // Skip logging if we've flagged to reduce noise
+    if (skipRenderLogRef.current) {
+      return;
+    }
+    
     if (previousValueRef.current !== totalValue) {
       console.log(`[PortfolioSummary] Value changed: $${previousValueRef.current.toFixed(2)} → $${totalValue.toFixed(2)}`);
       previousValueRef.current = totalValue;
-    } else {
+      
+      // If we've rendered many times, start skipping logs to reduce noise
+      if (renderCount.current > 10) {
+        skipRenderLogRef.current = true;
+        console.log(`[PortfolioSummary] Suppressing further render logs after ${renderCount.current} renders`);
+      }
+    } else if (renderCount.current <= 5) {
+      // Only log the first few unchanged renders to reduce noise
       console.log(`[PortfolioSummary] Rendering #${renderCount.current} with unchanged value: $${totalValue.toFixed(2)}`);
     }
   });

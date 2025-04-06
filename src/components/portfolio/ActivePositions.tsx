@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
@@ -23,9 +22,22 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   const previousPositionsRef = useRef<UserPoolPosition[]>([]);
   const processedTransactionsRef = useRef<Set<string>>(new Set());
   const clickTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const skipNextUpdateRef = useRef<boolean>(false);
+  const lastOptimisticUpdateTimeRef = useRef<number>(0);
 
-  // Force re-render of positions when they change
   useEffect(() => {
+    const now = Date.now();
+    if (now - lastOptimisticUpdateTimeRef.current < 15000) {
+      console.log('[ActivePositions] Skipping position update due to recent optimistic update');
+      return;
+    }
+    
+    if (skipNextUpdateRef.current) {
+      console.log('[ActivePositions] Skipping position update due to flag');
+      skipNextUpdateRef.current = false;
+      return;
+    }
+
     const positionsChanged = JSON.stringify(previousPositionsRef.current) !== JSON.stringify(positions);
     
     if (positionsChanged) {
@@ -36,7 +48,6 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
     }
   }, [positions]);
 
-  // Clear any remaining timeouts when unmounting
   useEffect(() => {
     return () => {
       Object.values(clickTimeoutsRef.current).forEach(timeout => {
@@ -105,20 +116,20 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   };
 
   const handleSupplyClick = (position: UserPoolPosition) => {
-    // Check for existing timeout for this pool to prevent double clicks
     const actionKey = `supply-${position.poolId}`;
     if (clickTimeoutsRef.current[actionKey]) {
       console.log(`[ActivePositions] Preventing duplicate supply action for pool ${position.poolId}`);
       return;
     }
     
-    // Create a unique transaction ID that will be consistent throughout the flow
     const transactionId = generateTransactionId();
     
-    // Set a timeout to prevent multiple clicks
     clickTimeoutsRef.current[actionKey] = setTimeout(() => {
       delete clickTimeoutsRef.current[actionKey];
     }, 2000);
+    
+    lastOptimisticUpdateTimeRef.current = Date.now();
+    skipNextUpdateRef.current = true;
     
     console.log(`[ActivePositions] Opening supply modal for pool ${position.poolId} with transaction ID ${transactionId}`);
     
@@ -127,27 +138,25 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
       poolContractAddress: position.contractAddress,
       lpSymbol: position.symbol,
       transactionId: transactionId,
-      // Pass a callback but don't call updatePositionOptimistically directly here
-      // The PoolModals will handle the optimistic update
       updateUserPositionOptimistically: null
     });
   };
   
   const handleWithdrawClick = (position: UserPoolPosition) => {
-    // Check for existing timeout for this pool to prevent double clicks
     const actionKey = `withdraw-${position.poolId}`;
     if (clickTimeoutsRef.current[actionKey]) {
       console.log(`[ActivePositions] Preventing duplicate withdraw action for pool ${position.poolId}`);
       return;
     }
     
-    // Create a unique transaction ID that will be consistent throughout the flow
     const transactionId = generateTransactionId();
     
-    // Set a timeout to prevent multiple clicks
     clickTimeoutsRef.current[actionKey] = setTimeout(() => {
       delete clickTimeoutsRef.current[actionKey];
     }, 2000);
+    
+    lastOptimisticUpdateTimeRef.current = Date.now();
+    skipNextUpdateRef.current = true;
     
     console.log(`[ActivePositions] Opening withdraw modal for pool ${position.poolId} with transaction ID ${transactionId}`);
     
@@ -157,8 +166,6 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
       lpValue: position.currentValue,
       poolContractAddress: position.contractAddress,
       transactionId: transactionId,
-      // Not calling onSuccessfulWithdraw directly with updatePositionOptimistically
-      // The PoolModals will handle the optimistic update
       onSuccessfulWithdraw: null
     });
   };

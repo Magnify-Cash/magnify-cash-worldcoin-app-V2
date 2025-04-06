@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ import { previewDeposit } from "@/lib/backendRequests";
 import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
 import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { LiquidityPool } from "@/types/supabase/liquidity";
 import { useModalContext } from "@/contexts/ModalContext";
 
 interface SupplyModalProps {
@@ -213,7 +211,6 @@ export function SupplyModal({
         // Transaction was sent successfully
         const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         
-        // Skip the waiting for transaction confirmation - remove the loading state immediately
         toast({
           title: "Supply successful",
           description: "Your assets have been successfully supplied to the pool.",

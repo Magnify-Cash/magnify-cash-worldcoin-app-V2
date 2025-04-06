@@ -1,10 +1,9 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Wallet, Loader2 } from "lucide-react";
-import { useCacheListener, EVENTS } from "@/hooks/useCacheListener";
 
 interface UserPortfolioCardProps {
   balance: number;
@@ -32,90 +31,17 @@ export function UserPortfolioCard({
   showSupplyButton = true,
   showWithdrawButton = true,
   poolStatus,
-  symbol = "LP",
-  poolContractAddress
+  symbol = "LP"
 }: UserPortfolioCardProps) {
   const isMobile = useIsMobile();
   const [balance, setBalance] = useState(initialBalance);
   const [currentValue, setCurrentValue] = useState(initialCurrentValue);
-  const processedTransactions = useRef<Set<string>>(new Set());
   
+  // Update when props change
   useEffect(() => {
     setBalance(initialBalance);
     setCurrentValue(initialCurrentValue);
   }, [initialBalance, initialCurrentValue]);
-  
-  useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
-    if (!data || !poolContractAddress || data.poolContractAddress !== poolContractAddress || !data.isUserAction) {
-      return;
-    }
-    
-    // Skip if we've already processed this transaction
-    if (data.transactionId && processedTransactions.current.has(data.transactionId)) {
-      console.log("[UserPortfolioCard] Skipping already processed transaction:", data.transactionId);
-      return;
-    }
-    
-    // Add to processed transactions if it has an ID
-    if (data.transactionId) {
-      console.log("[UserPortfolioCard] Processing transaction:", data.transactionId);
-      processedTransactions.current.add(data.transactionId);
-    }
-    
-    console.log("[UserPortfolioCard] User transaction event detected:", data);
-    
-    if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
-      if (data.type === 'supply') {
-        const lpIncrease = data.lpAmount || data.amount * 0.95; 
-        
-        console.log("[UserPortfolioCard] Applying optimistic supply update:", {
-          oldBalance: balance,
-          newBalance: balance + lpIncrease,
-          oldValue: currentValue,
-          newValue: currentValue + data.amount
-        });
-        
-        setBalance(prevBalance => prevBalance + lpIncrease);
-        setCurrentValue(prevValue => prevValue + data.amount);
-      } else if (data.type === 'withdraw') {
-        const lpDecrease = data.lpAmount || data.amount * 0.95;
-        
-        console.log("[UserPortfolioCard] Applying optimistic withdraw update:", {
-          oldBalance: balance,
-          newBalance: balance - lpDecrease,
-          oldValue: currentValue,
-          newValue: currentValue - data.amount
-        });
-        
-        setBalance(prevBalance => Math.max(0, prevBalance - lpDecrease));
-        setCurrentValue(prevValue => Math.max(0, prevValue - data.amount));
-      }
-    }
-  });
-  
-  useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
-    if (poolContractAddress) {
-      const walletAddress = localStorage.getItem("ls_wallet_address");
-      const expectedCacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
-      
-      if (data && data.key === expectedCacheKey && data.value && data.isUserAction) {
-        const hasBalanceChanged = data.value.balance !== balance;
-        const hasValueChanged = data.value.currentValue !== currentValue;
-        
-        if (hasBalanceChanged || hasValueChanged) {
-          console.log("[UserPortfolioCard] Position update detected with changes:", {
-            oldBalance: balance,
-            newBalance: data.value.balance,
-            oldValue: currentValue,
-            newValue: data.value.currentValue
-          });
-          
-          setBalance(data.value.balance);
-          setCurrentValue(data.value.currentValue);
-        }
-      }
-    }
-  });
 
   const getEmptyBalanceMessage = () => {
     if (poolStatus === 'active' || poolStatus === 'withdrawal') {

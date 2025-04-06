@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -131,7 +130,6 @@ export function WithdrawModal({
       if (finalPayload.status === "success") {
         const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         
-        // Skip the waiting for transaction confirmation - remove the loading state immediately
         toast({
           title: "Withdrawal successful",
           description: "Your assets have been successfully withdrawn from the pool.",

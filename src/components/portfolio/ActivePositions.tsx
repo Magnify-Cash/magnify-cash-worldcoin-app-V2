@@ -1,26 +1,23 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { UserPoolPosition } from "@/hooks/useUserPoolPositions";
 import { usePoolModals } from "@/hooks/usePoolModals";
+import { usePortfolio } from "@/contexts/PortfolioContext";
 
 interface ActivePositionsProps {
   positions: UserPoolPosition[];
   isMobile: boolean;
-  refreshPositions: () => void;
-  updateUserPositionOptimistically: (poolId: number, amount: number, isWithdrawal?: boolean) => void;
 }
 
 export const ActivePositions: React.FC<ActivePositionsProps> = ({
   positions,
   isMobile,
-  refreshPositions,
-  updateUserPositionOptimistically,
 }) => {
   const navigate = useNavigate();
   const { openSupplyModal, openWithdrawModal } = usePoolModals();
+  const { refreshPortfolio, updatePositionOptimistically } = usePortfolio();
   const [renderKey, setRenderKey] = useState<number>(0);
 
   // Force re-render of positions when they change
@@ -139,9 +136,9 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                         poolId: position.poolId,
                         poolContractAddress: position.contractAddress,
                         lpSymbol: position.symbol,
-                        refreshPositions: refreshPositions,
+                        refreshPositions: refreshPortfolio,
                         updateUserPositionOptimistically: (poolId, amount) => {
-                          updateUserPositionOptimistically(poolId, amount, false);
+                          updatePositionOptimistically(poolId, amount, false);
                         }
                       });
                     }}
@@ -159,8 +156,8 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                       lpBalance: position.balance,
                       lpValue: position.currentValue,
                       poolContractAddress: position.contractAddress,
-                      onSuccessfulWithdraw: (amount) => {
-                        updateUserPositionOptimistically(position.poolId, amount, true);
+                      onSuccessfulWithdraw: (amount, lpAmount) => {
+                        updatePositionOptimistically(position.poolId, amount, true, lpAmount);
                       }
                     })}
                     variant="outline" 

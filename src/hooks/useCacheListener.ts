@@ -11,16 +11,16 @@ export const EVENTS = {
 
 // Transaction types
 export const TRANSACTION_TYPES = {
-  SUPPLY: "SUPPLY",
-  WITHDRAW: "WITHDRAW",
-  REPAY_LOAN: "REPAY_LOAN"
+  SUPPLY: "supply",
+  WITHDRAW: "withdraw",
+  REPAY_LOAN: "repay_loan"
 };
 
 /**
  * Interface for transaction event data
  */
 export interface TransactionEventData {
-  type: typeof TRANSACTION_TYPES.SUPPLY | typeof TRANSACTION_TYPES.WITHDRAW | typeof TRANSACTION_TYPES.REPAY_LOAN;
+  type: string;
   amount: number;
   lpAmount?: number;
   poolContractAddress?: string;
@@ -45,6 +45,6 @@ export function useCacheListener(
 
 // Helper to emit cache update events
 export const emitCacheUpdate = (eventType: string, data: any) => {
+  console.log(`[emitCacheUpdate] Emitting ${eventType} event:`, data);
   eventEmitter.emit(eventType, data);
 }
-

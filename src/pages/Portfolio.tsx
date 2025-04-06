@@ -17,7 +17,7 @@ const Portfolio = () => {
   const navigate = useNavigate();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [updateTrigger, setUpdateTrigger] = useState<number>(0);
-  const [processedTransactions] = useState<Set<string>>(new Set());
+  const [positionUpdateKey, setPositionUpdateKey] = useState<number>(0);
   
   // Get user's wallet address from localStorage
   useEffect(() => {
@@ -30,37 +30,31 @@ const Portfolio = () => {
     setWalletAddress(ls_wallet);
   }, [navigate]);
   
-  // Force refresh function - can be called to immediately trigger a full re-render
+  // Force refresh function - can be called to immediately trigger a data refresh
   const forceRefresh = useCallback(() => {
     console.log('[Portfolio] Force refreshing portfolio data');
     setUpdateTrigger(prev => prev + 1);
   }, []);
   
-  // Listen for transaction events to force refresh with improved logging
+  // Handle position updates - this will force a re-render of position components
+  const forcePositionUpdate = useCallback(() => {
+    console.log('[Portfolio] Force updating position UI');
+    setPositionUpdateKey(prev => prev + 1);
+  }, []);
+
+  // Listen for transaction events to update UI immediately
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
     if (!data) return;
     
-    if (data.transactionId && processedTransactions.has(data.transactionId)) {
-      console.log('[Portfolio] Skipping already processed transaction:', data.transactionId);
-      return;
-    }
+    console.log('[Portfolio] Transaction event detected:', data.type, data.transactionId);
     
-    // Track processed transaction to avoid duplicates
-    if (data.transactionId) {
-      console.log('[Portfolio] Processing transaction event:', data.transactionId, data.type);
-      processedTransactions.add(data.transactionId);
-    }
+    // Update the UI immediately
+    forcePositionUpdate();
     
-    console.log('[Portfolio] Transaction event detected, triggering update');
-    forceRefresh();
-  });
-
-  // Listen for user position updates to refresh the portfolio
-  useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
-    if (walletAddress && data.key && data.key.includes(walletAddress)) {
-      console.log('[Portfolio] User position cache update detected, refreshing positions');
+    // Also queue a background refresh after a short delay
+    setTimeout(() => {
       forceRefresh();
-    }
+    }, 500);
   });
 
   const { 
@@ -101,19 +95,19 @@ const Portfolio = () => {
             </button>
           </div>
         ) : hasPositions ? (
-          <div className="space-y-5" key={`portfolio-content-${updateTrigger}`}>
+          <div className="space-y-5">
             <ActivePositions 
+              key={`positions-${positionUpdateKey}-${updateTrigger}`}
               positions={positions}
               isMobile={isMobile}
               refreshPositions={forceRefresh}
               updateUserPositionOptimistically={updateUserPositionOptimistically}
-              updateTrigger={updateTrigger}
             />
 
             <PortfolioSummary
+              key={`summary-${positionUpdateKey}-${updateTrigger}`}
               totalValue={totalValue}
               isMobile={isMobile}
-              key={`portfolio-summary-${updateTrigger}`}
             />
           </div>
         ) : (

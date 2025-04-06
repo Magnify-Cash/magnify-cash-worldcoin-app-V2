@@ -174,17 +174,16 @@ export const usePoolModals = () => {
     poolContractAddress?: string;
     lpSymbol?: string;
     onSuccessfulSupply?: (amount: number) => void;
-    refreshPositions?: () => void; // Add refreshPositions as a parameter
+    refreshPositions?: () => void;
+    updateUserPositionOptimistically?: (poolId: number, amount: number) => void; // Accept as a parameter
   }) => {
-    const { updateUserPositionOptimistically } = useUserPoolPositions(""); // Access the function
-
     const wrappedOnSuccessfulSupply = (amount: number) => {
       const approximateLpAmount = amount * 0.95; // Simple approximation
       const walletAddress = localStorage.getItem("ls_wallet_address");
   
       // Optimistically update the user's position
-      if (params.poolId) {
-        updateUserPositionOptimistically(params.poolId, amount);
+      if (params.poolId && params.updateUserPositionOptimistically) {
+        params.updateUserPositionOptimistically(params.poolId, amount);
       }
   
       // Update the user position cache

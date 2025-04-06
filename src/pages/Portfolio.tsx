@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -32,7 +31,8 @@ const Portfolio = () => {
     loading, 
     error, 
     hasPositions,
-    refreshPositions
+    refreshPositions,
+    updateUserPositionOptimistically
   } = useUserPoolPositions(walletAddress || "");
 
   // Don't render anything until we've checked for wallet address
@@ -67,6 +67,8 @@ const Portfolio = () => {
             <ActivePositions 
               positions={positions}
               isMobile={isMobile}
+              refreshPositions={refreshPositions}
+              updateUserPositionOptimistically={updateUserPositionOptimistically}
             />
 
             <PortfolioSummary

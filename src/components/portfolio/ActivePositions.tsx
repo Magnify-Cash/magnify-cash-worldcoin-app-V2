@@ -9,6 +9,8 @@ import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
 interface ActivePositionsProps {
   positions: UserPoolPosition[];
   isMobile: boolean;
+  refreshPositions: () => void; // Add this
+  updateUserPositionOptimistically: (poolId: number, amount: number) => void; // Add this
 }
 
 export const ActivePositions: React.FC<ActivePositionsProps> = ({
@@ -129,10 +131,11 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                         poolId: position.poolId,
                         poolContractAddress: position.contractAddress,
                         lpSymbol: position.symbol,
-                        refreshPositions, // Pass refreshPositions here
+                        refreshPositions, // Pass refreshPositions
+                        updateUserPositionOptimistically, // Pass the function here
                       });
 
-                      // Optimistically update the balance
+                      // Optionally, optimistically update the balance directly here
                       updateUserPositionOptimistically(position.poolId, 100); // Example amount
                     }}
                     size="sm"

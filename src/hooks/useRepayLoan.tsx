@@ -1,7 +1,7 @@
 
 import { useCallback, useState } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { useWaitForTransactionReceipt } from "wagmi";
+import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
 import {
@@ -40,15 +40,18 @@ const useRepayLoan = () => {
 
   const client = createPublicClient({
     chain: worldchain,
-    transport: http(WORLDCHAIN_RPC_URL)
-  });
+    transport: http('https://worldchain-mainnet.g.alchemy.com/public'),
+  })
 
-  const { data: receipt, isLoading: isConfirming } = useWaitForTransactionReceipt({
-    hash: transactionHash as `0x${string}`,
-    config: {
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+  useWaitForTransactionReceipt({
+    client: client as any,
+    transactionId: transactionHash as `0x${string}` || "0x",
+    appConfig: {
       app_id: WORLDCOIN_CLIENT_ID,
     },
   });
+
 
   const repayLoan = useCallback(async (loanAmount: bigint) => {
     setError(null);
@@ -203,7 +206,6 @@ const useRepayLoan = () => {
     transactionHash,
     isLoading,
     isConfirming,
-    receipt,
     loanDetails,
   };
 };

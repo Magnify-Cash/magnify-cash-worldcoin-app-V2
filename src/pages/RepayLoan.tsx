@@ -27,7 +27,6 @@ const RepayLoan = () => {
     error: repayError,
     isLoading: isRepaying,
     isConfirming,
-    receipt,
     transactionHash
   } = useRepayLoan();
 
@@ -41,20 +40,20 @@ const RepayLoan = () => {
     }
   }, [repayError]);
 
-  useEffect(() => {
-    if (receipt?.status === 1) {
-      toast({
-        title: "Loan Repaid Successfully",
-        description: `Transaction Hash: ${transactionHash}`,
-      });
-    } else if (receipt?.status === 0) {
-      toast({
-        title: "Loan Repayment Failed",
-        description: `Transaction Hash: ${transactionHash}`,
-        variant: "destructive",
-      });
-    }
-  }, [receipt, transactionHash]);
+  // useEffect(() => {
+  //   if (receipt?.status === 1) {
+  //     toast({
+  //       title: "Loan Repaid Successfully",
+  //       description: `Transaction Hash: ${transactionHash}`,
+  //     });
+  //   } else if (receipt?.status === 0) {
+  //     toast({
+  //       title: "Loan Repayment Failed",
+  //       description: `Transaction Hash: ${transactionHash}`,
+  //       variant: "destructive",
+  //     });
+  //   }
+  // }, [receipt, transactionHash]);
 
   useEffect(() => {
     const fetchLoanData = async () => {

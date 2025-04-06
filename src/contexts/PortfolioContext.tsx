@@ -19,7 +19,7 @@ interface PortfolioState {
 
 interface PortfolioContextType {
   state: PortfolioState;
-  refreshPortfolio: () => void;
+  refreshPortfolio: (forceRefresh?: boolean) => void;
   updatePositionOptimistically: (poolId: number, amount: number, isWithdrawal?: boolean, lpAmount?: number) => void;
 }
 
@@ -43,6 +43,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const positionsCache = useRef<Record<number, UserPoolPosition>>({});
   const optimisticUpdateTimestampRef = useRef<number>(0);
   const isFetchingRef = useRef<boolean>(false);
+  const optimisticUpdatesActive = useRef<Set<number>>(new Set());
   
   // Get user's wallet address from localStorage
   useEffect(() => {
@@ -56,7 +57,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   }, [navigate]);
 
   // Fetch portfolio data - without caching
-  const fetchPortfolio = useCallback(async (avoidOptimisticOverwrite = false) => {
+  const fetchPortfolio = useCallback(async (forceRefresh = false) => {
     if (!walletAddress) {
       setState(prev => ({ ...prev, loading: false, positions: [], hasPositions: false }));
       return;
@@ -68,6 +69,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
+    // Skip fetching if we have recent optimistic updates (unless forced)
+    if (!forceRefresh && Date.now() - optimisticUpdateTimestampRef.current < 10000 && optimisticUpdatesActive.current.size > 0) {
+      console.log('[PortfolioProvider] Skipping fetch due to recent optimistic updates');
+      return;
+    }
+    
     // Set the fetching flag
     isFetchingRef.current = true;
     
@@ -76,7 +83,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      console.log('[PortfolioProvider] Fetching fresh portfolio data');
+      console.log('[PortfolioProvider] Fetching portfolio data. Force refresh:', forceRefresh);
 
       const pools = await getPools();
       if (!pools || pools.length === 0) {
@@ -94,9 +101,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
       const positionPromises = pools.map(async (pool) => {
         if (!pool.contract_address) return null;
+        
+        // Skip fetching this pool if there's an active optimistic update for it
+        // and we're not forcing a refresh
+        if (!forceRefresh && optimisticUpdatesActive.current.has(pool.id)) {
+          console.log(`[PortfolioProvider] Skipping fetch for pool ${pool.id} due to active optimistic update`);
+          const cachedPosition = positionsCache.current[pool.id];
+          return cachedPosition || null;
+        }
 
         try {
-          // Always fetch fresh data - no caching
+          // Always fetch fresh data
           const lpBalance = await getUserLPBalance(walletAddress, pool.contract_address);
           if (lpBalance.balance <= 0) return null;
 
@@ -113,13 +128,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             apy: pool.apy
           };
           
-          // Update local reference only (no cache)
+          // Update local reference
           positionsCache.current[pool.id] = position;
 
           return position;
         } catch (err) {
           console.error(`Error fetching position for pool ${pool.id}:`, err);
-          return null;
+          // Return the cached position if we have one rather than null
+          return positionsCache.current[pool.id] || null;
         }
       });
 
@@ -133,11 +149,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       console.log('[PortfolioProvider] Fetched positions:', validPositions);
       console.log('[PortfolioProvider] New total value:', newTotalValue);
       
-      // Check if we should avoid overwriting optimistic updates
-      // Only apply the fetched data if it's newer than the last optimistic update
-      // or if we explicitly want to overwrite optimistic updates
-      if (!avoidOptimisticOverwrite && fetchStartTime < optimisticUpdateTimestampRef.current) {
-        console.log('[PortfolioProvider] Skipping update as there was a more recent optimistic update');
+      // Don't apply the fetched data if it's older than the last optimistic update
+      // or if there's an active optimistic update and we're not forcing a refresh
+      if (!forceRefresh && fetchStartTime < optimisticUpdateTimestampRef.current && 
+          optimisticUpdatesActive.current.size > 0) {
+        console.log('[PortfolioProvider] Not applying fetch results because there was a more recent optimistic update');
         isFetchingRef.current = false;
         return;
       }
@@ -171,7 +187,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // Initialize the portfolio
   useEffect(() => {
     if (walletAddress) {
-      fetchPortfolio();
+      fetchPortfolio(true);
     }
     
     return () => {
@@ -182,8 +198,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   }, [walletAddress, fetchPortfolio]);
 
   // Force refresh function
-  const refreshPortfolio = useCallback(() => {
-    console.log('[PortfolioProvider] Manually refreshing portfolio');
+  const refreshPortfolio = useCallback((forceRefresh = true) => {
+    console.log('[PortfolioProvider] Refreshing portfolio. Force refresh:', forceRefresh);
     
     // Clear any pending refresh to avoid multiple refreshes
     if (refreshTimeoutRef.current) {
@@ -192,7 +208,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     
     // Set a short timeout to avoid multiple rapid refreshes
     refreshTimeoutRef.current = window.setTimeout(() => {
-      fetchPortfolio(true); // Force overwrite any optimistic updates
+      fetchPortfolio(forceRefresh);
       refreshTimeoutRef.current = null;
     }, 100);
   }, [fetchPortfolio]);
@@ -206,8 +222,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   ) => {
     console.log(`[PortfolioProvider] Optimistically updating poolId ${poolId} with amount ${amount}, isWithdrawal: ${isWithdrawal}`);
     
-    // Set the optimistic update timestamp
+    // Set the optimistic update timestamp and mark this pool as having an active update
     optimisticUpdateTimestampRef.current = Date.now();
+    optimisticUpdatesActive.current.add(poolId);
     
     setState(currentState => {
       // Find the position to update
@@ -247,12 +264,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             currentValue: newValue
           };
           
-          // Update position in state
+          // Update position in state and cache
           updatedPositions = currentState.positions.map(p => 
             p.poolId === poolId ? updatedPosition : p
           );
           
-          updatedTotalValue = currentState.totalValue - amount;
+          positionsCache.current[poolId] = updatedPosition;
+          
+          updatedTotalValue = Math.max(0, currentState.totalValue - amount);
         } else {
           // For deposits to existing positions
           // Use provided LP amount or estimate based on the current ratio
@@ -276,10 +295,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             currentValue: newValue
           };
           
-          // Update position in state
+          // Update position in state and cache
           updatedPositions = currentState.positions.map(p => 
             p.poolId === poolId ? updatedPosition : p
           );
+          
+          positionsCache.current[poolId] = updatedPosition;
           
           updatedTotalValue = currentState.totalValue + amount;
         }
@@ -312,6 +333,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
               hasPositions: true,
               lastUpdated: Date.now()
             }));
+            
+            // Update cache
+            positionsCache.current[poolId] = newPosition;
           }
         }).catch(err => {
           console.error(`Error creating new position for pool ${poolId}:`, err);
@@ -334,16 +358,23 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         });
       }
       
-      // Schedule a fresh data fetch after a delay
+      // Schedule clearing the optimistic flag after some time
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
       
       refreshTimeoutRef.current = window.setTimeout(() => {
-        console.log(`[PortfolioProvider] Fetching real data after optimistic update delay`);
-        fetchPortfolio();
+        console.log(`[PortfolioProvider] Clearing optimistic update flag for pool ${poolId}`);
+        optimisticUpdatesActive.current.delete(poolId);
+        
+        // Only fetch real data if all optimistic updates have been cleared
+        if (optimisticUpdatesActive.current.size === 0) {
+          console.log(`[PortfolioProvider] All optimistic updates cleared, fetching real data`);
+          fetchPortfolio(true);
+        }
+        
         refreshTimeoutRef.current = null;
-      }, 5000); // Longer delay before fetching the real data
+      }, 15000); // Longer delay before clearing optimistic state
       
       return {
         ...currentState,
@@ -381,8 +412,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       
       if (!affectedPosition) return currentState;
       
-      // Set the optimistic update timestamp
+      // Find pool ID for this contract address
+      const poolId = affectedPosition.poolId;
+      
+      // Set the optimistic update flag
       optimisticUpdateTimestampRef.current = Date.now();
+      optimisticUpdatesActive.current.add(poolId);
       
       let updatedPosition: UserPoolPosition;
       let updatedTotalValue = currentState.totalValue;
@@ -399,6 +434,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         };
         
         updatedTotalValue += data.amount;
+        
+        // Update cache
+        positionsCache.current[poolId] = updatedPosition;
         
         console.log(`[PortfolioProvider] Updating position ${affectedPosition.poolId} for supply:`, {
           oldBalance: affectedPosition.balance,
@@ -422,6 +460,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         
         updatedTotalValue -= data.amount;
         
+        // Update cache
+        positionsCache.current[poolId] = updatedPosition;
+        
         console.log(`[PortfolioProvider] Updating position ${affectedPosition.poolId} for withdrawal:`, {
           oldBalance: affectedPosition.balance,
           newBalance,
@@ -439,16 +480,23 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         p.poolId === affectedPosition.poolId ? updatedPosition : p
       );
       
-      // Schedule a fresh data fetch after a delay
+      // Schedule clearing the optimistic flag after some time
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
       
       refreshTimeoutRef.current = window.setTimeout(() => {
-        console.log(`[PortfolioProvider] Fetching real data after transaction delay`);
-        fetchPortfolio();
+        console.log(`[PortfolioProvider] Clearing optimistic update flag for pool ${poolId}`);
+        optimisticUpdatesActive.current.delete(poolId);
+        
+        // Only fetch real data if all optimistic updates have been cleared
+        if (optimisticUpdatesActive.current.size === 0) {
+          console.log(`[PortfolioProvider] All optimistic updates cleared, fetching real data`);
+          fetchPortfolio(true);
+        }
+        
         refreshTimeoutRef.current = null;
-      }, 5000); // Longer delay before fetching the real data
+      }, 15000); // Longer delay before clearing optimistic state
       
       return {
         ...currentState,

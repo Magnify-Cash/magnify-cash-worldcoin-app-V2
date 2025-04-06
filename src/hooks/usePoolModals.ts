@@ -223,7 +223,7 @@ export const usePoolModals = () => {
         hasUpdateFn: !!params.updateUserPositionOptimistically
       });
   
-      // Optimistically update the user's position
+      // Optimistically update the user's position if there's a poolId and updateFn
       if (params.poolId && params.updateUserPositionOptimistically) {
         console.log("[usePoolModals] Calling optimistic update function");
         params.updateUserPositionOptimistically(params.poolId, amount);
@@ -242,15 +242,8 @@ export const usePoolModals = () => {
       if (params.onSuccessfulSupply) {
         params.onSuccessfulSupply(amount, lpAmount);
       }
-  
-      // Trigger refreshPositions to fetch updated data but with a delay
-      // to avoid overwriting our optimistic update
-      if (params.refreshPositions) {
-        console.log("[usePoolModals] Scheduling delayed refresh");
-        setTimeout(() => {
-          params.refreshPositions?.();
-        }, 5000);
-      }
+      
+      // We don't trigger a refreshPositions here anymore - rely on our optimistic update
     };
   
     openModal("supply", {
@@ -287,6 +280,8 @@ export const usePoolModals = () => {
       if (params.onSuccessfulWithdraw) {
         params.onSuccessfulWithdraw(amount, lpAmount);
       }
+      
+      // We don't trigger any refreshes here - rely on our optimistic update
     };
     
     openModal("withdraw", {

@@ -12,11 +12,18 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
   isMobile 
 }) => {
   const renderCount = useRef(0);
+  const previousValueRef = useRef(totalValue);
 
-  // Track when we render to help with debugging
+  // Track when we render and value changes to help with debugging
   useEffect(() => {
     renderCount.current++;
-    console.log(`[PortfolioSummary] Rendering #${renderCount.current} with value: $${totalValue.toFixed(2)}`);
+    
+    if (previousValueRef.current !== totalValue) {
+      console.log(`[PortfolioSummary] Value changed: $${previousValueRef.current.toFixed(2)} → $${totalValue.toFixed(2)}`);
+      previousValueRef.current = totalValue;
+    } else {
+      console.log(`[PortfolioSummary] Rendering #${renderCount.current} with unchanged value: $${totalValue.toFixed(2)}`);
+    }
   });
   
   return (

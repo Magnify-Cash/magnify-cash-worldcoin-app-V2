@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -12,34 +11,69 @@ interface ActivePositionsProps {
   isMobile: boolean;
   refreshPositions: () => void;
   updateUserPositionOptimistically: (poolId: number, amount: number, isWithdrawal?: boolean) => void;
+  updateTrigger?: number;
 }
 
 export const ActivePositions: React.FC<ActivePositionsProps> = ({
   positions,
   isMobile,
   refreshPositions,
-  updateUserPositionOptimistically
+  updateUserPositionOptimistically,
+  updateTrigger = 0
 }) => {
   const navigate = useNavigate();
   const { openSupplyModal, openWithdrawModal } = usePoolModals();
+  const [localPositions, setLocalPositions] = useState<UserPoolPosition[]>(positions);
   const [positionsKey, setPositionsKey] = useState<number>(0);
   const [processedTransactions] = useState<Set<string>>(new Set());
 
-  // Force re-render when transactions occur
+  useEffect(() => {
+    console.log('[ActivePositions] Positions updated:', positions);
+    setLocalPositions(positions);
+    setPositionsKey(prev => prev + 1);
+  }, [positions, updateTrigger]);
+
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
-    if (!data || !data.transactionId || processedTransactions.has(data.transactionId)) {
+    if (!data || !data.poolContractAddress) {
       return;
     }
     
-    // Track processed transaction
-    processedTransactions.add(data.transactionId);
+    if (data.transactionId && processedTransactions.has(data.transactionId)) {
+      console.log('[ActivePositions] Skipping already processed transaction:', data.transactionId);
+      return;
+    }
+    
+    if (data.transactionId) {
+      console.log('[ActivePositions] Processing transaction:', data.transactionId);
+      processedTransactions.add(data.transactionId);
+    }
+    
     console.log('[ActivePositions] Transaction detected, forcing re-render:', data);
     
-    // Force re-render by updating the key
-    setPositionsKey(prev => prev + 1);
+    if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
+      const affectedPosition = localPositions.find(pos => pos.contractAddress === data.poolContractAddress);
+      
+      if (affectedPosition) {
+        if (data.type === 'supply') {
+          const lpAmount = data.lpAmount || data.amount * 0.95;
+          console.log(`[ActivePositions] Updating position ${affectedPosition.poolId} for supply:`, {
+            amount: data.amount,
+            lpAmount
+          });
+          
+          updateUserPositionOptimistically(affectedPosition.poolId, data.amount, false);
+        } else if (data.type === 'withdraw') {
+          console.log(`[ActivePositions] Updating position ${affectedPosition.poolId} for withdraw:`, {
+            amount: data.amount
+          });
+          
+          updateUserPositionOptimistically(affectedPosition.poolId, data.amount, true);
+        }
+      }
+    }
     
-    // Also refresh positions data after a short delay
-    setTimeout(() => refreshPositions(), 1000);
+    setPositionsKey(prev => prev + 1);
+    setTimeout(() => refreshPositions(), 500);
   });
 
   const getStatusColor = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
@@ -98,10 +132,10 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   };
 
   return (
-    <div className="space-y-5" key={`positions-list-${positionsKey}`}>
-      {positions.map((position) => (
+    <div className="space-y-5" key={`positions-list-${positionsKey}-${updateTrigger}`}>
+      {localPositions.map((position) => (
         <div 
-          key={`${position.poolId}-${position.balance}-${position.currentValue}-${positionsKey}`} 
+          key={`${position.poolId}-${position.balance.toFixed(3)}-${position.currentValue.toFixed(3)}-${positionsKey}-${updateTrigger}`} 
           className="rounded-lg bg-white shadow-md overflow-hidden"
         >
           <div className="p-4">
@@ -153,8 +187,10 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                         poolContractAddress: position.contractAddress,
                         lpSymbol: position.symbol,
                         refreshPositions: refreshPositions,
-                        updateUserPositionOptimistically: (poolId, amount) => 
-                          updateUserPositionOptimistically(poolId, amount, false)
+                        updateUserPositionOptimistically: (poolId, amount) => {
+                          updateUserPositionOptimistically(poolId, amount, false);
+                          setTimeout(() => refreshPositions(), 500);
+                        }
                       });
                     }}
                     size="sm"
@@ -173,6 +209,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                       poolContractAddress: position.contractAddress,
                       onSuccessfulWithdraw: (amount) => {
                         updateUserPositionOptimistically(position.poolId, amount, true);
+                        setTimeout(() => refreshPositions(), 500);
                       }
                     })}
                     variant="outline" 

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PortfolioHeader } from "@/components/portfolio/PortfolioHeader";
@@ -29,26 +30,36 @@ const Portfolio = () => {
     setWalletAddress(ls_wallet);
   }, [navigate]);
   
-  // Listen for transaction events to force refresh
+  // Force refresh function - can be called to immediately trigger a full re-render
+  const forceRefresh = useCallback(() => {
+    console.log('[Portfolio] Force refreshing portfolio data');
+    setUpdateTrigger(prev => prev + 1);
+  }, []);
+  
+  // Listen for transaction events to force refresh with improved logging
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
-    if (!data || (data.transactionId && processedTransactions.has(data.transactionId))) {
+    if (!data) return;
+    
+    if (data.transactionId && processedTransactions.has(data.transactionId)) {
+      console.log('[Portfolio] Skipping already processed transaction:', data.transactionId);
       return;
     }
     
     // Track processed transaction to avoid duplicates
     if (data.transactionId) {
+      console.log('[Portfolio] Processing transaction event:', data.transactionId, data.type);
       processedTransactions.add(data.transactionId);
     }
     
     console.log('[Portfolio] Transaction event detected, triggering update');
-    setUpdateTrigger(prev => prev + 1);
+    forceRefresh();
   });
 
   // Listen for user position updates to refresh the portfolio
   useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
     if (walletAddress && data.key && data.key.includes(walletAddress)) {
       console.log('[Portfolio] User position cache update detected, refreshing positions');
-      setUpdateTrigger(prev => prev + 1);
+      forceRefresh();
     }
   });
 
@@ -94,13 +105,15 @@ const Portfolio = () => {
             <ActivePositions 
               positions={positions}
               isMobile={isMobile}
-              refreshPositions={refreshPositions}
+              refreshPositions={forceRefresh}
               updateUserPositionOptimistically={updateUserPositionOptimistically}
+              updateTrigger={updateTrigger}
             />
 
             <PortfolioSummary
               totalValue={totalValue}
               isMobile={isMobile}
+              key={`portfolio-summary-${updateTrigger}`}
             />
           </div>
         ) : (

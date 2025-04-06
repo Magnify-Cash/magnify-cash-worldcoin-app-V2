@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getPools } from '@/lib/poolRequests';
 import { getUserLPBalance, previewRedeem } from '@/lib/backendRequests';
 import { toast } from '@/components/ui/use-toast';
@@ -34,7 +34,8 @@ export const useUserPoolPositions = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [processedTransactions] = useState<Set<string>>(new Set());
+  const processedTransactions = useRef<Set<string>>(new Set());
+  const initialLoadComplete = useRef(false);
 
   // Enhanced fetch positions function with better error handling
   const fetchPositions = useCallback(async () => {
@@ -72,7 +73,7 @@ export const useUserPoolPositions = (
             contractAddress: pool.contract_address,
             balance: lpBalance.balance,
             currentValue: redeemPreview.usdcAmount,
-            status: pool.status,
+            status: pool.status as 'warm-up' | 'active' | 'cooldown' | 'withdrawal',
             apy: pool.apy
           };
         } catch (err) {
@@ -88,6 +89,7 @@ export const useUserPoolPositions = (
 
       console.log('[useUserPoolPositions] Fetched positions:', validPositions);
       setPositions(validPositions);
+      initialLoadComplete.current = true;
     } catch (err) {
       console.error("Error fetching user positions:", err);
       setError("Failed to load your portfolio data. Please try again later.");
@@ -99,96 +101,144 @@ export const useUserPoolPositions = (
     } finally {
       setLoading(false);
     }
-  }, [walletAddress, updateTrigger]);
+  }, [walletAddress]);
 
   // Initial data fetch when component mounts or dependencies change
   useEffect(() => {
     fetchPositions();
   }, [fetchPositions, refreshTrigger, updateTrigger]);
-
-  // Listen for transaction events to update positions optimistically
+  
+  // Listen for transaction events with enhanced processing for Portfolio
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
-    if (!data || !data.transactionId || processedTransactions.has(data.transactionId)) {
+    if (!data || !initialLoadComplete.current) {
       return;
     }
     
-    // Track processed transaction
-    processedTransactions.add(data.transactionId);
+    // Skip if we've already processed this transaction
+    if (data.transactionId && processedTransactions.current.has(data.transactionId)) {
+      console.log('[useUserPoolPositions] Skipping already processed transaction:', data.transactionId);
+      return;
+    }
     
-    if (data.type === TRANSACTION_TYPES.SUPPLY && data.poolContractAddress) {
-      console.log('[useUserPoolPositions] Optimistic supply update:', data);
+    // Track processed transactions
+    if (data.transactionId) {
+      console.log('[useUserPoolPositions] Processing transaction:', data.transactionId);
+      processedTransactions.current.add(data.transactionId);
+    }
+    
+    if (data.poolContractAddress) {
+      console.log('[useUserPoolPositions] Transaction event with contract address detected:', data);
       
-      setPositions(prevPositions => {
-        // Check if this position already exists
-        const existingPosition = prevPositions.find(p => p.contractAddress === data.poolContractAddress);
+      if (data.type === TRANSACTION_TYPES.SUPPLY && data.amount) {
+        console.log('[useUserPoolPositions] Optimistic supply update:', data);
         
-        if (existingPosition) {
-          // Update existing position
+        setPositions(prevPositions => {
+          // Check if this position already exists
+          const existingPosition = prevPositions.find(p => p.contractAddress === data.poolContractAddress);
+          
+          if (existingPosition) {
+            // Update existing position
+            return prevPositions.map(position => {
+              if (position.contractAddress === data.poolContractAddress) {
+                const lpAmount = data.lpAmount || data.amount * 0.95;
+                console.log(`[useUserPoolPositions] Updating position ${position.poolId}:`, {
+                  oldBalance: position.balance,
+                  newBalance: position.balance + lpAmount,
+                  oldValue: position.currentValue,
+                  newValue: position.currentValue + data.amount
+                });
+                
+                return {
+                  ...position,
+                  balance: position.balance + lpAmount,
+                  currentValue: position.currentValue + data.amount
+                };
+              }
+              return position;
+            });
+          } else {
+            // This would be a new position, but we need more data
+            // For now, we'll just trigger a refresh to load the new position
+            setTimeout(() => setRefreshTrigger(prev => prev + 1), 500);
+            return prevPositions;
+          }
+        });
+      } else if (data.type === TRANSACTION_TYPES.WITHDRAW && data.amount) {
+        console.log('[useUserPoolPositions] Optimistic withdraw update:', data);
+        
+        setPositions(prevPositions => {
           return prevPositions.map(position => {
             if (position.contractAddress === data.poolContractAddress) {
+              const lpAmount = data.lpAmount || (position.balance > 0 ? 
+                (data.amount / position.currentValue) * position.balance : data.amount * 0.95);
+              
+              const newBalance = Math.max(0, position.balance - lpAmount);
+              const newValue = Math.max(0, position.currentValue - data.amount);
+              
+              console.log(`[useUserPoolPositions] Updating position ${position.poolId} for withdrawal:`, {
+                oldBalance: position.balance,
+                newBalance,
+                oldValue: position.currentValue,
+                newValue,
+                lpAmount
+              });
+              
+              // If the position is now empty, we'll filter it out
+              if (newBalance <= 0) {
+                return {
+                  ...position,
+                  balance: 0,
+                  currentValue: 0
+                };
+              }
+              
               return {
                 ...position,
-                balance: position.balance + (data.lpAmount || 0),
-                currentValue: position.currentValue + data.amount
+                balance: newBalance,
+                currentValue: newValue
               };
             }
             return position;
-          });
-        } else {
-          // This would be a new position, but we need more data
-          // In reality, we should fetch the pool details here
-          // For now, we'll just trigger a refresh to load the new position
-          setTimeout(() => refreshPositions(), 500);
-          return prevPositions;
-        }
-      });
-    } else if (data.type === TRANSACTION_TYPES.WITHDRAW && data.poolContractAddress) {
-      console.log('[useUserPoolPositions] Optimistic withdraw update:', data);
+          }).filter(position => position.balance > 0);
+        });
+      }
       
-      setPositions(prevPositions => {
-        return prevPositions.map(position => {
-          if (position.contractAddress === data.poolContractAddress) {
-            const newBalance = Math.max(0, position.balance - (data.lpAmount || 0));
-            const newValue = Math.max(0, position.currentValue - data.amount);
-            
-            // If the position is now empty, we might want to remove it
-            if (newBalance <= 0) {
-              // We'll simply filter it out in the next render
-              return {
-                ...position,
-                balance: 0,
-                currentValue: 0
-              };
-            }
-            
-            return {
-              ...position,
-              balance: newBalance,
-              currentValue: newValue
-            };
-          }
-          return position;
-        }).filter(position => position.balance > 0);
-      });
+      // Schedule a refresh to get real data after a short delay
+      setTimeout(() => setRefreshTrigger(prev => prev + 1), 1000);
     }
   });
 
   const totalValue = positions.reduce((sum, position) => sum + position.currentValue, 0);
   const hasPositions = positions.length > 0;
 
-  const refreshPositions = () => {
+  const refreshPositions = useCallback(() => {
+    console.log('[useUserPoolPositions] Manually refreshing positions');
     setRefreshTrigger(prev => prev + 1);
-  };
+  }, []);
 
-  const updateUserPositionOptimistically = (poolId: number, amount: number, isWithdrawal: boolean = false) => {
+  // More accurate optimistic updates with better LP amount estimation
+  const updateUserPositionOptimistically = useCallback((poolId: number, amount: number, isWithdrawal: boolean = false) => {
+    console.log(`[useUserPoolPositions] Optimistically updating poolId ${poolId} with amount ${amount}, isWithdrawal: ${isWithdrawal}`);
+    
     setPositions((prevPositions) => {
       if (isWithdrawal) {
         // For withdrawals
         return prevPositions.map((position) => {
           if (position.poolId === poolId) {
-            const estimatedLpAmount = amount / (position.currentValue / position.balance);
+            // Calculate LP amount using the position's current ratio
+            const estimatedLpAmount = position.balance > 0 ? 
+              (amount / position.currentValue) * position.balance : amount * 0.95;
+            
             const newBalance = Math.max(0, position.balance - estimatedLpAmount);
             const newValue = Math.max(0, position.currentValue - amount);
+            
+            console.log(`[useUserPoolPositions] Optimistically updating position ${poolId} for withdrawal:`, {
+              oldBalance: position.balance,
+              newBalance,
+              oldValue: position.currentValue,
+              newValue,
+              estimatedLpAmount
+            });
             
             return { 
               ...position, 
@@ -200,20 +250,38 @@ export const useUserPoolPositions = (
         }).filter(position => position.balance > 0); // Remove positions with zero balance
       } else {
         // For deposits
-        return prevPositions.map((position) => {
-          if (position.poolId === poolId) {
-            const estimatedLpAmount = amount * 0.95; // Simple estimation
-            return { 
-              ...position, 
-              balance: position.balance + estimatedLpAmount,
-              currentValue: position.currentValue + amount 
-            };
-          }
-          return position;
-        });
+        const existingPosition = prevPositions.find(p => p.poolId === poolId);
+        if (existingPosition) {
+          return prevPositions.map((position) => {
+            if (position.poolId === poolId) {
+              // Use a reasonable LP estimate based on the current ratio, or default to 0.95
+              const estimatedLpAmount = position.balance > 0 && position.currentValue > 0 ?
+                (amount / position.currentValue) * position.balance : amount * 0.95;
+                
+              console.log(`[useUserPoolPositions] Optimistically updating position ${poolId} for deposit:`, {
+                oldBalance: position.balance,
+                newBalance: position.balance + estimatedLpAmount,
+                oldValue: position.currentValue,
+                newValue: position.currentValue + amount
+              });
+              
+              return { 
+                ...position, 
+                balance: position.balance + estimatedLpAmount,
+                currentValue: position.currentValue + amount 
+              };
+            }
+            return position;
+          });
+        } else {
+          // This would be a new position, which requires more data than we have
+          // Schedule a refresh to load the new position from the API
+          setTimeout(() => refreshPositions(), 500);
+          return prevPositions;
+        }
       }
     });
-  };
+  }, [refreshPositions]);
 
   return { 
     positions, 

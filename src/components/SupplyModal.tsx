@@ -103,9 +103,11 @@ export function SupplyModal({
   const updatePoolCache = (supplyAmount: number) => {
     if (!poolContractAddress) return;
     
+    console.log(`[SupplyModal] Updating pool cache for ${poolContractAddress} after supply of ${supplyAmount}`);
+    
     const poolContractCacheKey = `pool_data_contract_${poolContractAddress}`;
     
-    Cache.update<LiquidityPool>(poolContractCacheKey, (pool: LiquidityPool | null) => {
+    Cache.update<LiquidityPool>(poolContractCacheKey, (pool: LiquidityPool | undefined) => {
       if (!pool) return pool;
       
       const updatedPool = {
@@ -120,14 +122,15 @@ export function SupplyModal({
         key: poolContractCacheKey,
         value: updatedPool,
         action: 'update',
-        supplyAmount
+        supplyAmount,
+        poolContractAddress
       });
       
       return updatedPool;
     });
     
     const allPoolsCacheKey = 'pool_data_all';
-    Cache.update<LiquidityPool[]>(allPoolsCacheKey, (pools: LiquidityPool[] | null) => {
+    Cache.update<LiquidityPool[]>(allPoolsCacheKey, (pools: LiquidityPool[] | undefined) => {
       if (!Array.isArray(pools)) return pools;
       
       const updatedPools = pools.map(pool => {
@@ -147,13 +150,12 @@ export function SupplyModal({
         key: allPoolsCacheKey,
         value: updatedPools,
         action: 'update',
-        supplyAmount
+        supplyAmount,
+        poolContractAddress
       });
       
       return updatedPools;
     });
-    
-    console.log(`[SupplyModal] Updated pool cache for ${poolContractAddress} after supply of ${supplyAmount}`);
     
     emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
       type: 'supply',
@@ -161,6 +163,8 @@ export function SupplyModal({
       poolContractAddress,
       timestamp: Date.now()
     });
+    
+    console.log(`[SupplyModal] Finished updating cache and emitting events for ${poolContractAddress} supply of ${supplyAmount}`);
   };
 
   const handleSupply = async () => {

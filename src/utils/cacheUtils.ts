@@ -27,11 +27,26 @@ export class Cache {
       cache[key] = value;
     }
     
-    // Emit events based on key patterns to notify components
+    // Enhanced event emission with more contextual data
     if (key.startsWith('pool_data_')) {
-      eventEmitter.emit(EVENTS.POOL_DATA_UPDATED, { key, value, oldValue });
+      const poolContractAddress = key.replace('pool_data_contract_', '');
+      eventEmitter.emit(EVENTS.POOL_DATA_UPDATED, { 
+        key, 
+        value, 
+        oldValue,
+        action: 'set',
+        poolContractAddress
+      });
     } else if (key.startsWith('user_position_')) {
-      eventEmitter.emit(EVENTS.USER_POSITION_UPDATED, { key, value, oldValue });
+      const [_, walletAddress, poolAddress] = key.split('_');
+      eventEmitter.emit(EVENTS.USER_POSITION_UPDATED, { 
+        key, 
+        value, 
+        oldValue,
+        action: 'set',
+        walletAddress,
+        poolAddress
+      });
     }
   }
 
@@ -66,12 +81,25 @@ export class Cache {
    * @param key The key of the value to update.
    * @param updateFn A function that takes the current value (or undefined if it doesn't exist) and returns the new value.
    */
-  static update<T>(key: string, updateFn: (currentValue: T | undefined) => T): void {
+  static update<T>(key: string, updateFn: (currentValue: T | undefined) => T | undefined): void {
     const currentValue = Cache.get<T>(key);
     const newValue = updateFn(currentValue);
-    Cache.set(key, newValue);
     
-    // We don't need to emit events here since set() will handle that
+    if (newValue !== undefined) {
+      // Track if this was an actual change
+      const isChanged = JSON.stringify(currentValue) !== JSON.stringify(newValue);
+      
+      // Only update cache and emit events if there was a real change
+      if (isChanged) {
+        console.log(`[Cache] Updating ${key} with new value:`, newValue);
+        Cache.set(key, newValue);
+      } else {
+        console.log(`[Cache] No change detected for ${key}, skipping update`);
+      }
+    } else {
+      // If updateFn returns undefined, remove the key from cache
+      Cache.delete(key);
+    }
   }
 
   /**
@@ -82,11 +110,26 @@ export class Cache {
     const oldValue = cache[key];
     delete cache[key];
     
-    // Notify components about the deleted cache entry
+    // Enhanced event emission with additional context
     if (key.startsWith('pool_data_')) {
-      eventEmitter.emit(EVENTS.POOL_DATA_UPDATED, { key, value: undefined, oldValue, action: 'delete' });
+      const poolContractAddress = key.replace('pool_data_contract_', '');
+      eventEmitter.emit(EVENTS.POOL_DATA_UPDATED, { 
+        key, 
+        value: undefined, 
+        oldValue, 
+        action: 'delete',
+        poolContractAddress
+      });
     } else if (key.startsWith('user_position_')) {
-      eventEmitter.emit(EVENTS.USER_POSITION_UPDATED, { key, value: undefined, oldValue, action: 'delete' });
+      const [_, walletAddress, poolAddress] = key.split('_');
+      eventEmitter.emit(EVENTS.USER_POSITION_UPDATED, { 
+        key, 
+        value: undefined, 
+        oldValue, 
+        action: 'delete',
+        walletAddress,
+        poolAddress
+      });
     }
   }
 

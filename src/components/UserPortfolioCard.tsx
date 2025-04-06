@@ -49,6 +49,42 @@ export function UserPortfolioCard({
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
     if (data && poolContractAddress && data.poolContractAddress === poolContractAddress) {
       console.log("[UserPortfolioCard] Transaction event detected:", data);
+      
+      // For immediate UI feedback on supply transaction
+      if (data.type === 'supply' && data.amount) {
+        // Apply optimistic update to the UI for better UX
+        const approximateLpIncrease = data.amount * 0.95; 
+        
+        console.log("[UserPortfolioCard] Applying optimistic update:", {
+          oldBalance: balance,
+          newBalance: balance + approximateLpIncrease,
+          oldValue: currentValue,
+          newValue: currentValue + data.amount
+        });
+        
+        setBalance(prevBalance => prevBalance + approximateLpIncrease);
+        setCurrentValue(prevValue => prevValue + data.amount);
+      }
+    }
+  });
+  
+  // Listen for user position cache updates
+  useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
+    if (poolContractAddress) {
+      const walletAddress = localStorage.getItem("ls_wallet_address");
+      const expectedCacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
+      
+      if (data && data.key === expectedCacheKey && data.value) {
+        console.log("[UserPortfolioCard] Position update detected:", data.value);
+        
+        // Only update if values are different to avoid unnecessary re-renders
+        if (data.value.balance !== balance) {
+          setBalance(data.value.balance);
+        }
+        if (data.value.currentValue !== currentValue) {
+          setCurrentValue(data.value.currentValue);
+        }
+      }
     }
   });
 

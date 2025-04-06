@@ -4,13 +4,7 @@ import { getUserLPBalance, previewRedeem } from '@/lib/backendRequests';
 import { toast } from '@/components/ui/use-toast';
 import { Cache } from '@/utils/cacheUtils';
 import { useCacheListener, EVENTS } from './useCacheListener';
-
-interface UserPositionData {
-  balance: number;
-  currentValue: number;
-  loading: boolean;
-  error: string | null;
-}
+import { UserPositionData } from '@/types/user';
 
 const initialState: UserPositionData = {
   balance: 0,
@@ -72,20 +66,49 @@ export const useUserPoolPosition = (
     }
   }, []);
 
-  // Listen for relevant transaction events
+  // Listen for relevant transaction events with improved logging
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
-    if (data.poolContractAddress === poolContractAddress && walletAddress) {
-      console.log("[useUserPoolPosition] Received transaction event, refreshing position data");
+    if (data?.poolContractAddress === poolContractAddress && walletAddress) {
+      console.log("[useUserPoolPosition] Received transaction event, refreshing position data:", data);
       const cacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
-      fetchPositionData(poolContractAddress, walletAddress, cacheKey);
+      
+      // For immediate UI feedback, create an optimistic update
+      if (data.type === 'supply' && data.amount) {
+        Cache.update<UserPositionData>(cacheKey, (current) => {
+          if (!current) return current;
+          
+          // Approximation of new LP tokens based on deposit amount
+          const approximateLpIncrease = data.amount * 0.95; 
+          const newBalance = current.balance + approximateLpIncrease;
+          const newValue = current.currentValue + data.amount;
+          
+          console.log("[useUserPoolPosition] Optimistically updating position:", { 
+            oldBalance: current.balance,
+            newBalance,
+            oldValue: current.currentValue,
+            newValue
+          });
+          
+          return {
+            ...current,
+            balance: newBalance,
+            currentValue: newValue
+          };
+        });
+      }
+      
+      // Get latest data after a short delay to allow blockchain to update
+      setTimeout(() => {
+        fetchPositionData(poolContractAddress, walletAddress, cacheKey);
+      }, 500);
     }
   });
 
-  // Listen for user position cache updates
+  // Listen for user position cache updates with improved logging
   useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
     if (walletAddress && poolContractAddress && 
         data.key === `user_position_${walletAddress}_${poolContractAddress}`) {
-      console.log("[useUserPoolPosition] Received position cache update");
+      console.log("[useUserPoolPosition] Received position cache update:", data);
       if (data.value) {
         setPositionData(data.value);
       }

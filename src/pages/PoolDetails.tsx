@@ -59,16 +59,86 @@ const PoolDetails = () => {
   const userPosition = useUserPoolPosition(pool?.contract_address, refreshTrigger);
 
   useCacheListener(EVENTS.POOL_DATA_UPDATED, (data) => {
-    if (pool && data.key && data.key.includes(pool.contract_address)) {
+    if (pool && pool.contract_address && data.key && data.key.includes(pool.contract_address)) {
       console.log("[PoolDetails] Received pool data cache update:", data);
+      
+      // Apply optimistic updates for immediate UI feedback
+      if (data.action === 'update' && data.supplyAmount && typeof data.supplyAmount === 'number') {
+        const updatedTVL = (pool.total_value_locked || 0) + data.supplyAmount;
+        const updatedLiquidity = (pool.available_liquidity || 0) + data.supplyAmount;
+        
+        console.log("[PoolDetails] Applying optimistic update:", {
+          oldTVL: pool.total_value_locked,
+          newTVL: updatedTVL,
+          oldLiquidity: pool.available_liquidity,
+          newLiquidity: updatedLiquidity
+        });
+        
+        setOptimisticUpdates({
+          totalValueLocked: updatedTVL,
+          availableLiquidity: updatedLiquidity,
+        });
+        
+        // Apply update to current pool data for immediate UI reflection
+        setPool(prevPool => {
+          if (!prevPool) return prevPool;
+          return {
+            ...prevPool,
+            total_value_locked: updatedTVL,
+            available_liquidity: updatedLiquidity,
+          };
+        });
+      }
+      
+      // Trigger a refresh to get latest data
       setRefreshTrigger(prev => prev + 1);
     }
   });
 
   useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
-    if (pool && data.key && data.key.includes(pool.contract_address)) {
-      console.log("[PoolDetails] Received user position cache update:", data);
-      setRefreshTrigger(prev => prev + 1);
+    if (pool && pool.contract_address) {
+      const walletAddress = localStorage.getItem("ls_wallet_address");
+      const expectedCacheKey = `user_position_${walletAddress}_${pool.contract_address}`;
+      
+      if (data.key === expectedCacheKey) {
+        console.log("[PoolDetails] Received user position cache update:", data);
+        
+        // Trigger a refresh of the user position data
+        setRefreshTrigger(prev => prev + 1);
+      }
+    }
+  });
+
+  useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
+    if (pool && pool.contract_address && data.poolContractAddress === pool.contract_address) {
+      console.log("[PoolDetails] Transaction event detected:", data);
+      
+      // For immediate UI feedback
+      if (data.type === 'supply' && data.amount) {
+        const updatedTVL = (pool.total_value_locked || 0) + data.amount;
+        const updatedLiquidity = (pool.available_liquidity || 0) + data.amount;
+        
+        console.log("[PoolDetails] Applying transaction-based update:", {
+          type: data.type,
+          amount: data.amount,
+          oldTVL: pool.total_value_locked,
+          newTVL: updatedTVL
+        });
+        
+        setPool(prevPool => {
+          if (!prevPool) return prevPool;
+          return {
+            ...prevPool,
+            total_value_locked: updatedTVL,
+            available_liquidity: updatedLiquidity,
+          };
+        });
+        
+        // Trigger a refresh after a short delay to get confirmed data
+        setTimeout(() => {
+          setRefreshTrigger(prev => prev + 1);
+        }, 500);
+      }
     }
   });
 

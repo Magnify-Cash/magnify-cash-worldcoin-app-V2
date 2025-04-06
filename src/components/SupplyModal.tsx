@@ -114,10 +114,8 @@ export function SupplyModal({
           expectedLpAmount = preview.lpAmount;
         } catch (e) {
           console.error("Failed to get final LP preview:", e);
-          expectedLpAmount = parseFloat(amount) * 0.95;
+          expectedLpAmount = null;
         }
-      } else if (!expectedLpAmount) {
-        expectedLpAmount = parseFloat(amount) * 0.95;
       }
   
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 min
@@ -208,7 +206,6 @@ export function SupplyModal({
       });
   
       if (finalPayload.status === "success") {
-        // Transaction was sent successfully
         const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         
         toast({
@@ -216,23 +213,24 @@ export function SupplyModal({
           description: "Your assets have been successfully supplied to the pool.",
         });
         
-        // Call the onSuccessfulSupply callback first, before closing modal
-        if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
+        if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function' && expectedLpAmount !== null) {
           console.log("[SupplyModal] Calling onSuccessfulSupply with:", {
             amount: loanAmount,
             lpAmount: expectedLpAmount,
             transactionId
           });
           onSuccessfulSupply(loanAmount, expectedLpAmount, transactionId);
+        } else if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
+          const fallbackLpAmount = loanAmount * 0.95;
+          console.log("[SupplyModal] Using fallback LP amount for callback:", fallbackLpAmount);
+          onSuccessfulSupply(loanAmount, fallbackLpAmount, transactionId);
         }
         
-        // Close the modal after the optimistic update is applied
         setTimeout(() => {
           onClose();
           setAmount("");
         }, 100);
         
-        // Also refresh balance after a short delay
         setTimeout(() => {
           refreshBalance();
         }, 1000);
@@ -264,17 +262,19 @@ export function SupplyModal({
   const calculateLPTokens = () => {
     const numAmount = parseFloat(amount);
     
-    if (isPreviewLoading || (previewRequested && !previewLpAmount)) {
+    if (isPreviewLoading) {
       return "...";
     }
     
-    if (previewLpAmount) {
-      return previewLpAmount;
+    if (previewLpAmount !== null) {
+      return previewLpAmount.toFixed(4);
     }
     
-    return !isNaN(numAmount) && numAmount > 0 && numAmount < 10
-      ? (numAmount * 0.95).toFixed(4)
-      : "0.0000";
+    if (previewRequested || (!isNaN(numAmount) && numAmount > 0)) {
+      return "...";
+    }
+    
+    return "0.0000";
   };
 
   const displayBalance = () => {

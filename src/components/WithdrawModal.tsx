@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export function WithdrawModal({
   const [isLoading, setIsLoading] = useState(false);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [rateError, setRateError] = useState<string | null>(null);
+  const [isRateLoading, setIsRateLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const walletAddress = localStorage.getItem("ls_wallet_address") || null;
@@ -45,6 +47,7 @@ export function WithdrawModal({
   useEffect(() => {
     const fetchExchangeRate = async () => {
       try {
+        setIsRateLoading(true);
         const res = await previewRedeem(1, poolContractAddress);
         setExchangeRate(res.usdcAmount);
         setRateError(null);
@@ -52,6 +55,8 @@ export function WithdrawModal({
         console.error("Error fetching exchange rate", err);
         setExchangeRate(0);
         setRateError("Unable to load exchange rate.");
+      } finally {
+        setIsRateLoading(false);
       }
     };
 
@@ -83,9 +88,23 @@ export function WithdrawModal({
 
   const calculateLpTokenAmount = () => {
     const numAmount = parseFloat(amount);
+    
+    // Show loading indicator when fetching exchange rate
+    if (isRateLoading) {
+      return "...";
+    }
+    
+    // If we have a valid exchange rate and amount, calculate the LP token amount
     if (!isNaN(numAmount) && numAmount > 0 && exchangeRate > 0) {
       return (numAmount / exchangeRate).toFixed(4);
     }
+    
+    // If we have an amount but no exchange rate yet, show loading indicator
+    if (!isNaN(numAmount) && numAmount > 0) {
+      return "...";
+    }
+    
+    // Default state
     return "0.0000";
   };
 
@@ -97,7 +116,20 @@ export function WithdrawModal({
       setTransactionPending(true);
       setTransactionMessage("Processing your withdrawal...");
   
-      const estimatedLpAmount = parseFloat(calculateLpTokenAmount());
+      // Get a fresh calculation of LP amount if needed
+      let estimatedLpAmount = parseFloat(calculateLpTokenAmount());
+      if (isNaN(estimatedLpAmount) || calculateLpTokenAmount() === "...") {
+        try {
+          // Make a direct call to get the exchange rate
+          const res = await previewRedeem(parseFloat(amount), poolContractAddress);
+          estimatedLpAmount = parseFloat(amount) / res.usdcAmount;
+        } catch (err) {
+          console.error("Failed to calculate LP amount for withdrawal", err);
+          // Use a fallback only for the transaction, not for display
+          estimatedLpAmount = parseFloat(amount) / exchangeRate || parseFloat(amount);
+        }
+      }
+      
       const lpTokenAmountWithDecimals = BigInt(Math.floor(estimatedLpAmount * 1_000_000));
   
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
@@ -281,7 +313,7 @@ export function WithdrawModal({
         <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
           <Button
             onClick={handleWithdraw}
-            disabled={!amount || !isAmountValid() || isLoading || exchangeRate <= 0}
+            disabled={!amount || !isAmountValid() || isLoading || exchangeRate <= 0 || isRateLoading}
             className="bg-[#8B5CF6] hover:bg-[#7c50e6] text-white w-full py-6"
           >
             {isLoading ? "Processing..." : "Withdraw"}

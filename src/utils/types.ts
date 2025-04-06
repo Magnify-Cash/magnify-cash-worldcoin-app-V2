@@ -69,11 +69,19 @@ export interface ActiveLoanData {
   isActive: boolean;
 }
 
-// TODO: Replace `any[]` with proper type once response structure is known
-export type LoanHistoryEntry = any[];
+export interface LoanEntry {
+  loanID: string;
+  tokenId: string;
+  loanTimestamp: string;
+  repaymentTimestamp: string;
+  borrower: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
 
-// TODO: Replace `any[]` with proper type once response structure is known
-export type AllLoansEntry = any[]; 
+export type LoanHistoryEntry = LoanEntry[];
+
+export type AllLoansEntry = LoanEntry[];
 
 export interface PoolBalanceUSDCResponse {
   totalAssets: number;

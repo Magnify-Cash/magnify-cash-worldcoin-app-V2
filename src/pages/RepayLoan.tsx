@@ -1,377 +1,190 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { Header } from "@/components/Header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Calendar, DollarSign, Clock } from "lucide-react";
-import { Loan, useMagnifyWorld } from "@/hooks/useMagnifyWorld";
-import { calculateRemainingTime } from "@/utils/timeinfo";
-import useRepayLoan from "@/hooks/useRepayLoan";
-import { useToast } from "@/hooks/use-toast";
-import { formatUnits } from "viem";
-import { getUSDCBalance } from "@/lib/backendRequests";
+import { ArrowLeft, ArrowRight, ChevronsLeft, ChevronsRight, Coins } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { getLoanById } from "@/lib/loanRequests";
+import { Loan } from "@/types/supabase/loan";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { LoadingState } from "@/components/portfolio/LoadingState";
+import { useRepayLoan } from "@/hooks/useRepayLoan";
+import { format } from 'date-fns';
 
 const RepayLoan = () => {
-  // States
-  const [isClicked, setIsClicked] = useState(false);
+  const { id } = useParams();
+  const isMobile = useIsMobile();
 
-  // hooks
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const ls_wallet = localStorage.getItem("ls_wallet_address");
-  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
-  const loan = data?.loan;
-  const loanData: Loan | undefined = loan && loan[1];
-  const loanVersion = loan ? loan[0] : "";
+  const [loading, setLoading] = useState(true);
+  const [loanData, setLoanData] = useState<Loan | null>(null);
 
-  console.log("[RepayLoan] Loan data:", loanData);
-  console.log("[RepayLoan] Loan version:", loanVersion);
+  const {
+    transactionHash,
+    isLoading: isRepaying,
+    error: repayError,
+    repayLoan,
+    receipt
+  } = useRepayLoan();
 
-  // Update USDC balance on page load
   useEffect(() => {
-    const updateUSDCBalance = async () => {
-      if (ls_wallet) {
-        try {
-          const balance = await getUSDCBalance(ls_wallet);
-          sessionStorage.setItem("usdcBalance", balance.toString());
-        } catch (error) {
-          console.error("Failed to fetch USDC balance:", error);
-        }
-      }
-    };
-
-    updateUSDCBalance();
-  }, [ls_wallet]);
-
-  // loan repayment
-  const loanAmountDue = useMemo(() => {
-    if (loanData) {
-      return loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
+    if (repayError) {
+      toast({
+        title: "Error repaying loan",
+        description: repayError.message,
+        variant: "destructive",
+      });
     }
-    return 0n; // Default value if loanData is not available
-  }, [loanData]);
+  }, [repayError]);
 
-  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
-  
-  const handleApplyLoan = useCallback(
-    async (event: React.FormEvent) => {
-      event.preventDefault();
-      if (isClicked) return;
-  
-      setIsClicked(true);
+  useEffect(() => {
+    if (receipt?.status === 1) {
+      toast({
+        title: "Loan Repaid Successfully",
+        description: `Transaction Hash: ${transactionHash}`,
+      });
+    } else if (receipt?.status === 0) {
+      toast({
+        title: "Loan Repayment Failed",
+        description: `Transaction Hash: ${transactionHash}`,
+        variant: "destructive",
+      });
+    }
+  }, [receipt, transactionHash]);
 
-      if(!sessionStorage.getItem("usdcBalance")) {
-        const balance = await getUSDCBalance(ls_wallet as string);
-        sessionStorage.setItem("usdcBalance", balance.toString());
-      }
-
-      const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
-      const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
-
-      if (currentBalance < amountDueFloat) {
+  useEffect(() => {
+    const fetchLoanData = async () => {
+      if (!id) {
         toast({
-          title: "Insufficient USDC",
-          description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
+          title: "Loan ID not found",
+          description: "Please provide a valid loan ID.",
           variant: "destructive",
         });
-        setIsClicked(false);
         return;
       }
-  
+
       try {
-        // If we have a loan and a version, proceed with repayment
-        if (loanData && loanVersion) {
-          // Fix: Pass BigInt directly without conversion to number
-          await repayLoanWithPermit2(BigInt(loanAmountDue), loanVersion);
-  
-          // Clear session storage
-          sessionStorage.removeItem("usdcBalance");
-          sessionStorage.removeItem("walletTokens");
-          sessionStorage.removeItem("walletCacheTimestamp");
-        } else {
+        setLoading(true);
+        const loan = await getLoanById(parseInt(id));
+
+        if (!loan) {
           toast({
-            title: "Error",
-            description: "Unable to pay back loan. No active loan found.",
+            title: "Loan not found",
+            description: "The requested loan does not exist.",
             variant: "destructive",
           });
+          return;
         }
-      } catch (error: any) {
-        console.error("Loan repayment error:", error);
+
+        setLoanData(loan);
+      } catch (error) {
+        console.error("Error fetching loan data:", error);
         toast({
           title: "Error",
-          description: error?.message?.includes("user rejected transaction")
-            ? "Transaction rejected by user."
-            : error?.message || "Unable to pay back loan.",
+          description: "Failed to load loan data. Please try again later.",
           variant: "destructive",
         });
       } finally {
-        setIsClicked(false);
+        setLoading(false);
       }
-    },
-    [loanData, loanVersion, repayLoanWithPermit2, loanAmountDue, toast, ls_wallet]
-  );
-  
-  // Call refetch after loan repayment is confirmed
-  useEffect(() => {
-    if (isConfirmed) {
-      const timeout = setTimeout(async () => {
-        await refetch();
-      }, 1000);
+    };
 
-      return () => clearTimeout(timeout);
-    }
-  }, [isConfirmed, refetch]);
+    fetchLoanData();
+  }, [id]);
 
-  // Loading & error states
-  if (isLoading) {
+  const formatValue = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2
+    }).format(value);
+  };
+
+  const formatDate = (date: string) => {
+    return format(new Date(date), 'MMM dd, yyyy');
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen">
-        <Header title="Loan Status" />
-        <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
-            <div className="dot-spinner">
-              <div className="dot bg-[#1A1E8E]"></div>
-              <div className="dot bg-[#4A3A9A]"></div>
-              <div className="dot bg-[#7A2F8A]"></div>
-              <div className="dot bg-[#A11F75]"></div>
-            </div>
-        </div>
+      <div className="min-h-screen bg-white">
+        <Header title="Repay Loan" />
+        <main className="container max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
+          <LoadingState message="Loading Loan Details" />
+        </main>
       </div>
     );
   }
 
-  if (isError) {
-    return (
-      <div className="min-h-screen">
-        <Header title="Loan Status" />
-        <div className="flex justify-center items-center h-[calc(100vh-80px)]">Error fetching data.</div>
-      </div>
-    );
-  }
+  // Convert number to BigInt for loanAmountDue
+  const loanAmountDue = BigInt(loanData?.amount_due || 0);
 
-  // No NFT but has an active loan case (V1 or V2 loan)
-  if (data && (!data.nftInfo?.tokenId || data.nftInfo.tokenId === "0") && data.hasActiveLoan && loan) {
-    // For user with no NFT but with active loan, show loan details card
-    const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
-      BigInt(loanData?.startTime || 0), 
-      BigInt(loanData?.loanPeriod || 0)
-    );
-    
-    const amountDue = loanData?.amount ? 
-      loanData.amount + (loanData.amount * (loanData?.interestRate || 0n)) / 10000n : 0n;
-
-    return (
-      <div className="min-h-screen bg-background">
-        <Header title="Loan Status" />
-        <div className="container max-w-2xl mx-auto p-6 space-y-6">
-          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-            <div className="flex items-center justify-between mb-4">
-              <span className="px-3 py-1 rounded-full bg-green-300 text-black text-sm">
-                Active Loan
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
-                  <p className="text-start font-semibold">${formatUnits(loanData?.amount || 0n, 6)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground text-start">Repayment Amount</p>
-                  <p className="text-start font-semibold">${formatUnits(amountDue, 6)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground text-start">Due Date</p>
-                  <p className="text-start font-semibold">
-                    {new Date(dueDate).toLocaleDateString("en-US", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      timeZoneName: "short", 
-                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    })}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground text-start">Time Remaining</p>
-                  <p className="text-start font-semibold">
-                    {`${daysRemaining}d ${hoursRemaining}hr ${minutesRemaining}m`}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <Button onClick={handleApplyLoan} className="w-full mt-4 primary-button" disabled={isClicked || isConfirming || isConfirmed}>
-              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
-            </Button>
-            {transactionId && (
-              <div className="mt-4">
-                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
-                  Transaction ID:{" "}
-                  <span title={transactionId}>
-                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-                  </span>
-                </p>
-                {isConfirming && (
-                  <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-                    <div className="flex justify-center">
-                      <div className="orbit-spinner">
-                        <div className="orbit"></div>
-                        <div className="orbit"></div>
-                        <div className="center"></div>
-                      </div>
-                    </div>
-                    <p className="text-white text-center max-w-md px-4 text-lg font-medium">
-                      Confirming transaction, please do not leave this page until confirmation is complete.
-                    </p>
-                  </div>
-                )}
-                {isConfirmed && (
-                  <>
-                    <p>Transaction confirmed!</p>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if user has an active loan
-  if (!loan || !loanData || loanData.amount === 0n || !loanData.isActive) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header title="Loan Status" />
-        <div className="container max-w-2xl mx-auto p-6 space-y-6">
-          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-            <h3 className="text-lg font-semibold text-center">No Active Loans</h3>
-            <p className="text-center text-muted-foreground">
-              It looks like you don't have any active loans. Would you like to request one?
-            </p>
-            <Button onClick={() => navigate("/loan")} className="w-full mt-4">
-              Request a Loan
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Active loan with NFT case
-  const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
-    loanData.startTime,
-    loanData.loanPeriod,
-  );
-  const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
-  
   return (
-    <div className="min-h-screen bg-background">
-      <Header title="Loan Status" />
-      <div className="container max-w-2xl mx-auto p-6 space-y-6">
-        <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span
-              className={`px-3 py-1 rounded-full ${
-                loanData.isActive ? "bg-green-300" : "bg-red-300"
-              } text-black text-sm`}
-            >
-              {loanData.isActive
-                ? "Active Loan"
-                : "Defaulted Loan"}
-            </span>
-          </div>
+    <div className="min-h-screen bg-white pb-20">
+      <Header title="Repay Loan" />
 
-          <div className="grid grid-cols-1 gap-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
-                <p className="text-start font-semibold">${formatUnits(loanData.amount, 6)} </p>
+      <main className="container max-w-3xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6">
+        {loanData && (
+          <>
+            <Card className="mb-6 border border-[#8B5CF6]/20 overflow-hidden">
+              <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5 py-5 px-6 flex justify-center">
+                <div className="flex items-center gap-3">
+                  <div className="bg-[#8B5CF6]/20 rounded-full p-2 flex items-center justify-center">
+                    <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-[#8B5CF6]" />
+                  </div>
+                  <h1 className="text-xl sm:text-2xl font-bold">
+                    Loan Details
+                  </h1>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground text-start">Repayment Amount</p>
-                <p className="text-start font-semibold">${formatUnits(amountDue, 6)}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground text-start">Due Date</p>
-                <p className="text-start font-semibold">
-                  {new Date(dueDate).toLocaleDateString("en-US", {
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    timeZoneName: "short", 
-                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                  })}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground text-start">Time Remaining</p>
-                <p className="text-start font-semibold">
-                  {`${daysRemaining}d ${hoursRemaining}hr ${minutesRemaining}m`}
-                </p>
-              </div>
-            </div>
-          </div>
-          <Button
-            onClick={handleApplyLoan}
-            className="w-full primary-button"
-            disabled={isClicked || isConfirming || isConfirmed}
-          >
-            {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
-          </Button>
-          {transactionId && (
-            <div className="mt-4">
-              <p className="overflow-hidden text-ellipsis whitespace-nowrap">
-                Transaction ID:{" "}
-                <span title={transactionId}>
-                  {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-                </span>
-              </p>
-              {isConfirming && (
-                <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-                  <div className="flex justify-center">
-                    <div className="orbit-spinner">
-                      <div className="orbit"></div>
-                      <div className="orbit"></div>
-                      <div className="center"></div>
+            </Card>
+
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
+              <Card className="w-full border border-[#8B5CF6]/20 overflow-hidden">
+                <CardHeader className="pb-2 pt-4 bg-gradient-to-r from-[#8B5CF6]/10 to-[#6E59A5]/5">
+                  <CardTitle className="text-xl flex items-center gap-2 justify-center">
+                    Loan Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className={`${isMobile ? "px-3 py-2" : "pt-5"} space-y-3 sm:space-y-4`}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500">Loan Amount</p>
+                      <p className="text-sm sm:text-lg font-semibold">{formatValue(loanData.loan_amount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500">Amount Due</p>
+                      <p className="text-sm sm:text-lg font-semibold">{formatValue(loanData.amount_due)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500">Interest Rate</p>
+                      <p className="text-sm sm:text-lg font-semibold">{loanData.interest_rate}%</p>
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500">Loan Start Date</p>
+                      <p className="text-sm sm:text-lg font-semibold">{formatDate(loanData.loan_start_date)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500">Loan End Date</p>
+                      <p className="text-sm sm:text-lg font-semibold">{formatDate(loanData.loan_end_date)}</p>
                     </div>
                   </div>
-                  <p className="text-white text-center max-w-md px-4 text-lg font-medium">
-                    Confirming transaction, please do not leave this page until confirmation is complete.
-                  </p>
-                </div>
-              )}
-              {isConfirmed && (
-                <>
-                  <p>Transaction confirmed!</p>
-                </>
-              )}
+                </CardContent>
+              </Card>
+
+              <Button
+                onClick={() => repayLoan(loanAmountDue)}
+                disabled={isRepaying}
+                className="w-full"
+              >
+                {isRepaying ? "Repaying..." : "Repay Loan"}
+              </Button>
             </div>
-          )}
-        </div>
-      </div>
+          </>
+        )}
+      </main>
     </div>
   );
 };

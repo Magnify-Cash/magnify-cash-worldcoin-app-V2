@@ -1,3 +1,4 @@
+
 // Define a generic type for the cache data
 type CacheData<T> = {
   [key: string]: T | undefined;
@@ -74,6 +75,37 @@ export class Cache {
   static clear(): void {
     for (const key in cache) {
       delete cache[key];
+    }
+  }
+
+  /**
+   * Checks if a key exists in the cache.
+   * @param key The key to check.
+   * @returns True if the key exists and has not expired, false otherwise.
+   */
+  static exists(key: string): boolean {
+    const cachedValue = cache[key];
+    
+    if (!cachedValue) {
+      return false;
+    }
+    
+    // Check for expiration if it's a value with expiration time
+    if (typeof cachedValue === 'object' && cachedValue !== null && 'expirationTime' in cachedValue) {
+      return new Date().getTime() <= cachedValue.expirationTime;
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Clears all pool-related cache entries.
+   */
+  static clearPoolCache(): void {
+    for (const key in cache) {
+      if (key.startsWith('pool_') || key.startsWith('user_position_')) {
+        delete cache[key];
+      }
     }
   }
 }

@@ -1,7 +1,6 @@
-
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
+import { useWaitForTransactionReceipt } from "wagmi";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
 import {
@@ -39,35 +38,27 @@ const useRepayLoan = () => {
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
 
-  // Create a public client with correct configuration to fix the TypeScript error
   const client = createPublicClient({
     chain: worldchain,
     transport: http(WORLDCHAIN_RPC_URL)
-  }) as any; // Using 'as any' to bypass the type checking issues
+  }) as any;
 
-  // Fix the transaction receipt hook usage - use meta.hash instead of hash directly
-  const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
-    useWaitForTransactionReceipt({
-      client,
-      // Use the hash in meta to avoid TypeScript error
-      meta: transactionId ? {
-        hash: transactionId as `0x${string}`
-      } : undefined,
-      appConfig: {
-        app_id: WORLDCOIN_CLIENT_ID,
-      },
-    });
+  const receipt = useWaitForTransactionReceipt({
+    hash: transactionId as `0x${string}`,
+    appConfig: {
+      app_id: WORLDCOIN_CLIENT_ID,
+    },
+  });
 
-  // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
-    if (isConfirmingTransaction) {
+    if (receipt.isLoading) {
       setIsConfirming(true);
     }
-    if (isTransactionConfirmed) {
+    if (receipt.isSuccess) {
       setIsConfirming(false);
       setIsConfirmed(true);
     }
-  }, [isConfirmingTransaction, isTransactionConfirmed]);
+  }, [receipt.isLoading, receipt.isSuccess]);
 
   const repayLoanWithPermit2 = useCallback(async (loanAmount: bigint | string, V1OrV2OrV3: string) => {
     setError(null);
@@ -75,7 +66,6 @@ const useRepayLoan = () => {
     setIsConfirmed(false);
     setLoanDetails(null);
 
-    // Convert to string if it's bigint
     const loanAmountString = typeof loanAmount === 'bigint' ? loanAmount.toString() : loanAmount;
     
     const CONTRACT_ADDRESS = getContractAddress(V1OrV2OrV3);
@@ -195,24 +185,23 @@ const useRepayLoan = () => {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
 
-        // Convert loan amount to number for display
         const loanAmountNumber = Number(loanAmountString);
 
         setLoanDetails({
           amount: loanAmountNumber,
-          interest: 0, // Calculate based on contract terms
-          totalDue: loanAmountNumber, // Calculate total with interest
+          interest: 0,
+          totalDue: loanAmountNumber,
           transactionId: finalPayload.transaction_id,
         });
       } else {
         console.error("Error sending transaction", finalPayload, commandPayload);
         setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
-        setIsConfirming(false); // Reset `isConfirming` in case of error
+        setIsConfirming(false);
       }
     } catch (err) {
       console.error("Error sending transaction", err);
       setError(`Transaction failed: ${(err as Error).message}`);
-      setIsConfirming(false); // Reset `isConfirming` in case of error
+      setIsConfirming(false);
     }
   }, []);
 

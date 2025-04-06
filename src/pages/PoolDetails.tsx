@@ -393,6 +393,8 @@ const PoolDetails = () => {
 
   const shouldShowSupplyButton = pool?.status !== 'withdrawal';
   const shouldShowWithdrawButton = pool?.status !== 'active';
+  
+  const showPriceChart = false;
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -549,11 +551,13 @@ const PoolDetails = () => {
                 </CardContent>
               </Card>
 
-              <PoolPriceGraph 
-                poolId={pool.id} 
-                symbol={poolSymbol} 
-                contractAddress={pool.contract_address}
-              />
+              {showPriceChart && (
+                <PoolPriceGraph 
+                  poolId={pool.id} 
+                  symbol={poolSymbol} 
+                  contractAddress={pool.contract_address}
+                />
+              )}
 
               <UserPortfolioCard
                 balance={userPosition.balance}

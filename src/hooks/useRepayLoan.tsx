@@ -180,6 +180,9 @@ export function useRepayLoan() {
       if (finalPayload.status === "success") {
         console.log("Transaction sent successfully");
         
+        // Add a transaction ID
+        const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        
         // Call the onTransactionSent callback if provided
         if (onTransactionSent) {
           onTransactionSent();
@@ -187,7 +190,7 @@ export function useRepayLoan() {
         
         // Simulate waiting for transaction confirmation
         const confirmed = await waitForTransactionConfirmation(
-          "0x" + Math.random().toString(16).substring(2, 10), // Mock transaction hash
+          transactionId, // Use the transaction ID
           "Ethereum"
         );
         
@@ -199,13 +202,14 @@ export function useRepayLoan() {
             isPending: false,
           });
           
-          // Emit transaction event
+          // Emit transaction event with transaction ID
           emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
             type: TRANSACTION_TYPES.REPAY_LOAN,
             amount: totalDue,
             timestamp: Date.now(),
             action: 'repay',
-            isUserAction: true
+            isUserAction: true,
+            transactionId: transactionId
           });
           
           toast({

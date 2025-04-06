@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getUserLPBalance, previewRedeem } from '@/lib/backendRequests';
 import { toast } from '@/components/ui/use-toast';
 import { Cache } from '@/utils/cacheUtils';
@@ -19,6 +18,7 @@ export const useUserPoolPosition = (
 ): UserPositionData => {
   const [positionData, setPositionData] = useState<UserPositionData>(initialState);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const processedTransactions = useRef<Set<string>>(new Set());
   
   // Get wallet address from localStorage
   useEffect(() => {
@@ -68,73 +68,88 @@ export const useUserPoolPosition = (
 
   // Listen for relevant transaction events with improved logging
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
-    if (data?.poolContractAddress === poolContractAddress && walletAddress && data.isUserAction) {
-      // Only process if it's a user-initiated supply or withdraw transaction 
-      if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
-        console.log("[useUserPoolPosition] Received user transaction event, refreshing position data:", data);
-        const cacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
-        
-        // For immediate UI feedback, create an optimistic update
-        if (data.type === 'supply' && data.amount) {
-          Cache.update<UserPositionData>(cacheKey, (current) => {
-            if (!current) {
-              // If no position exists yet, create a new one
-              return {
-                balance: data.lpAmount || data.amount * 0.95,
-                currentValue: data.amount,
-                loading: false,
-                error: null
-              };
-            }
-            
-            // Use actual LP amount if available
-            const lpIncrease = data.lpAmount || data.amount * 0.95; 
-            const newBalance = current.balance + lpIncrease;
-            const newValue = current.currentValue + data.amount;
-            
-            console.log("[useUserPoolPosition] Optimistically updating position for supply:", { 
-              oldBalance: current.balance,
-              newBalance,
-              oldValue: current.currentValue,
-              newValue,
-              actualLpAmount: data.lpAmount
-            });
-            
+    // Skip if no relevant data or not for this pool
+    if (!data || !poolContractAddress || data?.poolContractAddress !== poolContractAddress || !walletAddress) {
+      return;
+    }
+    
+    // Skip if we've already processed this transaction
+    if (data.transactionId && processedTransactions.current.has(data.transactionId)) {
+      console.log("[useUserPoolPosition] Skipping already processed transaction:", data.transactionId);
+      return;
+    }
+    
+    // Add to processed transactions if it has an ID
+    if (data.transactionId) {
+      console.log("[useUserPoolPosition] Processing transaction:", data.transactionId);
+      processedTransactions.current.add(data.transactionId);
+    }
+    
+    // Only process if it's a user-initiated supply or withdraw transaction 
+    if ((data.type === 'supply' || data.type === 'withdraw') && data.amount && data.isUserAction) {
+      console.log("[useUserPoolPosition] Received user transaction event, refreshing position data:", data);
+      const cacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
+      
+      // For immediate UI feedback, create an optimistic update
+      if (data.type === 'supply' && data.amount) {
+        Cache.update<UserPositionData>(cacheKey, (current) => {
+          if (!current) {
+            // If no position exists yet, create a new one
             return {
-              ...current,
-              balance: newBalance,
-              currentValue: newValue
+              balance: data.lpAmount || data.amount * 0.95,
+              currentValue: data.amount,
+              loading: false,
+              error: null
             };
+          }
+          
+          // Use actual LP amount if available
+          const lpIncrease = data.lpAmount || data.amount * 0.95; 
+          const newBalance = current.balance + lpIncrease;
+          const newValue = current.currentValue + data.amount;
+          
+          console.log("[useUserPoolPosition] Optimistically updating position for supply:", { 
+            oldBalance: current.balance,
+            newBalance,
+            oldValue: current.currentValue,
+            newValue,
+            actualLpAmount: data.lpAmount
           });
-        } else if (data.type === 'withdraw' && data.amount) {
-          Cache.update<UserPositionData>(cacheKey, (current) => {
-            if (!current) return current;
-            
-            // Use provided LP amount or approximate it
-            const lpAmount = data.lpAmount || data.amount * 0.95;
-            const newBalance = Math.max(0, current.balance - lpAmount);
-            const newValue = Math.max(0, current.currentValue - data.amount);
-            
-            console.log("[useUserPoolPosition] Optimistically updating position for withdraw:", { 
-              oldBalance: current.balance,
-              newBalance,
-              oldValue: current.currentValue,
-              newValue
-            });
-            
-            return {
-              ...current,
-              balance: newBalance,
-              currentValue: newValue
-            };
+          
+          return {
+            ...current,
+            balance: newBalance,
+            currentValue: newValue
+          };
+        });
+      } else if (data.type === 'withdraw' && data.amount) {
+        Cache.update<UserPositionData>(cacheKey, (current) => {
+          if (!current) return current;
+          
+          // Use provided LP amount or approximate it
+          const lpAmount = data.lpAmount || data.amount * 0.95;
+          const newBalance = Math.max(0, current.balance - lpAmount);
+          const newValue = Math.max(0, current.currentValue - data.amount);
+          
+          console.log("[useUserPoolPosition] Optimistically updating position for withdraw:", { 
+            oldBalance: current.balance,
+            newBalance,
+            oldValue: current.currentValue,
+            newValue
           });
-        }
-        
-        // Get latest data after a short delay to allow blockchain to update
-        setTimeout(() => {
-          fetchPositionData(poolContractAddress, walletAddress, cacheKey);
-        }, 1000); // Slightly longer delay for blockchain confirmation
+          
+          return {
+            ...current,
+            balance: newBalance,
+            currentValue: newValue
+          };
+        });
       }
+      
+      // Get latest data after a short delay to allow blockchain to update
+      setTimeout(() => {
+        fetchPositionData(poolContractAddress, walletAddress, cacheKey);
+      }, 1000); // Slightly longer delay for blockchain confirmation
     }
   });
 

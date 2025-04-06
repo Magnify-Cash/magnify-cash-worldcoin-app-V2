@@ -18,7 +18,6 @@ import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { Cache } from "@/utils/cacheUtils";
 import { LiquidityPool } from "@/types/supabase/liquidity";
-import { emitCacheUpdate, EVENTS, TRANSACTION_TYPES } from "@/hooks/useCacheListener";
 import { useModalContext } from "@/contexts/ModalContext";
 
 interface SupplyModalProps {
@@ -27,7 +26,7 @@ interface SupplyModalProps {
   poolContractAddress?: string;
   lpSymbol?: string;
   walletAddress?: string;
-  onSuccessfulSupply?: (amount: number, lpAmount: number) => void;
+  onSuccessfulSupply?: (amount: number, lpAmount: number, transactionId: string) => void;
 }
 
 export function SupplyModal({ 
@@ -100,97 +99,6 @@ export function SupplyModal({
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
     return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
-  };
-
-  const updatePoolCache = (supplyAmount: number, actualLpAmount: number) => {
-    if (!poolContractAddress) return;
-    
-    console.log(`[SupplyModal] Updating pool cache for ${poolContractAddress} after supply of ${supplyAmount} USDC / ${actualLpAmount} LP`);
-    
-    const poolContractCacheKey = `pool_data_contract_${poolContractAddress}`;
-    
-    Cache.update<LiquidityPool>(poolContractCacheKey, (pool: LiquidityPool | undefined) => {
-      if (!pool) return pool;
-      
-      const updatedPool = {
-        ...pool,
-        total_value_locked: pool.total_value_locked + supplyAmount,
-        available_liquidity: pool.available_liquidity + supplyAmount,
-        token_a_amount: pool.token_a_amount + supplyAmount,
-        token_b_amount: pool.token_b_amount + supplyAmount
-      };
-      
-      emitCacheUpdate(EVENTS.POOL_DATA_UPDATED, {
-        key: poolContractCacheKey,
-        value: updatedPool,
-        action: 'update',
-        supplyAmount,
-        lpAmount: actualLpAmount,
-        isUserAction: true,
-        poolContractAddress
-      });
-      
-      return updatedPool;
-    });
-    
-    const allPoolsCacheKey = 'pool_data_all';
-    Cache.update<LiquidityPool[]>(allPoolsCacheKey, (pools: LiquidityPool[] | undefined) => {
-      if (!Array.isArray(pools)) return pools;
-      
-      const updatedPools = pools.map(pool => {
-        if (pool.contract_address === poolContractAddress) {
-          return {
-            ...pool,
-            total_value_locked: pool.total_value_locked + supplyAmount,
-            available_liquidity: pool.available_liquidity + supplyAmount,
-            token_a_amount: pool.token_a_amount + supplyAmount,
-            token_b_amount: pool.token_b_amount + supplyAmount
-          };
-        }
-        return pool;
-      });
-      
-      emitCacheUpdate(EVENTS.POOL_DATA_UPDATED, {
-        key: allPoolsCacheKey,
-        value: updatedPools,
-        action: 'update',
-        supplyAmount,
-        lpAmount: actualLpAmount,
-        isUserAction: true,
-        poolContractAddress
-      });
-      
-      return updatedPools;
-    });
-    
-    const userPositionCacheKey = `user_position_${walletAddress}_${poolContractAddress}`;
-    Cache.update<any>(userPositionCacheKey, (position) => {
-      if (!position) {
-        return {
-          balance: actualLpAmount,
-          currentValue: supplyAmount,
-          loading: false,
-          error: null
-        };
-      }
-      return {
-        ...position,
-        balance: position.balance + actualLpAmount,
-        currentValue: position.currentValue + supplyAmount,
-      };
-    });
-    
-    emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
-      type: TRANSACTION_TYPES.SUPPLY,
-      amount: supplyAmount,
-      lpAmount: actualLpAmount,
-      poolContractAddress,
-      timestamp: Date.now(),
-      action: 'deposit',
-      isUserAction: true
-    });
-    
-    console.log(`[SupplyModal] Finished updating cache and emitting events for ${poolContractAddress} supply of ${supplyAmount}`);
   };
 
   const waitForTransactionConfirmation = async (txHash: string, network: string, maxAttempts = 30) => {
@@ -331,16 +239,18 @@ export function SupplyModal({
   
       if (finalPayload.status === "success") {
         // Transaction was sent successfully
+        const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         setTransactionMessage("Transaction sent! Waiting for confirmation...");
         
         // In a real implementation, this would be a call to check the transaction status on-chain
         const confirmed = await waitForTransactionConfirmation(
-          "0x" + Math.random().toString(16).substring(2, 10), // Mock transaction hash
+          transactionId, // Use the actual transaction ID
           "Ethereum"
         );
         
         if (confirmed) {
-          updatePoolCache(loanAmount, expectedLpAmount);
+          // IMPORTANT: We're not updating the cache or emitting events here anymore
+          // This is now centralized in usePoolModals
           
           toast({
             title: "Supply successful",
@@ -348,7 +258,7 @@ export function SupplyModal({
           });
           
           if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
-            onSuccessfulSupply(loanAmount, expectedLpAmount);
+            onSuccessfulSupply(loanAmount, expectedLpAmount, transactionId);
           }
           
           setTimeout(() => {
@@ -371,6 +281,7 @@ export function SupplyModal({
           description: finalPayload.status === "error" && finalPayload.error_code
             ? finalPayload.error_code 
             : "Something went wrong",
+          variant: "destructive"
         });
         setTransactionPending(false);
       }
@@ -379,6 +290,7 @@ export function SupplyModal({
       toast({
         title: "Error",
         description: err.message ?? "Something went wrong",
+        variant: "destructive"
       });
       setTransactionPending(false);
     } finally {

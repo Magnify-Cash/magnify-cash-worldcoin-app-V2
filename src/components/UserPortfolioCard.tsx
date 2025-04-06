@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -37,6 +38,7 @@ export function UserPortfolioCard({
   const isMobile = useIsMobile();
   const [balance, setBalance] = useState(initialBalance);
   const [currentValue, setCurrentValue] = useState(initialCurrentValue);
+  const processedTransactions = useRef<Set<string>>(new Set());
   
   useEffect(() => {
     setBalance(initialBalance);
@@ -44,35 +46,49 @@ export function UserPortfolioCard({
   }, [initialBalance, initialCurrentValue]);
   
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
-    if (data && poolContractAddress && data.poolContractAddress === poolContractAddress && data.isUserAction) {
-      console.log("[UserPortfolioCard] User transaction event detected:", data);
-      
-      if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
-        if (data.type === 'supply') {
-          const lpIncrease = data.lpAmount || data.amount * 0.95; 
-          
-          console.log("[UserPortfolioCard] Applying optimistic supply update:", {
-            oldBalance: balance,
-            newBalance: balance + lpIncrease,
-            oldValue: currentValue,
-            newValue: currentValue + data.amount
-          });
-          
-          setBalance(prevBalance => prevBalance + lpIncrease);
-          setCurrentValue(prevValue => prevValue + data.amount);
-        } else if (data.type === 'withdraw') {
-          const lpDecrease = data.lpAmount || data.amount * 0.95;
-          
-          console.log("[UserPortfolioCard] Applying optimistic withdraw update:", {
-            oldBalance: balance,
-            newBalance: balance - lpDecrease,
-            oldValue: currentValue,
-            newValue: currentValue - data.amount
-          });
-          
-          setBalance(prevBalance => Math.max(0, prevBalance - lpDecrease));
-          setCurrentValue(prevValue => Math.max(0, prevValue - data.amount));
-        }
+    if (!data || !poolContractAddress || data.poolContractAddress !== poolContractAddress || !data.isUserAction) {
+      return;
+    }
+    
+    // Skip if we've already processed this transaction
+    if (data.transactionId && processedTransactions.current.has(data.transactionId)) {
+      console.log("[UserPortfolioCard] Skipping already processed transaction:", data.transactionId);
+      return;
+    }
+    
+    // Add to processed transactions if it has an ID
+    if (data.transactionId) {
+      console.log("[UserPortfolioCard] Processing transaction:", data.transactionId);
+      processedTransactions.current.add(data.transactionId);
+    }
+    
+    console.log("[UserPortfolioCard] User transaction event detected:", data);
+    
+    if ((data.type === 'supply' || data.type === 'withdraw') && data.amount) {
+      if (data.type === 'supply') {
+        const lpIncrease = data.lpAmount || data.amount * 0.95; 
+        
+        console.log("[UserPortfolioCard] Applying optimistic supply update:", {
+          oldBalance: balance,
+          newBalance: balance + lpIncrease,
+          oldValue: currentValue,
+          newValue: currentValue + data.amount
+        });
+        
+        setBalance(prevBalance => prevBalance + lpIncrease);
+        setCurrentValue(prevValue => prevValue + data.amount);
+      } else if (data.type === 'withdraw') {
+        const lpDecrease = data.lpAmount || data.amount * 0.95;
+        
+        console.log("[UserPortfolioCard] Applying optimistic withdraw update:", {
+          oldBalance: balance,
+          newBalance: balance - lpDecrease,
+          oldValue: currentValue,
+          newValue: currentValue - data.amount
+        });
+        
+        setBalance(prevBalance => Math.max(0, prevBalance - lpDecrease));
+        setCurrentValue(prevValue => Math.max(0, prevValue - data.amount));
       }
     }
   });

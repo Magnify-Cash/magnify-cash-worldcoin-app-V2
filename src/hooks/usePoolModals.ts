@@ -14,7 +14,8 @@ export const usePoolModals = () => {
     poolContractAddress: string | undefined,
     walletAddress: string | undefined,
     supplyAmount: number,
-    lpAmount: number
+    lpAmount: number,
+    transactionId: string
   ) => {
     if (!poolContractAddress || !walletAddress || isNaN(supplyAmount) || isNaN(lpAmount) || supplyAmount <= 0 || lpAmount <= 0) {
       console.error("[usePoolModals] Invalid parameters for updateUserPositionCache:", {
@@ -30,7 +31,8 @@ export const usePoolModals = () => {
       poolContractAddress,
       walletAddress,
       supplyAmount,
-      lpAmount
+      lpAmount,
+      transactionId
     });
     
     // Create a cache key for this specific user position
@@ -61,7 +63,7 @@ export const usePoolModals = () => {
     // Also update the pool data to reflect the new deposit
     updatePoolCache(poolContractAddress, supplyAmount);
     
-    // Emit a clear transaction event with detailed information
+    // Emit a clear transaction event with detailed information - CENTRAL EMISSION POINT
     emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
       type: TRANSACTION_TYPES.SUPPLY,
       amount: supplyAmount,
@@ -69,7 +71,8 @@ export const usePoolModals = () => {
       poolContractAddress: poolContractAddress,
       timestamp: Date.now(),
       action: 'deposit',
-      isUserAction: true
+      isUserAction: true,
+      transactionId: transactionId // Add unique ID
     });
   };
   
@@ -78,7 +81,8 @@ export const usePoolModals = () => {
     poolContractAddress: string | undefined,
     walletAddress: string | undefined,
     withdrawAmount: number,
-    lpAmount: number
+    lpAmount: number,
+    transactionId: string
   ) => {
     if (!poolContractAddress || !walletAddress || isNaN(withdrawAmount) || isNaN(lpAmount) || withdrawAmount <= 0 || lpAmount <= 0) {
       console.error("[usePoolModals] Invalid parameters for updateUserPositionCacheAfterWithdraw:", {
@@ -94,7 +98,8 @@ export const usePoolModals = () => {
       poolContractAddress,
       walletAddress,
       withdrawAmount,
-      lpAmount
+      lpAmount,
+      transactionId
     });
     
     // Create a cache key for this specific user position
@@ -115,7 +120,7 @@ export const usePoolModals = () => {
     // Also update the pool data to reflect the withdrawal
     updatePoolCache(poolContractAddress, -withdrawAmount);
     
-    // Emit a clear transaction event with detailed information
+    // Emit a clear transaction event with detailed information - CENTRAL EMISSION POINT
     emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
       type: TRANSACTION_TYPES.WITHDRAW,
       amount: withdrawAmount,
@@ -123,7 +128,8 @@ export const usePoolModals = () => {
       poolContractAddress: poolContractAddress,
       timestamp: Date.now(),
       action: 'withdrawal',
-      isUserAction: true
+      isUserAction: true,
+      transactionId: transactionId // Add unique ID
     });
   };
   
@@ -202,7 +208,7 @@ export const usePoolModals = () => {
     refreshPositions?: () => void;
     updateUserPositionOptimistically?: (poolId: number, amount: number) => void;
   }) => {
-    const wrappedOnSuccessfulSupply = (amount: number, lpAmount: number) => {
+    const wrappedOnSuccessfulSupply = (amount: number, lpAmount: number, transactionId: string) => {
       // Clear the transaction pending state
       setTransactionPending(false);
       setTransactionMessage(undefined);
@@ -219,7 +225,8 @@ export const usePoolModals = () => {
         params.poolContractAddress,
         walletAddress || undefined,
         amount,
-        lpAmount
+        lpAmount,
+        transactionId
       );
   
       // Call the original callback if provided
@@ -247,7 +254,7 @@ export const usePoolModals = () => {
     onSuccessfulWithdraw?: (amount: number, lpAmount: number) => void;
   }) => {
     // Wrap to handle cache updates on successful withdrawal
-    const wrappedOnSuccessfulWithdraw = (amount: number, lpAmount: number) => {
+    const wrappedOnSuccessfulWithdraw = (amount: number, lpAmount: number, transactionId: string) => {
       // Clear the transaction pending state
       setTransactionPending(false);
       setTransactionMessage(undefined);
@@ -259,7 +266,8 @@ export const usePoolModals = () => {
         params.poolContractAddress,
         walletAddress || undefined,
         amount,
-        lpAmount
+        lpAmount,
+        transactionId
       );
       
       // Call the original callback if provided

@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import eventEmitter from '@/utils/eventEmitter';
 
@@ -19,13 +20,14 @@ export const TRANSACTION_TYPES = {
  * Interface for transaction event data
  */
 export interface TransactionEventData {
-  type: typeof TRANSACTION_TYPES.SUPPLY | typeof TRANSACTION_TYPES.WITHDRAW;
+  type: typeof TRANSACTION_TYPES.SUPPLY | typeof TRANSACTION_TYPES.WITHDRAW | typeof TRANSACTION_TYPES.REPAY_LOAN;
   amount: number;
   lpAmount?: number;
   poolContractAddress?: string;
   timestamp: number;
-  action?: 'deposit' | 'withdrawal';
+  action?: 'deposit' | 'withdrawal' | 'repay';
   isUserAction?: boolean; // Flag to indicate whether this was triggered by a user action
+  transactionId?: string; // Unique ID to prevent duplicate handling
 }
 
 export function useCacheListener(
@@ -45,3 +47,4 @@ export function useCacheListener(
 export const emitCacheUpdate = (eventType: string, data: any) => {
   eventEmitter.emit(eventType, data);
 }
+

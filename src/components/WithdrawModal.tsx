@@ -12,18 +12,26 @@ import {
 import { AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { previewRedeem } from "@/lib/backendRequests";
+import { MiniKit } from "@worldcoin/minikit-js";
+import { useModalContext } from "@/contexts/ModalContext";
 
 interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
   lpBalance: number;
   lpValue: number;
-  poolContractAddress: string;
-  onSuccessfulWithdraw?: (amount: number, lpAmount: number) => void;
+  poolContractAddress?: string;
+  onSuccessfulWithdraw?: (amount: number, lpAmount: number, transactionId: string) => void;
 }
 
-export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue, poolContractAddress, onSuccessfulWithdraw }: WithdrawModalProps) {
+export function WithdrawModal({ 
+  isOpen, 
+  onClose, 
+  lpBalance = 0,
+  lpValue = 0,
+  poolContractAddress,
+  onSuccessfulWithdraw,
+}: WithdrawModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
@@ -116,14 +124,11 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue, poolContrac
       });
   
       if (finalPayload.status === "success") {
-        toast({
-          title: "Withdrawal successful",
-          description: `Tx ID: ${finalPayload.transaction_id}`,
-        });
+        const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         
         if (onSuccessfulWithdraw && typeof onSuccessfulWithdraw === 'function') {
           const withdrawAmount = parseFloat(amount);
-          onSuccessfulWithdraw(withdrawAmount, estimatedLpAmount);
+          onSuccessfulWithdraw(withdrawAmount, estimatedLpAmount, transactionId);
         }
         
         onClose();

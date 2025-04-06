@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
@@ -6,24 +5,44 @@ import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
 
-export type RequestLoanResponse = {
+export interface BorrowerInfo {
+  contractAddress?: string;
+  loanAmount?: number;
+  interestRate?: number;
+  loanPeriod?: number;
+}
+
+export interface ActiveLoan {
+  loanAmount: number;
+  startTimestamp: number;
+  isActive: boolean;
+  interestRate: number;
+  loanPeriod: number;
+}
+
+export interface RequestLoanResponse {
   requestNewLoan: (poolAddress: string) => Promise<void>;
   error: string | null;
   transactionId: string | null;
   isConfirming: boolean;
   isConfirmed: boolean;
-};
+  activeLoan: ActiveLoan | null;
+  borrowerInfo: BorrowerInfo | null;
+  refreshLoanData: () => void;
+}
 
 const useRequestLoan = (): RequestLoanResponse => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
+  const [activeLoan, setActiveLoan] = useState<ActiveLoan | null>(null);
+  const [borrowerInfo, setBorrowerInfo] = useState<BorrowerInfo | null>(null);
 
   const client = createPublicClient({
     chain: worldchain,
     transport: http('https://worldchain-mainnet.g.alchemy.com/public'),
-  })
+  });
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
@@ -33,7 +52,6 @@ const useRequestLoan = (): RequestLoanResponse => {
         app_id: WORLDCOIN_CLIENT_ID,
       },
     });
-    
 
   useEffect(() => {
     if (isConfirmingTransaction) {
@@ -93,7 +111,33 @@ const useRequestLoan = (): RequestLoanResponse => {
     }
   }, []);
 
-  return { requestNewLoan, error, transactionId, isConfirming, isConfirmed };
+  const refreshLoanData = useCallback(() => {
+    setBorrowerInfo({
+      contractAddress: "0x1234567890123456789012345678901234567890",
+      loanAmount: 100,
+      interestRate: 5,
+      loanPeriod: 30 * 24 * 60 * 60
+    });
+    
+    setActiveLoan({
+      loanAmount: 100,
+      startTimestamp: Math.floor(Date.now() / 1000) - 60 * 60 * 24,
+      isActive: true,
+      interestRate: 5,
+      loanPeriod: 30 * 24 * 60 * 60
+    });
+  }, []);
+
+  return { 
+    requestNewLoan, 
+    error, 
+    transactionId, 
+    isConfirming, 
+    isConfirmed,
+    activeLoan,
+    borrowerInfo,
+    refreshLoanData
+  };
 };
 
 export default useRequestLoan;

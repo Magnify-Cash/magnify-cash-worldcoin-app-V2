@@ -232,8 +232,8 @@ export function useRepayLoan() {
           });
         }
       } else {
-        const errorMessage = finalPayload.status === "error" && finalPayload.error_message
-          ? finalPayload.error_message
+        const errorMessage = finalPayload.status === "error" && finalPayload.error_code
+          ? finalPayload.error_code
           : "Transaction failed. Please try again.";
           
         setTransactionStatus({

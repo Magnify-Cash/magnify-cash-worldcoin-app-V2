@@ -12,7 +12,6 @@ import {
 import { AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MiniKit } from "@worldcoin/minikit-js";
 import { previewRedeem } from "@/lib/backendRequests";
 
 interface WithdrawModalProps {
@@ -132,8 +131,8 @@ export function WithdrawModal({ isOpen, onClose, lpBalance, lpValue, poolContrac
       } else {
         toast({
           title: "Withdrawal failed",
-          description: finalPayload.status === "error" && finalPayload.error_message
-            ? finalPayload.error_message
+          description: finalPayload.status === "error" && finalPayload.error_code
+            ? finalPayload.error_code
             : "Something went wrong",
         });
       }

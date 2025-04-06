@@ -368,8 +368,8 @@ export function SupplyModal({
       } else {
         toast({
           title: "Transaction failed",
-          description: finalPayload.status === "error" && finalPayload.error_message
-            ? finalPayload.error_message 
+          description: finalPayload.status === "error" && finalPayload.error_code
+            ? finalPayload.error_code 
             : "Something went wrong",
         });
         setTransactionPending(false);

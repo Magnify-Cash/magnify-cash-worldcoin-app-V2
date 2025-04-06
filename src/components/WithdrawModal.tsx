@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export function WithdrawModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const walletAddress = localStorage.getItem("ls_wallet_address") || null;
+  const { setTransactionPending, setTransactionMessage } = useModalContext();
 
   useEffect(() => {
     const fetchExchangeRate = async () => {
@@ -93,6 +95,8 @@ export function WithdrawModal({
       if (!amount || !walletAddress || !poolContractAddress) return;
   
       setIsLoading(true);
+      setTransactionPending(true);
+      setTransactionMessage("Processing your withdrawal...");
   
       const estimatedLpAmount = parseFloat(calculateLpTokenAmount());
       const lpTokenAmountWithDecimals = BigInt(Math.floor(estimatedLpAmount * 1_000_000));
@@ -127,6 +131,12 @@ export function WithdrawModal({
       if (finalPayload.status === "success") {
         const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         
+        // Skip the waiting for transaction confirmation - remove the loading state immediately
+        toast({
+          title: "Withdrawal successful",
+          description: "Your assets have been successfully withdrawn from the pool.",
+        });
+        
         if (onSuccessfulWithdraw && typeof onSuccessfulWithdraw === 'function') {
           const withdrawAmount = parseFloat(amount);
           onSuccessfulWithdraw(withdrawAmount, estimatedLpAmount, transactionId);
@@ -134,6 +144,7 @@ export function WithdrawModal({
         
         onClose();
         setAmount("");
+        setTransactionPending(false);
       } else {
         toast({
           title: "Withdrawal failed",
@@ -141,6 +152,7 @@ export function WithdrawModal({
             ? finalPayload.error_code
             : "Something went wrong",
         });
+        setTransactionPending(false);
       }
     } catch (err: any) {
       console.error("Withdraw error:", err);
@@ -148,6 +160,7 @@ export function WithdrawModal({
         title: "Transaction error",
         description: err.message ?? "Something went wrong",
       });
+      setTransactionPending(false);
     } finally {
       setIsLoading(false);
     }

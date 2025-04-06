@@ -1,16 +1,17 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { UserPoolPosition } from "@/hooks/useUserPoolPositions";
 import { usePoolModals } from "@/hooks/usePoolModals";
+import { useCacheListener, EVENTS } from '@/hooks/useCacheListener';
 
 interface ActivePositionsProps {
   positions: UserPoolPosition[];
   isMobile: boolean;
   refreshPositions: () => void;
-  updateUserPositionOptimistically: (poolId: number, amount: number) => void;
+  updateUserPositionOptimistically: (poolId: number, amount: number, isWithdrawal?: boolean) => void;
 }
 
 export const ActivePositions: React.FC<ActivePositionsProps> = ({
@@ -21,6 +22,25 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
 }) => {
   const navigate = useNavigate();
   const { openSupplyModal, openWithdrawModal } = usePoolModals();
+  const [positionsKey, setPositionsKey] = useState<number>(0);
+  const [processedTransactions] = useState<Set<string>>(new Set());
+
+  // Force re-render when transactions occur
+  useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
+    if (!data || !data.transactionId || processedTransactions.has(data.transactionId)) {
+      return;
+    }
+    
+    // Track processed transaction
+    processedTransactions.add(data.transactionId);
+    console.log('[ActivePositions] Transaction detected, forcing re-render:', data);
+    
+    // Force re-render by updating the key
+    setPositionsKey(prev => prev + 1);
+    
+    // Also refresh positions data after a short delay
+    setTimeout(() => refreshPositions(), 1000);
+  });
 
   const getStatusColor = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
     switch (status) {
@@ -78,10 +98,10 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" key={positionsKey}>
       {positions.map((position) => (
         <div 
-          key={position.poolId} 
+          key={`${position.poolId}-${position.balance}-${position.currentValue}`} 
           className="rounded-lg bg-white shadow-md overflow-hidden"
         >
           <div className="p-4">
@@ -132,8 +152,9 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                         poolId: position.poolId,
                         poolContractAddress: position.contractAddress,
                         lpSymbol: position.symbol,
-                        refreshPositions: refreshPositions, 
-                        updateUserPositionOptimistically: updateUserPositionOptimistically
+                        refreshPositions: refreshPositions,
+                        updateUserPositionOptimistically: (poolId, amount) => 
+                          updateUserPositionOptimistically(poolId, amount, false)
                       });
                     }}
                     size="sm"
@@ -149,7 +170,10 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                       poolId: position.poolId,
                       lpBalance: position.balance,
                       lpValue: position.currentValue,
-                      poolContractAddress: position.contractAddress
+                      poolContractAddress: position.contractAddress,
+                      onSuccessfulWithdraw: (amount) => {
+                        updateUserPositionOptimistically(position.poolId, amount, true);
+                      }
                     })}
                     variant="outline" 
                     size="sm"

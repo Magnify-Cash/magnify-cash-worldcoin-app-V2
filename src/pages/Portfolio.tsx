@@ -9,11 +9,13 @@ import { ActivePositions } from "@/components/portfolio/ActivePositions";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
 import { useNavigate } from "react-router-dom";
+import { useCacheListener, EVENTS } from '@/hooks/useCacheListener';
 
 const Portfolio = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [updateTrigger, setUpdateTrigger] = useState<number>(0);
   
   // Get user's wallet address from localStorage
   useEffect(() => {
@@ -26,6 +28,12 @@ const Portfolio = () => {
     setWalletAddress(ls_wallet);
   }, [navigate]);
   
+  // Listen for transaction events to force refresh
+  useCacheListener(EVENTS.TRANSACTION_COMPLETED, () => {
+    console.log('[Portfolio] Transaction event detected, triggering update');
+    setUpdateTrigger(prev => prev + 1);
+  });
+
   const { 
     positions, 
     totalValue, 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -43,6 +42,14 @@ const Portfolio = () => {
     
     console.log('[Portfolio] Transaction event detected, triggering update');
     setUpdateTrigger(prev => prev + 1);
+  });
+
+  // Listen for user position updates to refresh the portfolio
+  useCacheListener(EVENTS.USER_POSITION_UPDATED, (data) => {
+    if (walletAddress && data.key && data.key.includes(walletAddress)) {
+      console.log('[Portfolio] User position cache update detected, refreshing positions');
+      setUpdateTrigger(prev => prev + 1);
+    }
   });
 
   const { 

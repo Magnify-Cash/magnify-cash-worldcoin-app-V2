@@ -99,7 +99,7 @@ export const useUserPoolPositions = (
     } finally {
       setLoading(false);
     }
-  }, [walletAddress]);
+  }, [walletAddress, updateTrigger]);
 
   // Initial data fetch when component mounts or dependencies change
   useEffect(() => {

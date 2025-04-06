@@ -1,9 +1,9 @@
-
 import { useModalContext } from "@/contexts/ModalContext";
 import { Cache } from "@/utils/cacheUtils";
 import { UserPositionData } from "@/types/user";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { emitCacheUpdate, EVENTS, TRANSACTION_TYPES } from "@/hooks/useCacheListener";
+import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
 
 export const usePoolModals = () => {
   const { openModal, closeModal } = useModalContext();
@@ -174,30 +174,41 @@ export const usePoolModals = () => {
     poolContractAddress?: string;
     lpSymbol?: string;
     onSuccessfulSupply?: (amount: number) => void;
+    refreshPositions?: () => void; // Add refreshPositions as a parameter
   }) => {
-    // We'll wrap the provided onSuccessfulSupply callback to also update our caches
+    const { updateUserPositionOptimistically } = useUserPoolPositions(""); // Access the function
+
     const wrappedOnSuccessfulSupply = (amount: number) => {
-      // Get approximate LP amount (could be refined with actual value)
       const approximateLpAmount = amount * 0.95; // Simple approximation
       const walletAddress = localStorage.getItem("ls_wallet_address");
-      
+  
+      // Optimistically update the user's position
+      if (params.poolId) {
+        updateUserPositionOptimistically(params.poolId, amount);
+      }
+  
       // Update the user position cache
       updateUserPositionCache(
-        params.poolContractAddress, 
-        walletAddress || undefined, 
-        amount, 
+        params.poolContractAddress,
+        walletAddress || undefined,
+        amount,
         approximateLpAmount
       );
-      
+  
       // Call the original callback if provided
       if (params.onSuccessfulSupply) {
         params.onSuccessfulSupply(amount);
       }
+  
+      // Trigger refreshPositions to fetch updated data
+      if (params.refreshPositions) {
+        params.refreshPositions();
+      }
     };
-    
+  
     openModal("supply", {
       ...params,
-      onSuccessfulSupply: wrappedOnSuccessfulSupply
+      onSuccessfulSupply: wrappedOnSuccessfulSupply,
     });
   };
 

@@ -21,6 +21,7 @@ interface UseUserPoolPositionsResult {
   error: string | null;
   hasPositions: boolean;
   refreshPositions: () => void;
+  updateUserPositionOptimistically: (poolId: number, amount: number) => void;
 }
 
 export const useUserPoolPositions = (
@@ -105,12 +106,23 @@ export const useUserPoolPositions = (
     setRefreshTrigger(prev => prev + 1);
   };
 
+  const updateUserPositionOptimistically = (poolId: number, amount: number) => {
+    setPositions((prevPositions) =>
+      prevPositions.map((position) =>
+        position.poolId === poolId
+          ? { ...position, balance: position.balance + amount }
+          : position
+      )
+    );
+  };
+
   return { 
     positions, 
     totalValue, 
     loading, 
     error, 
     hasPositions,
-    refreshPositions
+    refreshPositions,
+    updateUserPositionOptimistically
   };
 };

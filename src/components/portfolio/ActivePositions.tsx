@@ -4,6 +4,7 @@ import { ExternalLink, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { UserPoolPosition } from "@/hooks/useUserPoolPositions";
 import { usePoolModals } from "@/hooks/usePoolModals";
+import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
 
 interface ActivePositionsProps {
   positions: UserPoolPosition[];
@@ -15,6 +16,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   isMobile
 }) => {
   const navigate = useNavigate();
+  const { refreshPositions, updateUserPositionOptimistically } = useUserPoolPositions(""); // Access refreshPositions and updateUserPositionOptimistically
   const { openSupplyModal, openWithdrawModal } = usePoolModals();
 
   const getStatusColor = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
@@ -122,11 +124,17 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
               <div className="flex gap-2">
                 {showSupplyButton(position.status) && (
                   <Button 
-                    onClick={() => openSupplyModal({
-                      poolId: position.poolId,
-                      poolContractAddress: position.contractAddress,
-                      lpSymbol: position.symbol
-                    })}
+                    onClick={() => {
+                      openSupplyModal({
+                        poolId: position.poolId,
+                        poolContractAddress: position.contractAddress,
+                        lpSymbol: position.symbol,
+                        refreshPositions, // Pass refreshPositions here
+                      });
+
+                      // Optimistically update the balance
+                      updateUserPositionOptimistically(position.poolId, 100); // Example amount
+                    }}
                     size="sm"
                     className="flex-1 bg-[#8B5CF6] hover:bg-[#7c4df3]"
                   >

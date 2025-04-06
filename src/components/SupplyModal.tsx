@@ -19,8 +19,6 @@ import { MiniKit } from "@worldcoin/minikit-js";
 import { Cache } from "@/utils/cacheUtils";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { emitCacheUpdate, EVENTS, TRANSACTION_TYPES } from "@/hooks/useCacheListener";
-import { TransactionOverlay } from "@/components/TransactionOverlay";
-import { useModalContext } from "@/contexts/ModalContext";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -46,13 +44,6 @@ export function SupplyModal({
   const [previewRequested, setPreviewRequested] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
-  
-  const { 
-    isTransactionPending, 
-    setTransactionPending,
-    transactionHash,
-    setTransactionHash
-  } = useModalContext();
   
   const { 
     balance: usdcBalance, 
@@ -205,7 +196,6 @@ export function SupplyModal({
       if (!walletAddress || !poolContractAddress || !amount) return;
   
       setIsLoading(true);
-      setTransactionPending(true);
       
       let expectedLpAmount = previewLpAmount;
       if (!expectedLpAmount && parseFloat(amount) >= 10) {
@@ -305,75 +295,38 @@ export function SupplyModal({
         ],
       });
   
-      if (finalPayload.status === "success" && finalPayload.hash) {
-        setTransactionHash(finalPayload.hash);
-        
+      if (finalPayload.status === "success") {
         updatePoolCache(loanAmount, expectedLpAmount);
         
         toast({
-          title: "Transaction submitted",
-          description: "Your deposit transaction has been submitted to the blockchain.",
+          title: "Supply successful",
+          description: "Your assets have been successfully supplied to the pool.",
         });
         
-        try {
-          const receipt = await MiniKit.core.waitForTransactionReceipt({
-            hash: finalPayload.hash as `0x${string}`
-          });
-          
-          console.log("Transaction receipt:", receipt);
-          
-          if (receipt.status === "success") {
-            toast({
-              title: "Supply successful",
-              description: "Your assets have been successfully supplied to the pool.",
-            });
-            
-            if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
-              onSuccessfulSupply(loanAmount);
-            }
-            
-            setTimeout(() => {
-              refreshBalance();
-            }, 1000);
-            
-            setTransactionPending(false);
-            onClose();
-            setAmount("");
-          } else {
-            toast({
-              title: "Transaction failed",
-              description: "Your transaction failed to complete on the blockchain.",
-              variant: "destructive",
-            });
-            setTransactionPending(false);
-          }
-        } catch (error) {
-          console.error("Error waiting for transaction receipt:", error);
-          toast({
-            title: "Transaction status unknown",
-            description: "Please check your wallet for transaction status.",
-            variant: "destructive",
-          });
-          setTransactionPending(false);
+        if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
+          onSuccessfulSupply(loanAmount);
         }
+        
+        setTimeout(() => {
+          refreshBalance();
+        }, 1000);
+        
+        onClose();
+        setAmount("");
       } else {
         toast({
           title: "Transaction failed",
           description: finalPayload.error_code === "user_rejected"
             ? "User rejected the transaction"
             : "Something went wrong",
-          variant: "destructive",
         });
-        setTransactionPending(false);
       }
     } catch (err: any) {
       console.error("Deposit failed", err);
       toast({
         title: "Error",
         description: err.message ?? "Something went wrong",
-        variant: "destructive",
       });
-      setTransactionPending(false);
     } finally {
       setIsLoading(false);
     }
@@ -403,7 +356,7 @@ export function SupplyModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !isTransactionPending && !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className={`sm:max-w-[425px] ${isMobile ? "max-w-[90%] p-4" : ""} rounded-lg`}
         style={{
@@ -449,14 +402,13 @@ export function SupplyModal({
                 inputMode="decimal"
                 ref={inputRef}
                 tabIndex={-1}
-                disabled={isTransactionPending}
               />
               <Button
                 type="button"
                 variant="ghost"
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
                 onClick={() => usdcBalance !== null && setAmount(usdcBalance.toString())}
-                disabled={balanceLoading || usdcBalance === null || isTransactionPending}
+                disabled={balanceLoading || usdcBalance === null}
               >
                 MAX
               </Button>
@@ -496,26 +448,16 @@ export function SupplyModal({
         <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
           <Button
             onClick={handleSupply}
-            disabled={!amount || !isAmountValid() || isLoading || balanceLoading || isTransactionPending}
+            disabled={!amount || !isAmountValid() || isLoading || balanceLoading}
             className="bg-[#8B5CF6] hover:bg-[#7c50e6] text-white w-full py-6"
           >
-            {isLoading || isTransactionPending ? "Processing..." : "Supply"}
+            {isLoading ? "Processing..." : "Supply"}
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={onClose} 
-            disabled={isLoading || isTransactionPending} 
-            className="w-full py-6"
-          >
+          <Button variant="outline" onClick={onClose} disabled={isLoading} className="w-full py-6">
             Cancel
           </Button>
         </DialogFooter>
       </DialogContent>
-      
-      <TransactionOverlay 
-        isVisible={isTransactionPending} 
-        message="Processing your deposit. Please don't close this window until the transaction is confirmed."
-      />
     </Dialog>
   );
 }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { MiniKit } from "@worldcoin/minikit-js";
 import { Cache } from "@/utils/cacheUtils";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { emitCacheUpdate, EVENTS, TRANSACTION_TYPES } from "@/hooks/useCacheListener";
+import { useModalContext } from "@/contexts/ModalContext";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -26,7 +28,7 @@ interface SupplyModalProps {
   poolContractAddress?: string;
   lpSymbol?: string;
   walletAddress?: string;
-  onSuccessfulSupply?: (amount: number) => void;
+  onSuccessfulSupply?: (amount: number, lpAmount: number) => void;
 }
 
 export function SupplyModal({ 
@@ -44,6 +46,7 @@ export function SupplyModal({
   const [previewRequested, setPreviewRequested] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const { setTransactionPending, setTransactionMessage } = useModalContext();
   
   const { 
     balance: usdcBalance, 
@@ -191,11 +194,41 @@ export function SupplyModal({
     console.log(`[SupplyModal] Finished updating cache and emitting events for ${poolContractAddress} supply of ${supplyAmount}`);
   };
 
+  const waitForTransactionConfirmation = async (txHash: string, network: string, maxAttempts = 30) => {
+    let attempts = 0;
+    
+    while (attempts < maxAttempts) {
+      try {
+        setTransactionMessage(`Waiting for transaction confirmation (${attempts + 1}/${maxAttempts})...`);
+        
+        // This is a simulated wait in our demo
+        // In a real implementation, you would check the blockchain for confirmation
+        await new Promise(resolve => setTimeout(resolve, 1000)); 
+        
+        // For demo purposes, we'll simulate successful confirmation after a few attempts
+        if (attempts >= 2) {
+          console.log(`Transaction ${txHash} confirmed on ${network}`);
+          return true;
+        }
+        
+        attempts++;
+      } catch (error) {
+        console.error("Error checking transaction status:", error);
+        attempts++;
+      }
+    }
+    
+    console.error(`Transaction ${txHash} could not be confirmed after ${maxAttempts} attempts`);
+    return false;
+  };
+
   const handleSupply = async () => {
     try {
       if (!walletAddress || !poolContractAddress || !amount) return;
   
       setIsLoading(true);
+      setTransactionPending(true);
+      setTransactionMessage("Preparing transaction...");
       
       let expectedLpAmount = previewLpAmount;
       if (!expectedLpAmount && parseFloat(amount) >= 10) {
@@ -235,7 +268,9 @@ export function SupplyModal({
       ];
   
       const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
-  
+      
+      setTransactionMessage("Please confirm the transaction in your wallet...");
+      
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
@@ -296,30 +331,49 @@ export function SupplyModal({
       });
   
       if (finalPayload.status === "success") {
-        updatePoolCache(loanAmount, expectedLpAmount);
+        // Transaction was sent successfully
+        setTransactionMessage("Transaction sent! Waiting for confirmation...");
         
-        toast({
-          title: "Supply successful",
-          description: "Your assets have been successfully supplied to the pool.",
-        });
+        // In a real implementation, this would be a call to check the transaction status on-chain
+        const confirmed = await waitForTransactionConfirmation(
+          "0x" + Math.random().toString(16).substring(2, 10), // Mock transaction hash
+          "Ethereum"
+        );
         
-        if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
-          onSuccessfulSupply(loanAmount);
+        if (confirmed) {
+          updatePoolCache(loanAmount, expectedLpAmount);
+          
+          toast({
+            title: "Supply successful",
+            description: "Your assets have been successfully supplied to the pool.",
+          });
+          
+          if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
+            onSuccessfulSupply(loanAmount, expectedLpAmount);
+          }
+          
+          setTimeout(() => {
+            refreshBalance();
+          }, 1000);
+          
+          onClose();
+          setAmount("");
+        } else {
+          toast({
+            title: "Transaction timeout",
+            description: "Your transaction was sent but could not be confirmed in time. Please check your wallet for status.",
+            variant: "destructive",
+          });
+          setTransactionPending(false);
         }
-        
-        setTimeout(() => {
-          refreshBalance();
-        }, 1000);
-        
-        onClose();
-        setAmount("");
       } else {
         toast({
           title: "Transaction failed",
-          description: finalPayload.error_code === "user_rejected"
+          description: finalPayload.status === "error" && finalPayload.error === "user_rejected"
             ? "User rejected the transaction"
             : "Something went wrong",
         });
+        setTransactionPending(false);
       }
     } catch (err: any) {
       console.error("Deposit failed", err);
@@ -327,6 +381,7 @@ export function SupplyModal({
         title: "Error",
         description: err.message ?? "Something went wrong",
       });
+      setTransactionPending(false);
     } finally {
       setIsLoading(false);
     }

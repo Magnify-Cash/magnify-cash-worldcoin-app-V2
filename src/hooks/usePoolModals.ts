@@ -1,3 +1,4 @@
+
 import { useModalContext } from "@/contexts/ModalContext";
 import { Cache } from "@/utils/cacheUtils";
 import { UserPositionData } from "@/types/user";
@@ -6,7 +7,7 @@ import { emitCacheUpdate, EVENTS, TRANSACTION_TYPES } from "@/hooks/useCacheList
 import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
 
 export const usePoolModals = () => {
-  const { openModal, closeModal } = useModalContext();
+  const { openModal, closeModal, setTransactionPending, setTransactionMessage } = useModalContext();
 
   // Function to update user position data in cache after a successful supply
   const updateUserPositionCache = (
@@ -15,7 +16,15 @@ export const usePoolModals = () => {
     supplyAmount: number,
     lpAmount: number
   ) => {
-    if (!poolContractAddress || !walletAddress) return;
+    if (!poolContractAddress || !walletAddress || isNaN(supplyAmount) || isNaN(lpAmount) || supplyAmount <= 0 || lpAmount <= 0) {
+      console.error("[usePoolModals] Invalid parameters for updateUserPositionCache:", {
+        poolContractAddress,
+        walletAddress,
+        supplyAmount,
+        lpAmount
+      });
+      return;
+    }
     
     console.log("[usePoolModals] Updating user position cache after supply:", {
       poolContractAddress,
@@ -71,7 +80,15 @@ export const usePoolModals = () => {
     withdrawAmount: number,
     lpAmount: number
   ) => {
-    if (!poolContractAddress || !walletAddress) return;
+    if (!poolContractAddress || !walletAddress || isNaN(withdrawAmount) || isNaN(lpAmount) || withdrawAmount <= 0 || lpAmount <= 0) {
+      console.error("[usePoolModals] Invalid parameters for updateUserPositionCacheAfterWithdraw:", {
+        poolContractAddress,
+        walletAddress,
+        withdrawAmount,
+        lpAmount
+      });
+      return;
+    }
     
     console.log("[usePoolModals] Updating user position cache after withdrawal:", {
       poolContractAddress,
@@ -115,6 +132,14 @@ export const usePoolModals = () => {
     poolContractAddress: string,
     supplyAmount: number
   ) => {
+    if (!poolContractAddress || isNaN(supplyAmount) || supplyAmount === 0) {
+      console.error("[usePoolModals] Invalid parameters for updatePoolCache:", {
+        poolContractAddress,
+        supplyAmount
+      });
+      return;
+    }
+    
     const poolContractCacheKey = `pool_data_contract_${poolContractAddress}`;
     
     Cache.update<LiquidityPool>(poolContractCacheKey, (pool) => {
@@ -173,12 +198,15 @@ export const usePoolModals = () => {
     poolId?: number;
     poolContractAddress?: string;
     lpSymbol?: string;
-    onSuccessfulSupply?: (amount: number) => void;
+    onSuccessfulSupply?: (amount: number, lpAmount: number) => void;
     refreshPositions?: () => void;
-    updateUserPositionOptimistically?: (poolId: number, amount: number) => void; // Accept as a parameter
+    updateUserPositionOptimistically?: (poolId: number, amount: number) => void;
   }) => {
-    const wrappedOnSuccessfulSupply = (amount: number) => {
-      const approximateLpAmount = amount * 0.95; // Simple approximation
+    const wrappedOnSuccessfulSupply = (amount: number, lpAmount: number) => {
+      // Clear the transaction pending state
+      setTransactionPending(false);
+      setTransactionMessage(undefined);
+      
       const walletAddress = localStorage.getItem("ls_wallet_address");
   
       // Optimistically update the user's position
@@ -191,12 +219,12 @@ export const usePoolModals = () => {
         params.poolContractAddress,
         walletAddress || undefined,
         amount,
-        approximateLpAmount
+        lpAmount
       );
   
       // Call the original callback if provided
       if (params.onSuccessfulSupply) {
-        params.onSuccessfulSupply(amount);
+        params.onSuccessfulSupply(amount, lpAmount);
       }
   
       // Trigger refreshPositions to fetch updated data
@@ -216,9 +244,14 @@ export const usePoolModals = () => {
     lpBalance?: number;
     lpValue?: number;
     poolContractAddress?: string;
+    onSuccessfulWithdraw?: (amount: number, lpAmount: number) => void;
   }) => {
     // Wrap to handle cache updates on successful withdrawal
     const wrappedOnSuccessfulWithdraw = (amount: number, lpAmount: number) => {
+      // Clear the transaction pending state
+      setTransactionPending(false);
+      setTransactionMessage(undefined);
+      
       const walletAddress = localStorage.getItem("ls_wallet_address");
       
       // Update the user position cache for withdrawal
@@ -228,6 +261,11 @@ export const usePoolModals = () => {
         amount,
         lpAmount
       );
+      
+      // Call the original callback if provided
+      if (params.onSuccessfulWithdraw) {
+        params.onSuccessfulWithdraw(amount, lpAmount);
+      }
     };
     
     openModal("withdraw", {
@@ -240,5 +278,7 @@ export const usePoolModals = () => {
     openSupplyModal,
     openWithdrawModal,
     closeModal,
+    setTransactionPending,
+    setTransactionMessage,
   };
 };

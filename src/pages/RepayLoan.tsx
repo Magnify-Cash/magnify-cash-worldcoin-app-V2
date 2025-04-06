@@ -1,198 +1,379 @@
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { LoanCard } from "@/components/LoanCard";
-import useRequestLoan from "@/hooks/useRequestLoan";
-import { TransactionOverlay } from "@/components/TransactionOverlay";
-import { useRepayLoan } from "@/hooks/useRepayLoan";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { Calendar, DollarSign, Clock } from "lucide-react";
+import { Loan, useMagnifyWorld } from "@/hooks/useMagnifyWorld";
+import { calculateRemainingTime } from "@/utils/timeinfo";
+import useRepayLoan from "@/hooks/useRepayLoan";
+import { useToast } from "@/hooks/use-toast";
+import { formatUnits } from "viem";
+import { getUSDCBalance } from "@/lib/backendRequests";
 
-const formSchema = z.object({
-  repaymentAmount: z.string().min(1, "Amount is required"),
-});
+const RepayLoan = () => {
+  // States
+  const [isClicked, setIsClicked] = useState(false);
 
-export default function RepayLoan() {
+  // hooks
+  const { toast } = useToast();
   const navigate = useNavigate();
-  const { activeLoan, borrowerInfo, refreshLoanData } = useRequestLoan();
-  const { repayLoan, isLoading, error, isSuccess, isPending } = useRepayLoan();
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const ls_wallet = localStorage.getItem("ls_wallet_address");
+  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const loan = data?.loan;
+  const loanData: Loan | undefined = loan && loan[1];
+  const loanVersion = loan ? loan[0] : "";
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      repaymentAmount: "",
-    },
-  });
+  console.log("[RepayLoan] Loan data:", loanData);
+  console.log("[RepayLoan] Loan version:", loanVersion);
 
+  // Update USDC balance on page load
   useEffect(() => {
-    refreshLoanData();
-  }, [refreshLoanData]);
-
-  useEffect(() => {
-    if (activeLoan && activeLoan.loanAmount) {
-      const interest = (activeLoan.loanAmount * activeLoan.interestRate) / 10000;
-      const totalDue = activeLoan.loanAmount + interest;
-      form.setValue("repaymentAmount", totalDue.toString());
-    }
-  }, [activeLoan, form]);
-
-  useEffect(() => {
-    if (isSuccess) {
-      setTimeout(() => {
-        navigate("/loan", { replace: true });
-      }, 2000);
-    }
-  }, [isSuccess, navigate]);
-
-  const handleRepayLoan = async (values: z.infer<typeof formSchema>) => {
-    if (!borrowerInfo || !activeLoan || !borrowerInfo.contractAddress) return;
-
-    try {
-      setShowConfirmation(true);
-      await repayLoan(
-        borrowerInfo.contractAddress,
-        {
-          amount: activeLoan.loanAmount,
-          startTime: activeLoan.startTimestamp,
-          isActive: activeLoan.isActive,
-          interestRate: activeLoan.interestRate,
-          loanPeriod: activeLoan.loanPeriod
-        },
-        () => {
-          // Success callback
-          setShowConfirmation(false);
-          refreshLoanData();
-        },
-        () => {
-          // Transaction sent callback
+    const updateUSDCBalance = async () => {
+      if (ls_wallet) {
+        try {
+          const balance = await getUSDCBalance(ls_wallet);
+          sessionStorage.setItem("usdcBalance", balance.toString());
+        } catch (error) {
+          console.error("Failed to fetch USDC balance:", error);
         }
-      );
-    } catch (err: any) {
-      console.error("Error repaying loan:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to repay loan",
-        variant: "destructive",
-      });
-      setShowConfirmation(false);
+      }
+    };
+
+    updateUSDCBalance();
+  }, [ls_wallet]);
+
+  // loan repayment
+  const loanAmountDue = useMemo(() => {
+    if (loanData) {
+      return loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
     }
-  };
+    return 0n; // Default value if loanData is not available
+  }, [loanData]);
 
-  const calculateTotalDue = () => {
-    if (!activeLoan) return 0;
-    const interest = (activeLoan.loanAmount * activeLoan.interestRate) / 10000;
-    return activeLoan.loanAmount + interest;
-  };
+  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
+  
+  const handleApplyLoan = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+      if (isClicked) return;
+  
+      setIsClicked(true);
 
-  return (
-    <div className="container py-8 max-w-lg mx-auto">
-      <TransactionOverlay isVisible={isPending} message="Repaying your loan, please wait for confirmation..." />
-      
-      <Card className="mb-8">
-        <CardHeader className="bg-gradient-to-r from-[#1A1E8F]/10 via-[#5A1A8F]/10 to-[#A11F75]/10">
-          <CardTitle className="text-2xl text-center bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-            Repay Your Loan
-          </CardTitle>
-          <CardDescription className="text-center">
-            Pay back your outstanding loan and associated interest
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-6 pt-6">
-          {activeLoan ? (
-            <>
-              <LoanCard
-                loan={activeLoan}
-                borrowerInfo={borrowerInfo}
-                showPayButton={false}
-                showStatus={true}
-              />
-              
-              <div className="bg-slate-50 p-4 rounded-lg">
-                <h4 className="text-lg font-medium mb-2">Repayment Details</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-gray-600">Principal:</div>
-                  <div className="text-right font-medium">${activeLoan.loanAmount.toFixed(2)}</div>
-                  
-                  <div className="text-gray-600">Interest ({activeLoan.interestRate / 100}%):</div>
-                  <div className="text-right font-medium">
-                    ${((activeLoan.loanAmount * activeLoan.interestRate) / 10000).toFixed(2)}
-                  </div>
-                  
-                  <div className="text-gray-600 font-medium">Total Due:</div>
-                  <div className="text-right font-bold">${calculateTotalDue().toFixed(2)}</div>
+      if(!sessionStorage.getItem("usdcBalance")) {
+        const balance = await getUSDCBalance(ls_wallet as string);
+        sessionStorage.setItem("usdcBalance", balance.toString());
+      }
+
+      const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
+      const amountDueFloat = Number(formatUnits(loanAmountDue, 6));
+
+      if (currentBalance < amountDueFloat) {
+        toast({
+          title: "Insufficient USDC",
+          description: `You need $${amountDueFloat.toFixed(2)} to repay the loan, but only have $${currentBalance.toFixed(2)}.`,
+          variant: "destructive",
+        });
+        setIsClicked(false);
+        return;
+      }
+  
+      try {
+        // If we have a loan and a version, proceed with repayment
+        if (loanData && loanVersion) {
+          await repayLoanWithPermit2(loanAmountDue, loanVersion);
+  
+          // Clear session storage
+          sessionStorage.removeItem("usdcBalance");
+          sessionStorage.removeItem("walletTokens");
+          sessionStorage.removeItem("walletCacheTimestamp");
+        } else {
+          toast({
+            title: "Error",
+            description: "Unable to pay back loan. No active loan found.",
+            variant: "destructive",
+          });
+        }
+      } catch (error: any) {
+        console.error("Loan repayment error:", error);
+        toast({
+          title: "Error",
+          description: error?.message?.includes("user rejected transaction")
+            ? "Transaction rejected by user."
+            : error?.message || "Unable to pay back loan.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsClicked(false);
+      }
+    },
+    [loanData, loanVersion, repayLoanWithPermit2, loanAmountDue, toast, ls_wallet]
+  );
+  
+  // Call refetch after loan repayment is confirmed
+  useEffect(() => {
+    if (isConfirmed) {
+      const timeout = setTimeout(async () => {
+        await refetch();
+      }, 1000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isConfirmed, refetch]);
+
+  // Loading & error states
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <Header title="Loan Status" />
+        <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
+            <div className="dot-spinner">
+              <div className="dot bg-[#1A1E8E]"></div>
+              <div className="dot bg-[#4A3A9A]"></div>
+              <div className="dot bg-[#7A2F8A]"></div>
+              <div className="dot bg-[#A11F75]"></div>
+            </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen">
+        <Header title="Loan Status" />
+        <div className="flex justify-center items-center h-[calc(100vh-80px)]">Error fetching data.</div>
+      </div>
+    );
+  }
+
+  // No NFT but has an active loan case (V1 or V2 loan)
+  if (data && (!data.nftInfo?.tokenId || data.nftInfo.tokenId === "0") && data.hasActiveLoan && loan) {
+    // For user with no NFT but with active loan, show loan details card
+    const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
+      BigInt(loanData?.startTime || 0), 
+      BigInt(loanData?.loanPeriod || 0)
+    );
+    
+    const amountDue = loanData?.amount ? 
+      loanData.amount + (loanData.amount * (loanData?.interestRate || 0n)) / 10000n : 0n;
+
+    return (
+      <div className="min-h-screen bg-background">
+        <Header title="Loan Status" />
+        <div className="container max-w-2xl mx-auto p-6 space-y-6">
+          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <span className="px-3 py-1 rounded-full bg-green-300 text-black text-sm">
+                Active Loan
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
+                  <p className="text-start font-semibold">${formatUnits(loanData?.amount || 0n, 6)}</p>
                 </div>
               </div>
-              
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleRepayLoan)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="repaymentAmount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Repayment Amount (USDC)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            type="number" 
-                            step="0.01"
-                            disabled={true}
-                            className="bg-gray-100"
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          This is the total amount due including interest
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <Button 
-                    type="submit"
-                    disabled={!activeLoan || isLoading || isSuccess}
-                    className="w-full bg-[#8B5CF6] hover:bg-[#7c50e6]"
-                  >
-                    {isLoading ? "Processing..." : isSuccess ? "Repayment Successful!" : "Repay Loan"}
-                  </Button>
-                </form>
-              </Form>
-            </>
-          ) : (
-            <div className="text-center py-6 text-gray-500">
-              {isLoading ? "Loading loan data..." : "No active loan found"}
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground text-start">Repayment Amount</p>
+                  <p className="text-start font-semibold">${formatUnits(amountDue, 6)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground text-start">Due Date</p>
+                  <p className="text-start font-semibold">
+                    {new Date(dueDate).toLocaleDateString("en-US", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZoneName: "short", 
+                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground text-start">Time Remaining</p>
+                  <p className="text-start font-semibold">
+                    {`${daysRemaining}d ${hoursRemaining}hr ${minutesRemaining}m`}
+                  </p>
+                </div>
+              </div>
             </div>
-          )}
-        </CardContent>
-        
-        <CardFooter className="flex flex-col gap-4">
+            
+            <Button onClick={handleApplyLoan} className="w-full mt-4 primary-button" disabled={isClicked || isConfirming || isConfirmed}>
+              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
+            </Button>
+            {transactionId && (
+              <div className="mt-4">
+                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+                  Transaction ID:{" "}
+                  <span title={transactionId}>
+                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+                  </span>
+                </p>
+                {isConfirming && (
+                  <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+                    <div className="flex justify-center">
+                      <div className="orbit-spinner">
+                        <div className="orbit"></div>
+                        <div className="orbit"></div>
+                        <div className="center"></div>
+                      </div>
+                    </div>
+                    <p className="text-white text-center max-w-md px-4 text-lg font-medium">
+                      Confirming transaction, please do not leave this page until confirmation is complete.
+                    </p>
+                  </div>
+                )}
+                {isConfirmed && (
+                  <>
+                    <p>Transaction confirmed!</p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user has an active loan
+  if (!loan || !loanData || loanData.amount === 0n || !loanData.isActive) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header title="Loan Status" />
+        <div className="container max-w-2xl mx-auto p-6 space-y-6">
+          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
+            <h3 className="text-lg font-semibold text-center">No Active Loans</h3>
+            <p className="text-center text-muted-foreground">
+              It looks like you don't have any active loans. Would you like to request one?
+            </p>
+            <Button onClick={() => navigate("/loan")} className="w-full mt-4">
+              Request a Loan
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Active loan with NFT case
+  const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
+    BigInt(loanData.startTime),
+    BigInt(loanData.loanPeriod),
+  );
+  const amountDue = loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
+  
+  return (
+    <div className="min-h-screen bg-background">
+      <Header title="Loan Status" />
+      <div className="container max-w-2xl mx-auto p-6 space-y-6">
+        <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <span
+              className={`px-3 py-1 rounded-full ${
+                loanData.isActive ? "bg-green-300" : "bg-red-300"
+              } text-black text-sm`}
+            >
+              {loanData.isActive
+                ? "Active Loan"
+                : "Defaulted Loan"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
+                <p className="text-start font-semibold">${formatUnits(loanData.amount, 6)} </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground text-start">Repayment Amount</p>
+                <p className="text-start font-semibold">${formatUnits(amountDue, 6)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground text-start">Due Date</p>
+                <p className="text-start font-semibold">
+                  {new Date(dueDate).toLocaleDateString("en-US", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZoneName: "short", 
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  })}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground text-start">Time Remaining</p>
+                <p className="text-start font-semibold">
+                  {`${daysRemaining}d ${hoursRemaining}hr ${minutesRemaining}m`}
+                </p>
+              </div>
+            </div>
+          </div>
           <Button
-            variant="outline"
-            onClick={() => navigate("/loan")}
-            className="w-full"
+            onClick={handleApplyLoan}
+            className="w-full primary-button"
+            disabled={isClicked || isConfirming || isConfirmed}
           >
-            Back to Loan
+            {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
           </Button>
-          
-          {error && (
-            <div className="text-red-500 text-center text-sm">{error}</div>
-          )}
-          
-          {isSuccess && (
-            <div className="text-green-500 text-center text-sm">
-              Loan successfully repaid! Redirecting...
+          {transactionId && (
+            <div className="mt-4">
+              <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+                Transaction ID:{" "}
+                <span title={transactionId}>
+                  {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+                </span>
+              </p>
+              {isConfirming && (
+                <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+                  <div className="flex justify-center">
+                    <div className="orbit-spinner">
+                      <div className="orbit"></div>
+                      <div className="orbit"></div>
+                      <div className="center"></div>
+                    </div>
+                  </div>
+                  <p className="text-white text-center max-w-md px-4 text-lg font-medium">
+                    Confirming transaction, please do not leave this page until confirmation is complete.
+                  </p>
+                </div>
+              )}
+              {isConfirmed && (
+                <>
+                  <p>Transaction confirmed!</p>
+                </>
+              )}
             </div>
           )}
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default RepayLoan;

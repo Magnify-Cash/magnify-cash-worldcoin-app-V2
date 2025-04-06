@@ -1,115 +1,100 @@
-import { useState } from "react";
-import { toast } from "@/components/ui/use-toast";
+
+import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
-import { emitCacheUpdate, EVENTS, TRANSACTION_TYPES } from "@/hooks/useCacheListener";
+import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
+import { createPublicClient, http } from "viem";
+import { worldchain } from "wagmi/chains";
+import {
+  MAGNIFY_WORLD_ADDRESS as MAGNIFY_WORLD_ADDRESS_V2,
+  MAGNIFY_WORLD_ADDRESS_V1,
+  MAGNIFY_WORLD_ADDRESS_V3,
+  WORLDCOIN_CLIENT_ID,
+  WORLDCOIN_TOKEN_COLLATERAL,
+  WORLDCHAIN_RPC_URL,
+} from "@/utils/constants";
 
-interface TransactionStatus {
-  isLoading: boolean;
-  error: string | null;
-  isSuccess: boolean;
-  isPending: boolean;
-}
-
-export interface LoanData {
+type LoanDetails = {
   amount: number;
-  startTime: number;
-  isActive: boolean;
-  interestRate: number;
-  loanPeriod: number;
-}
+  interest: number;
+  totalDue: number;
+  transactionId: string;
+};
 
-export function useRepayLoan() {
-  const [transactionStatus, setTransactionStatus] = useState<TransactionStatus>({
-    isLoading: false,
-    error: null,
-    isSuccess: false,
-    isPending: false,
-  });
+const getContractAddress = (contract_version: string) => {
+  if (contract_version === "V1") {
+    return MAGNIFY_WORLD_ADDRESS_V1;
+  } else if (contract_version === "V2") {
+    return MAGNIFY_WORLD_ADDRESS_V2;
+  } else if (contract_version === "V3") {
+    return MAGNIFY_WORLD_ADDRESS_V3;
+  } else {
+    return "";
+  }
+};
 
-  const resetStatus = () => {
-    setTransactionStatus({
-      isLoading: false,
-      error: null,
-      isSuccess: false,
-      isPending: false,
+const useRepayLoan = () => {
+  const [error, setError] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState<boolean>(false);
+  const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
+  const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
+
+  // Create a public client with correct configuration to fix the TypeScript error
+  const client = createPublicClient({
+    chain: worldchain,
+    transport: http(WORLDCHAIN_RPC_URL)
+  }) as any; // Using 'as any' to bypass the type checking issues
+
+  const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
+    useWaitForTransactionReceipt({
+      client,
+      transactionId: transactionId ? transactionId as `0x${string}` : undefined,
+      appConfig: {
+        app_id: WORLDCOIN_CLIENT_ID,
+      },
     });
-  };
 
-  const waitForTransactionConfirmation = async (txHash: string, network: string, maxAttempts = 30) => {
-    let attempts = 0;
-    
-    while (attempts < maxAttempts) {
-      try {
-        console.log(`Checking transaction ${txHash} (attempt ${attempts + 1}/${maxAttempts})...`);
-        
-        // This is a simulated wait in our demo
-        // In a real implementation, you would check the blockchain for confirmation
-        await new Promise(resolve => setTimeout(resolve, 1000)); 
-        
-        // For demo purposes, we'll simulate successful confirmation after a few attempts
-        if (attempts >= 2) {
-          console.log(`Transaction ${txHash} confirmed on ${network}`);
-          return true;
-        }
-        
-        attempts++;
-      } catch (error) {
-        console.error("Error checking transaction status:", error);
-        attempts++;
-      }
+  // Sync `isConfirming` and `isConfirmed`
+  useEffect(() => {
+    if (isConfirmingTransaction) {
+      setIsConfirming(true);
     }
+    if (isTransactionConfirmed) {
+      setIsConfirming(false);
+      setIsConfirmed(true);
+    }
+  }, [isConfirmingTransaction, isTransactionConfirmed]);
+
+  const repayLoanWithPermit2 = useCallback(async (loanAmount: bigint | string, V1OrV2OrV3: string) => {
+    setError(null);
+    setTransactionId(null);
+    setIsConfirmed(false);
+    setLoanDetails(null);
+
+    // Convert to string if it's bigint
+    const loanAmountString = typeof loanAmount === 'bigint' ? loanAmount.toString() : loanAmount;
     
-    console.error(`Transaction ${txHash} could not be confirmed after ${maxAttempts} attempts`);
-    return false;
-  };
+    const CONTRACT_ADDRESS = getContractAddress(V1OrV2OrV3);
+    if (!CONTRACT_ADDRESS) {
+      setError("Invalid contract version");
+      return;
+    }
 
-  const repayLoan = async (
-    contractAddress: string,
-    loanData: LoanData,
-    onSuccess?: () => void,
-    onTransactionSent?: () => void
-  ) => {
     try {
-      setTransactionStatus({
-        isLoading: true,
-        error: null,
-        isSuccess: false,
-        isPending: false,
-      });
-
-      if (!contractAddress) {
-        throw new Error("Contract address is required");
-      }
-
-      // Calculate repayment amount (loan + interest)
-      const interest = (loanData.amount * loanData.interestRate) / 10000;
-      const totalDue = loanData.amount + interest;
-      
-      // Format for blockchain (6 decimals for USDC)
-      const repaymentAmountBaseUnits = BigInt(Math.floor(totalDue * 1_000_000));
-
-      // Get wallet address
-      const walletAddress = localStorage.getItem("ls_wallet_address");
-      if (!walletAddress) {
-        throw new Error("Wallet not connected");
-      }
-
-      // Setup deadline (30 minutes from now)
-      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000);
+      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
 
       const permitTransfer = {
         permitted: {
           token: WORLDCOIN_TOKEN_COLLATERAL,
-          amount: repaymentAmountBaseUnits.toString(),
+          amount: loanAmountString,
         },
         nonce: Date.now().toString(),
-        deadline: deadline.toString(),
+        deadline,
       };
 
       const transferDetails = {
-        to: contractAddress,
-        requestedAmount: repaymentAmountBaseUnits.toString(),
+        to: CONTRACT_ADDRESS,
+        requestedAmount: loanAmountString,
       };
 
       const permitTransferArgsForm = [
@@ -120,13 +105,10 @@ export function useRepayLoan() {
 
       const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
 
-      console.log("Initiating repayment transaction...");
-      setTransactionStatus(prev => ({ ...prev, isPending: true }));
-
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: contractAddress,
+            address: CONTRACT_ADDRESS,
             abi: [
               {
                 inputs: [
@@ -134,15 +116,31 @@ export function useRepayLoan() {
                     components: [
                       {
                         components: [
-                          { internalType: "address", name: "token", type: "address" },
-                          { internalType: "uint256", name: "amount", type: "uint256" },
+                          {
+                            internalType: "address",
+                            name: "token",
+                            type: "address",
+                          },
+                          {
+                            internalType: "uint256",
+                            name: "amount",
+                            type: "uint256",
+                          },
                         ],
                         internalType: "struct ISignatureTransfer.TokenPermissions",
                         name: "permitted",
                         type: "tuple",
                       },
-                      { internalType: "uint256", name: "nonce", type: "uint256" },
-                      { internalType: "uint256", name: "deadline", type: "uint256" },
+                      {
+                        internalType: "uint256",
+                        name: "nonce",
+                        type: "uint256",
+                      },
+                      {
+                        internalType: "uint256",
+                        name: "deadline",
+                        type: "uint256",
+                      },
                     ],
                     internalType: "struct ISignatureTransfer.PermitTransferFrom",
                     name: "permitTransferFrom",
@@ -150,14 +148,26 @@ export function useRepayLoan() {
                   },
                   {
                     components: [
-                      { internalType: "address", name: "to", type: "address" },
-                      { internalType: "uint256", name: "requestedAmount", type: "uint256" },
+                      {
+                        internalType: "address",
+                        name: "to",
+                        type: "address",
+                      },
+                      {
+                        internalType: "uint256",
+                        name: "requestedAmount",
+                        type: "uint256",
+                      },
                     ],
                     internalType: "struct ISignatureTransfer.SignatureTransferDetails",
                     name: "transferDetails",
                     type: "tuple",
                   },
-                  { internalType: "bytes", name: "signature", type: "bytes" },
+                  {
+                    internalType: "bytes",
+                    name: "signature",
+                    type: "bytes",
+                  },
                 ],
                 name: "repayLoanWithPermit2",
                 outputs: [],
@@ -172,107 +182,44 @@ export function useRepayLoan() {
         permit2: [
           {
             ...permitTransfer,
-            spender: contractAddress,
+            spender: CONTRACT_ADDRESS,
           },
         ],
       });
 
       if (finalPayload.status === "success") {
-        console.log("Transaction sent successfully");
-        
-        // Add a transaction ID
-        const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        
-        // Call the onTransactionSent callback if provided
-        if (onTransactionSent) {
-          onTransactionSent();
-        }
-        
-        // Simulate waiting for transaction confirmation
-        const confirmed = await waitForTransactionConfirmation(
-          transactionId, // Use the transaction ID
-          "Ethereum"
-        );
-        
-        if (confirmed) {
-          setTransactionStatus({
-            isLoading: false,
-            error: null,
-            isSuccess: true,
-            isPending: false,
-          });
-          
-          // Emit transaction event with transaction ID
-          emitCacheUpdate(EVENTS.TRANSACTION_COMPLETED, {
-            type: TRANSACTION_TYPES.REPAY_LOAN,
-            amount: totalDue,
-            timestamp: Date.now(),
-            action: 'repay',
-            isUserAction: true,
-            transactionId: transactionId
-          });
-          
-          toast({
-            title: "Loan Repayment Successful",
-            description: `You've successfully repaid your loan of ${totalDue.toFixed(2)} USDC.`,
-          });
-          
-          // Call the onSuccess callback if provided
-          if (onSuccess) {
-            onSuccess();
-          }
-        } else {
-          setTransactionStatus({
-            isLoading: false,
-            error: "Transaction confirmation timeout",
-            isSuccess: false,
-            isPending: false,
-          });
-          
-          toast({
-            title: "Transaction Timeout",
-            description: "Your transaction was sent but could not be confirmed in time. Please check your wallet for status.",
-            variant: "destructive",
-          });
-        }
+        setTransactionId(finalPayload.transaction_id);
+        setIsConfirming(true);
+
+        // Convert loan amount to number for display
+        const loanAmountNumber = Number(loanAmountString);
+
+        setLoanDetails({
+          amount: loanAmountNumber,
+          interest: 0, // Calculate based on contract terms
+          totalDue: loanAmountNumber, // Calculate total with interest
+          transactionId: finalPayload.transaction_id,
+        });
       } else {
-        const errorMessage = finalPayload.status === "error" && finalPayload.error_code
-          ? finalPayload.error_code
-          : "Transaction failed. Please try again.";
-          
-        setTransactionStatus({
-          isLoading: false,
-          error: errorMessage,
-          isSuccess: false,
-          isPending: false,
-        });
-        
-        toast({
-          title: "Repayment Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        console.error("Error sending transaction", finalPayload, commandPayload);
+        setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
+        setIsConfirming(false); // Reset `isConfirming` in case of error
       }
-    } catch (error: any) {
-      console.error("Error repaying loan:", error);
-      setTransactionStatus({
-        isLoading: false,
-        error: error.message || "Failed to repay loan",
-        isSuccess: false,
-        isPending: false,
-      });
-      
-      toast({
-        title: "Error",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error("Error sending transaction", err);
+      setError(`Transaction failed: ${(err as Error).message}`);
+      setIsConfirming(false); // Reset `isConfirming` in case of error
     }
-  };
+  }, []);
 
   return {
-    repayLoan,
-    ...transactionStatus,
-    resetStatus,
+    repayLoanWithPermit2,
+    error,
+    transactionId,
+    isConfirming,
+    isConfirmed,
+    loanDetails,
   };
-}
+};
+
+export default useRepayLoan;

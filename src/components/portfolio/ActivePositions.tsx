@@ -1,24 +1,25 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { UserPoolPosition } from "@/hooks/useUserPoolPositions";
 import { usePoolModals } from "@/hooks/usePoolModals";
-import { useUserPoolPositions } from "@/hooks/useUserPoolPositions";
 
 interface ActivePositionsProps {
   positions: UserPoolPosition[];
   isMobile: boolean;
-  refreshPositions: () => void; // Add this
-  updateUserPositionOptimistically: (poolId: number, amount: number) => void; // Add this
+  refreshPositions: () => void;
+  updateUserPositionOptimistically: (poolId: number, amount: number) => void;
 }
 
 export const ActivePositions: React.FC<ActivePositionsProps> = ({
   positions,
-  isMobile
+  isMobile,
+  refreshPositions,
+  updateUserPositionOptimistically
 }) => {
   const navigate = useNavigate();
-  const { refreshPositions, updateUserPositionOptimistically } = useUserPoolPositions(""); // Access refreshPositions and updateUserPositionOptimistically
   const { openSupplyModal, openWithdrawModal } = usePoolModals();
 
   const getStatusColor = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
@@ -131,12 +132,9 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                         poolId: position.poolId,
                         poolContractAddress: position.contractAddress,
                         lpSymbol: position.symbol,
-                        refreshPositions, // Pass refreshPositions
-                        updateUserPositionOptimistically, // Pass the function here
+                        refreshPositions: refreshPositions, 
+                        updateUserPositionOptimistically: updateUserPositionOptimistically
                       });
-
-                      // Optionally, optimistically update the balance directly here
-                      updateUserPositionOptimistically(position.poolId, 100); // Example amount
                     }}
                     size="sm"
                     className="flex-1 bg-[#8B5CF6] hover:bg-[#7c4df3]"

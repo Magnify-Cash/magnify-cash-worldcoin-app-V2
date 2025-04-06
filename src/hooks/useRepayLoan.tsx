@@ -1,208 +1,156 @@
-import { useCallback, useState } from "react";
+
+import { useState, useCallback } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
-import { createPublicClient, http } from "viem";
-import { worldchain } from "wagmi/chains";
-import {
-  MAGNIFY_WORLD_ADDRESS as MAGNIFY_WORLD_ADDRESS_V2,
-  MAGNIFY_WORLD_ADDRESS_V1,
-  MAGNIFY_WORLD_ADDRESS_V3,
-  WORLDCOIN_CLIENT_ID,
-  WORLDCOIN_TOKEN_COLLATERAL,
-  WORLDCHAIN_RPC_URL,
-} from "@/utils/constants";
+import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 
-type LoanDetails = {
-  amount: number;
-  interest: number;
-  totalDue: number;
-  transactionId: string;
-};
+interface UseRepayLoanProps {
+  contractAddress: string;
+  repayAmount: number;
+  onSuccess?: () => void;
+}
 
-const getContractAddress = (contract_version: string) => {
-  if (contract_version === "V1") {
-    return MAGNIFY_WORLD_ADDRESS_V1;
-  } else if (contract_version === "V2") {
-    return MAGNIFY_WORLD_ADDRESS_V2;
-  } else if (contract_version === "V3") {
-    return MAGNIFY_WORLD_ADDRESS_V3;
-  } else {
-    return "";
-  }
-};
+interface UseRepayLoanReturn {
+  repay: () => Promise<void>;
+  isConfirming: boolean;
+  isConfirmed: boolean;
+  error: Error | null;
+  transactionId: string | null;
+}
 
-const useRepayLoan = () => {
+export function useRepayLoan({
+  contractAddress,
+  repayAmount,
+  onSuccess,
+}: UseRepayLoanProps): UseRepayLoanReturn {
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isConfirmed, setIsConfirmed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [transactionHash, setTransactionHash] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
 
-  const client = createPublicClient({
-    chain: worldchain,
-    transport: http('https://worldchain-mainnet.g.alchemy.com/public'),
-  });
-
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-  useWaitForTransactionReceipt({
-    client: client as any,
-    hash: transactionHash as `0x${string}` || "0x",
-  });
-
-  const repayLoan = useCallback(async (loanAmount: bigint) => {
-    setError(null);
-    setTransactionHash(null);
-    setIsLoading(true);
-    setLoanDetails(null);
-
+  const repay = useCallback(async () => {
     try {
-      // For simplicity, we're using V2 contract by default
-      const CONTRACT_VERSION = "V2";
-      const CONTRACT_ADDRESS = getContractAddress(CONTRACT_VERSION);
-      
-      if (!CONTRACT_ADDRESS) {
-        throw new Error("Invalid contract version");
-      }
+      setIsConfirming(true);
+      setError(null);
 
-      const loanAmountString = loanAmount.toString();
       const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
+      const repayAmountFormatted = BigInt(Math.floor(repayAmount * 1_000_000));
+      const walletAddress = localStorage.getItem("ls_wallet_address") || "";
 
       const permitTransfer = {
         permitted: {
           token: WORLDCOIN_TOKEN_COLLATERAL,
-          amount: loanAmountString,
+          amount: repayAmountFormatted.toString(),
         },
         nonce: Date.now().toString(),
         deadline,
       };
 
       const transferDetails = {
-        to: CONTRACT_ADDRESS,
-        requestedAmount: loanAmountString,
+        to: contractAddress,
+        requestedAmount: repayAmountFormatted.toString(),
       };
-
-      const permitTransferArgsForm = [
-        [permitTransfer.permitted.token, permitTransfer.permitted.amount],
-        permitTransfer.nonce,
-        permitTransfer.deadline,
-      ];
-
-      const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
 
       const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: CONTRACT_ADDRESS,
+            address: contractAddress,
             abi: [
               {
+                name: "repayLoanWithPermit2",
+                type: "function",
+                stateMutability: "nonpayable",
                 inputs: [
                   {
-                    components: [
-                      {
-                        components: [
-                          {
-                            internalType: "address",
-                            name: "token",
-                            type: "address",
-                          },
-                          {
-                            internalType: "uint256",
-                            name: "amount",
-                            type: "uint256",
-                          },
-                        ],
-                        internalType: "struct ISignatureTransfer.TokenPermissions",
-                        name: "permitted",
-                        type: "tuple",
-                      },
-                      {
-                        internalType: "uint256",
-                        name: "nonce",
-                        type: "uint256",
-                      },
-                      {
-                        internalType: "uint256",
-                        name: "deadline",
-                        type: "uint256",
-                      },
-                    ],
-                    internalType: "struct ISignatureTransfer.PermitTransferFrom",
                     name: "permitTransferFrom",
                     type: "tuple",
-                  },
-                  {
                     components: [
                       {
-                        internalType: "address",
-                        name: "to",
-                        type: "address",
+                        name: "permitted",
+                        type: "tuple",
+                        components: [
+                          { name: "token", type: "address" },
+                          { name: "amount", type: "uint256" },
+                        ],
                       },
-                      {
-                        internalType: "uint256",
-                        name: "requestedAmount",
-                        type: "uint256",
-                      },
+                      { name: "nonce", type: "uint256" },
+                      { name: "deadline", type: "uint256" },
                     ],
-                    internalType: "struct ISignatureTransfer.SignatureTransferDetails",
-                    name: "transferDetails",
-                    type: "tuple",
                   },
                   {
-                    internalType: "bytes",
-                    name: "signature",
-                    type: "bytes",
+                    name: "transferDetails",
+                    type: "tuple",
+                    components: [
+                      { name: "to", type: "address" },
+                      { name: "requestedAmount", type: "uint256" },
+                    ],
                   },
+                  { name: "signature", type: "bytes" },
                 ],
-                name: "repayLoanWithPermit2",
                 outputs: [],
-                stateMutability: "nonpayable",
-                type: "function",
               },
             ],
             functionName: "repayLoanWithPermit2",
-            args: [permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
+            args: [
+              [
+                [
+                  permitTransfer.permitted.token,
+                  permitTransfer.permitted.amount,
+                ],
+                permitTransfer.nonce,
+                permitTransfer.deadline,
+              ],
+              [transferDetails.to, transferDetails.requestedAmount],
+              "PERMIT2_SIGNATURE_PLACEHOLDER_0",
+            ],
           },
         ],
         permit2: [
           {
             ...permitTransfer,
-            spender: CONTRACT_ADDRESS,
+            spender: contractAddress,
           },
         ],
       });
 
-      if (finalPayload.status === "success") {
-        setTransactionHash(finalPayload.transaction_id);
+      console.log("Repay finalPayload:", finalPayload);
+
+      if (finalPayload.status === "success" && finalPayload.hash) {
+        setTransactionId(finalPayload.hash);
         
-        // Convert the loan amount string back to a number for state
-        const loanAmountNumber = Number(loanAmountString);
-        setLoanDetails({
-          amount: loanAmountNumber,
-          interest: 0, // We'd calculate this from contract in a real implementation
-          totalDue: loanAmountNumber,
-          transactionId: finalPayload.transaction_id,
-        });
+        // Wait for transaction receipt
+        try {
+          const receipt = await MiniKit.core.waitForTransactionReceipt({
+            // Removed hash property to fix type error
+            hash: finalPayload.hash as `0x${string}`
+          });
+          
+          console.log("Transaction receipt:", receipt);
+          
+          if (receipt.status === "success") {
+            setIsConfirmed(true);
+            if (onSuccess) {
+              onSuccess();
+            }
+          } else {
+            throw new Error("Transaction failed");
+          }
+        } catch (error) {
+          console.error("Error waiting for transaction:", error);
+          throw error;
+        }
+      } else if (finalPayload.error_code === "user_rejected") {
+        throw new Error("User rejected the transaction");
       } else {
-        const errorMessage = finalPayload.error_code === "user_rejected" 
-          ? "User rejected transaction" 
-          : "Transaction failed";
-        throw new Error(errorMessage);
+        throw new Error(finalPayload.error_message || "Transaction failed");
       }
-    } catch (err) {
-      console.error("Error sending transaction", err);
-      setError(err instanceof Error ? err : new Error(String(err)));
+    } catch (err: any) {
+      console.error("Repay error:", err);
+      setError(err);
+      throw err;
     } finally {
-      setIsLoading(false);
+      setIsConfirming(false);
     }
-  }, []);
+  }, [contractAddress, repayAmount, onSuccess]);
 
-  return {
-    repayLoan,
-    error,
-    transactionHash,
-    isLoading,
-    isConfirming,
-    loanDetails,
-  };
-};
-
-export default useRepayLoan;
+  return { repay, isConfirming, isConfirmed, error, transactionId };
+}

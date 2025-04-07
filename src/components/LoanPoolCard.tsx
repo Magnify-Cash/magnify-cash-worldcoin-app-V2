@@ -122,7 +122,7 @@ export const LoanPoolCard = ({
           )}
         </div>
         <div>
-          <p className="text-gray-600 text-sm flex items-center">
+          <p className="text-gray-600 text-sm flex items-center justify-center">
             Origination Fee
             <Popover>
               <PopoverTrigger asChild>
@@ -140,7 +140,7 @@ export const LoanPoolCard = ({
           {dataLoading ? (
             <Skeleton className="h-6 w-16" />
           ) : (
-            <p className="font-medium">{formattedOriginationFee}</p>
+            <p className="font-medium text-center">{formattedOriginationFee}</p>
           )}
         </div>
         

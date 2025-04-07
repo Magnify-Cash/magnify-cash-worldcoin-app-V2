@@ -5,6 +5,7 @@ import { readContract } from "@wagmi/core";
 import { config } from "@/providers/Wagmi";
 import { MAGNIFY_WORLD_ADDRESS_V3 } from "@/utils/constants";
 import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
+import { ActiveLoanData } from "@/utils/types";
 
 export const getLoanById = async (id: number): Promise<Loan | null> => {
   try {
@@ -43,6 +44,30 @@ export const getAllLoans = async (): Promise<Loan[]> => {
   } catch (error) {
     console.error("Error fetching loans:", error);
     return [];
+  }
+};
+
+export const getV3ActiveLoan = async (wallet: string, contractAddress: string): Promise<ActiveLoanData | null> => {
+  try {
+    console.log(`[getV3ActiveLoan] Checking active loan for wallet: ${wallet} on contract: ${contractAddress}`);
+    
+    const response = await backendRequest<ActiveLoanData>(
+      "GET",
+      "loan/active",
+      { wallet, contract: contractAddress },
+      { retries: 2 }
+    );
+    
+    console.log("[getV3ActiveLoan] Response:", response);
+    
+    if (response.status >= 200 && response.status < 300 && response.data) {
+      return response.data;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("[getV3ActiveLoan] Error:", error);
+    return null;
   }
 };
 

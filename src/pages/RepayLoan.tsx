@@ -63,7 +63,7 @@ const RepayLoan = () => {
           const tierInfo = data.allTiers.find(t => t.tierId === data.nftInfo?.tier);
           if (tierInfo) {
             const amount = BigInt(Math.round(tierInfo.loanAmount * 1e6)); // Convert to micros
-            const interest = BigInt(Math.round((amount * BigInt(tierInfo.interestRate)) / 10000n));
+            const interest = BigInt(Math.round((Number(amount) * tierInfo.interestRate) / 100)); // Fix type conversion
             return amount + interest;
           }
         }

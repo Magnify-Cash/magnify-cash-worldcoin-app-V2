@@ -13,6 +13,7 @@ import {
 import { magnifyV1Abi } from "@/utils/magnifyV1Abi";
 import { magnifyV2Abi } from "@/utils/magnifyV2Abi";
 import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
+import { getSoulboundPoolAddresses, getPoolLoanAmount, getPoolLoanInterestRate, getPoolLoanDuration, getActiveLoan } from "@/lib/backendRequests";
 
 export const VERIFICATION_TIERS: Record<"NONE" | "ORB", VerificationTier> = {
   NONE: {
@@ -152,36 +153,59 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         console.warn("[useMagnifyWorld] Error checking V2 loan:", err);
       }
 
-      // Check for V3 loans specifically
+      return null;
+    };
+
+    // Check for V3 loans by querying the backend API
+    const checkV3Loans = async (): Promise<[string, Loan] | null> => {
       try {
-        const result = await readContract(config, {
-          address: MAGNIFY_WORLD_ADDRESS_V3,
-          abi: magnifyV3Abi,
-          functionName: "fetchLoanByAddress",
-          args: [walletAddress],
-        });
+        console.log("[useMagnifyWorld] Checking V3 loans via backend API");
+        const poolAddressesResponse = await getSoulboundPoolAddresses();
         
-        console.log("[useMagnifyWorld] V3 loan check result:", result);
+        if (!poolAddressesResponse || !Array.isArray(poolAddressesResponse)) {
+          console.warn("[useMagnifyWorld] Failed to get pool addresses");
+          return null;
+        }
         
-        if (result) {
-          const [hasActiveLoan, rawLoan] = result as [boolean, any];
-          if (hasActiveLoan && rawLoan) {
-            return [
-              "V3",
-              {
-                amount: BigInt(rawLoan.amount || 0),
-                startTime: Number(rawLoan.startTime || 0),
-                isActive: true,
-                interestRate: BigInt(rawLoan.interestRate || 0),
-                loanPeriod: BigInt(rawLoan.loanPeriod || 0),
-              },
-            ];
+        for (const contractAddress of poolAddressesResponse) {
+          try {
+            const activeLoanData = await getActiveLoan(walletAddress, contractAddress);
+            
+            if (activeLoanData && activeLoanData.isActive) {
+              console.log(`[useMagnifyWorld] Found active V3 loan on contract ${contractAddress}:`, activeLoanData);
+              
+              // Get loan amount and interest rate from pool
+              const loanAmountResponse = await getPoolLoanAmount(contractAddress);
+              const interestRateResponse = await getPoolLoanInterestRate(contractAddress);
+              const loanDurationResponse = await getPoolLoanDuration(contractAddress);
+              
+              const amount = BigInt(Math.round((loanAmountResponse?.loanAmount || 0) * 1e6)); // Convert to micros
+              const interestRate = BigInt(
+                interestRateResponse?.interestRate ? 
+                Number(interestRateResponse.interestRate) * 100 : 0
+              ); // Convert to basis points (e.g., 5% = 500)
+              const loanPeriod = BigInt(loanDurationResponse?.seconds || 0);
+              const startTime = Number(activeLoanData.loanTimestamp) || 0;
+              
+              return [
+                "V3",
+                {
+                  amount,
+                  startTime,
+                  isActive: true,
+                  interestRate,
+                  loanPeriod,
+                },
+              ];
+            }
+          } catch (err) {
+            console.warn(`[useMagnifyWorld] Error checking contract ${contractAddress}:`, err);
           }
         }
       } catch (err) {
-        console.warn("[useMagnifyWorld] Error checking V3 loan:", err);
+        console.warn("[useMagnifyWorld] Error checking V3 loans:", err);
       }
-
+      
       return null;
     };
 
@@ -191,8 +215,18 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
 
       let tierData = null;
 
+      // Check for V1/V2 loans first
       const legacyLoan = await checkLegacyLoans();
       if (legacyLoan) loanData = legacyLoan;
+
+      // If no legacy loan, check for V3 loans
+      if (!loanData) {
+        const v3Loan = await checkV3Loans();
+        if (v3Loan) {
+          loanData = v3Loan;
+          console.log("[useMagnifyWorld] Using V3 loan:", loanData);
+        }
+      }
 
       const nftResponse = await getSoulboundUserNFT(walletAddress);
 
@@ -232,7 +266,7 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
             loanData = [
               nftData.loan?.version || "V3",
               {
-                amount: BigInt(nftData.loan?.amount || 0),
+                amount: BigInt(Math.round((nftData.loan?.amount || 0) * 1e6)),
                 startTime: nftData.loan?.startTime || 0,
                 isActive: nftData.loan?.isActive ?? true,
                 interestRate: BigInt(nftData.loan?.interestRate || 0),
@@ -242,36 +276,11 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
             
             console.log("[useMagnifyWorld] Using NFT data for loan:", loanData);
           } else if (nftData.ongoingLoan && !loanData) {
-            // If we know there's an active loan but we don't have details, use the V3 contract
-            try {
-              console.log("[useMagnifyWorld] Attempting to get V3 loan details from contract directly");
-              
-              const result = await readContract(config, {
-                address: MAGNIFY_WORLD_ADDRESS_V3,
-                abi: magnifyV3Abi,
-                functionName: "userLoans",
-                args: [walletAddress],
-              });
-              
-              if (result) {
-                console.log("[useMagnifyWorld] V3 userLoans result:", result);
-                const loan = result as any;
-                
-                loanData = [
-                  "V3",
-                  {
-                    amount: BigInt(loan.amount || loan[0] || 0),
-                    startTime: Number(loan.startTime || loan[1] || 0),
-                    isActive: Boolean(loan.isActive !== undefined ? loan.isActive : true),
-                    interestRate: BigInt(loan.interestRate || loan[3] || 0),
-                    loanPeriod: BigInt(loan.loanPeriod || loan[4] || 0),
-                  },
-                ];
-                
-                console.log("[useMagnifyWorld] Retrieved V3 loan data:", loanData);
-              }
-            } catch (err) {
-              console.warn("[useMagnifyWorld] Error getting V3 loan details:", err);
+            // If we know there's an active loan but don't have details, check V3 API again
+            const v3Loan = await checkV3Loans();
+            if (v3Loan) {
+              loanData = v3Loan;
+              console.log("[useMagnifyWorld] Retrieved V3 loan data after NFT check:", loanData);
             }
           }
         }

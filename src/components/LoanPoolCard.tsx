@@ -1,3 +1,4 @@
+
 import { Coins, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,7 +96,7 @@ export const LoanPoolCard = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 gap-4 mb-4">
         <div>
           <p className="text-gray-600 text-sm">Loan Amount</p>
           {dataLoading ? (
@@ -131,7 +132,7 @@ export const LoanPoolCard = ({
               </PopoverTrigger>
               <PopoverContent className="w-80 p-4 bg-white shadow-md rounded-md">
                 <p className="text-sm">
-                  Origination Fee is automatically deducted from your loan amount. This fee covers processing and administration costs.
+                  Origination Fee is automatically deducted from your loan amount.
                 </p>
               </PopoverContent>
             </Popover>

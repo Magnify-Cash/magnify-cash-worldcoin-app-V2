@@ -157,6 +157,8 @@ const Loan = () => {
         
         // Use the pool's specific loan amount instead of the generic loanData amount
         const poolLoanAmount = poolBorrowerInfo.loanAmount;
+
+        console.log(`[Loan] Pool ${contractAddress} loan amount: ${poolLoanAmount}, user balance: ${latestBalance}`);
   
         if (latestBalance < poolLoanAmount) {
           toast({

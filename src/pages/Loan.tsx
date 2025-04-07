@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -91,7 +92,8 @@ const Loan = () => {
               results[pool.contract_address!] = {
                 loanAmount: borrowerInfo.loanAmount,
                 interestRate: borrowerInfo.interestRate,
-                loanPeriod: borrowerInfo.loanPeriodDays * 24 * 60 * 60
+                loanPeriod: borrowerInfo.loanPeriodDays * 24 * 60 * 60,
+                originationFee: borrowerInfo.originationFee
               };
             })
             .catch(error => {
@@ -288,7 +290,7 @@ const Loan = () => {
               </Button>
             </div>
           ) : filteredPools.length > 0 ? (
-            filteredPools.map((pool) => {
+            filteredPools.map((pool, index) => {
               const contractAddress = pool.contract_address || "";
               const borrowerInfo = poolsWithBorrowerInfo[contractAddress];
               const isLoadingData = !borrowerInfo;
@@ -307,6 +309,11 @@ const Loan = () => {
               const loanPeriod = borrowerInfo ? 
                 borrowerInfo.loanPeriod : 
                 (pool.borrower_info.loanPeriodDays || 0) * 24 * 60 * 60;
+              
+              const originationFee = borrowerInfo ? 
+                borrowerInfo.originationFee : 
+                typeof pool.borrower_info.originationFee === 'string' ? 
+                  parseFloat(pool.borrower_info.originationFee.replace(/[^0-9.]/g, '')) : 0;
 
               return (
                 <LoanPoolCard
@@ -322,6 +329,8 @@ const Loan = () => {
                   disabled={isConfirming && selectedPool === contractAddress}
                   tierId={3}
                   dataLoading={isLoadingData}
+                  originationFee={originationFee}
+                  poolIndex={index}
                 />
               );
             })

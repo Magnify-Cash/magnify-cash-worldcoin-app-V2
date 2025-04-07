@@ -1,5 +1,4 @@
-
-import { Shield, Info } from "lucide-react";
+import { Coins, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -20,7 +19,19 @@ interface LoanPoolCardProps {
   disabled?: boolean;
   tierId: number;
   dataLoading?: boolean;
+  originationFee?: number;
+  poolIndex?: number;
 }
+
+// Array of colors for pool icons
+const POOL_COLORS = [
+  "text-[#8B5CF6]", // Vivid Purple
+  "text-[#F97316]", // Bright Orange
+  "text-[#0EA5E9]", // Ocean Blue
+  "text-[#1EAEDB]", // Bright Blue
+  "text-[#33C3F0]", // Sky Blue
+  "text-[#ea384c]", // Red
+];
 
 export const LoanPoolCard = ({
   name,
@@ -34,6 +45,8 @@ export const LoanPoolCard = ({
   disabled = false,
   tierId,
   dataLoading = false,
+  originationFee = 0,
+  poolIndex = 0,
 }: LoanPoolCardProps) => {
   const handleSelectPool = () => {
     onSelect(contractAddress, tierId);
@@ -64,6 +77,12 @@ export const LoanPoolCard = ({
     return '8.5%'; // Default fallback
   })();
 
+  // Format origination fee
+  const formattedOriginationFee = `${originationFee.toFixed(2)}%`;
+
+  // Determine icon color based on pool index
+  const iconColor = POOL_COLORS[poolIndex % POOL_COLORS.length];
+
   // Check if pool has enough liquidity
   const hasEnoughLiquidity = liquidity >= loanAmount;
 
@@ -71,21 +90,9 @@ export const LoanPoolCard = ({
     <div className="glass-card p-6 mb-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <Shield className="w-6 h-6 mr-2 text-[#5A1A8F]" />
+          <Coins className={`w-6 h-6 mr-2 ${iconColor}`} />
           <h3 className="text-lg font-medium">{name}</h3>
         </div>
-        {!hasEnoughLiquidity && !dataLoading && (
-          <Popover>
-            <PopoverTrigger>
-              <Info className="w-5 h-5 text-amber-500" />
-            </PopoverTrigger>
-            <PopoverContent className="w-80">
-              <p className="text-sm">
-                This pool currently doesn't have enough liquidity for your loan amount.
-              </p>
-            </PopoverContent>
-          </Popover>
-        )}
       </div>
       
       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -114,13 +121,37 @@ export const LoanPoolCard = ({
           )}
         </div>
         <div>
+          <p className="text-gray-600 text-sm flex items-center">
+            Origination Fee
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="ml-1 inline-flex">
+                  <Info className="h-3 w-3 text-gray-400 hover:text-gray-600 transition-colors" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4 bg-white shadow-md rounded-md">
+                <p className="text-sm">
+                  Origination Fee is automatically deducted from your loan amount. This fee covers processing and administration costs.
+                </p>
+              </PopoverContent>
+            </Popover>
+          </p>
+          {dataLoading ? (
+            <Skeleton className="h-6 w-16" />
+          ) : (
+            <p className="font-medium">{formattedOriginationFee}</p>
+          )}
+        </div>
+        
+        {/* Available Liquidity - commented out as requested */}
+        {/* <div>
           <p className="text-gray-600 text-sm">Available Liquidity</p>
           {dataLoading ? (
             <Skeleton className="h-6 w-24" />
           ) : (
             <p className="font-medium">${liquidity.toLocaleString()}</p>
           )}
-        </div>
+        </div> */}
       </div>
       
       <Button 
@@ -128,7 +159,7 @@ export const LoanPoolCard = ({
         disabled={isLoading || disabled || !hasEnoughLiquidity || dataLoading} 
         className="w-full"
       >
-        {isLoading ? "Loading..." : dataLoading ? "Loading Pool Data..." : !hasEnoughLiquidity ? "Insufficient Liquidity" : "Apply for Loan"}
+        {isLoading ? "Loading..." : dataLoading ? "Loading Pool Data..." : !hasEnoughLiquidity ? "Insufficient Liquidity" : "Apply Now"}
       </Button>
     </div>
   );

@@ -96,28 +96,26 @@ export const LoanPoolCard = ({
         </div>
       </div>
       
-      <div className="space-y-1 mb-4">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600 text-sm">Loan Amount:</span>
+      <div className="space-y-2 mb-4">
+        <div>
+          <p className="text-gray-600 text-sm mb-1">Loan Amount</p>
           {dataLoading ? (
             <Skeleton className="h-5 w-24" />
           ) : (
-            <span className="font-medium">${loanAmount.toLocaleString()}</span>
+            <p className="font-medium">${loanAmount.toLocaleString()}</p>
           )}
         </div>
-        
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600 text-sm">Interest Rate:</span>
+        <div>
+          <p className="text-gray-600 text-sm mb-1">Interest Rate</p>
           {dataLoading ? (
             <Skeleton className="h-5 w-16" />
           ) : (
-            <span className="font-medium">{formattedInterestRate}</span>
+            <p className="font-medium">{formattedInterestRate}</p>
           )}
         </div>
-        
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600 text-sm flex items-center">
-            Origination Fee:
+        <div>
+          <p className="text-gray-600 text-sm mb-1 flex items-center justify-center">
+            Origination Fee
             <Popover>
               <PopoverTrigger asChild>
                 <button className="ml-1 inline-flex">
@@ -130,20 +128,19 @@ export const LoanPoolCard = ({
                 </p>
               </PopoverContent>
             </Popover>
-          </span>
+          </p>
           {dataLoading ? (
             <Skeleton className="h-5 w-16" />
           ) : (
-            <span className="font-medium">{formattedOriginationFee}</span>
+            <p className="font-medium text-center">{formattedOriginationFee}</p>
           )}
         </div>
-        
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600 text-sm">Duration:</span>
+        <div>
+          <p className="text-gray-600 text-sm mb-1">Duration</p>
           {dataLoading ? (
             <Skeleton className="h-5 w-20" />
           ) : (
-            <span className="font-medium">{formattedLoanPeriod} days</span>
+            <p className="font-medium">{formattedLoanPeriod} days</p>
           )}
         </div>
         

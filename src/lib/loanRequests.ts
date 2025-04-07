@@ -1,6 +1,10 @@
 
 import backendRequest from "./request";
 import { Loan } from "@/types/supabase/loan";
+import { readContract } from "@wagmi/core";
+import { config } from "@/providers/Wagmi";
+import { MAGNIFY_WORLD_ADDRESS_V3 } from "@/utils/constants";
+import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
 
 export const getLoanById = async (id: number): Promise<Loan | null> => {
   try {
@@ -39,5 +43,59 @@ export const getAllLoans = async (): Promise<Loan[]> => {
   } catch (error) {
     console.error("Error fetching loans:", error);
     return [];
+  }
+};
+
+export const getV3LoanData = async (walletAddress: string): Promise<{
+  hasActiveLoan: boolean;
+  amount: bigint;
+  startTime: number;
+  interestRate: bigint;
+  loanPeriod: bigint;
+} | null> => {
+  try {
+    console.log("[getV3LoanData] Fetching V3 loan data for wallet:", walletAddress);
+    
+    const result = await readContract(config, {
+      address: MAGNIFY_WORLD_ADDRESS_V3,
+      abi: magnifyV3Abi,
+      functionName: "userLoans",
+      args: [walletAddress as `0x${string}`],
+    });
+    
+    console.log("[getV3LoanData] Raw V3 loan data:", result);
+    
+    if (result) {
+      const loan = result as any;
+      
+      // Try to detect the structure of the response
+      const amount = typeof loan.amount !== 'undefined' ? BigInt(loan.amount) : 
+                     Array.isArray(loan) && loan.length > 0 ? BigInt(loan[0] || 0) : BigInt(0);
+      
+      const startTime = typeof loan.startTime !== 'undefined' ? Number(loan.startTime) :
+                        Array.isArray(loan) && loan.length > 1 ? Number(loan[1] || 0) : 0;
+                        
+      const isActive = typeof loan.isActive !== 'undefined' ? Boolean(loan.isActive) : 
+                       Array.isArray(loan) && loan.length > 2 ? Boolean(loan[2] || false) : false;
+                       
+      const interestRate = typeof loan.interestRate !== 'undefined' ? BigInt(loan.interestRate) :
+                          Array.isArray(loan) && loan.length > 3 ? BigInt(loan[3] || 0) : BigInt(0);
+                          
+      const loanPeriod = typeof loan.loanPeriod !== 'undefined' ? BigInt(loan.loanPeriod) :
+                         Array.isArray(loan) && loan.length > 4 ? BigInt(loan[4] || 0) : BigInt(0);
+      
+      return {
+        hasActiveLoan: isActive,
+        amount,
+        startTime,
+        interestRate,
+        loanPeriod
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("[getV3LoanData] Error fetching V3 loan data:", error);
+    return null;
   }
 };

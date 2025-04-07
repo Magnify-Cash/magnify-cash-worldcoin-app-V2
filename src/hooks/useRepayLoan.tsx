@@ -28,7 +28,8 @@ const getContractAddress = (contract_version: string) => {
   } else if (contract_version === "V3") {
     return MAGNIFY_WORLD_ADDRESS_V3;
   } else {
-    return "";
+    console.warn(`[useRepayLoan] Invalid contract version: ${contract_version}, defaulting to V3`);
+    return MAGNIFY_WORLD_ADDRESS_V3;
   }
 };
 
@@ -70,6 +71,14 @@ const useRepayLoan = () => {
     setTransactionId(null);
     setIsConfirmed(false);
     setLoanDetails(null);
+    
+    console.log(`[useRepayLoan] Repaying loan with amount: ${loanAmount}, version: ${V1OrV2OrV3}`);
+
+    // Ensure loan amount is not 0
+    if (loanAmount === 0n || loanAmount === '0') {
+      setError("Invalid loan amount: cannot repay 0 tokens");
+      return;
+    }
 
     // Convert to string if it's bigint
     const loanAmountString = typeof loanAmount === 'bigint' ? loanAmount.toString() : loanAmount;
@@ -96,6 +105,9 @@ const useRepayLoan = () => {
         to: CONTRACT_ADDRESS,
         requestedAmount: loanAmountString,
       };
+
+      console.log("[useRepayLoan] Permit transfer:", permitTransfer);
+      console.log("[useRepayLoan] Transfer details:", transferDetails);
 
       const permitTransferArgsForm = [
         [permitTransfer.permitted.token, permitTransfer.permitted.amount],
@@ -186,6 +198,8 @@ const useRepayLoan = () => {
           },
         ],
       });
+
+      console.log("[useRepayLoan] Transaction response:", finalPayload);
 
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);

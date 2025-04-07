@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { getSoulboundUserNFT, getSoulboundData } from "@/lib/backendRequests";
@@ -151,6 +152,36 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         console.warn("[useMagnifyWorld] Error checking V2 loan:", err);
       }
 
+      // Check for V3 loans specifically
+      try {
+        const result = await readContract(config, {
+          address: MAGNIFY_WORLD_ADDRESS_V3,
+          abi: magnifyV3Abi,
+          functionName: "fetchLoanByAddress",
+          args: [walletAddress],
+        });
+        
+        console.log("[useMagnifyWorld] V3 loan check result:", result);
+        
+        if (result) {
+          const [hasActiveLoan, rawLoan] = result as [boolean, any];
+          if (hasActiveLoan && rawLoan) {
+            return [
+              "V3",
+              {
+                amount: BigInt(rawLoan.amount || 0),
+                startTime: Number(rawLoan.startTime || 0),
+                isActive: true,
+                interestRate: BigInt(rawLoan.interestRate || 0),
+                loanPeriod: BigInt(rawLoan.loanPeriod || 0),
+              },
+            ];
+          }
+        }
+      } catch (err) {
+        console.warn("[useMagnifyWorld] Error checking V3 loan:", err);
+      }
+
       return null;
     };
 
@@ -192,16 +223,57 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         };
 
         if ((nftData.hasActiveLoan || nftData.ongoingLoan) && !loanData) {
-          loanData = [
-            nftData.loan?.version || "V3",
-            {
-              amount: BigInt(nftData.loan?.amount || 0),
-              startTime: nftData.loan?.startTime || 0,
-              isActive: nftData.loan?.isActive ?? true,
-              interestRate: BigInt(nftData.loan?.interestRate || 0),
-              loanPeriod: BigInt(nftData.loan?.loanPeriod || 0),
-            },
-          ];
+          // Check if we have complete loan details from the NFT data
+          if (nftData.loan && 
+              (typeof nftData.loan.amount !== 'undefined' || 
+               typeof nftData.loan.interestRate !== 'undefined' ||
+               typeof nftData.loan.loanPeriod !== 'undefined')) {
+            
+            loanData = [
+              nftData.loan?.version || "V3",
+              {
+                amount: BigInt(nftData.loan?.amount || 0),
+                startTime: nftData.loan?.startTime || 0,
+                isActive: nftData.loan?.isActive ?? true,
+                interestRate: BigInt(nftData.loan?.interestRate || 0),
+                loanPeriod: BigInt(nftData.loan?.loanPeriod || 0),
+              },
+            ];
+            
+            console.log("[useMagnifyWorld] Using NFT data for loan:", loanData);
+          } else if (nftData.ongoingLoan && !loanData) {
+            // If we know there's an active loan but we don't have details, use the V3 contract
+            try {
+              console.log("[useMagnifyWorld] Attempting to get V3 loan details from contract directly");
+              
+              const result = await readContract(config, {
+                address: MAGNIFY_WORLD_ADDRESS_V3,
+                abi: magnifyV3Abi,
+                functionName: "userLoans",
+                args: [walletAddress],
+              });
+              
+              if (result) {
+                console.log("[useMagnifyWorld] V3 userLoans result:", result);
+                const loan = result as any;
+                
+                loanData = [
+                  "V3",
+                  {
+                    amount: BigInt(loan.amount || loan[0] || 0),
+                    startTime: Number(loan.startTime || loan[1] || 0),
+                    isActive: Boolean(loan.isActive !== undefined ? loan.isActive : true),
+                    interestRate: BigInt(loan.interestRate || loan[3] || 0),
+                    loanPeriod: BigInt(loan.loanPeriod || loan[4] || 0),
+                  },
+                ];
+                
+                console.log("[useMagnifyWorld] Retrieved V3 loan data:", loanData);
+              }
+            } catch (err) {
+              console.warn("[useMagnifyWorld] Error getting V3 loan details:", err);
+            }
+          }
         }
 
         if (nftData.tiers) tierData = nftData.tiers;
@@ -209,11 +281,13 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
 
       const newData: ContractData = {
         nftInfo: soulboundNFT,
-        hasActiveLoan: Boolean(loanData?.[1]?.isActive),
+        hasActiveLoan: Boolean(loanData?.[1]?.isActive || soulboundNFT.ongoingLoan),
         loan: loanData,
         allTiers: tierData || undefined,
       };
 
+      console.log("[useMagnifyWorld] Final contract data:", newData);
+      
       globalCache[walletAddress] = newData;
       setData(newData);
     } catch (error) {

@@ -224,7 +224,7 @@ export const getActiveLoan = async (
 ): Promise<ActiveLoanData> => {
   const response = await backendRequest<ActiveLoanData>(
     "GET",
-    "loan/active",
+    "v3/loan/active",
     { wallet, contract }
   );
 
@@ -244,7 +244,7 @@ export const getLoanHistory = async (
 ): Promise<LoanHistoryEntry> => {
   const response = await backendRequest<LoanHistoryEntry>(
     "GET",
-    "loan/history",
+    "v3/loan/history",
     { wallet, contract }
   );
 

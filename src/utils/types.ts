@@ -154,6 +154,7 @@ export interface SoulboundDataResponse {
     isActive: boolean;
     interestRate: number;
     loanPeriod: number;
+    poolAddress?: string;
   };
   tiers?: Array<{
     loanAmount: number;

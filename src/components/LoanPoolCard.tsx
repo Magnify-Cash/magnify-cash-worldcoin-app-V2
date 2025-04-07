@@ -89,40 +89,32 @@ export const LoanPoolCard = ({
 
   return (
     <div className="glass-card p-6 mb-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center">
           <Coins className={`w-6 h-6 mr-2 ${iconColor}`} />
           <h3 className="text-lg font-medium">{name}</h3>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 gap-4 mb-4">
+      <div className="space-y-2 mb-4">
         <div>
-          <p className="text-gray-600 text-sm">Loan Amount</p>
+          <p className="text-gray-600 text-sm mb-1">Loan Amount</p>
           {dataLoading ? (
-            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-5 w-24" />
           ) : (
             <p className="font-medium">${loanAmount.toLocaleString()}</p>
           )}
         </div>
         <div>
-          <p className="text-gray-600 text-sm">Interest Rate</p>
+          <p className="text-gray-600 text-sm mb-1">Interest Rate</p>
           {dataLoading ? (
-            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-5 w-16" />
           ) : (
             <p className="font-medium">{formattedInterestRate}</p>
           )}
         </div>
         <div>
-          <p className="text-gray-600 text-sm">Duration</p>
-          {dataLoading ? (
-            <Skeleton className="h-6 w-20" />
-          ) : (
-            <p className="font-medium">{formattedLoanPeriod} days</p>
-          )}
-        </div>
-        <div>
-          <p className="text-gray-600 text-sm flex items-center justify-center">
+          <p className="text-gray-600 text-sm mb-1 flex items-center justify-center">
             Origination Fee
             <Popover>
               <PopoverTrigger asChild>
@@ -138,9 +130,17 @@ export const LoanPoolCard = ({
             </Popover>
           </p>
           {dataLoading ? (
-            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-5 w-16" />
           ) : (
             <p className="font-medium text-center">{formattedOriginationFee}</p>
+          )}
+        </div>
+        <div>
+          <p className="text-gray-600 text-sm mb-1">Duration</p>
+          {dataLoading ? (
+            <Skeleton className="h-5 w-20" />
+          ) : (
+            <p className="font-medium">{formattedLoanPeriod} days</p>
           )}
         </div>
         

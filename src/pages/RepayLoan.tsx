@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -335,10 +334,7 @@ const RepayLoan = () => {
         <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
           <div className="flex items-center justify-between">
             <span className="px-3 py-1 rounded-full bg-green-300 text-black text-sm">
-              Active Loan {loanVersion ? `(${loanVersion})` : ''}
-              {loanVersion === 'V3' && loanData?.poolAddress && (
-                <span className="text-xs ml-1">Pool: {loanData.poolAddress.slice(0, 6)}...{loanData.poolAddress.slice(-4)}</span>
-              )}
+              Active Loan
             </span>
           </div>
 

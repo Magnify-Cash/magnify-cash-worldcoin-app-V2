@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import useRequestLoan from "@/hooks/useRequestLoan";
 import { Button } from "@/components/ui/button";
-import { useUSDCBalance } from "@/providers/USDCBalanceProvider";
 import { usePoolData } from "@/contexts/PoolDataContext";
 import { LoanPoolCard } from "@/components/LoanPoolCard";
 import { LiquidityPool } from "@/types/supabase/liquidity";
@@ -28,7 +27,6 @@ const Loan = () => {
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { data, isLoading: isLoadingNFT, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const { requestNewLoan, isConfirming, isConfirmed, transactionId } = useRequestLoan();
-  const { usdcBalance, refreshBalance } = useUSDCBalance();
   const { pools, loading: isLoadingPools } = usePoolData();
   
   // Extract loan information from data
@@ -139,9 +137,6 @@ const Loan = () => {
       setSelectedPool(contractAddress);
   
       try {
-        await refreshBalance();
-        const latestBalance = usdcBalance ?? 0;
-        
         // Get the borrower info for this specific pool
         const poolBorrowerInfo = poolsWithBorrowerInfo[contractAddress];
         
@@ -155,15 +150,27 @@ const Loan = () => {
           return;
         }
         
-        // Use the pool's specific loan amount instead of the generic loanData amount
+        // Find the pool by contract address to get its available liquidity
+        const selectedPoolData = pools.find(pool => pool.contract_address === contractAddress);
+        if (!selectedPoolData) {
+          toast({
+            title: "Error",
+            description: "Pool information not found. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Use the pool's specific loan amount and check against available liquidity
         const poolLoanAmount = poolBorrowerInfo.loanAmount;
+        const poolLiquidity = selectedPoolData.available_liquidity;
 
-        console.log(`[Loan] Pool ${contractAddress} loan amount: ${poolLoanAmount}, user balance: ${latestBalance}`);
+        console.log(`[Loan] Pool ${contractAddress} loan amount: ${poolLoanAmount}, pool liquidity: ${poolLiquidity}`);
   
-        if (latestBalance < poolLoanAmount) {
+        if (poolLiquidity < poolLoanAmount) {
           toast({
             title: "Loan Unavailable",
-            description: "Our lending pool is temporarily depleted. Please try again later.",
+            description: "This lending pool is temporarily depleted. Please try again later or choose another pool.",
             variant: "destructive",
           });
           return;
@@ -195,7 +202,7 @@ const Loan = () => {
         setIsClicked(false);
       }
     },
-    [data, requestNewLoan, toast, usdcBalance, refreshBalance, isClicked, poolsWithBorrowerInfo]
+    [data, requestNewLoan, toast, pools, isClicked, poolsWithBorrowerInfo]
   );
   
   // Handle navigation after claiming loan

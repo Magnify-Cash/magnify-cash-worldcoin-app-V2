@@ -1,8 +1,9 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
-import { createPublicClient } from "viem/clients";
-import { http } from "viem/transport";
+import { createPublicClient, http } from "viem";
+import { worldchain } from "wagmi/chains";
 import {
   MAGNIFY_WORLD_ADDRESS as MAGNIFY_WORLD_ADDRESS_V2,
   MAGNIFY_WORLD_ADDRESS_V1,
@@ -11,12 +12,6 @@ import {
   WORLDCOIN_TOKEN_COLLATERAL,
   WORLDCHAIN_RPC_URL,
 } from "@/utils/constants";
-
-const worldchain = {
-  id: 955305,
-  name: 'Worldcoin',
-  network: 'worldchain',
-};
 
 type LoanDetails = {
   amount: number;
@@ -31,6 +26,7 @@ const getContractAddress = (contract_version: string, poolAddress?: string) => {
   } else if (contract_version === "V2") {
     return MAGNIFY_WORLD_ADDRESS_V2;
   } else if (contract_version === "V3") {
+    // For V3 loans, use the specific pool address provided
     if (!poolAddress) {
       console.warn(`[useRepayLoan] No pool address provided for V3 loan, defaulting to main V3 contract`);
       return MAGNIFY_WORLD_ADDRESS_V3;
@@ -49,10 +45,11 @@ const useRepayLoan = () => {
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
 
+  // Create a public client with correct configuration to fix the TypeScript error
   const client = createPublicClient({
     chain: worldchain,
     transport: http(WORLDCHAIN_RPC_URL)
-  }) as any;
+  }) as any; // Using 'as any' to bypass the type checking issues
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
@@ -63,6 +60,7 @@ const useRepayLoan = () => {
       },
     });
 
+  // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
     if (isConfirmingTransaction) {
       setIsConfirming(true);
@@ -81,11 +79,13 @@ const useRepayLoan = () => {
     
     console.log(`[useRepayLoan] Repaying loan with amount: ${loanAmount}, version: ${V1OrV2OrV3}, poolAddress: ${poolAddress || 'N/A'}`);
 
+    // Ensure loan amount is not 0
     if (loanAmount === 0n || loanAmount === '0') {
       setError("Invalid loan amount: cannot repay 0 tokens");
       return;
     }
 
+    // Convert to string if it's bigint
     const loanAmountString = typeof loanAmount === 'bigint' ? loanAmount.toString() : loanAmount;
     
     const CONTRACT_ADDRESS = getContractAddress(V1OrV2OrV3, poolAddress);
@@ -211,23 +211,24 @@ const useRepayLoan = () => {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
 
+        // Convert loan amount to number for display
         const loanAmountNumber = Number(loanAmountString);
 
         setLoanDetails({
           amount: loanAmountNumber,
-          interest: 0,
-          totalDue: loanAmountNumber,
+          interest: 0, // Calculate based on contract terms
+          totalDue: loanAmountNumber, // Calculate total with interest
           transactionId: finalPayload.transaction_id,
         });
       } else {
         console.error("Error sending transaction", finalPayload, commandPayload);
         setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
-        setIsConfirming(false);
+        setIsConfirming(false); // Reset `isConfirming` in case of error
       }
     } catch (err) {
       console.error("Error sending transaction", err);
       setError(`Transaction failed: ${(err as Error).message}`);
-      setIsConfirming(false);
+      setIsConfirming(false); // Reset `isConfirming` in case of error
     }
   }, []);
 

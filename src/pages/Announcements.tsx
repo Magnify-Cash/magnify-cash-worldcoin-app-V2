@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,9 @@ const Announcements = () => {
   const { data: session } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       return session;
     },
   });

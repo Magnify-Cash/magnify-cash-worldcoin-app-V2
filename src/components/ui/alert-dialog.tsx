@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
@@ -14,9 +13,12 @@ const AlertDialogPortal = AlertDialogPrimitive.Portal
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
->(({ ...props }, ref) => (
+>(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
-    className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+    className={cn(
+      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
     {...props}
     ref={ref}
   />
@@ -72,10 +74,10 @@ AlertDialogFooter.displayName = "AlertDialogFooter"
 const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
->(({ ...props }, ref) => (
+>(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className="text-lg font-semibold"
+    className={cn("text-lg font-semibold", className)}
     {...props}
   />
 ))
@@ -84,10 +86,10 @@ AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName
 const AlertDialogDescription = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description>
->(({ ...props }, ref) => (
+>(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Description
     ref={ref}
-    className="text-sm text-muted-foreground"
+    className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
 ))

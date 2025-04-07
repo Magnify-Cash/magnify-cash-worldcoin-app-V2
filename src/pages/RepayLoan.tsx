@@ -7,8 +7,6 @@ import { Loan, useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import { calculateRemainingTime } from "@/utils/timeinfo";
 import useRepayLoan from "@/hooks/useRepayLoan";
 import { useToast } from "@/hooks/use-toast";
-import { createPublicClient } from "viem/clients";
-import { http } from "viem/transport";
 import { formatUnits } from "viem";
 import { getUSDCBalance } from "@/lib/backendRequests";
 

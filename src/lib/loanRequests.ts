@@ -53,7 +53,7 @@ export const getV3ActiveLoan = async (wallet: string, contractAddress: string): 
     
     const response = await backendRequest<ActiveLoanData>(
       "GET",
-      "loan/active",
+      "v3/loan/active",
       { wallet, contract: contractAddress },
       { retries: 2 }
     );
@@ -61,7 +61,12 @@ export const getV3ActiveLoan = async (wallet: string, contractAddress: string): 
     console.log("[getV3ActiveLoan] Response:", response);
     
     if (response.status >= 200 && response.status < 300 && response.data) {
-      return response.data;
+      // Add the pool address to the response data for easier access later
+      const loanData = {
+        ...response.data,
+        poolAddress: contractAddress
+      };
+      return loanData;
     }
     
     return null;
@@ -71,15 +76,18 @@ export const getV3ActiveLoan = async (wallet: string, contractAddress: string): 
   }
 };
 
+// This function will be deprecated as we're moving to backend API calls for V3 loans
 export const getV3LoanData = async (walletAddress: string): Promise<{
   hasActiveLoan: boolean;
   amount: bigint;
   startTime: number;
   interestRate: bigint;
   loanPeriod: bigint;
+  poolAddress?: string;
 } | null> => {
   try {
     console.log("[getV3LoanData] Fetching V3 loan data for wallet:", walletAddress);
+    console.warn("[getV3LoanData] This function is deprecated. Use backend API calls through useMagnifyWorld instead.");
     
     const result = await readContract(config, {
       address: MAGNIFY_WORLD_ADDRESS_V3,

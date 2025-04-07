@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "@/components/ui/use-toast";
-import { getSoulboundUserNFT, getSoulboundData } from "@/lib/backendRequests";
+import { getSoulboundUserNFT, getSoulboundData, getSoulboundPoolAddresses, getPoolLoanAmount, getPoolLoanInterestRate, getPoolLoanDuration, getActiveLoan } from "@/lib/backendRequests";
 import { readContract } from "@wagmi/core";
 import { config } from "@/providers/Wagmi";
 import {
@@ -13,7 +13,6 @@ import {
 import { magnifyV1Abi } from "@/utils/magnifyV1Abi";
 import { magnifyV2Abi } from "@/utils/magnifyV2Abi";
 import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
-import { getSoulboundPoolAddresses, getPoolLoanAmount, getPoolLoanInterestRate, getPoolLoanDuration, getActiveLoan } from "@/lib/backendRequests";
 
 export const VERIFICATION_TIERS: Record<"NONE" | "ORB", VerificationTier> = {
   NONE: {
@@ -65,6 +64,7 @@ export interface Loan {
   isActive: boolean;
   interestRate: bigint;
   loanPeriod: bigint;
+  poolAddress?: string; // Add pool address field for V3 loans
 }
 
 export interface ContractData {
@@ -195,6 +195,7 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
                   isActive: true,
                   interestRate,
                   loanPeriod,
+                  poolAddress: contractAddress, // Store the pool address for V3 loans
                 },
               ];
             }
@@ -271,6 +272,7 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
                 isActive: nftData.loan?.isActive ?? true,
                 interestRate: BigInt(nftData.loan?.interestRate || 0),
                 loanPeriod: BigInt(nftData.loan?.loanPeriod || 0),
+                poolAddress: nftData.loan?.poolAddress, // Include pool address if available
               },
             ];
             

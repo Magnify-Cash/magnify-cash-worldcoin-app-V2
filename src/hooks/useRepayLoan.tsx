@@ -20,16 +20,21 @@ type LoanDetails = {
   transactionId: string;
 };
 
-const getContractAddress = (contract_version: string) => {
+const getContractAddress = (contract_version: string, poolAddress?: string) => {
   if (contract_version === "V1") {
     return MAGNIFY_WORLD_ADDRESS_V1;
   } else if (contract_version === "V2") {
     return MAGNIFY_WORLD_ADDRESS_V2;
   } else if (contract_version === "V3") {
-    return MAGNIFY_WORLD_ADDRESS_V3;
+    // For V3 loans, use the specific pool address provided
+    if (!poolAddress) {
+      console.warn(`[useRepayLoan] No pool address provided for V3 loan, defaulting to main V3 contract`);
+      return MAGNIFY_WORLD_ADDRESS_V3;
+    }
+    return poolAddress as `0x${string}`;
   } else {
     console.warn(`[useRepayLoan] Invalid contract version: ${contract_version}, defaulting to V3`);
-    return MAGNIFY_WORLD_ADDRESS_V3;
+    return poolAddress || MAGNIFY_WORLD_ADDRESS_V3;
   }
 };
 
@@ -66,13 +71,13 @@ const useRepayLoan = () => {
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
-  const repayLoanWithPermit2 = useCallback(async (loanAmount: bigint | string, V1OrV2OrV3: string) => {
+  const repayLoanWithPermit2 = useCallback(async (loanAmount: bigint | string, V1OrV2OrV3: string, poolAddress?: string) => {
     setError(null);
     setTransactionId(null);
     setIsConfirmed(false);
     setLoanDetails(null);
     
-    console.log(`[useRepayLoan] Repaying loan with amount: ${loanAmount}, version: ${V1OrV2OrV3}`);
+    console.log(`[useRepayLoan] Repaying loan with amount: ${loanAmount}, version: ${V1OrV2OrV3}, poolAddress: ${poolAddress || 'N/A'}`);
 
     // Ensure loan amount is not 0
     if (loanAmount === 0n || loanAmount === '0') {
@@ -83,7 +88,7 @@ const useRepayLoan = () => {
     // Convert to string if it's bigint
     const loanAmountString = typeof loanAmount === 'bigint' ? loanAmount.toString() : loanAmount;
     
-    const CONTRACT_ADDRESS = getContractAddress(V1OrV2OrV3);
+    const CONTRACT_ADDRESS = getContractAddress(V1OrV2OrV3, poolAddress);
     if (!CONTRACT_ADDRESS) {
       setError("Invalid contract version");
       return;
@@ -108,6 +113,7 @@ const useRepayLoan = () => {
 
       console.log("[useRepayLoan] Permit transfer:", permitTransfer);
       console.log("[useRepayLoan] Transfer details:", transferDetails);
+      console.log("[useRepayLoan] Using contract address:", CONTRACT_ADDRESS);
 
       const permitTransferArgsForm = [
         [permitTransfer.permitted.token, permitTransfer.permitted.amount],

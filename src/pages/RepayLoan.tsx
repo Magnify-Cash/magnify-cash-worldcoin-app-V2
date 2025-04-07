@@ -26,6 +26,7 @@ const RepayLoan = () => {
 
   console.log("[RepayLoan] Loan data:", loanData);
   console.log("[RepayLoan] Loan version:", loanVersion);
+  console.log("[RepayLoan] Pool address:", loanData?.poolAddress || "Not available");
   console.log("[RepayLoan] Full data object:", data);
 
   // Update USDC balance on page load
@@ -104,7 +105,12 @@ const RepayLoan = () => {
       try {
         // If we have a loan and a version, proceed with repayment
         if (loanVersion) {
-          await repayLoanWithPermit2(loanAmountDue, loanVersion);
+          // Get the pool address for V3 loans
+          const poolAddress = loanVersion === "V3" ? loanData?.poolAddress : undefined;
+          
+          console.log(`[RepayLoan] Repaying ${loanVersion} loan with amount: ${loanAmountDue}, pool address: ${poolAddress || 'N/A'}`);
+          
+          await repayLoanWithPermit2(loanAmountDue, loanVersion, poolAddress);
   
           // Clear session storage
           sessionStorage.removeItem("usdcBalance");
@@ -130,7 +136,7 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [loanVersion, repayLoanWithPermit2, loanAmountDue, toast, ls_wallet]
+    [loanVersion, repayLoanWithPermit2, loanAmountDue, toast, ls_wallet, loanData?.poolAddress]
   );
   
   // Call refetch after loan repayment is confirmed
@@ -330,6 +336,9 @@ const RepayLoan = () => {
           <div className="flex items-center justify-between">
             <span className="px-3 py-1 rounded-full bg-green-300 text-black text-sm">
               Active Loan {loanVersion ? `(${loanVersion})` : ''}
+              {loanVersion === 'V3' && loanData?.poolAddress && (
+                <span className="text-xs ml-1">Pool: {loanData.poolAddress.slice(0, 6)}...{loanData.poolAddress.slice(-4)}</span>
+              )}
             </span>
           </div>
 

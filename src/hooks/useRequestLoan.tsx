@@ -1,9 +1,26 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
-import { createPublicClient, http } from "viem";
-import { worldchain } from "wagmi/chains";
+import { createPublicClient } from "viem/clients"; // Updated import
+import { http } from "viem/transport"; // Updated import
+
+// Define worldchain here for local use
+const worldchain = {
+  id: 955305,
+  name: 'Worldcoin',
+  network: 'worldchain',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Worldcoin',
+    symbol: 'WLD',
+  },
+  rpcUrls: {
+    public: { http: ['https://worldchain-mainnet.g.alchemy.com/public'] },
+    default: { http: ['https://worldchain-mainnet.g.alchemy.com/public'] },
+  },
+};
 
 export interface BorrowerInfo {
   contractAddress?: string;

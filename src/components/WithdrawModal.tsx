@@ -21,6 +21,11 @@ import {
   calculateEarlyExitFeeFromContract,
   calculateNetAmountAfterContractFee
 } from "@/utils/feeUtils";
+import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
+import { useWalletClient, usePublicClient } from "wagmi";
+import { worldchain } from "viem/chains";
+import { erc20Abi } from 'viem';
+import { parseUnits } from 'viem/utils';
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -58,6 +63,8 @@ export function WithdrawModal({
     setTransactionPending, 
     setTransactionMessage 
   } = useModalContext();
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
 
   console.log("[WithdrawModal] Rendering with poolStatus:", poolStatus);
   console.log("[WithdrawModal] Rendering with poolContractAddress:", poolContractAddress);
@@ -176,6 +183,8 @@ export function WithdrawModal({
     try {
       if (!amount || !walletAddress || !poolContractAddress) return;
   
+      const isMiniApp = MiniKit.isInstalled();
+  
       setIsLoading(true);
       setTransactionPending(true);
       setTransactionMessage("Processing your withdrawal...");
@@ -190,68 +199,77 @@ export function WithdrawModal({
           estimatedLpAmount = parseFloat(amount) / exchangeRate || parseFloat(amount);
         }
       }
-      
-      const lpTokenAmountWithDecimals = BigInt(Math.floor(estimatedLpAmount * 1_000_000));
   
-      const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
-        transaction: [
-          {
-            address: poolContractAddress,
-            abi: [
-              {
-                name: "redeem",
-                type: "function",
-                stateMutability: "nonpayable",
-                inputs: [
-                  { name: "shares", type: "uint256" },
-                  { name: "receiver", type: "address" },
-                  { name: "owner", type: "address" },
-                ],
-                outputs: [{ type: "uint256" }],
-              },
-            ],
-            functionName: "redeem",
-            args: [
-              lpTokenAmountWithDecimals.toString(),
-              walletAddress,
-              walletAddress,
-            ],
-          },
-        ],
+      const lpTokenAmountWithDecimals = parseUnits(estimatedLpAmount.toFixed(6), 6); // LP tokens = 6 decimals
+  
+      if (isMiniApp) {
+        const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+          transaction: [
+            {
+              address: poolContractAddress,
+              abi: [
+                {
+                  name: "redeem",
+                  type: "function",
+                  stateMutability: "nonpayable",
+                  inputs: [
+                    { name: "shares", type: "uint256" },
+                    { name: "receiver", type: "address" },
+                    { name: "owner", type: "address" },
+                  ],
+                  outputs: [{ type: "uint256" }],
+                },
+              ],
+              functionName: "redeem",
+              args: [
+                lpTokenAmountWithDecimals.toString(),
+                walletAddress,
+                walletAddress,
+              ],
+            },
+          ],
+        });
+  
+        if (finalPayload.status !== "success") {
+          throw new Error(finalPayload.error_code || "Withdrawal failed");
+        }
+      } else {
+        if (!walletClient || !publicClient) throw new Error("Wallet client not ready");
+  
+        setTransactionMessage("Sending withdrawal transaction...");
+  
+        const hash = await walletClient.writeContract({
+          account: walletAddress as `0x${string}`,
+          address: poolContractAddress as `0x${string}`,
+          abi: magnifyV3Abi,
+          functionName: "redeem",
+          args: [lpTokenAmountWithDecimals, walletAddress, walletAddress],
+          chain: worldchain,
+        });
+  
+        await publicClient.waitForTransactionReceipt({ hash });
+      }
+  
+      toast({
+        title: "Withdrawal successful",
+        description: isWarmupPeriod 
+          ? `Your assets have been withdrawn with a ${earlyExitFee.toFixed(2)} USDC early exit fee.` 
+          : "Your assets have been successfully withdrawn from the pool.",
       });
   
-      if (finalPayload.status === "success") {
-        const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        
-        toast({
-          title: "Withdrawal successful",
-          description: isWarmupPeriod 
-            ? `Your assets have been withdrawn with a ${earlyExitFee.toFixed(2)} USDC early exit fee.` 
-            : "Your assets have been successfully withdrawn from the pool.",
-        });
-        
-        if (onSuccessfulWithdraw && typeof onSuccessfulWithdraw === 'function') {
-          const withdrawAmount = parseFloat(amount);
-          onSuccessfulWithdraw(withdrawAmount, estimatedLpAmount, transactionId);
-        }
-        
-        onClose();
-        setAmount("");
-        setTransactionPending(false);
-      } else {
-        toast({
-          title: "Withdrawal failed",
-          description: finalPayload.status === "error" && finalPayload.error_code
-            ? finalPayload.error_code
-            : "Something went wrong",
-        });
-        setTransactionPending(false);
+      if (onSuccessfulWithdraw && typeof onSuccessfulWithdraw === 'function') {
+        onSuccessfulWithdraw(parseFloat(amount), estimatedLpAmount, `tx-${Date.now()}`);
       }
+  
+      onClose();
+      setAmount("");
+      setTransactionPending(false);
     } catch (err: any) {
       console.error("Withdraw error:", err);
       toast({
         title: "Transaction error",
         description: err.message ?? "Something went wrong",
+        variant: "destructive"
       });
       setTransactionPending(false);
     } finally {
@@ -259,6 +277,7 @@ export function WithdrawModal({
       setEarlyWithdrawalDialogOpen(false);
     }
   };
+  
 
   return (
     <>

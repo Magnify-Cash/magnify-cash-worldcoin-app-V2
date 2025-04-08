@@ -1,12 +1,11 @@
-
 type APYMapping = {
   [key: string]: number;
 };
 
 // Pool APY values (in percentage)
 export const POOL_APY_VALUES: APYMapping = {
-  "0x75E0B3E2c5de6Abeb77C3e0e143D8e6158Daf4d5": 11.3,
-  "0x6D92A3aaADf838Ed13cB8697eb9d35fcF6c4dBa9": 9.8,
+  "0x75e0b3e2c5de6abeb77c3e0e143d8e6158daf4d5": 11.3,
+  "0x6d92a3aaadf838ed13cb8697eb9d35fcf6c4dba9": 9.8,
 };
 
 /**
@@ -20,7 +19,7 @@ export const getPoolAPY = (poolIdOrAddress: string | number | undefined, default
     return defaultAPY;
   }
   
-  const key = poolIdOrAddress.toString();
+  const key = poolIdOrAddress.toString().toLowerCase();
   console.log("[getPoolAPY] Looking up APY for:", key, "in mapping:", POOL_APY_VALUES);
   
   // Check if we have a mapping for this key

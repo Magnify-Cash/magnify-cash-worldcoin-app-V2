@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
@@ -33,7 +32,6 @@ const Welcome = () => {
     if (MiniKit.isInstalled()) {
       setIsMiniApp(true);
       
-      // Clear metamask flag if we're in MiniApp
       localStorage.removeItem("ls_metamask_user");
     }
   }, []);
@@ -76,7 +74,6 @@ const Welcome = () => {
           const user = await MiniKit.getUserByAddress(extendedPayload.address);
           localStorage.setItem("ls_wallet_address", user.walletAddress);
           localStorage.setItem("ls_username", user.username);
-          // Ensure we clear any metamask flag for MiniApp users
           localStorage.removeItem("ls_metamask_user");
   
           toast.toast({
@@ -112,34 +109,34 @@ const Welcome = () => {
   
       try {
         setLoadingLender(true);
-        await connectAsync({ connector: injected() });
-
-        await switchToWorldChain();
-  
-        if (address) {
-          localStorage.setItem("ls_wallet_address", address);
-          localStorage.setItem("ls_username", address);
-          // Set flag for Metamask users
-          localStorage.setItem("ls_metamask_user", "true");
+        let currentAddress = address;
+        
+        if (!isConnected || !currentAddress) {
+          const result = await connectAsync({ connector: injected() });
+          currentAddress = result.accounts[0];
           
-          toast.toast({
-            title: "Wallet Connected",
-            description: `Connected to ${address.slice(0, 6)}...${address.slice(-4)}`,
-          });
-  
-          navigate(redirectTo);
-        } else {
-          toast.toast({
-            title: "Error",
-            description: "No wallet address detected.",
-            variant: "destructive",
-          });
+          if (!currentAddress) {
+            throw new Error("Failed to connect wallet");
+          }
         }
+        
+        await switchToWorldChain();
+        
+        localStorage.setItem("ls_wallet_address", currentAddress);
+        localStorage.setItem("ls_username", currentAddress);
+        localStorage.setItem("ls_metamask_user", "true");
+        
+        toast.toast({
+          title: "Wallet Connected",
+          description: `Connected to ${currentAddress.slice(0, 6)}...${currentAddress.slice(-4)}`,
+        });
+  
+        navigate(redirectTo);
       } catch (err) {
-        console.error("Wagmi connect failed:", err);
+        console.error("Wallet connection or chain switch failed:", err);
         toast.toast({
           title: "Connection Failed",
-          description: "Wallet connection was unsuccessful.",
+          description: "Please ensure your wallet is unlocked and try again.",
           variant: "destructive",
         });
       } finally {

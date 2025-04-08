@@ -29,6 +29,7 @@ interface WithdrawModalProps {
   lpBalance: number;
   lpValue: number;
   poolContractAddress?: string;
+  poolStatus?: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
   onSuccessfulWithdraw?: (amount: number, lpAmount: number, transactionId: string) => void;
 }
 
@@ -38,6 +39,7 @@ export function WithdrawModal({
   lpBalance = 0,
   lpValue = 0,
   poolContractAddress,
+  poolStatus,
   onSuccessfulWithdraw,
 }: WithdrawModalProps) {
   const [amount, setAmount] = useState<string>("");
@@ -54,11 +56,14 @@ export function WithdrawModal({
   const walletAddress = localStorage.getItem("ls_wallet_address") || null;
   const { 
     setTransactionPending, 
-    setTransactionMessage, 
-    poolStatus 
+    setTransactionMessage 
   } = useModalContext();
 
+  console.log("[WithdrawModal] Rendering with poolStatus:", poolStatus);
+  
+  // Determine if we're in the warmup period based on the poolStatus
   const isWarmupPeriod = isInWarmupPeriod(poolStatus);
+  console.log("[WithdrawModal] isWarmupPeriod:", isWarmupPeriod);
   
   useEffect(() => {
     const fetchExchangeRate = async () => {
@@ -136,9 +141,13 @@ export function WithdrawModal({
   };
 
   const handleWithdrawButton = () => {
+    console.log("[WithdrawModal] handleWithdrawButton called. isWarmupPeriod:", isWarmupPeriod, "isAmountValid:", isAmountValid());
+    
     if (isWarmupPeriod && isAmountValid()) {
+      console.log("[WithdrawModal] Opening early withdrawal dialog");
       setEarlyWithdrawalDialogOpen(true);
     } else {
+      console.log("[WithdrawModal] Proceeding with regular withdrawal");
       handleWithdraw();
     }
   };

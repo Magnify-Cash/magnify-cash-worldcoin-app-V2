@@ -1,5 +1,6 @@
 
 import { http, createConfig } from "wagmi";
+import { WORLDCHAIN_RPC_URL } from "@/utils/constants";
 
 // Define worldchain locally since it's not exported from wagmi/chains
 const worldchain = {
@@ -12,7 +13,7 @@ const worldchain = {
   },
   rpcUrls: {
     default: {
-      http: ["https://worldchain-mainnet.g.alchemy.com/public"],
+      http: [WORLDCHAIN_RPC_URL],
     },
   },
 };

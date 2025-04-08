@@ -51,6 +51,7 @@ export const ModalManager: React.FC = () => {
           lpValue={lpValue || 0}
           poolContractAddress={poolContractAddress || undefined}
           onSuccessfulWithdraw={onSuccessfulWithdraw}
+          poolStatus={poolStatus}
         />
       </>
     );

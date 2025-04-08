@@ -26,6 +26,7 @@ export const getEarlyExitFeeRate = async (): Promise<number> => {
  * @returns Boolean indicating if the pool is in warm-up
  */
 export const isInWarmupPeriod = (poolStatus?: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): boolean => {
+  console.log("[feeUtils] isInWarmupPeriod called with poolStatus:", poolStatus);
   return poolStatus === 'warm-up';
 };
 

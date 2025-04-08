@@ -30,10 +30,14 @@ export function LendingPoolCard({
 }: LendingPoolCardProps) {
   const isMobile = useIsMobile();
 
-  // Use the custom APY if available based on poolId or contractAddress
-  const displayAPY = poolId || contractAddress ? 
-    getPoolAPY(poolId || contractAddress, apy) : 
-    apy;
+  // Calculate the display APY based on contract address or pool ID
+  const displayAPY = contractAddress ? 
+    getPoolAPY(contractAddress, apy) : 
+    poolId ? 
+      getPoolAPY(poolId, apy) : 
+      apy;
+      
+  console.log("[LendingPoolCard] Pool:", title, "ContractAddress:", contractAddress, "PoolID:", poolId, "Default APY:", apy, "Display APY:", displayAPY);
 
   const formatValue = (value: number, suffix: string) => {
     if (value >= 1000000) {

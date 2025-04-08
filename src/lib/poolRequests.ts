@@ -180,8 +180,8 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           token_b: symbolResponse.symbol || 'LP',
           token_a_amount: balanceResponse.totalAssets || 0,
           token_b_amount: balanceResponse.totalAssets || 0,
-          // Use getPoolAPY for the hardcoded value, default to 8.5 if not found
-          apy: getPoolAPY(contract || (index + 1), 8.5),
+          // Get APY from poolConstants.ts - first try contract address, then ID
+          apy: getPoolAPY(contract, 8.5),
           total_value_locked: balanceResponse.totalAssets || 0,
           available_liquidity: liquidityResponse.liquidity || 0,
           status: statusMap[statusResponse.status] || 'active',
@@ -214,6 +214,9 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           }
         };
         
+        // Add debug log to see APY values
+        console.log(`[poolRequests] Created pool ID: ${pool.id}, Contract: ${contract}, APY: ${pool.apy}%`);
+        
         // Cache the individual pool by contract
         Cache.set(poolContractCacheKey(contract), pool, 15);
         
@@ -232,7 +235,7 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           token_a_amount: 0,
           token_b_amount: 0,
           // Use getPoolAPY for the hardcoded value, default to 8.5 if not found
-          apy: getPoolAPY(contract || (index + 1), 8.5),
+          apy: getPoolAPY(contract, 8.5),
           total_value_locked: 0,
           available_liquidity: 0,
           status: 'active' as 'warm-up' | 'active' | 'cooldown' | 'withdrawal',

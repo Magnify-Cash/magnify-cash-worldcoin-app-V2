@@ -1,3 +1,4 @@
+
 type APYMapping = {
   [key: string]: number;
 };
@@ -12,7 +13,22 @@ export const POOL_APY_VALUES: APYMapping = {
  * Get the APY for a specific pool based on its ID or contract address
  * Falls back to the default 8.5% if not found
  */
-export const getPoolAPY = (poolIdOrAddress: string | number, defaultAPY: number = 8.5): number => {
+export const getPoolAPY = (poolIdOrAddress: string | number | undefined, defaultAPY: number = 8.5): number => {
+  // Handle undefined or null values
+  if (!poolIdOrAddress) {
+    console.log("[getPoolAPY] No pool ID or address provided, returning default:", defaultAPY);
+    return defaultAPY;
+  }
+  
   const key = poolIdOrAddress.toString();
-  return POOL_APY_VALUES[key] !== undefined ? POOL_APY_VALUES[key] : defaultAPY;
+  console.log("[getPoolAPY] Looking up APY for:", key, "in mapping:", POOL_APY_VALUES);
+  
+  // Check if we have a mapping for this key
+  if (POOL_APY_VALUES[key] !== undefined) {
+    console.log("[getPoolAPY] Found APY value:", POOL_APY_VALUES[key]);
+    return POOL_APY_VALUES[key];
+  }
+  
+  console.log("[getPoolAPY] No APY found for key, returning default:", key, defaultAPY);
+  return defaultAPY;
 };

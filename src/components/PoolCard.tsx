@@ -53,7 +53,11 @@ export function PoolCard({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const displayAPY = getPoolAPY(contract || id, apy);
+  const displayAPY = contract ? 
+    getPoolAPY(contract, apy) : 
+    getPoolAPY(id, apy);
+  
+  console.log("[PoolCard]", title, "Contract:", contract, "ID:", id, "Default APY:", apy, "Display APY:", displayAPY);
   
   const formatDate = (dateStr?: string): string => {
     if (!dateStr) return '';

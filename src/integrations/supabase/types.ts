@@ -250,6 +250,47 @@ export type Database = {
           },
         ]
       }
+      user_pool_lending: {
+        Row: {
+          address: string
+          assets: number
+          blocknumber: number
+          eventname: string
+          id: number
+          pool_id: number
+          shares: number
+          timestamp: string
+        }
+        Insert: {
+          address: string
+          assets: number
+          blocknumber: number
+          eventname: string
+          id?: number
+          pool_id: number
+          shares: number
+          timestamp: string
+        }
+        Update: {
+          address?: string
+          assets?: number
+          blocknumber?: number
+          eventname?: string
+          id?: number
+          pool_id?: number
+          shares?: number
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_pool_lending_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "pool_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

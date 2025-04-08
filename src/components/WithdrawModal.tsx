@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,8 +18,8 @@ import { previewRedeem } from "@/lib/backendRequests";
 import { EarlyWithdrawalDialog } from "./EarlyWithdrawalDialog";
 import { 
   isInWarmupPeriod, 
-  calculateEarlyExitFee,
-  calculateNetAmountAfterFee
+  calculateEarlyExitFeeFromContract,
+  calculateNetAmountAfterContractFee
 } from "@/utils/feeUtils";
 
 interface WithdrawModalProps {
@@ -50,6 +49,7 @@ export function WithdrawModal({
   const [earlyWithdrawalDialogOpen, setEarlyWithdrawalDialogOpen] = useState(false);
   const [earlyExitFee, setEarlyExitFee] = useState<number>(0);
   const [netAmount, setNetAmount] = useState<number>(0);
+  const [fetchingFee, setFetchingFee] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
@@ -60,6 +60,7 @@ export function WithdrawModal({
   } = useModalContext();
 
   console.log("[WithdrawModal] Rendering with poolStatus:", poolStatus);
+  console.log("[WithdrawModal] Rendering with poolContractAddress:", poolContractAddress);
   
   // Determine if we're in the warmup period based on the poolStatus
   const isWarmupPeriod = isInWarmupPeriod(poolStatus);
@@ -67,6 +68,8 @@ export function WithdrawModal({
   
   useEffect(() => {
     const fetchExchangeRate = async () => {
+      if (!poolContractAddress) return;
+      
       try {
         setIsRateLoading(true);
         const res = await previewRedeem(1, poolContractAddress);
@@ -96,18 +99,35 @@ export function WithdrawModal({
   }, [isOpen]);
 
   useEffect(() => {
-    const numAmount = parseFloat(amount);
-    if (!isNaN(numAmount) && numAmount > 0) {
-      const feeAmount = isWarmupPeriod ? calculateEarlyExitFee(numAmount) : 0;
-      const netWithdrawAmount = isWarmupPeriod ? calculateNetAmountAfterFee(numAmount) : numAmount;
+    const calculateFees = async () => {
+      const numAmount = parseFloat(amount);
+      if (isNaN(numAmount) || numAmount <= 0 || !poolContractAddress) {
+        setEarlyExitFee(0);
+        setNetAmount(0);
+        return;
+      }
       
-      setEarlyExitFee(feeAmount);
-      setNetAmount(netWithdrawAmount);
-    } else {
-      setEarlyExitFee(0);
-      setNetAmount(0);
-    }
-  }, [amount, isWarmupPeriod]);
+      if (isWarmupPeriod) {
+        try {
+          setFetchingFee(true);
+          const feeAmount = await calculateEarlyExitFeeFromContract(numAmount, poolContractAddress);
+          const netWithdrawAmount = numAmount - feeAmount;
+          
+          setEarlyExitFee(feeAmount);
+          setNetAmount(netWithdrawAmount);
+        } catch (error) {
+          console.error("[WithdrawModal] Error calculating fees:", error);
+        } finally {
+          setFetchingFee(false);
+        }
+      } else {
+        setEarlyExitFee(0);
+        setNetAmount(numAmount);
+      }
+    };
+    
+    calculateFees();
+  }, [amount, isWarmupPeriod, poolContractAddress]);
 
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);

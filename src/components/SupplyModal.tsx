@@ -108,6 +108,11 @@ export function SupplyModal({
   };
 
   const handleSupply = async () => {
+    const retrySupply = async () => {
+      setTransactionMessage("Retrying transaction...");
+      return await handleSupply();
+    };
+  
     try {
       if (!walletAddress || !poolContractAddress || !amount) return;
   
@@ -132,7 +137,7 @@ export function SupplyModal({
       const loanAmountBaseUnits = parseUnits(amount, 6);
   
       if (isMiniApp) {
-        const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 min
+        const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
   
         const permitTransfer = {
           permitted: {
@@ -158,47 +163,11 @@ export function SupplyModal({
   
         setTransactionMessage("Please confirm the transaction in your wallet...");
   
-        const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+        const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
           transaction: [
             {
               address: poolContractAddress,
-              abi: [
-                {
-                  name: "depositWithPermit2",
-                  type: "function",
-                  stateMutability: "nonpayable",
-                  inputs: [
-                    { name: "amount", type: "uint256" },
-                    { name: "receiver", type: "address" },
-                    {
-                      name: "permitTransferFrom",
-                      type: "tuple",
-                      components: [
-                        {
-                          name: "permitted",
-                          type: "tuple",
-                          components: [
-                            { name: "token", type: "address" },
-                            { name: "amount", type: "uint256" },
-                          ],
-                        },
-                        { name: "nonce", type: "uint256" },
-                        { name: "deadline", type: "uint256" },
-                      ],
-                    },
-                    {
-                      name: "transferDetails",
-                      type: "tuple",
-                      components: [
-                        { name: "to", type: "address" },
-                        { name: "requestedAmount", type: "uint256" },
-                      ],
-                    },
-                    { name: "signature", type: "bytes" },
-                  ],
-                  outputs: [],
-                },
-              ],
+              abi: magnifyV3Abi,
               functionName: "depositWithPermit2",
               args: [
                 loanAmountBaseUnits.toString(),
@@ -228,7 +197,7 @@ export function SupplyModal({
         const allowance = await publicClient.readContract({
           address: WORLDCOIN_TOKEN_COLLATERAL,
           abi: erc20Abi,
-          functionName: 'allowance',
+          functionName: "allowance",
           args: [walletAddress as `0x${string}`, poolContractAddress as `0x${string}`],
         });
   
@@ -238,7 +207,7 @@ export function SupplyModal({
             account: walletAddress as `0x${string}`,
             address: WORLDCOIN_TOKEN_COLLATERAL as `0x${string}`,
             abi: erc20Abi,
-            functionName: 'approve',
+            functionName: "approve",
             args: [poolContractAddress as `0x${string}`, loanAmountBaseUnits],
             chain: worldchain,
           });
@@ -247,6 +216,7 @@ export function SupplyModal({
         }
   
         setTransactionMessage("Sending deposit transaction...");
+  
         const hash = await walletClient.writeContract({
           account: walletAddress as `0x${string}`,
           address: poolContractAddress as `0x${string}`,
@@ -274,16 +244,31 @@ export function SupplyModal({
       setTransactionPending(false);
     } catch (err: any) {
       console.error("Supply error", err);
+  
+      const isRpcError =
+        err?.message?.includes("eth_getTransactionCount") ||
+        err?.message?.includes("JsonRpcEngine");
+  
+      if (isRpcError) {
+        const retry = window.confirm("RPC error occurred. Retry the transaction?");
+        if (retry) return retrySupply();
+      }
+  
       toast({
-        title: "Error",
-        description: err.message || "Something went wrong",
+        title: isRpcError ? "Network error (RPC issue)" : "Error",
+        description:
+          isRpcError
+            ? "The transaction could not be submitted due to an RPC issue. Please try again."
+            : "Something went wrong",
         variant: "destructive",
       });
+  
       setTransactionPending(false);
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   const calculateLPTokens = () => {
     const numAmount = parseFloat(amount);

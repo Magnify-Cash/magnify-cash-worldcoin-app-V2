@@ -180,6 +180,11 @@ export function WithdrawModal({
   };
   
   const handleWithdraw = async () => {
+    const retryWithdraw = async () => {
+      setTransactionMessage("Retrying withdrawal...");
+      return await handleWithdraw(); // Recursive retry
+    };
+  
     try {
       if (!amount || !walletAddress || !poolContractAddress) return;
   
@@ -200,7 +205,7 @@ export function WithdrawModal({
         }
       }
   
-      const lpTokenAmountWithDecimals = parseUnits(estimatedLpAmount.toFixed(6), 6); // LP tokens = 6 decimals
+      const lpTokenAmountWithDecimals = parseUnits(estimatedLpAmount.toFixed(6), 6);
   
       if (isMiniApp) {
         const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
@@ -221,11 +226,7 @@ export function WithdrawModal({
                 },
               ],
               functionName: "redeem",
-              args: [
-                lpTokenAmountWithDecimals.toString(),
-                walletAddress,
-                walletAddress,
-              ],
+              args: [lpTokenAmountWithDecimals.toString(), walletAddress, walletAddress],
             },
           ],
         });
@@ -252,12 +253,12 @@ export function WithdrawModal({
   
       toast({
         title: "Withdrawal successful",
-        description: isWarmupPeriod 
-          ? `Your assets have been withdrawn with a ${earlyExitFee.toFixed(2)} USDC early exit fee.` 
+        description: isWarmupPeriod
+          ? `Your assets have been withdrawn with a ${earlyExitFee.toFixed(2)} USDC early exit fee.`
           : "Your assets have been successfully withdrawn from the pool.",
       });
   
-      if (onSuccessfulWithdraw && typeof onSuccessfulWithdraw === 'function') {
+      if (onSuccessfulWithdraw && typeof onSuccessfulWithdraw === "function") {
         onSuccessfulWithdraw(parseFloat(amount), estimatedLpAmount, `tx-${Date.now()}`);
       }
   
@@ -266,17 +267,31 @@ export function WithdrawModal({
       setTransactionPending(false);
     } catch (err: any) {
       console.error("Withdraw error:", err);
+  
+      const isRpcError =
+        err?.message?.includes("eth_getTransactionCount") ||
+        err?.message?.includes("JsonRpcEngine");
+  
+      if (isRpcError) {
+        const retry = window.confirm("MetaMask RPC error occurred. Retry the withdrawal?");
+        if (retry) return retryWithdraw();
+      }
+  
       toast({
-        title: "Transaction error",
-        description: err.message ?? "Something went wrong",
-        variant: "destructive"
+        title: isRpcError ? "Network error (RPC issue)" : "Transaction error",
+        description: isRpcError
+          ? "The transaction could not be submitted due to an RPC issue. Please try again."
+          : "Something went wrong",
+        variant: "destructive",
       });
+  
       setTransactionPending(false);
     } finally {
       setIsLoading(false);
       setEarlyWithdrawalDialogOpen(false);
     }
   };
+  
   
 
   return (

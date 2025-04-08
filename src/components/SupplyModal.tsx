@@ -166,11 +166,47 @@ export function SupplyModal({
   
         setTransactionMessage("Please confirm the transaction in your wallet...");
   
-        const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+        const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
           transaction: [
             {
               address: poolContractAddress,
-              abi: magnifyV3Abi,
+              abi: [
+                {
+                  name: "depositWithPermit2",
+                  type: "function",
+                  stateMutability: "nonpayable",
+                  inputs: [
+                    { name: "amount", type: "uint256" },
+                    { name: "receiver", type: "address" },
+                    {
+                      name: "permitTransferFrom",
+                      type: "tuple",
+                      components: [
+                        {
+                          name: "permitted",
+                          type: "tuple",
+                          components: [
+                            { name: "token", type: "address" },
+                            { name: "amount", type: "uint256" },
+                          ],
+                        },
+                        { name: "nonce", type: "uint256" },
+                        { name: "deadline", type: "uint256" },
+                      ],
+                    },
+                    {
+                      name: "transferDetails",
+                      type: "tuple",
+                      components: [
+                        { name: "to", type: "address" },
+                        { name: "requestedAmount", type: "uint256" },
+                      ],
+                    },
+                    { name: "signature", type: "bytes" },
+                  ],
+                  outputs: [],
+                },
+              ],
               functionName: "depositWithPermit2",
               args: [
                 loanAmountBaseUnits.toString(),

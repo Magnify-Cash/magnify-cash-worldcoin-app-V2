@@ -219,3 +219,11 @@ export interface LPTokenHistoryResponse {
   timestamp: string;
   date: string;
 }
+
+export interface PoolEarlyExitFeeResponse  {
+  earlyExitFee: number;
+}
+
+export type PoolPenaltyFeeResponse = {
+  penaltyFee: number;
+};

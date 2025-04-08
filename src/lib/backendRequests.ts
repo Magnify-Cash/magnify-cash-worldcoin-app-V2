@@ -38,6 +38,8 @@ import {
   PoolWarmupPeriodResponse,
   UserLPBalanceResponse,
   LPTokenHistoryResponse,
+  PoolEarlyExitFeeResponse,
+  PoolPenaltyFeeResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -237,7 +239,6 @@ export const getActiveLoan = async (
   return response.data;
 };
 
-//TODO: Add type for LoanHistoryEntry
 export const getLoanHistory = async (
   wallet: string,
   contract: string
@@ -257,7 +258,6 @@ export const getLoanHistory = async (
   return response.data;
 };
 
-//TODO: Add type for AllLoansEntry
 export const getAllLoans = async (
   contract: string
 ): Promise<AllLoansEntry> => {
@@ -758,3 +758,44 @@ export const getLPTokenHistory = async (
   return response.data;
 }
 
+export const getPoolEarlyExitFee = async (
+  contract: string
+): Promise<{ earlyExitFee: number }> => {
+  const response = await backendRequest<PoolEarlyExitFeeResponse>(
+    "GET",
+    "v3/pool/fee/exit",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.earlyExitFee !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch early exit fee. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolPenaltyFee = async (
+  contract: string
+): Promise<PoolPenaltyFeeResponse> => {
+  const response = await backendRequest<PoolPenaltyFeeResponse>(
+    "GET",
+    "v3/pool/fee/penalty",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.penaltyFee !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch penalty fee. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};

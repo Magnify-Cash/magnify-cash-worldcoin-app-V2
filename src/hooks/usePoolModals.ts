@@ -235,6 +235,7 @@ export const usePoolModals = () => {
     poolContractAddress?: string;
     lpSymbol?: string;
     transactionId?: string;
+    poolStatus?: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
     onSuccessfulSupply?: (amount: number, lpAmount: number) => void;
     refreshPositions?: () => void;
     updateUserPositionOptimistically?: ((poolId: number, amount: number) => void) | null;
@@ -297,6 +298,7 @@ export const usePoolModals = () => {
     lpValue?: number;
     poolContractAddress?: string;
     transactionId?: string;
+    poolStatus?: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
     onSuccessfulWithdraw?: ((amount: number, lpAmount: number) => void) | null;
   }) => {
     // Always ensure we have a transaction ID

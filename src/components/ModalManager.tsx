@@ -19,6 +19,7 @@ export const ModalManager: React.FC = () => {
     onSuccessfulWithdraw,
     isTransactionPending,
     transactionMessage,
+    poolStatus,
   } = useModalContext();
 
   if (!isOpen || !modalType) return null;

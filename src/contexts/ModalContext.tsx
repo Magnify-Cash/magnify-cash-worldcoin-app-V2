@@ -10,10 +10,11 @@ interface ModalContextType {
   lpBalance?: number;
   lpValue?: number;
   walletAddress?: string;
+  poolStatus?: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
   openModal: (type: string, options: any) => void;
   closeModal: () => void;
-  onSuccessfulSupply?: (amount: number) => void;
-  onSuccessfulWithdraw?: (amount: number, lpAmount: number) => void;
+  onSuccessfulSupply?: (amount: number, lpAmount: number, transactionId?: string) => void;
+  onSuccessfulWithdraw?: (amount: number, lpAmount: number, transactionId?: string) => void;
   // Transaction tracking
   isTransactionPending: boolean;
   setTransactionPending: (isPending: boolean) => void;

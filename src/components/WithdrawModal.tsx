@@ -16,6 +16,7 @@ import { MiniKit } from "@worldcoin/minikit-js";
 import { useModalContext } from "@/contexts/ModalContext";
 import { previewRedeem } from "@/lib/backendRequests";
 import { EarlyWithdrawalDialog } from "./EarlyWithdrawalDialog";
+import { RetryTransactionDialog } from "./RetryTransactionDialog";
 import { 
   isInWarmupPeriod, 
   calculateEarlyExitFeeFromContract,
@@ -52,6 +53,7 @@ export function WithdrawModal({
   const [rateError, setRateError] = useState<string | null>(null);
   const [isRateLoading, setIsRateLoading] = useState(false);
   const [earlyWithdrawalDialogOpen, setEarlyWithdrawalDialogOpen] = useState(false);
+  const [showRetryDialog, setShowRetryDialog] = useState(false);
   const [earlyExitFee, setEarlyExitFee] = useState<number>(0);
   const [netAmount, setNetAmount] = useState<number>(0);
   const [fetchingFee, setFetchingFee] = useState(false);
@@ -273,8 +275,8 @@ export function WithdrawModal({
         err?.message?.includes("JsonRpcEngine");
   
       if (isRpcError) {
-        const retry = window.confirm("MetaMask RPC error occurred. Retry the withdrawal?");
-        if (retry) return retryWithdraw();
+        setShowRetryDialog(true);
+        return;
       }
   
       toast({
@@ -292,7 +294,15 @@ export function WithdrawModal({
     }
   };
   
-  
+  const handleRetryConfirm = () => {
+    setShowRetryDialog(false);
+    handleWithdraw();
+  };
+
+  const handleRetryCancel = () => {
+    setShowRetryDialog(false);
+    setTransactionPending(false);
+  };
 
   return (
     <>
@@ -463,6 +473,12 @@ export function WithdrawModal({
         withdrawAmount={parseFloat(amount) || 0}
         feeAmount={earlyExitFee}
         netAmount={netAmount}
+      />
+      
+      <RetryTransactionDialog 
+        isOpen={showRetryDialog} 
+        onConfirm={handleRetryConfirm} 
+        onCancel={handleRetryCancel} 
       />
     </>
   );

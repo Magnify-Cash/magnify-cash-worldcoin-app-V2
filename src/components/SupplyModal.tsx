@@ -22,6 +22,7 @@ import { useWalletClient, usePublicClient } from "wagmi";
 import { worldchain } from "viem/chains";
 import { erc20Abi } from 'viem';
 import { parseUnits } from 'viem/utils';
+import { RetryTransactionDialog } from "./RetryTransactionDialog";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export function SupplyModal({
   const [previewLpAmount, setPreviewLpAmount] = useState<number | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewRequested, setPreviewRequested] = useState(false);
+  const [showRetryDialog, setShowRetryDialog] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const { setTransactionPending, setTransactionMessage } = useModalContext();
@@ -65,6 +67,7 @@ export function SupplyModal({
       setIsLoading(false);
       setPreviewLpAmount(null);
       setPreviewRequested(false);
+      setShowRetryDialog(false);
       
       refreshBalance();
       
@@ -250,8 +253,8 @@ export function SupplyModal({
         err?.message?.includes("JsonRpcEngine");
   
       if (isRpcError) {
-        const retry = window.confirm("RPC error occurred. Retry the transaction?");
-        if (retry) return retrySupply();
+        setShowRetryDialog(true);
+        return;
       }
   
       toast({
@@ -268,7 +271,6 @@ export function SupplyModal({
       setIsLoading(false);
     }
   };
-  
 
   const calculateLPTokens = () => {
     const numAmount = parseFloat(amount);
@@ -295,109 +297,127 @@ export function SupplyModal({
     return usdcBalance.toFixed(2);
   };
 
+  const handleRetryConfirm = () => {
+    setShowRetryDialog(false);
+    handleSupply();
+  };
+
+  const handleRetryCancel = () => {
+    setShowRetryDialog(false);
+    setTransactionPending(false);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className={`sm:max-w-[425px] ${isMobile ? "max-w-[90%] p-4" : ""} rounded-lg`}
-        style={{
-          position: 'fixed',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          maxHeight: isMobile ? "90vh" : "auto",
-          overflowY: "auto",
-        }}
-      >
-        <DialogHeader className={isMobile ? "pb-2" : ""}>
-          <DialogTitle className="text-xl text-center">Supply Assets</DialogTitle>
-          <DialogDescription className="text-center">
-            Provide liquidity to earn yield.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent
+          className={`sm:max-w-[425px] ${isMobile ? "max-w-[90%] p-4" : ""} rounded-lg`}
+          style={{
+            position: 'fixed',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            maxHeight: isMobile ? "90vh" : "auto",
+            overflowY: "auto",
+          }}
+        >
+          <DialogHeader className={isMobile ? "pb-2" : ""}>
+            <DialogTitle className="text-xl text-center">Supply Assets</DialogTitle>
+            <DialogDescription className="text-center">
+              Provide liquidity to earn yield.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className={`grid gap-3 py-2 ${isMobile ? "py-2" : "py-4"}`}>
-          <div className="grid gap-2">
-            <div className="flex items-center justify-between">
-              <label htmlFor="amount" className="text-sm font-medium">
-                Amount (USDC)
-              </label>
-              <span className="text-xs text-gray-500">
-                Balance: {displayBalance()} USDC
-              </span>
-            </div>
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                <DollarSign className="h-4 w-4" />
+          <div className={`grid gap-3 py-2 ${isMobile ? "py-2" : "py-4"}`}>
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="amount" className="text-sm font-medium">
+                  Amount (USDC)
+                </label>
+                <span className="text-xs text-gray-500">
+                  Balance: {displayBalance()} USDC
+                </span>
               </div>
-              <Input
-                id="amount"
-                placeholder="0.00"
-                className="pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                type="number"
-                step="0.01"
-                min="0"
-                autoComplete="off"
-                inputMode="decimal"
-                ref={inputRef}
-                tabIndex={-1}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
-                onClick={() => usdcBalance !== null && setAmount(usdcBalance.toString())}
-                disabled={balanceLoading || usdcBalance === null}
-              >
-                MAX
-              </Button>
-            </div>
-
-            {amount && parseFloat(amount) >= 1 && (
-              <div className="text-xs text-gray-500 mt-1">
-                You will receive {calculateLPTokens()} {lpSymbol} tokens
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  <DollarSign className="h-4 w-4" />
+                </div>
+                <Input
+                  id="amount"
+                  placeholder="0.00"
+                  className="pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  autoComplete="off"
+                  inputMode="decimal"
+                  ref={inputRef}
+                  tabIndex={-1}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
+                  onClick={() => usdcBalance !== null && setAmount(usdcBalance.toString())}
+                  disabled={balanceLoading || usdcBalance === null}
+                >
+                  MAX
+                </Button>
               </div>
-            )}
 
-            {amount && !isAmountValid() && (
-              <p className="text-xs text-red-500">
-                {parseFloat(amount) > (usdcBalance || 0)
-                  ? "Insufficient balance in wallet"
-                  : "Please enter a valid amount"}
-              </p>
-            )}
-          </div>
+              {amount && parseFloat(amount) >= 1 && (
+                <div className="text-xs text-gray-500 mt-1">
+                  You will receive {calculateLPTokens()} {lpSymbol} tokens
+                </div>
+              )}
 
-          <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? "p-2 my-1" : "mt-2"}`}>
-            <div className="flex items-start">
-              <AlertTriangle className="mr-2 h-5 w-5 text-amber-600 flex-shrink-0 mt-0" />
-              <div className="text-xs text-amber-800">
-                <p className="font-medium mb-1">Risk Warning:</p>
-                <p>
-                  Providing liquidity involves financial risk. Your supplied funds may be subject to market fluctuations, 
-                  smart contract vulnerabilities, and changes in liquidity demand. While you may earn yield, returns are 
-                  not guaranteed, and withdrawal availability depends on pool liquidity. Only contribute what you can 
-                  afford to lose and conduct your own research before participating.
+              {amount && !isAmountValid() && (
+                <p className="text-xs text-red-500">
+                  {parseFloat(amount) > (usdcBalance || 0)
+                    ? "Insufficient balance in wallet"
+                    : "Please enter a valid amount"}
                 </p>
+              )}
+            </div>
+
+            <div className={`rounded-md bg-amber-50 p-3 ${isMobile ? "p-2 my-1" : "mt-2"}`}>
+              <div className="flex items-start">
+                <AlertTriangle className="mr-2 h-5 w-5 text-amber-600 flex-shrink-0 mt-0" />
+                <div className="text-xs text-amber-800">
+                  <p className="font-medium mb-1">Risk Warning:</p>
+                  <p>
+                    Providing liquidity involves financial risk. Your supplied funds may be subject to market fluctuations, 
+                    smart contract vulnerabilities, and changes in liquidity demand. While you may earn yield, returns are 
+                    not guaranteed, and withdrawal availability depends on pool liquidity. Only contribute what you can 
+                    afford to lose and conduct your own research before participating.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
-          <Button
-            onClick={handleSupply}
-            disabled={!amount || !isAmountValid() || isLoading || balanceLoading}
-            className="bg-[#8B5CF6] hover:bg-[#7c50e6] text-white w-full py-6"
-          >
-            {isLoading ? "Processing..." : "Supply"}
-          </Button>
-          <Button variant="outline" onClick={onClose} disabled={isLoading} className="w-full py-6">
-            Cancel
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter className="flex flex-col space-y-3 sm:flex-col">
+            <Button
+              onClick={handleSupply}
+              disabled={!amount || !isAmountValid() || isLoading || balanceLoading}
+              className="bg-[#8B5CF6] hover:bg-[#7c50e6] text-white w-full py-6"
+            >
+              {isLoading ? "Processing..." : "Supply"}
+            </Button>
+            <Button variant="outline" onClick={onClose} disabled={isLoading} className="w-full py-6">
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <RetryTransactionDialog 
+        isOpen={showRetryDialog} 
+        onConfirm={handleRetryConfirm} 
+        onCancel={handleRetryCancel} 
+      />
+    </>
   );
 }

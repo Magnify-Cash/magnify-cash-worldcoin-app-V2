@@ -14,6 +14,7 @@ export const calculateEarlyExitFeeFromContract = async (
   try {
     console.log("[feeUtils] Getting early exit fee from contract:", poolContract);
     const feeResponse = await getPoolEarlyExitFee(poolContract);
+    // Use feeResponse directly as percentage (1 means 1%)
     const feeRate = feeResponse.earlyExitFee / 100; // Convert percentage to decimal (1% -> 0.01)
     console.log("[feeUtils] Contract fee rate:", feeRate);
     return withdrawAmount * feeRate;
@@ -33,7 +34,8 @@ export const calculateEarlyExitFeeFromContract = async (
 export const getContractEarlyExitFeeRate = async (poolContract: string): Promise<number> => {
   try {
     const feeResponse = await getPoolEarlyExitFee(poolContract);
-    return feeResponse.earlyExitFee / 100; // Convert percentage to decimal (1% -> 0.01)
+    // Don't divide by 100 again, just return the actual percentage value
+    return feeResponse.earlyExitFee;
   } catch (error) {
     console.error("[feeUtils] Error getting fee rate from contract:", error);
     return 0; // Fallback to zero fee

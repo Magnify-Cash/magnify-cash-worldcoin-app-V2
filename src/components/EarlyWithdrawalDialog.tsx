@@ -29,7 +29,7 @@ export function EarlyWithdrawalDialog({
   feeAmount,
   netAmount,
 }: EarlyWithdrawalDialogProps) {
-  // Calculate fee percentage for display
+  // Calculate fee percentage for display (should be actual percentage, not decimal)
   const feePercentage = withdrawAmount > 0 ? (feeAmount / withdrawAmount * 100).toFixed(1) : '0.0';
   
   return (

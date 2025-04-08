@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,11 +73,9 @@ export function WithdrawModal({
   console.log("[WithdrawModal] Rendering with poolStatus:", poolStatus);
   console.log("[WithdrawModal] Rendering with poolContractAddress:", poolContractAddress);
   
-  // Determine if we're in the warmup period based on the poolStatus
   const isWarmupPeriod = isInWarmupPeriod(poolStatus);
   console.log("[WithdrawModal] isWarmupPeriod:", isWarmupPeriod);
   
-  // Load the exit fee percentage at component mount
   useEffect(() => {
     const loadFeePercentage = async () => {
       if (!poolContractAddress || !isWarmupPeriod) {
@@ -88,7 +85,7 @@ export function WithdrawModal({
       
       try {
         const feeRate = await getContractEarlyExitFeeRate(poolContractAddress);
-        setFeePercentage(feeRate * 100); // Store as actual percentage for display
+        setFeePercentage(feeRate);
       } catch (error) {
         console.error("[WithdrawModal] Error loading fee percentage:", error);
         setFeePercentage(0);
@@ -97,7 +94,7 @@ export function WithdrawModal({
     
     loadFeePercentage();
   }, [poolContractAddress, isWarmupPeriod]);
-  
+
   useEffect(() => {
     const fetchExchangeRate = async () => {
       if (!poolContractAddress) return;

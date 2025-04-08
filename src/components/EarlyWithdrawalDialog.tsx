@@ -29,6 +29,9 @@ export function EarlyWithdrawalDialog({
   feeAmount,
   netAmount,
 }: EarlyWithdrawalDialogProps) {
+  // Calculate fee percentage for display
+  const feePercentage = withdrawAmount > 0 ? (feeAmount / withdrawAmount * 100).toFixed(1) : '0.1';
+  
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
       <AlertDialogContent className="max-w-[425px]">
@@ -50,7 +53,7 @@ export function EarlyWithdrawalDialog({
               <span>${withdrawAmount.toFixed(2)} USDC</span>
             </div>
             <div className="flex justify-between text-sm text-red-500 font-medium">
-              <span>Early Exit Fee (0.1%):</span>
+              <span>Early Exit Fee ({feePercentage}%):</span>
               <span>-${feeAmount.toFixed(2)} USDC</span>
             </div>
             <div className="border-t pt-1 mt-1"></div>

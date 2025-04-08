@@ -304,7 +304,7 @@ export const usePoolModals = () => {
     // Always ensure we have a transaction ID
     const transactionId = params.transactionId || `modal-tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     
-    console.log(`[usePoolModals] Opening withdraw modal with transaction ID: ${transactionId}`);
+    console.log(`[usePoolModals] Opening withdraw modal with transaction ID: ${transactionId}, poolStatus:`, params.poolStatus);
     
     // Wrap to handle cache updates on successful withdrawal
     const wrappedOnSuccessfulWithdraw = (amount: number, lpAmount: number) => {

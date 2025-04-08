@@ -139,8 +139,9 @@ const PoolDetails = () => {
           });
           
           setTimeout(() => {
-            setRefreshTrigger(prev => prev + 1);
-          }, 500);
+            setOptimisticUpdates(null);
+            fetchPoolData();
+          }, 3000);
         }
       }
     }
@@ -413,11 +414,13 @@ const PoolDetails = () => {
 
   const handleWithdraw = () => {
     if (pool) {
+      console.log("[PoolDetails] Opening withdraw modal with poolStatus:", pool.status);
       openWithdrawModal({
         poolId: pool.id,
         lpBalance: userPosition.balance,
         lpValue: userPosition.currentValue,
-        poolContractAddress: pool.contract_address
+        poolContractAddress: pool.contract_address,
+        poolStatus: pool.status
       });
     }
   };

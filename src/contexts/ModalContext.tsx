@@ -1,67 +1,94 @@
 
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useContext, useState, ReactNode } from "react";
 
 interface ModalContextType {
   isOpen: boolean;
-  modalType: string | null;
-  poolId?: number;
+  modalType: "supply" | "withdraw" | null;
   poolContractAddress?: string;
   lpSymbol?: string;
   lpBalance?: number;
   lpValue?: number;
   walletAddress?: string;
   poolStatus?: 'warm-up' | 'active' | 'cooldown' | 'withdrawal';
-  openModal: (type: string, options: any) => void;
-  closeModal: () => void;
-  onSuccessfulSupply?: (amount: number, lpAmount: number, transactionId?: string) => void;
-  onSuccessfulWithdraw?: (amount: number, lpAmount: number, transactionId?: string) => void;
-  // Transaction tracking
+  transactionId?: string;
+  onSuccessfulSupply: (amount: number, lpAmount: number) => void;
+  onSuccessfulWithdraw: (amount: number, lpAmount: number) => void;
   isTransactionPending: boolean;
-  setTransactionPending: (isPending: boolean) => void;
   transactionMessage?: string;
+  openModal: (type: "supply" | "withdraw", options: any) => void;
+  closeModal: () => void;
+  setTransactionPending: (pending: boolean) => void;
   setTransactionMessage: (message?: string) => void;
 }
 
-const defaultValue: ModalContextType = {
+const defaultValues: ModalContextType = {
   isOpen: false,
   modalType: null,
+  onSuccessfulSupply: () => {},
+  onSuccessfulWithdraw: () => {},
+  isTransactionPending: false,
   openModal: () => {},
   closeModal: () => {},
-  isTransactionPending: false,
   setTransactionPending: () => {},
   setTransactionMessage: () => {},
 };
 
-const ModalContext = createContext<ModalContextType>(defaultValue);
+const ModalContext = createContext<ModalContextType>(defaultValues);
 
-export const useModalContext = () => {
-  return useContext(ModalContext);
-};
+export const useModalContext = () => useContext(ModalContext);
 
-export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+interface ModalProviderProps {
+  children: ReactNode;
+}
+
+export const ModalProvider = ({ children }: ModalProviderProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [modalType, setModalType] = useState<string | null>(null);
-  const [modalOptions, setModalOptions] = useState({});
-  const [isTransactionPending, setTransactionPending] = useState(false);
-  const [transactionMessage, setTransactionMessage] = useState<string | undefined>(undefined);
+  const [modalType, setModalType] = useState<"supply" | "withdraw" | null>(null);
+  const [poolContractAddress, setPoolContractAddress] = useState<string>();
+  const [lpSymbol, setLpSymbol] = useState<string>();
+  const [lpBalance, setLpBalance] = useState<number>();
+  const [lpValue, setLpValue] = useState<number>();
+  const [walletAddress, setWalletAddress] = useState<string>();
+  const [poolStatus, setPoolStatus] = useState<'warm-up' | 'active' | 'cooldown' | 'withdrawal'>();
+  const [transactionId, setTransactionId] = useState<string>();
+  const [isTransactionPending, setIsTransactionPending] = useState(false);
+  const [transactionMessage, setTransactionMessage] = useState<string>();
+  
+  const [onSuccessfulSupply, setOnSuccessfulSupply] = useState<(amount: number, lpAmount: number) => void>(
+    () => () => {}
+  );
+  
+  const [onSuccessfulWithdraw, setOnSuccessfulWithdraw] = useState<(amount: number, lpAmount: number) => void>(
+    () => () => {}
+  );
 
-  const openModal = (type: string, options: any = {}) => {
+  const openModal = (type: "supply" | "withdraw", options: any = {}) => {
     setModalType(type);
-    setModalOptions(options);
+    setPoolContractAddress(options.poolContractAddress);
+    setLpSymbol(options.lpSymbol);
+    setLpBalance(options.lpBalance);
+    setLpValue(options.lpValue);
+    setWalletAddress(options.walletAddress);
+    setPoolStatus(options.poolStatus);
+    setTransactionId(options.transactionId);
+    
+    console.log("[ModalContext] Setting poolStatus:", options.poolStatus);
+    
+    if (options.onSuccessfulSupply) {
+      setOnSuccessfulSupply(() => options.onSuccessfulSupply);
+    }
+    
+    if (options.onSuccessfulWithdraw) {
+      setOnSuccessfulWithdraw(() => options.onSuccessfulWithdraw);
+    }
+    
     setIsOpen(true);
   };
 
   const closeModal = () => {
-    // Only allow closing if there's no pending transaction
-    if (!isTransactionPending) {
-      setIsOpen(false);
-      setModalType(null);
-      setModalOptions({});
-      setTransactionPending(false);
-      setTransactionMessage(undefined);
-    }
+    setIsOpen(false);
+    setModalType(null);
+    setTransactionId(undefined);
   };
 
   return (
@@ -69,12 +96,20 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         isOpen,
         modalType,
-        ...modalOptions,
+        poolContractAddress,
+        lpSymbol,
+        lpBalance,
+        lpValue,
+        walletAddress,
+        poolStatus,
+        transactionId,
+        onSuccessfulSupply,
+        onSuccessfulWithdraw,
+        isTransactionPending,
+        transactionMessage,
         openModal,
         closeModal,
-        isTransactionPending,
-        setTransactionPending,
-        transactionMessage,
+        setTransactionPending: setIsTransactionPending,
         setTransactionMessage,
       }}
     >

@@ -20,14 +20,14 @@ import { RetryTransactionDialog } from "./RetryTransactionDialog";
 import { 
   isInWarmupPeriod, 
   calculateEarlyExitFeeFromContract,
-  calculateNetAmountAfterContractFee,
   getContractEarlyExitFeeRate
 } from "@/utils/feeUtils";
 import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
 import { useWalletClient, usePublicClient } from "wagmi";
 import { worldchain } from "viem/chains";
-import { erc20Abi } from 'viem';
 import { parseUnits } from 'viem/utils';
+import { ensureWalletReady } from "@/utils/ensureWalletReady";
+import { useConnect } from "wagmi";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -62,13 +62,17 @@ export function WithdrawModal({
   
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
-  const walletAddress = localStorage.getItem("ls_wallet_address") || null;
+  let walletAddress = localStorage.getItem("ls_wallet_address") || null;
   const { 
     setTransactionPending, 
     setTransactionMessage 
   } = useModalContext();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
+  const { connectAsync } = useConnect();
+  
+  let activeWalletClient = walletClient;
+  let activePublicClient = publicClient;
 
   console.log("[WithdrawModal] Rendering with poolStatus:", poolStatus);
   console.log("[WithdrawModal] Rendering with poolContractAddress:", poolContractAddress);
@@ -204,13 +208,26 @@ export function WithdrawModal({
   const handleWithdraw = async () => {
     const retryWithdraw = async () => {
       setTransactionMessage("Retrying withdrawal...");
-      return await handleWithdraw(); // Recursive retry
+      return await handleWithdraw();
     };
   
     try {
-      if (!amount || !walletAddress || !poolContractAddress) return;
+      if (!amount || !poolContractAddress) return;
   
       const isMiniApp = MiniKit.isInstalled();
+  
+      if (!isMiniApp) {
+        const walletInfo = await ensureWalletReady(connectAsync);
+        if (!walletInfo) {
+          setTransactionPending(false);
+          setIsLoading(false);
+          return;
+        }
+  
+        walletAddress = walletInfo.address;
+        activeWalletClient = walletInfo.walletClient;
+        activePublicClient = walletInfo.publicClient;
+      }
   
       setIsLoading(true);
       setTransactionPending(true);
@@ -257,11 +274,11 @@ export function WithdrawModal({
           throw new Error(finalPayload.error_code || "Withdrawal failed");
         }
       } else {
-        if (!walletClient || !publicClient) throw new Error("Wallet client not ready");
+        if (!activeWalletClient || !activePublicClient) throw new Error("Wallet client not ready");
   
         setTransactionMessage("Sending withdrawal transaction...");
   
-        const hash = await walletClient.writeContract({
+        const hash = await activeWalletClient.writeContract({
           account: walletAddress as `0x${string}`,
           address: poolContractAddress as `0x${string}`,
           abi: magnifyV3Abi,
@@ -270,7 +287,7 @@ export function WithdrawModal({
           chain: worldchain,
         });
   
-        await publicClient.waitForTransactionReceipt({ hash });
+        await activePublicClient.waitForTransactionReceipt({ hash });
       }
   
       toast({
@@ -303,7 +320,7 @@ export function WithdrawModal({
         title: isRpcError ? "Network error (RPC issue)" : "Transaction error",
         description: isRpcError
           ? "The transaction could not be submitted due to an RPC issue. Please try again."
-          : "Something went wrong",
+          : err.message || "Something went wrong",
         variant: "destructive",
       });
   
@@ -313,6 +330,7 @@ export function WithdrawModal({
       setEarlyWithdrawalDialogOpen(false);
     }
   };
+  
   
   const handleRetryConfirm = () => {
     setShowRetryDialog(false);

@@ -22,7 +22,9 @@ import { useWalletClient, usePublicClient } from "wagmi";
 import { worldchain } from "viem/chains";
 import { erc20Abi } from 'viem';
 import { parseUnits } from 'viem/utils';
-import { RetryTransactionDialog } from "./RetryTransactionDialog";
+import { RetryTransactionDialog } from "@/components/RetryTransactionDialog";
+import { ensureWalletReady } from "@/utils/ensureWalletReady";
+import { useConnect } from "wagmi";
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -53,6 +55,10 @@ export function SupplyModal({
 
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
+  const { connectAsync } = useConnect();
+
+  let activeWalletClient = walletClient;
+  let activePublicClient = publicClient;
   
   const { 
     balance: usdcBalance, 
@@ -120,6 +126,19 @@ export function SupplyModal({
       if (!walletAddress || !poolContractAddress || !amount) return;
   
       const isMiniApp = MiniKit.isInstalled();
+
+      if (!isMiniApp) {
+        const walletInfo = await ensureWalletReady(connectAsync);
+        if (!walletInfo) {
+          setTransactionPending(false);
+          setIsLoading(false);
+          return;
+        }
+      
+        walletAddress = walletInfo.address;
+        activeWalletClient = walletInfo.walletClient;
+        activePublicClient = walletInfo.publicClient;
+      }      
   
       setIsLoading(true);
       setTransactionPending(true);
@@ -229,11 +248,11 @@ export function SupplyModal({
           throw new Error(finalPayload.error_code || "Transaction failed");
         }
       } else {
-        if (!walletClient || !publicClient) throw new Error("Wallet client not ready");
+        if (!activeWalletClient || !activePublicClient) throw new Error("Wallet client not ready");
   
         setTransactionMessage("Checking allowance...");
   
-        const allowance = await publicClient.readContract({
+        const allowance = await activePublicClient.readContract({
           address: WORLDCOIN_TOKEN_COLLATERAL,
           abi: erc20Abi,
           functionName: "allowance",
@@ -242,7 +261,7 @@ export function SupplyModal({
   
         if (allowance < loanAmountBaseUnits) {
           setTransactionMessage("Approving USDC spend...");
-          const approveHash = await walletClient.writeContract({
+          const approveHash = await activeWalletClient.writeContract({
             account: walletAddress as `0x${string}`,
             address: WORLDCOIN_TOKEN_COLLATERAL as `0x${string}`,
             abi: erc20Abi,
@@ -251,12 +270,12 @@ export function SupplyModal({
             chain: worldchain,
           });
   
-          await publicClient.waitForTransactionReceipt({ hash: approveHash });
+          await activePublicClient.waitForTransactionReceipt({ hash: approveHash });
         }
   
         setTransactionMessage("Sending deposit transaction...");
   
-        const hash = await walletClient.writeContract({
+        const hash = await activeWalletClient.writeContract({
           account: walletAddress as `0x${string}`,
           address: poolContractAddress as `0x${string}`,
           abi: magnifyV3Abi,
@@ -265,7 +284,7 @@ export function SupplyModal({
           chain: worldchain,
         });
   
-        await publicClient.waitForTransactionReceipt({ hash });
+        await activePublicClient.waitForTransactionReceipt({ hash });
       }
   
       toast({
@@ -294,14 +313,19 @@ export function SupplyModal({
       }
   
       toast({
-        title: isRpcError ? "Network error (RPC issue)" : "Error",
-        description:
-          isRpcError
+        title: err.message === "Wallet is not connected to World Chain."
+          ? "Wrong Network"
+          : isRpcError
+            ? "Network error (RPC issue)"
+            : "Error",
+        description: err.message === "Wallet is not connected to World Chain."
+          ? "Please switch to the World Chain network in your wallet and try again."
+          : isRpcError
             ? "The transaction could not be submitted due to an RPC issue. Please try again."
-            : "Something went wrong",
+            : err.message || "Something went wrong",
         variant: "destructive",
       });
-  
+
       setTransactionPending(false);
     } finally {
       setIsLoading(false);

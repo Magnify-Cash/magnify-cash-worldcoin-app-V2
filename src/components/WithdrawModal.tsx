@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,8 @@ import { RetryTransactionDialog } from "./RetryTransactionDialog";
 import { 
   isInWarmupPeriod, 
   calculateEarlyExitFeeFromContract,
-  calculateNetAmountAfterContractFee
+  calculateNetAmountAfterContractFee,
+  getContractEarlyExitFeeRate
 } from "@/utils/feeUtils";
 import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
 import { useWalletClient, usePublicClient } from "wagmi";
@@ -57,6 +59,7 @@ export function WithdrawModal({
   const [earlyExitFee, setEarlyExitFee] = useState<number>(0);
   const [netAmount, setNetAmount] = useState<number>(0);
   const [fetchingFee, setFetchingFee] = useState(false);
+  const [feePercentage, setFeePercentage] = useState<number>(0);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
@@ -74,6 +77,26 @@ export function WithdrawModal({
   // Determine if we're in the warmup period based on the poolStatus
   const isWarmupPeriod = isInWarmupPeriod(poolStatus);
   console.log("[WithdrawModal] isWarmupPeriod:", isWarmupPeriod);
+  
+  // Load the exit fee percentage at component mount
+  useEffect(() => {
+    const loadFeePercentage = async () => {
+      if (!poolContractAddress || !isWarmupPeriod) {
+        setFeePercentage(0);
+        return;
+      }
+      
+      try {
+        const feeRate = await getContractEarlyExitFeeRate(poolContractAddress);
+        setFeePercentage(feeRate * 100); // Store as actual percentage for display
+      } catch (error) {
+        console.error("[WithdrawModal] Error loading fee percentage:", error);
+        setFeePercentage(0);
+      }
+    };
+    
+    loadFeePercentage();
+  }, [poolContractAddress, isWarmupPeriod]);
   
   useEffect(() => {
     const fetchExchangeRate = async () => {
@@ -395,7 +418,7 @@ export function WithdrawModal({
                 </div>
                 {isWarmupPeriod && amount && parseFloat(amount) > 0 && (
                   <div className="flex justify-between text-red-500">
-                    <span className="text-red-500">Early Exit Fee (0.1%):</span>
+                    <span className="text-red-500">Early Exit Fee ({feePercentage.toFixed(1)}%):</span>
                     <span className="font-medium">-${earlyExitFee.toFixed(2)}</span>
                   </div>
                 )}
@@ -424,7 +447,7 @@ export function WithdrawModal({
                   <div className="text-xs text-amber-800">
                     <p className="font-medium mb-1">Early Withdrawal Warning:</p>
                     <p>
-                      You are withdrawing during the warm-up period. An early exit fee of 0.1% 
+                      You are withdrawing during the warm-up period. An early exit fee of {feePercentage.toFixed(1)}% 
                       ({earlyExitFee.toFixed(2)} USDC) will be deducted from your withdrawal amount.
                     </p>
                   </div>

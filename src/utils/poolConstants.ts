@@ -1,27 +1,11 @@
-
-/**
- * This file contains constants for pool-specific values.
- */
-
-/**
- * Pool APY Mapping - Maps pool IDs or addresses to specific APY values
- * This overrides the default 8.5% APY value in the display
- */
-
 type APYMapping = {
-  [key: string]: number; // Either a pool ID (number as string) or contract address
+  [key: string]: number;
 };
 
 // Pool APY values (in percentage)
 export const POOL_APY_VALUES: APYMapping = {
-  // By pool ID
-  "1": 10.5,
-  "2": 8.5,
-  "3": 12.0,
-  "4": 9.2,
-  // Can also use contract addresses
-  "0x93dbB2d447F0086aF60B2becc66598fe3D9135A1": 11.3,
-  "0xF3b2F1Bdb5f622CB08171707673252C222734Ca3": 9.8,
+  "0x75E0B3E2c5de6Abeb77C3e0e143D8e6158Daf4d5": 11.3,
+  "0x6D92A3aaADf838Ed13cB8697eb9d35fcF6c4dBa9": 9.8,
 };
 
 /**

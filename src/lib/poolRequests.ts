@@ -11,13 +11,13 @@ import {
   getPoolLoanInterestRate,
   getPoolLoanAmount,
   getPoolOriginationFee,
-  getPoolWarmupPeriod,
-  getPoolAPY
+  getPoolWarmupPeriod
 } from "@/lib/backendRequests";
 import { LiquidityPool, UserPoolPosition } from "@/types/supabase/liquidity";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { retry } from "@/utils/retryUtils";
 import { Cache } from "@/utils/cacheUtils";
+import { getPoolAPY } from "@/utils/poolConstants";
 
 // Cache keys
 const POOLS_CACHE_KEY = 'pool_data_all';

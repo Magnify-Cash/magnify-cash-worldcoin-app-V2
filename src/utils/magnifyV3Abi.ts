@@ -1,4 +1,6 @@
-export const magnifyV3Abi = [
+import { Abi } from "viem";
+
+export const magnifyV3Abi: Abi = [
     {
       "inputs": [],
       "name": "AlreadySetup",

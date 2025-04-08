@@ -17,6 +17,11 @@ import { useWalletUSDCBalance } from "@/hooks/useWalletUSDCBalance";
 import { WORLDCOIN_TOKEN_COLLATERAL } from "@/utils/constants";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useModalContext } from "@/contexts/ModalContext";
+import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
+import { useWalletClient, usePublicClient } from "wagmi";
+import { worldchain } from "viem/chains";
+import { erc20Abi } from 'viem';
+import { parseUnits } from 'viem/utils';
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -43,6 +48,9 @@ export function SupplyModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const { setTransactionPending, setTransactionMessage } = useModalContext();
+
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
   
   const { 
     balance: usdcBalance, 
@@ -103,10 +111,12 @@ export function SupplyModal({
     try {
       if (!walletAddress || !poolContractAddress || !amount) return;
   
+      const isMiniApp = MiniKit.isInstalled();
+  
       setIsLoading(true);
       setTransactionPending(true);
       setTransactionMessage("Preparing transaction...");
-      
+  
       let expectedLpAmount = previewLpAmount;
       if (!expectedLpAmount && parseFloat(amount) >= 1) {
         try {
@@ -118,140 +128,120 @@ export function SupplyModal({
         }
       }
   
-      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 min
       const loanAmount = parseFloat(amount);
-      const loanAmountBaseUnits = BigInt(Math.floor(loanAmount * 1_000_000)); // 6 decimals
+      const loanAmountBaseUnits = parseUnits(amount, 6);
   
-      const permitTransfer = {
-        permitted: {
-          token: WORLDCOIN_TOKEN_COLLATERAL,
-          amount: loanAmountBaseUnits.toString(),
-        },
-        nonce: Date.now().toString(),
-        deadline,
-      };
+      if (isMiniApp) {
+        const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 min
   
-      const transferDetails = {
-        to: poolContractAddress,
-        requestedAmount: loanAmountBaseUnits.toString(),
-      };
-  
-      const permitTransferArgsForm = [
-        [permitTransfer.permitted.token, permitTransfer.permitted.amount],
-        permitTransfer.nonce,
-        permitTransfer.deadline,
-      ];
-  
-      const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
-      
-      setTransactionMessage("Please confirm the transaction in your wallet...");
-      
-      const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
-        transaction: [
-          {
-            address: poolContractAddress,
-            abi: [
-              {
-                name: "depositWithPermit2",
-                type: "function",
-                stateMutability: "nonpayable",
-                inputs: [
-                  { name: "amount", type: "uint256" },
-                  { name: "receiver", type: "address" },
-                  {
-                    name: "permitTransferFrom",
-                    type: "tuple",
-                    components: [
-                      {
-                        name: "permitted",
-                        type: "tuple",
-                        components: [
-                          { name: "token", type: "address" },
-                          { name: "amount", type: "uint256" },
-                        ],
-                      },
-                      { name: "nonce", type: "uint256" },
-                      { name: "deadline", type: "uint256" },
-                    ],
-                  },
-                  {
-                    name: "transferDetails",
-                    type: "tuple",
-                    components: [
-                      { name: "to", type: "address" },
-                      { name: "requestedAmount", type: "uint256" },
-                    ],
-                  },
-                  { name: "signature", type: "bytes" },
-                ],
-                outputs: [],
-              },
-            ],
-            functionName: "depositWithPermit2",
-            args: [
-              loanAmountBaseUnits.toString(),
-              walletAddress,
-              permitTransferArgsForm,
-              transferDetailsArgsForm,
-              "PERMIT2_SIGNATURE_PLACEHOLDER_0",
-            ],
+        const permitTransfer = {
+          permitted: {
+            token: WORLDCOIN_TOKEN_COLLATERAL,
+            amount: loanAmountBaseUnits.toString(),
           },
-        ],
-        permit2: [
-          {
-            ...permitTransfer,
-            spender: poolContractAddress,
-          },
-        ],
+          nonce: Date.now().toString(),
+          deadline,
+        };
+  
+        const transferDetails = {
+          to: poolContractAddress,
+          requestedAmount: loanAmountBaseUnits.toString(),
+        };
+  
+        const permitTransferArgsForm = [
+          [permitTransfer.permitted.token, permitTransfer.permitted.amount],
+          permitTransfer.nonce,
+          permitTransfer.deadline,
+        ];
+  
+        const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
+  
+        setTransactionMessage("Please confirm the transaction in your wallet...");
+  
+        const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+          transaction: [
+            {
+              address: poolContractAddress,
+              abi: magnifyV3Abi,
+              functionName: "depositWithPermit2",
+              args: [
+                loanAmountBaseUnits.toString(),
+                walletAddress,
+                permitTransferArgsForm,
+                transferDetailsArgsForm,
+                "PERMIT2_SIGNATURE_PLACEHOLDER_0",
+              ],
+            },
+          ],
+          permit2: [
+            {
+              ...permitTransfer,
+              spender: poolContractAddress,
+            },
+          ],
+        });
+  
+        if (finalPayload.status !== "success") {
+          throw new Error(finalPayload.error_code || "Transaction failed");
+        }
+      } else {
+        if (!walletClient || !publicClient) throw new Error("Wallet client not ready");
+  
+        setTransactionMessage("Checking allowance...");
+  
+        const allowance = await publicClient.readContract({
+          address: WORLDCOIN_TOKEN_COLLATERAL,
+          abi: erc20Abi,
+          functionName: 'allowance',
+          args: [walletAddress as `0x${string}`, poolContractAddress as `0x${string}`],
+        });
+  
+        if (allowance < loanAmountBaseUnits) {
+          setTransactionMessage("Approving USDC spend...");
+          const approveHash = await walletClient.writeContract({
+            account: walletAddress as `0x${string}`,
+            address: WORLDCOIN_TOKEN_COLLATERAL as `0x${string}`,
+            abi: erc20Abi,
+            functionName: 'approve',
+            args: [poolContractAddress as `0x${string}`, loanAmountBaseUnits],
+            chain: worldchain,
+          });
+  
+          await publicClient.waitForTransactionReceipt({ hash: approveHash });
+        }
+  
+        setTransactionMessage("Sending deposit transaction...");
+        const hash = await walletClient.writeContract({
+          account: walletAddress as `0x${string}`,
+          address: poolContractAddress as `0x${string}`,
+          abi: magnifyV3Abi,
+          functionName: "deposit",
+          args: [loanAmountBaseUnits, walletAddress],
+          chain: worldchain,
+        });
+  
+        await publicClient.waitForTransactionReceipt({ hash });
+      }
+  
+      toast({
+        title: "Supply successful",
+        description: "Your assets have been successfully supplied to the pool.",
       });
   
-      if (finalPayload.status === "success") {
-        const transactionId = finalPayload.transaction_id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        
-        toast({
-          title: "Supply successful",
-          description: "Your assets have been successfully supplied to the pool.",
-        });
-        
-        if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function' && expectedLpAmount !== null) {
-          console.log("[SupplyModal] Calling onSuccessfulSupply with:", {
-            amount: loanAmount,
-            lpAmount: expectedLpAmount,
-            transactionId
-          });
-          onSuccessfulSupply(loanAmount, expectedLpAmount, transactionId);
-        } else if (onSuccessfulSupply && typeof onSuccessfulSupply === 'function') {
-          const fallbackLpAmount = loanAmount * 0.95;
-          console.log("[SupplyModal] Using fallback LP amount for callback:", fallbackLpAmount);
-          onSuccessfulSupply(loanAmount, fallbackLpAmount, transactionId);
-        }
-        
-        setTimeout(() => {
-          onClose();
-          setAmount("");
-        }, 100);
-        
-        setTimeout(() => {
-          refreshBalance();
-        }, 1000);
-        
-        setTransactionPending(false);
-      } else {
-        toast({
-          title: "Transaction failed",
-          description: finalPayload.status === "error" && finalPayload.error_code
-            ? finalPayload.error_code 
-            : "Something went wrong",
-          variant: "destructive"
-        });
-        setTransactionPending(false);
+      if (onSuccessfulSupply && expectedLpAmount !== null) {
+        onSuccessfulSupply(loanAmount, expectedLpAmount, `tx-${Date.now()}`);
       }
+  
+      onClose();
+      setAmount("");
+      setTimeout(() => refreshBalance(), 1000);
+      setTransactionPending(false);
     } catch (err: any) {
-      console.error("Deposit failed", err);
+      console.error("Supply error", err);
       toast({
         title: "Error",
-        description: err.message ?? "Something went wrong",
-        variant: "destructive"
+        description: err.message || "Something went wrong",
+        variant: "destructive",
       });
       setTransactionPending(false);
     } finally {

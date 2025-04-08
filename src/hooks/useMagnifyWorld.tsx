@@ -12,7 +12,6 @@ import {
 
 import { magnifyV1Abi } from "@/utils/magnifyV1Abi";
 import { magnifyV2Abi } from "@/utils/magnifyV2Abi";
-import { magnifyV3Abi } from "@/utils/magnifyV3Abi";
 
 export const VERIFICATION_TIERS: Record<"NONE" | "ORB", VerificationTier> = {
   NONE: {

@@ -8,4 +8,5 @@ export const WORLDCHAIN_RPC_URL = "https://worldchain-mainnet.g.alchemy.com/publ
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 export const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT;
 export const MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-export const EARLY_EXIT_FEE_RATE = 0.001; // 0.1% early exit fee
+export const EARLY_EXIT_FEE_RATE = 0.001;
+export const WALLETCONNECT_PROJECT_ID = "3571da39c0621f656a9547e1c1f32f52"

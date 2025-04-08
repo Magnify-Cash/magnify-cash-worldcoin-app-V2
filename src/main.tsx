@@ -6,6 +6,11 @@ import App from "./App.tsx";
 import "./index.css";
 import { ENVIRONMENT } from "@/utils/constants";
 
+import { WagmiProvider } from "wagmi";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { config } from "@/lib/rainbowKit";
+import "@rainbow-me/rainbowkit/styles.css";
+
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: ENVIRONMENT || "development",
@@ -78,12 +83,16 @@ if (import.meta.hot) {
   });
 }
 
-const AppWithSentry = () => (
+const AppWithProviders = () => (
   <Sentry.ErrorBoundary fallback={<h2>Something went wrong</h2>}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
+          <App />
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   </Sentry.ErrorBoundary>
 );
 
-createRoot(document.getElementById("root")!).render(<AppWithSentry />);
+createRoot(document.getElementById("root")!).render(<AppWithProviders />);

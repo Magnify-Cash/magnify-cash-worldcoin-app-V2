@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
@@ -6,6 +5,9 @@ import { ArrowRight, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePoolData } from "@/contexts/PoolDataContext";
 import { prefetchBorrowerInfo } from "@/utils/borrowerInfoUtils";
+import { useConnect, useAccount, useDisconnect } from "wagmi";
+import { injected } from "wagmi/connectors";
+import { switchToWorldChain } from "@/utils/switchToWorldChain";
 
 type ExtendedWalletAuthPayload = MiniAppWalletAuthPayload & {
   address: string;
@@ -16,125 +18,130 @@ const Welcome = () => {
   const toast = useToast();
   const { pools, refreshPools, lastFetched, hasFetchStarted, loading: poolsLoading } = usePoolData();
   
+
   const [loadingLoan, setLoadingLoan] = useState(false);
   const [loadingLender, setLoadingLender] = useState(false);
   const [prefetchingBorrowerInfo, setPrefetchingBorrowerInfo] = useState(false);
+  const [isMiniApp, setIsMiniApp] = useState(false);
 
-  // Prefetch pool data and borrower info
+  const { connectAsync } = useConnect();
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+
   useEffect(() => {
-    // Only start prefetching if we haven't already or if we don't have pools data yet
+    if (MiniKit.isInstalled()) {
+      setIsMiniApp(true);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!hasFetchStarted || (pools.length === 0 && !poolsLoading)) {
-      console.log("[Welcome] Initiating pools data prefetch");
-      
-      // First, ensure we have the basic pool data
-      refreshPools(false).then(() => {
-        // After pools are fetched, log success
-        console.log(`[Welcome] Successfully prefetched pool data from API or cache`);
-      }).catch(err => {
-        console.error("[Welcome] Error prefetching pools:", err);
-      });
-    } else if (lastFetched) {
-      // If we already fetched, log the time for debugging
-      console.log(`[Welcome] Using previously fetched pool data from ${new Date(lastFetched).toLocaleTimeString()}`);
+      refreshPools(false).catch(console.error);
     }
   }, [refreshPools, lastFetched, hasFetchStarted, pools, poolsLoading]);
 
-  // Separate effect for borrower info to avoid unnecessary API calls
   useEffect(() => {
-    // Only prefetch borrower info if we have pools and haven't started prefetching yet
     if (pools.length > 0 && !prefetchingBorrowerInfo && !poolsLoading) {
       setPrefetchingBorrowerInfo(true);
-      
-      // Filter active pools with contract addresses
       const contractAddresses = pools
-        .filter(pool => pool.contract_address && pool.status === 'active')
+        .filter(pool => pool.contract_address && pool.status === "active")
         .map(pool => pool.contract_address!);
-      
+
       if (contractAddresses.length > 0) {
-        console.log(`[Welcome] Prefetching borrower info for ${contractAddresses.length} active pools`);
-        
-        // Prefetch borrower info for all active pools
-        prefetchBorrowerInfo(contractAddresses)
-          .then(() => {
-            console.log('[Welcome] Successfully prefetched borrower info for all active pools');
-          })
-          .catch(err => {
-            console.error('[Welcome] Error prefetching borrower info:', err);
-          });
-      } else {
-        console.log('[Welcome] No active pools with contract addresses found for borrower info prefetch');
+        prefetchBorrowerInfo(contractAddresses).catch(console.error);
       }
     }
   }, [pools, prefetchingBorrowerInfo, poolsLoading]);
 
-  const signInUser = async (redirectTo: string, isLenderFlow: boolean = false) => {
-    const wallet_address = localStorage.getItem("ls_wallet_address");
-    const username = localStorage.getItem("ls_username");
+  const handleLogin = async (redirectTo: string, isLender: boolean) => {
+    if (isMiniApp) {
+      // MINIKIT FLOW
+      try {
+        isLender ? setLoadingLender(true) : setLoadingLoan(true);
   
-    if (username && wallet_address) {
-      navigate(redirectTo);
-      return;
-    }
-  
-    try {
-      if (isLenderFlow) {
-        setLoadingLender(true);
-      } else {
-        setLoadingLoan(true);
-      }
-      
-      const nonce = crypto.randomUUID().replace(/-/g, "");
-      const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
-        nonce,
-        statement: "Sign in to Magnify Cash to manage your loans.",
-        expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
-        notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
-      });
-  
-      const extendedPayload = finalPayload as ExtendedWalletAuthPayload;
-  
-      if (extendedPayload?.address) {
-        const user = await MiniKit.getUserByAddress(extendedPayload.address);
-        localStorage.setItem("ls_wallet_address", user.walletAddress);
-        localStorage.setItem("ls_username", user.username);
-  
-        toast.toast({
-          title: "Successfully signed in!",
-          description: `Welcome back, ${user.username}!`,
+        const nonce = crypto.randomUUID().replace(/-/g, "");
+        const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
+          nonce,
+          statement: "Sign in to Magnify Cash to manage your loans.",
+          expirationTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          notBefore: new Date(Date.now() - 24 * 60 * 60 * 1000),
         });
   
-        navigate(redirectTo);
-      } else {
+        const extendedPayload = finalPayload as ExtendedWalletAuthPayload;
+        if (extendedPayload?.address) {
+          const user = await MiniKit.getUserByAddress(extendedPayload.address);
+          localStorage.setItem("ls_wallet_address", user.walletAddress);
+          localStorage.setItem("ls_username", user.username);
+  
+          toast.toast({
+            title: "Successfully signed in!",
+            description: `Welcome back, ${user.username}!`,
+          });
+  
+          navigate(redirectTo);
+        } else {
+          throw new Error("Missing wallet address from MiniKit.");
+        }
+      } catch (error) {
+        console.error("MiniKit auth failed:", error);
         toast.toast({
           title: "Error",
-          description: "Failed to retrieve wallet address.",
+          description: "Failed to sign in. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setLoadingLoan(false);
+        setLoadingLender(false);
       }
-    } catch (error) {
-      console.error("Authentication failed:", error);
-      toast.toast({
-        title: "Error",
-        description: "Failed to sign in. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingLoan(false);
-      setLoadingLender(false);
+    } else {
+      // NON-MINIAPP USERS
+      if (!isLender) {
+        toast.toast({
+          title: "MiniApp Required",
+          description: "Please use our MiniApp in the World App to get a loan.",
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      try {
+        setLoadingLender(true);
+        await connectAsync({ connector: injected() });
+
+        await switchToWorldChain();
+  
+        if (address) {
+          localStorage.setItem("ls_wallet_address", address);
+          localStorage.setItem("ls_username", address);
+          toast.toast({
+            title: "Wallet Connected",
+            description: `Connected to ${address.slice(0, 6)}...${address.slice(-4)}`,
+          });
+  
+          navigate(redirectTo);
+        } else {
+          toast.toast({
+            title: "Error",
+            description: "No wallet address detected.",
+            variant: "destructive",
+          });
+        }
+      } catch (err) {
+        console.error("Wagmi connect failed:", err);
+        toast.toast({
+          title: "Connection Failed",
+          description: "Wallet connection was unsuccessful.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingLender(false);
+      }
     }
   };
+  
 
-  const handleSignIn = async () => {
-    await signInUser("/wallet", false);
-  };
-  
-  const handleLenderSignUp = async () => {
-    await signInUser("/lending", true);
-  };
-  
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation - Mobile Optimized */}
       <nav className="px-3 sm:px-6 py-4 flex justify-between items-center border-b border-gray-100 safe-area-inset-top">
         <div className="flex items-center gap-2">
           <img
@@ -148,7 +155,6 @@ const Welcome = () => {
         </div>
       </nav>
 
-      {/* Hero Section - Mobile Optimized */}
       <div className="container mx-auto px-3 sm:px-6 pt-8 sm:pt-20 pb-12 sm:pb-24">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] text-transparent bg-clip-text animate-gradient leading-tight">
@@ -156,14 +162,13 @@ const Welcome = () => {
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-12 max-w-[90%] sm:max-w-2xl mx-auto font-medium">
-            Get instant loans backed by your World ID. No collateral needed, just
-            your verified digital presence.
+            Get instant loans backed by your World ID. No collateral needed, just your verified digital presence.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6 sm:mb-16 px-3 sm:px-4">
             <button
               disabled={loadingLoan}
-              onClick={handleSignIn}
+              onClick={() => handleLogin("/wallet", false)}
               className="glass-button flex items-center justify-center gap-2 w-full sm:w-auto min-h-[48px] text-base"
             >
               {loadingLoan ? "Connecting..." : "Get a Loan"}
@@ -172,7 +177,7 @@ const Welcome = () => {
 
             <button
               disabled={loadingLender}
-              onClick={handleLenderSignUp}
+              onClick={() => handleLogin("/lending", true)}
               className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl border border-gray-200 bg-gradient-to-r from-[#8B5CF6] via-[#A855F7] to-[#D946EF] text-white hover:opacity-90 transition-all duration-300 font-medium w-full sm:w-auto min-h-[48px] text-base"
             >
               {loadingLender ? "Connecting..." : "Become a Lender"}
@@ -180,7 +185,6 @@ const Welcome = () => {
             </button>
           </div>
 
-          {/* Trust Badge - Mobile Optimized */}
           <div className="flex items-center justify-center gap-2 text-gray-600 px-3 sm:px-4 text-center">
             <Shield className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm font-medium">

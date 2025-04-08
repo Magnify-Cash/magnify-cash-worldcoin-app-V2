@@ -14,6 +14,7 @@ import Portfolio from "@/pages/Portfolio";
 import LendingHistory from "@/pages/LendingHistory";
 import Calculator from "@/pages/Calculator";
 import ProtectedRoute from "@/pages/ProtectedPage";
+import MetamaskRestrictedRoute from "@/components/MetamaskRestrictedRoute";
 import NotFound from "@/pages/NotFound";
 import "./App.css";
 import eruda from "eruda";
@@ -52,7 +53,6 @@ function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/welcome" replace />} />
                 <Route path="/welcome" element={<Welcome />} />
-                <Route path="/announcements" element={<Announcements />} />
                 <Route path="/lending" element={<Lending />} />
                 <Route path="/pool/:contract" element={<PoolDetails />} />
                 {/* Legacy route support */}
@@ -60,52 +60,62 @@ function App() {
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/lending-history" element={<LendingHistory />} />
                 <Route path="/calculator" element={<Calculator />} />
+                
+                {/* MiniApp-only routes */}
+                <Route
+                  path="/announcements"
+                  element={
+                    <MetamaskRestrictedRoute>
+                      <Announcements />
+                    </MetamaskRestrictedRoute>
+                  }
+                />
                 <Route
                   path="/guide"
                   element={
-                    <ProtectedRoute>
+                    <MetamaskRestrictedRoute>
                       <Guide />
-                    </ProtectedRoute>
+                    </MetamaskRestrictedRoute>
                   }
                 />
                 <Route
                   path="/profile"
                   element={
-                    <ProtectedRoute>
+                    <MetamaskRestrictedRoute>
                       <Profile />
-                    </ProtectedRoute>
+                    </MetamaskRestrictedRoute>
                   }
                 />
                 <Route
                   path="/wallet"
                   element={
-                    <ProtectedRoute>
+                    <MetamaskRestrictedRoute>
                       <Wallet />
-                    </ProtectedRoute>
+                    </MetamaskRestrictedRoute>
                   }
                 />
                 <Route
                   path="/loan"
                   element={
-                    <ProtectedRoute>
+                    <MetamaskRestrictedRoute>
                       <Loan />
-                    </ProtectedRoute>
+                    </MetamaskRestrictedRoute>
                   }
                 />
                 <Route
                   path="/repay-loan"
                   element={
-                    <ProtectedRoute>
+                    <MetamaskRestrictedRoute>
                       <RepayLoan />
-                    </ProtectedRoute>
+                    </MetamaskRestrictedRoute>
                   }
                 />
                 <Route
                   path="/loan-history"
                   element={
-                    <ProtectedRoute>
+                    <MetamaskRestrictedRoute>
                       <LoanHistory />
-                    </ProtectedRoute>
+                    </MetamaskRestrictedRoute>
                   }
                 />
                 <Route path="*" element={<NotFound />} />

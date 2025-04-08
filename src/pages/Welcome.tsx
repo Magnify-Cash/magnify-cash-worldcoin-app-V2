@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MiniKit, MiniAppWalletAuthPayload } from "@worldcoin/minikit-js";
@@ -31,6 +32,9 @@ const Welcome = () => {
   useEffect(() => {
     if (MiniKit.isInstalled()) {
       setIsMiniApp(true);
+      
+      // Clear metamask flag if we're in MiniApp
+      localStorage.removeItem("ls_metamask_user");
     }
   }, []);
 
@@ -72,6 +76,8 @@ const Welcome = () => {
           const user = await MiniKit.getUserByAddress(extendedPayload.address);
           localStorage.setItem("ls_wallet_address", user.walletAddress);
           localStorage.setItem("ls_username", user.username);
+          // Ensure we clear any metamask flag for MiniApp users
+          localStorage.removeItem("ls_metamask_user");
   
           toast.toast({
             title: "Successfully signed in!",
@@ -113,6 +119,9 @@ const Welcome = () => {
         if (address) {
           localStorage.setItem("ls_wallet_address", address);
           localStorage.setItem("ls_username", address);
+          // Set flag for Metamask users
+          localStorage.setItem("ls_metamask_user", "true");
+          
           toast.toast({
             title: "Wallet Connected",
             description: `Connected to ${address.slice(0, 6)}...${address.slice(-4)}`,

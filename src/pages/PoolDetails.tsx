@@ -40,6 +40,7 @@ import { LoadingState } from "@/components/portfolio/LoadingState";
 import { useUserPoolPosition } from "@/hooks/useUserPoolPosition";
 import { usePoolModals } from "@/hooks/usePoolModals";
 import { useCacheListener, EVENTS } from "@/hooks/useCacheListener";
+import { getPoolAPY } from "@/utils/poolConstants";
 
 const PoolDetails = () => {
   const { contract, id } = useParams();
@@ -536,7 +537,7 @@ const PoolDetails = () => {
                       <p className="text-xs sm:text-sm text-gray-500">Estimated APY</p>
                       <p className="text-sm sm:text-lg font-semibold text-[#8B5CF6]">
                         <TrendingUp className="h-4 w-4 inline mr-1" />
-                        {pool.apy}%
+                        {getPoolAPY(pool.contract_address || pool.id, pool.apy)}%
                       </p>
                     </div>
                     

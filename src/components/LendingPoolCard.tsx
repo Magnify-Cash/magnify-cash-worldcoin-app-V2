@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { getPoolAPY } from "@/utils/poolConstants";
 
 interface LendingPoolCardProps {
   title: string;
@@ -14,6 +15,8 @@ interface LendingPoolCardProps {
   totalSupply: number;
   availableLiquidity: number;
   useCustomGradient?: boolean;
+  poolId?: number;
+  contractAddress?: string;
 }
 
 export function LendingPoolCard({ 
@@ -21,9 +24,16 @@ export function LendingPoolCard({
   apy, 
   totalSupply, 
   availableLiquidity,
-  useCustomGradient = false 
+  useCustomGradient = false,
+  poolId,
+  contractAddress
 }: LendingPoolCardProps) {
   const isMobile = useIsMobile();
+
+  // Use the custom APY if available based on poolId or contractAddress
+  const displayAPY = poolId || contractAddress ? 
+    getPoolAPY(poolId || contractAddress, apy) : 
+    apy;
 
   const formatValue = (value: number, suffix: string) => {
     if (value >= 1000000) {
@@ -98,7 +108,7 @@ export function LendingPoolCard({
               </Popover>
             </div>
             <div className={`font-semibold text-base sm:text-lg flex items-center ${useCustomGradient ? "text-[#D946EF]" : "text-[#8B5CF6]"}`}>
-              {apy}%
+              {displayAPY}%
             </div>
           </div>
         </div>

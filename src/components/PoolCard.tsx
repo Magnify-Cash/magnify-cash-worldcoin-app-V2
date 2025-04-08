@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   TrendingUp, 
@@ -20,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { safeParseDate, formatToLocalTime } from "@/utils/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getPoolAPY } from "@/utils/poolConstants";
 
 interface PoolCardProps {
   id: number;
@@ -53,6 +53,8 @@ export function PoolCard({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
+  const displayAPY = getPoolAPY(contract || id, apy);
+  
   const formatDate = (dateStr?: string): string => {
     if (!dateStr) return '';
     return formatToLocalTime(dateStr, 'MMM d, yyyy');
@@ -110,7 +112,6 @@ export function PoolCard({
     if (contract) {
       navigate(`/pool/${contract}`);
     } else {
-      // Fallback to ID-based routing if no contract is available
       navigate(`/pool/id/${id}`);
     }
   };
@@ -159,7 +160,7 @@ export function PoolCard({
               <Skeleton className="h-6 w-20" />
             ) : (
               <div className="font-bold text-lg sm:text-xl text-[#8B5CF6]">
-                {apy}%
+                {displayAPY}%
               </div>
             )}
           </div>

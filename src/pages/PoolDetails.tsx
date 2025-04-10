@@ -41,6 +41,7 @@ import { useUserPoolPosition } from "@/hooks/useUserPoolPosition";
 import { usePoolModals } from "@/hooks/usePoolModals";
 import { useCacheListener, EVENTS } from "@/hooks/useCacheListener";
 import { getPoolAPY } from "@/utils/poolConstants";
+import { formatDays } from "@/utils/timeinfo";
 
 const PoolDetails = () => {
   const { contract, id } = useParams();
@@ -446,23 +447,25 @@ const PoolDetails = () => {
     if (!pool.borrower_info) {
       return {
         warmupPeriod: defaultBorrowerInfo.warmupPeriod,
-        lockDuration: pool.metadata?.lockDurationDays ? `${pool.metadata.lockDurationDays} days` : "180 days",
+        lockDuration: pool.metadata?.lockDurationDays ? formatDays(pool.metadata.lockDurationDays) : "180 days",
         borrowerLoanAmount: defaultBorrowerInfo.borrowerLoanAmount,
         borrowerLoanPeriod: defaultBorrowerInfo.borrowerLoanPeriod,
         borrowerInterest: defaultBorrowerInfo.borrowerInterest,
         originationFee: defaultBorrowerInfo.originationFee,
-        cooldownStartDate: pool.metadata?.cooldownStartFormattedDate || 'N/A'
+        cooldownStartDate: pool.metadata?.cooldownStartFormattedDate || 
+          (pool.borrower_info?.loanPeriodDays ? formatDays(pool.borrower_info.loanPeriodDays) : formatDays(defaultBorrowerInfo.loanPeriodDays))
       };
     }
     
     return {
       warmupPeriod: pool.borrower_info.warmupPeriod || defaultBorrowerInfo.warmupPeriod,
-      lockDuration: pool.metadata?.lockDurationDays ? `${pool.metadata.lockDurationDays} days` : "180 days",
+      lockDuration: pool.metadata?.lockDurationDays ? formatDays(pool.metadata.lockDurationDays) : "180 days",
       borrowerLoanAmount: pool.borrower_info.loanAmount || defaultBorrowerInfo.borrowerLoanAmount,
-      borrowerLoanPeriod: pool.borrower_info.loanPeriodDays ? `${pool.borrower_info.loanPeriodDays} days` : defaultBorrowerInfo.borrowerLoanPeriod,
+      borrowerLoanPeriod: pool.borrower_info.loanPeriodDays ? formatDays(pool.borrower_info.loanPeriodDays) : defaultBorrowerInfo.borrowerLoanPeriod,
       borrowerInterest: pool.borrower_info.interestRate || defaultBorrowerInfo.borrowerInterest,
       originationFee: pool.borrower_info.originationFee || defaultBorrowerInfo.originationFee,
-      cooldownStartDate: pool.metadata?.cooldownStartFormattedDate || 'N/A'
+      cooldownStartDate: pool.metadata?.cooldownStartFormattedDate || 
+        (pool.borrower_info.loanPeriodDays ? formatDays(pool.borrower_info.loanPeriodDays) : formatDays(defaultBorrowerInfo.loanPeriodDays))
     };
   };
 
@@ -598,7 +601,7 @@ const PoolDetails = () => {
                       <div className="flex items-center justify-center">
                         <Lock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
                         <p className="text-sm sm:text-base font-medium text-center flex items-center">
-                          Funds locked for: {getLockDaysRemaining()} days
+                          Funds locked for: {formatDays(getLockDaysRemaining())}
                           <Popover>
                           <PopoverTrigger asChild>
                             <button className="flex-shrink-0 ml-1">
@@ -622,7 +625,7 @@ const PoolDetails = () => {
                       <div className="flex items-center justify-center">
                         <Unlock className="h-4 w-4 text-[#8B5CF6] mr-2 flex-shrink-0" />
                         <p className="text-sm sm:text-base font-medium text-center">
-                          Warm-Up for {getWarmupDays()} days
+                          Warm-Up for {formatDays(getWarmupDays())}
                         </p>
                       </div>
                     </div>

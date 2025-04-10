@@ -86,7 +86,7 @@ export function SupplyModal({
   useEffect(() => {
     const fetchPreviewAmount = async () => {
       const numAmount = parseFloat(amount);
-      if (!isNaN(numAmount) && numAmount >= 1 && poolContractAddress) {
+      if (!isNaN(numAmount) && numAmount >= 0.1 && poolContractAddress) {
         setIsPreviewLoading(true);
         setPreviewRequested(true);
         try {
@@ -99,7 +99,7 @@ export function SupplyModal({
           setIsPreviewLoading(false);
         }
       } else {
-        setPreviewRequested(numAmount >= 1);
+        setPreviewRequested(numAmount >= 0.1);
         setPreviewLpAmount(null);
       }
     };
@@ -113,7 +113,7 @@ export function SupplyModal({
 
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
-    return !isNaN(numAmount) && numAmount > 0 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
+    return !isNaN(numAmount) && numAmount >= 0.1 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
   };
 
   const handleSupply = async () => {
@@ -145,7 +145,7 @@ export function SupplyModal({
       setTransactionMessage("Preparing transaction...");
   
       let expectedLpAmount = previewLpAmount;
-      if (!expectedLpAmount && parseFloat(amount) >= 1) {
+      if (!expectedLpAmount && parseFloat(amount) >= 0.1) {
         try {
           const preview = await previewDeposit(parseFloat(amount), poolContractAddress);
           expectedLpAmount = preview.lpAmount;
@@ -343,7 +343,7 @@ export function SupplyModal({
       return previewLpAmount.toFixed(4);
     }
     
-    if (previewRequested || (!isNaN(numAmount) && numAmount > 0)) {
+    if (previewRequested || (!isNaN(numAmount) && numAmount >= 0.1)) {
       return "...";
     }
     
@@ -410,7 +410,7 @@ export function SupplyModal({
                   onChange={(e) => setAmount(e.target.value)}
                   type="number"
                   step="0.01"
-                  min="0"
+                  min="0.1"
                   autoComplete="off"
                   inputMode="decimal"
                   ref={inputRef}
@@ -427,7 +427,7 @@ export function SupplyModal({
                 </Button>
               </div>
 
-              {amount && parseFloat(amount) >= 1 && (
+              {amount && parseFloat(amount) >= 0.1 && (
                 <div className="text-xs text-gray-500 mt-1">
                   You will receive {calculateLPTokens()} {lpSymbol} tokens
                 </div>
@@ -437,6 +437,8 @@ export function SupplyModal({
                 <p className="text-xs text-red-500">
                   {parseFloat(amount) > (usdcBalance || 0)
                     ? "Insufficient balance in wallet"
+                    : parseFloat(amount) < 0.1
+                    ? "Minimum amount is 0.1 USDC"
                     : "Please enter a valid amount"}
                 </p>
               )}

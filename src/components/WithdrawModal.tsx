@@ -164,7 +164,7 @@ export function WithdrawModal({
 
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
-    return !isNaN(numAmount) && numAmount > 0 && numAmount <= lpValue;
+    return !isNaN(numAmount) && numAmount >= 0.1 && numAmount <= lpValue;
   };
 
   const calculateRemainingUsdcBalance = () => {
@@ -182,11 +182,11 @@ export function WithdrawModal({
       return "...";
     }
     
-    if (!isNaN(numAmount) && numAmount > 0 && exchangeRate > 0) {
+    if (!isNaN(numAmount) && numAmount >= 0.1 && exchangeRate > 0) {
       return (numAmount / exchangeRate).toFixed(4);
     }
     
-    if (!isNaN(numAmount) && numAmount > 0) {
+    if (!isNaN(numAmount) && numAmount >= 0.1) {
       return "...";
     }
     
@@ -385,7 +385,7 @@ export function WithdrawModal({
                   onChange={(e) => setAmount(e.target.value)}
                   type="number"
                   step="0.01"
-                  min="0"
+                  min="0.1"
                   autoComplete="off"
                   inputMode="decimal"
                   ref={inputRef}
@@ -411,6 +411,8 @@ export function WithdrawModal({
                 <p className="text-xs text-red-500">
                   {parseFloat(amount) > lpValue
                     ? "Insufficient USDC balance"
+                    : parseFloat(amount) < 0.1
+                    ? "Minimum amount is 0.1 USDC"
                     : "Please enter a valid amount"}
                 </p>
               )}

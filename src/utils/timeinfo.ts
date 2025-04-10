@@ -30,3 +30,8 @@ export function calculateRemainingTime(
   const dueDate = new Date(Number(endTimeInMilliseconds));
   return [daysRemaining, hoursRemaining, minutesRemaining, dueDate];
 }
+
+// Add a new utility function to format days with proper singular/plural
+export function formatDays(days: number): string {
+  return days === 1 ? "1 day" : `${days} days`;
+}

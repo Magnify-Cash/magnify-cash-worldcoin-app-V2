@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Coins } from "lucide-react";
@@ -104,11 +105,11 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
   };
 
   const showSupplyButton = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
-    return status === 'warm-up' || status === 'active';
+    return (status === 'warm-up' || status === 'active') && status !== 'cooldown';
   };
 
   const showWithdrawButton = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
-    return status === 'warm-up' || status === 'withdrawal';
+    return (status === 'warm-up' || status === 'withdrawal') && status !== 'cooldown';
   };
 
   const generateTransactionId = () => {
@@ -221,7 +222,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
               
               <div className="grid grid-cols-1 gap-2 mt-4">
                 <div className="flex gap-2">
-                  {showSupplyButton(position.status) && (
+                  {position.status !== 'cooldown' && showSupplyButton(position.status) && (
                     <Button 
                       onClick={() => handleSupplyClick(position)}
                       size="sm"
@@ -231,7 +232,7 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
                     </Button>
                   )}
                   
-                  {showWithdrawButton(position.status) && (
+                  {position.status !== 'cooldown' && showWithdrawButton(position.status) && (
                     <Button 
                       onClick={() => handleWithdrawClick(position)}
                       variant="outline" 

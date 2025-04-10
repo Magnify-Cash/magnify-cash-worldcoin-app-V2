@@ -1,4 +1,3 @@
-
 export function calculateRemainingTime(
   startTime: bigint,
   loanPeriod: bigint,
@@ -31,7 +30,11 @@ export function calculateRemainingTime(
   return [daysRemaining, hoursRemaining, minutesRemaining, dueDate];
 }
 
-// Add a new utility function to format days with proper singular/plural
+// Update formatDays to handle values at or below 1
 export function formatDays(days: number): string {
-  return days === 1 ? "1 day" : `${days} days`;
+  // Use singular "day" for values that are exactly 1 or less than or equal to 1
+  if (days <= 1) {
+    return days === 1 ? "1 day" : `${days} day`;
+  }
+  return `${days} days`;
 }

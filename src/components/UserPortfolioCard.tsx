@@ -50,6 +50,17 @@ export function UserPortfolioCard({
     return "You haven't supplied any assets yet";
   };
 
+  // Check if buttons should be shown based on pool status
+  const shouldShowSupplyButton = () => {
+    if (poolStatus === 'cooldown') return false;
+    return showSupplyButton || poolStatus === 'active';
+  };
+
+  const shouldShowWithdrawButton = () => {
+    if (poolStatus === 'cooldown') return false;
+    return showWithdrawButton;
+  };
+
   if (isLoading) {
     return (
       <Card className="border border-[#8B5CF6]/20 shadow-sm overflow-hidden">
@@ -95,7 +106,7 @@ export function UserPortfolioCard({
             
             {!hideButtons && (
               <div className="flex gap-2 pt-2">
-                {(showSupplyButton || poolStatus === 'active') && (
+                {shouldShowSupplyButton() && (
                   <Button
                     onClick={onSupply}
                     className="flex-1 bg-[#8B5CF6] hover:bg-[#7c50e6] text-white"
@@ -103,7 +114,7 @@ export function UserPortfolioCard({
                     Supply
                   </Button>
                 )}
-                {showWithdrawButton && (
+                {shouldShowWithdrawButton() && (
                   <Button
                     onClick={onWithdraw}
                     variant="outline"
@@ -118,11 +129,11 @@ export function UserPortfolioCard({
         ) : (
           <div className="text-center py-4">
             <p className="text-sm text-gray-500 mb-2">{getEmptyBalanceMessage()}</p>
-            {!(poolStatus === 'withdrawal') && (
+            {!(poolStatus === 'withdrawal' || poolStatus === 'cooldown') && (
               <p className="text-xs text-gray-400">Supply assets to start earning interest</p>
             )}
             
-            {!hideButtons && (showSupplyButton || poolStatus === 'active') && (
+            {!hideButtons && shouldShowSupplyButton() && (
               <Button
                 onClick={onSupply}
                 className="mt-4 bg-[#8B5CF6] hover:bg-[#7c50e6] text-white"

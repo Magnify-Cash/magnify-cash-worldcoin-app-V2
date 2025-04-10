@@ -313,16 +313,22 @@ export function SupplyModal({
       }
   
       toast({
-        title: err.message === "Wallet is not connected to World Chain."
-          ? "Wrong Network"
-          : isRpcError
-            ? "Network error (RPC issue)"
-            : "Error",
-        description: err.message === "Wallet is not connected to World Chain."
-          ? "Please switch to the World Chain network in your wallet and try again."
-          : isRpcError
-            ? "The transaction could not be submitted due to an RPC issue. Please try again."
-            : err.message + " test test" || "Something went wrong",
+        title:
+          err.message === "Wallet is not connected to World Chain."
+        ? "Wrong Network"
+        : err.message === "invalid_contract"
+        ? "Pending Approval"
+        : isRpcError
+        ? "Network error (RPC issue)"
+        : "Error",
+        description:
+          err.message === "Wallet is not connected to World Chain."
+        ? "Please switch to the World Chain network in your wallet and try again."
+        : err.message === "invalid_contract"
+        ? "This liquidity pool was just created and is currently pending approval by the World App team.\n\nContributions through World App will be enabled once the contract is reviewed and approved — usually within 24 hours.\n\nWe&apos;ll update this status automatically."
+        : isRpcError
+        ? "The transaction could not be submitted due to an RPC issue. Please try again."
+        : err.message + " test test" || "Something went wrong",
         variant: "destructive",
       });
 

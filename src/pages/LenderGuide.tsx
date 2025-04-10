@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { ChevronUp, AlertTriangle, Clock, Play, Pause, Download } from "lucide-react";
@@ -87,17 +88,18 @@ const LenderGuide = () => {
             </p>
             
             {/* Pool Lifecycle Diagram - Desktop & Mobile Optimized */}
-            <div className="mb-12 overflow-hidden">
+            <div className="mb-6">
               {/* Mobile & Desktop simplified timeline */}
-              <div className="relative h-32 md:h-40 mb-10">
+              <div className="relative h-40 mb-2 md:mb-10">
                 {/* Timeline bar */}
                 <div className="absolute top-1/2 left-0 w-full h-2 bg-gray-200 -translate-y-1/2 rounded-full"></div>
                 
                 {/* Warm-up Phase */}
                 <div className="absolute left-0 w-1/4 top-0 h-full flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-[#FEF7CD] border-2 border-[#F0C000] flex items-center justify-center z-10 mb-2">
+                  <div className="w-10 h-10 rounded-full bg-[#FEF7CD] border-2 border-[#F0C000] flex items-center justify-center z-10 mb-1">
                     <Clock className="h-5 w-5 text-[#F0C000]" />
                   </div>
+                  <p className="text-[10px] md:hidden font-medium text-[#F0C000]">Warm-Up</p>
                   <div className="w-full h-2 bg-[#FEF7CD] absolute top-1/2 -translate-y-1/2 rounded-l-full"></div>
                   <div className="absolute top-14 w-24 text-center hidden md:block">
                     <h4 className="font-semibold text-[#F0C000] mb-1">Warm-Up</h4>
@@ -107,9 +109,10 @@ const LenderGuide = () => {
                 
                 {/* Active Phase */}
                 <div className="absolute left-1/4 w-1/4 top-0 h-full flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-[#F2FCE2] border-2 border-[#6ABE39] flex items-center justify-center z-10 mb-2">
+                  <div className="w-10 h-10 rounded-full bg-[#F2FCE2] border-2 border-[#6ABE39] flex items-center justify-center z-10 mb-1">
                     <Play className="h-5 w-5 text-[#6ABE39]" />
                   </div>
+                  <p className="text-[10px] md:hidden font-medium text-[#6ABE39]">Active</p>
                   <div className="w-full h-2 bg-[#F2FCE2] absolute top-1/2 -translate-y-1/2"></div>
                   <div className="absolute top-14 w-24 text-center hidden md:block">
                     <h4 className="font-semibold text-[#6ABE39] mb-1">Active</h4>
@@ -119,9 +122,10 @@ const LenderGuide = () => {
                 
                 {/* Cooldown Phase */}
                 <div className="absolute left-2/4 w-1/4 top-0 h-full flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-[#F1F0FB] border-2 border-[#9CA3AF] flex items-center justify-center z-10 mb-2">
+                  <div className="w-10 h-10 rounded-full bg-[#F1F0FB] border-2 border-[#9CA3AF] flex items-center justify-center z-10 mb-1">
                     <Pause className="h-5 w-5 text-[#9CA3AF]" />
                   </div>
+                  <p className="text-[10px] md:hidden font-medium text-[#9CA3AF]">Cooldown</p>
                   <div className="w-full h-2 bg-[#F1F0FB] absolute top-1/2 -translate-y-1/2"></div>
                   <div className="absolute top-14 w-24 text-center hidden md:block">
                     <h4 className="font-semibold text-[#9CA3AF] mb-1">Cooldown</h4>
@@ -131,9 +135,10 @@ const LenderGuide = () => {
                 
                 {/* Withdrawal Phase */}
                 <div className="absolute left-3/4 w-1/4 top-0 h-full flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-[#D6BCFA] border-2 border-[#9b87f5] flex items-center justify-center z-10 mb-2">
+                  <div className="w-10 h-10 rounded-full bg-[#D6BCFA] border-2 border-[#9b87f5] flex items-center justify-center z-10 mb-1">
                     <Download className="h-5 w-5 text-[#9b87f5]" />
                   </div>
+                  <p className="text-[10px] md:hidden font-medium text-[#9b87f5]">Withdrawal</p>
                   <div className="w-full h-2 bg-[#D6BCFA] absolute top-1/2 -translate-y-1/2 rounded-r-full"></div>
                   <div className="absolute top-14 w-24 text-center hidden md:block">
                     <h4 className="font-semibold text-[#9b87f5] mb-1">Withdrawal</h4>

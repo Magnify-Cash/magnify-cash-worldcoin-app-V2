@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Info } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PoolCard } from "@/components/PoolCard";
 import { useIsMobile } from "@/hooks/use-mobile";

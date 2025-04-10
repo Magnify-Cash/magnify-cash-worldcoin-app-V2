@@ -239,61 +239,133 @@ const LenderGuide = () => {
             <Accordion type="single" collapsible className="space-y-4">
               <AccordionItem value="item-1" className="border-b border-gray-200">
                 <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
-                  How are APY rates determined?
+                  What are LP tokens and how do they work?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
-                  APY rates are determined based on pool utilization, market demand, and duration of the lending pool. Higher utilization generally translates to higher APY for lenders.
+                  LP (Liquidity Provider) tokens represent your share of a specific pool. As borrowers repay their loans with yield, the value of each LP token increases. When the pool reaches the withdrawal phase, you can redeem your LP tokens for your original funds plus any earned yield.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-2" className="border-b border-gray-200">
                 <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
-                  Can I withdraw my funds anytime?
+                  What currencies can I use to lend?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
-                  Yes, you can withdraw your supplied assets at any time, along with the accrued interest. However, some pools may have early withdrawal fees to discourage frequent withdrawals and maintain pool stability.
+                  Currently, Magnify Cash only supports lending in USD Coin (USDC). All deposits, repayments, and LP token values are denominated in USDC. Make sure your wallet is funded with USDC before attempting to contribute to a liquidity pool.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-3" className="border-b border-gray-200">
                 <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
-                  What currencies can I supply to the lending pools?
+                  Can I withdraw my funds before the pool ends?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
-                  Currently, our lending pools accept USDC. We plan to expand to other stablecoins and cryptocurrencies in future updates.
+                  You can withdraw during the warm-up period, but a small fee applies to discourage spamming. Once the pool enters the active phase, withdrawals are locked until the withdrawal period at the end of the pool's lifecycle.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-4" className="border-b border-gray-200">
                 <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
-                  How are my supplied assets protected?
+                  How is the LP token price calculated?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
-                  All loans are backed by World ID-verified borrowers with NFT collateral. Our risk management system ensures that lending pools maintain appropriate liquidity and collateralization ratios.
+                  The LP token price reflects the performance of the pool. It starts at 1.0 and increases based on the repayments received from borrowers. At the end of the cooldown period, the price is finalized based on how much of the borrowed funds were repaid versus defaulted.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-5" className="border-b border-gray-200">
                 <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
-                  What are LP tokens?
+                  When and how do I receive my yield?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
-                  LP (Liquidity Provider) tokens represent your share in a lending pool. When you supply assets, you receive LP tokens proportional to your contribution. These tokens can be redeemed for your original assets plus earned interest when you withdraw.
+                  Your yield is automatically included in the final value of your LP tokens. When the pool reaches the withdrawal phase, you can redeem your tokens to receive your funds plus yield in a single transaction.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-6" className="border-b border-gray-200">
                 <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
-                  How is interest calculated and paid?
+                  What happens during the cooldown period?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
-                  Interest accrues continuously based on the APY of the pool. Your earned interest is automatically reflected in the value of your LP tokens and is paid out when you withdraw your assets from the pool.
+                  During cooldown, new borrowing stops. Borrowers focus on repaying their outstanding loans, while deposits and withdrawals are paused. This allows the system to finalize repayment outcomes and determine the final LP token value.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-7" className="border-b border-gray-200">
                 <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
-                  Where can I get the latest updates about new lending pools?
+                  Can I join a pool after it has already started?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  Yes, you can contribute during both the warm-up and active periods. However, if you join during the active period instead of the warm-up, the LP token price may differ — which can affect your potential yield.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-8" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  What happens if a pool doesn't attract enough borrowers?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  The pool will still run its full cycle. If fewer loans are issued, there may be less yield generated, which could result in slower LP token growth. However, your funds remain secure and will be returned during the withdrawal phase.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-9" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  What happens if a borrower defaults?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  Borrowers who default are immediately blocked from taking any new loans from any pool. They must repay the full amount of the defaulted loan plus a defaulter's fee to regain access. Defaults reduce the total amount repaid to the pool and will negatively impact the final LP token value.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-10" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  How does World ID verification reduce risk?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  All borrowers must verify their identity using World ID via Orb. This ensures each person can only borrow once at a time, and helps prevent abuse by fake or duplicate accounts.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-11" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  Can I use MetaMask instead of the World App?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  Yes. While the World App is the primary interface, you can also access Magnify via MetaMask using a web browser if you prefer.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-12" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  Do I need to pay gas fees when lending or withdrawing?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  No. When using the World App, transactions are gasless thanks to World's sponsored transaction system. This means users don't need to hold crypto or pay fees to interact with Magnify Cash inside the app.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-13" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  How long is each pool term?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  Pool term lengths may vary and are determined by the team based on ongoing analysis. You can always view the specific term details for each pool before joining.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-14" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  Is there a minimum or maximum amount I can lend?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  There is no maximum limit — you can lend as much as you'd like. However, there is a minimum transaction amount of $0.10 USD, as required by the World App's payment system.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-15" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  Where can I get the latest updates on Magnify?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
                   You can stay updated by joining us on{" "}
@@ -307,9 +379,9 @@ const LenderGuide = () => {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="item-8" className="border-b border-gray-200">
+              <AccordionItem value="item-16" className="border-b border-gray-200">
                 <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
-                  I&apos;ve encountered an issue with my lending position. How can I get support?
+                  I&apos;ve encountered an issue. How can I get support?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
                   Join us on{" "} 

@@ -1,7 +1,6 @@
-
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
-import { ChevronUp, Info, AlertTriangle, LineChart, DollarSign, Clock } from "lucide-react";
+import { ChevronUp, Info, AlertTriangle, Clock, Play, Pause, Download } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -17,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 const LenderGuide = () => {
   const navigate = useNavigate();
@@ -41,146 +41,221 @@ const LenderGuide = () => {
           <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
             Lender Guide: How to Earn with Magnify Cash
           </h1>
+        </section>
 
-          <div className="space-y-8">
-            <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
-              <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-                1. Supply Liquidity
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Provide liquidity to our lending pools and earn yield on your assets
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <Card className="border border-[#5A1A8F]/10">
-                  <CardHeader>
-                    <DollarSign className="h-6 w-6 text-[#5A1A8F]" />
-                    <CardTitle>Earn Yield</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">Supply USDC to earn competitive APY rates on your assets</p>
-                  </CardContent>
-                </Card>
-                <Card className="border border-[#5A1A8F]/10">
-                  <CardHeader>
-                    <LineChart className="h-6 w-6 text-[#5A1A8F]" />
-                    <CardTitle>Track Performance</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">Monitor your investment growth in real-time</p>
-                  </CardContent>
-                </Card>
-                <Card className="border border-[#5A1A8F]/10">
-                  <CardHeader>
-                    <Clock className="h-6 w-6 text-[#5A1A8F]" />
-                    <CardTitle>Flexible Terms</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">Choose from different pools with varying APY rates and terms</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="glass-card p-4 border-l-4 border-[#5A1A8F] bg-gradient-to-r from-[#5A1A8F]/5 to-transparent">
-                <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-[#5A1A8F] flex-shrink-0 mt-1" />
-                  <p className="text-gray-600">
-                    💡 Tip: Browse available pools on the Lending page to find the best APY rates for your investment goals.
-                  </p>
-                </div>
-              </div>
+        <section className="mb-12">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] flex items-center justify-center">
+              <Info className="h-5 w-5 text-white" />
             </div>
-
-            <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
-              <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-                2. Manage Your Portfolio
-              </h2>
-                <p className="text-gray-600 mb-6">
-                Track your supplied assets and earnings through the Portfolio page
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+              How Liquidity Pools Work
+            </h2>
+          </div>
+          <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
+            <div className="space-y-6">
+              <div className="rounded-lg bg-gradient-to-r from-[#f1f0fb]/50 to-white p-6 shadow-sm border border-[#5A1A8F]/10">
+                <h3 className="text-xl font-semibold mb-3 text-[#5A1A8F]">Termed Liquidity Pools</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Magnify Cash offers <span className="font-semibold">termed liquidity pools</span>, where lenders contribute 
+                  funds during the warm-up and active periods. Once a pool opens for borrowing, funds become 
+                  available to borrowers.
                 </p>
-              <div className="glass-card p-4 border-l-4 border-[#5A1A8F] bg-gradient-to-r from-[#5A1A8F]/5 to-transparent">
-                <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-[#5A1A8F] flex-shrink-0 mt-1" />
-                  <p className="text-gray-600">
-                    💡 Tip: Use the Portfolio page to see your current positions, accumulated interest, and overall performance.
-                  </p>
-                </div>
               </div>
-            </div>
-
-            <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
-              <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-                3. Withdraw Funds
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Withdraw your supplied assets along with earned interest at any time
-              </p>
-              <div className="glass-card p-4 border-l-4 border-[#5A1A8F] bg-gradient-to-r from-[#5A1A8F]/5 to-transparent">
-                <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-[#5A1A8F] flex-shrink-0 mt-1" />
-                  <p className="text-gray-600">
-                    💡 Tip: Use the Withdraw feature from your Portfolio to access your funds and earned interest when needed.
-                  </p>
-                </div>
+              
+              <div className="rounded-lg bg-gradient-to-r from-[#f1f0fb]/50 to-white p-6 shadow-sm border border-[#5A1A8F]/10">
+                <h3 className="text-xl font-semibold mb-3 text-[#5A1A8F]">LP Tokens</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Lenders receive <span className="font-semibold">LP tokens</span> that represent their share of the specific pool. 
+                  These tokens increase in value as loans are repaid with interest.
+                </p>
+              </div>
+              
+              <div className="rounded-lg bg-gradient-to-r from-[#f1f0fb]/50 to-white p-6 shadow-sm border border-[#5A1A8F]/10">
+                <h3 className="text-xl font-semibold mb-3 text-[#5A1A8F]">Fixed Terms</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Since pools operate on <span className="font-semibold">fixed terms</span>, funds remain in the pool until maturity, 
+                  at which point lenders can withdraw their balance along with any earnings.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
         <section className="mb-12">
-          <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-            How Liquidity Pools Work
-          </h1>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] flex items-center justify-center">
+              <Clock className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+              Pool Lifecycle
+            </h2>
+          </div>
           <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
-            <p className="text-gray-600 mb-6">
-              Magnify Cash offers termed liquidity pools, where lenders contribute funds during the warm-up and active periods. Once a pool opens for borrowing, funds become available to borrowers. Lenders receive LP tokens that represent their share of the specific pool. These tokens increase in value as loans are repaid with interest. Since pools operate on fixed terms, funds remain in the pool until maturity, at which point lenders can withdraw their balance along with any earnings.
+            <p className="text-gray-700 mb-8 leading-relaxed">
+              Each liquidity pool progresses through four defined phases, each with unique characteristics and rules:
             </p>
+            
+            {/* Pool Lifecycle Diagram */}
+            <div className="mb-12 overflow-hidden">
+              <div className="relative h-32 md:h-40 mb-10">
+                {/* Timeline bar */}
+                <div className="absolute top-1/2 left-0 w-full h-2 bg-gray-200 -translate-y-1/2 rounded-full"></div>
+                
+                {/* Warm-up Phase */}
+                <div className="absolute left-0 w-1/4 top-0 h-full flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-[#FEF7CD] border-2 border-[#F0C000] flex items-center justify-center z-10 mb-2">
+                    <Clock className="h-5 w-5 text-[#F0C000]" />
+                  </div>
+                  <div className="w-full h-2 bg-[#FEF7CD] absolute top-1/2 -translate-y-1/2 rounded-l-full"></div>
+                  <div className="absolute top-14 w-24 text-center">
+                    <h4 className="font-semibold text-[#F0C000] mb-1">Warm-Up</h4>
+                    <p className="text-xs text-gray-600">Deposits allowed<br/>Withdrawals with fee</p>
+                  </div>
+                </div>
+                
+                {/* Active Phase */}
+                <div className="absolute left-1/4 w-1/4 top-0 h-full flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-[#F2FCE2] border-2 border-[#6ABE39] flex items-center justify-center z-10 mb-2">
+                    <Play className="h-5 w-5 text-[#6ABE39]" />
+                  </div>
+                  <div className="w-full h-2 bg-[#F2FCE2] absolute top-1/2 -translate-y-1/2"></div>
+                  <div className="absolute top-14 w-24 text-center">
+                    <h4 className="font-semibold text-[#6ABE39] mb-1">Active</h4>
+                    <p className="text-xs text-gray-600">Deposits allowed<br/>Borrowing active</p>
+                  </div>
+                </div>
+                
+                {/* Cooldown Phase */}
+                <div className="absolute left-2/4 w-1/4 top-0 h-full flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-[#F1F0FB] border-2 border-[#9CA3AF] flex items-center justify-center z-10 mb-2">
+                    <Pause className="h-5 w-5 text-[#9CA3AF]" />
+                  </div>
+                  <div className="w-full h-2 bg-[#F1F0FB] absolute top-1/2 -translate-y-1/2"></div>
+                  <div className="absolute top-14 w-24 text-center">
+                    <h4 className="font-semibold text-[#9CA3AF] mb-1">Cooldown</h4>
+                    <p className="text-xs text-gray-600">Borrowing paused<br/>Repayments only</p>
+                  </div>
+                </div>
+                
+                {/* Withdrawal Phase */}
+                <div className="absolute left-3/4 w-1/4 top-0 h-full flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-[#D6BCFA] border-2 border-[#9b87f5] flex items-center justify-center z-10 mb-2">
+                    <Download className="h-5 w-5 text-[#9b87f5]" />
+                  </div>
+                  <div className="w-full h-2 bg-[#D6BCFA] absolute top-1/2 -translate-y-1/2 rounded-r-full"></div>
+                  <div className="absolute top-14 w-24 text-center">
+                    <h4 className="font-semibold text-[#9b87f5] mb-1">Withdrawal</h4>
+                    <p className="text-xs text-gray-600">LP tokens redeemable<br/>Final yield determined</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Phase Descriptions */}
+            <div className="space-y-6">
+              <div className="rounded-lg bg-[#FEF7CD]/30 p-6 border-l-4 border-[#F0C000]">
+                <h3 className="text-xl font-semibold mb-2 text-[#F0C000] flex items-center gap-2">
+                  <Clock className="h-5 w-5" /> Warm-up Period
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Lenders can supply funds to the pool in exchange for LP tokens. Withdrawals are allowed, but a small fee applies to discourage spamming.
+                </p>
+              </div>
+              
+              <div className="rounded-lg bg-[#F2FCE2]/30 p-6 border-l-4 border-[#6ABE39]">
+                <h3 className="text-xl font-semibold mb-2 text-[#6ABE39] flex items-center gap-2">
+                  <Play className="h-5 w-5" /> Active Period
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Lenders can continue contributing funds, but withdrawals are no longer allowed. This is also when borrowers begin accessing the pool for loans.
+                </p>
+              </div>
+              
+              <div className="rounded-lg bg-[#F1F0FB]/30 p-6 border-l-4 border-[#9CA3AF]">
+                <h3 className="text-xl font-semibold mb-2 text-[#9CA3AF] flex items-center gap-2">
+                  <Pause className="h-5 w-5" /> Cooldown Period
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Borrowing is paused, and borrowers focus on repaying their outstanding loans. Lenders cannot contribute or withdraw during this time, allowing for a clear assessment of loan repayment outcomes and accurate calculation of final LP token value.
+                </p>
+              </div>
+              
+              <div className="rounded-lg bg-[#D6BCFA]/30 p-6 border-l-4 border-[#9b87f5]">
+                <h3 className="text-xl font-semibold mb-2 text-[#9b87f5] flex items-center gap-2">
+                  <Download className="h-5 w-5" /> Withdrawal Period
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  The pool reaches maturity. LP token prices have stabilized based on the pool's performance, and lenders can redeem their tokens to withdraw their original funds along with any accrued yield.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
         <section className="mb-12">
-          <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-            Pool Lifecycle
-          </h1>
-          <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
-            <p className="text-gray-600 mb-6">
-              Each liquidity pool progresses through four defined phases: Warm-up, Active, Cooldown, and Withdrawal.
-            </p>
-            <p className="text-gray-600 mb-6">
-              During the Warm-up period, lenders can supply funds to the pool in exchange for LP tokens. Withdrawals are allowed, but a small fee applies to discourage spamming.
-            </p>
-            <p className="text-gray-600 mb-6">
-              In the Active period, lenders can continue contributing funds, but withdrawals are no longer allowed. This is also when borrowers begin accessing the pool for loans.
-            </p>
-            <p className="text-gray-600 mb-6">
-              During the Cooldown period, borrowing is paused, and borrowers focus on repaying their outstanding loans. Lenders cannot contribute or withdraw during this time, allowing for a clear assessment of loan repayment outcomes and accurate calculation of final LP token value.
-            </p>
-            <p className="text-gray-600 mb-6">
-              In the Withdrawal period, the pool reaches maturity. LP token prices have stabilized based on the pool's performance, and lenders can redeem their tokens to withdraw their original funds along with any accrued yield.
-            </p>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+              Risk Management
+            </h2>
           </div>
-        </section>
-
-        <section className="mb-12">
-          <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-            Risk Management
-          </h1>
           <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-700 mb-8 leading-relaxed">
               Magnify Cash is designed with strong safeguards to protect lenders and support responsible borrowing.
             </p>
-            <p className="text-gray-600 mb-6">
-              Borrowers can only access the platform through the World App and must complete World ID (ORB) verification, ensuring all borrowers are real, verified individuals.
-            </p>
-            <p className="text-gray-600 mb-6">
-              Each borrower is limited to one active loan at a time, regardless of how many liquidity pools exist.
-            </p>
-            <p className="text-gray-600 mb-6">
-              If a borrower defaults, they are blocked from accessing new loans across all pools until they repay their defaulted loan plus a defaulter's fee.
-            </p>
-            <p className="text-gray-600 mb-6">
-              Lenders are primarily encouraged to access the platform through the World App for a seamless in-app experience. However, access via MetaMask in browser is also supported for advanced users who prefer it.
-            </p>
+            
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="border border-[#5A1A8F]/10 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="h-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75]"></div>
+                <CardHeader>
+                  <CardTitle className="text-xl">Identity Verification</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed">
+                    Borrowers can only access the platform through the World App and must complete World ID (ORB) verification, ensuring all borrowers are real, verified individuals.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border border-[#5A1A8F]/10 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="h-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75]"></div>
+                <CardHeader>
+                  <CardTitle className="text-xl">Loan Limits</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed">
+                    Each borrower is limited to one active loan at a time, regardless of how many liquidity pools exist.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border border-[#5A1A8F]/10 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="h-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75]"></div>
+                <CardHeader>
+                  <CardTitle className="text-xl">Default Consequences</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed">
+                    If a borrower defaults, they are blocked from accessing new loans across all pools until they repay their defaulted loan plus a defaulter's fee.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border border-[#5A1A8F]/10 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="h-2 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75]"></div>
+                <CardHeader>
+                  <CardTitle className="text-xl">Platform Access</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed">
+                    Lenders are primarily encouraged to access the platform through the World App for a seamless in-app experience. However, access via MetaMask in browser is also supported for advanced users who prefer it.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </section>
 

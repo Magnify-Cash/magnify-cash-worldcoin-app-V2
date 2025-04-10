@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Welcome from "@/pages/Welcome";
 import Guide from "@/pages/Guide";
+import LenderGuide from "@/pages/LenderGuide";
 import Profile from "@/pages/Profile";
 import Wallet from "@/pages/Wallet";
 import Loan from "@/pages/Loan";
@@ -60,6 +61,7 @@ function App() {
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/lending-history" element={<LendingHistory />} />
                 <Route path="/calculator" element={<Calculator />} />
+                <Route path="/lender-guide" element={<LenderGuide />} />
                 
                 {/* MiniApp-only routes */}
                 <Route

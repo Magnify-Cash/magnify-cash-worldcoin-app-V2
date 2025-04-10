@@ -1,3 +1,4 @@
+
 import { ArrowLeft, Home, Menu } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -22,7 +23,8 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
   const isPortfolioPage = location.pathname === "/portfolio";
   const isLendingHistoryPage = location.pathname === "/lending-history";
   const isCalculatorPage = location.pathname === "/calculator";
-  const isLendingRelated = isLendingPage || isPoolPage || isPortfolioPage || isLendingHistoryPage || isCalculatorPage;
+  const isLenderGuidePage = location.pathname === "/lender-guide";
+  const isLendingRelated = isLendingPage || isPoolPage || isPortfolioPage || isLendingHistoryPage || isCalculatorPage || isLenderGuidePage;
 
   const handleBackClick = () => {
     // Use browser history to go back instead of hardcoded redirection
@@ -97,6 +99,12 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
                   onClick={() => navigate("/calculator")}
                 >
                   Yield Calculator
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="min-h-[40px] focus:text-white focus-visible:text-white"
+                  onClick={() => navigate("/lender-guide")}
+                >
+                  Help Center
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

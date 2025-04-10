@@ -104,12 +104,15 @@ export const ActivePositions: React.FC<ActivePositionsProps> = ({
     }
   };
 
+  // Fixed the TypeScript error by removing redundant conditions
   const showSupplyButton = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
-    return (status === 'warm-up' || status === 'active') && status !== 'cooldown';
+    // We don't need to check for cooldown here since we'll do that check separately
+    return status === 'warm-up' || status === 'active';
   };
 
   const showWithdrawButton = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal') => {
-    return (status === 'warm-up' || status === 'withdrawal') && status !== 'cooldown';
+    // We don't need to check for cooldown here since we'll do that check separately
+    return status === 'warm-up' || status === 'withdrawal';
   };
 
   const generateTransactionId = () => {

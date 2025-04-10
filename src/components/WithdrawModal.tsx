@@ -331,7 +331,7 @@ export function WithdrawModal({
           err.message === "Wallet is not connected to World Chain."
           ? "Please switch to the World Chain network in your wallet and try again."
           : err.message === "invalid_contract"
-          ? "This liquidity pool was just created and is currently pending approval by the World App team.\n\nContributions through World App will be enabled once the contract is reviewed and approved — usually within 24 hours.\n\nWe&apos;ll update this status automatically."
+          ? "This liquidity pool was just created and is currently pending approval by the World App team.\n\nContributions through World App will be enabled once the contract is reviewed and approved — usually within 24 hours.\n\nWe will update this status automatically."
           : err.message === "user_rejected"
           ? "You rejected the transaction in your wallet. Please try again if you wish to proceed."
           : isRpcError

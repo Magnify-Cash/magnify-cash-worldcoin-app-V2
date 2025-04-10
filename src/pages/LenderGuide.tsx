@@ -1,4 +1,3 @@
-
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { ChevronUp, AlertTriangle, Clock, Play, Pause, Download } from "lucide-react";
@@ -87,78 +86,10 @@ const LenderGuide = () => {
               Each liquidity pool progresses through four defined phases, each with unique characteristics and rules:
             </p>
             
-            {/* Pool Lifecycle Diagram - Mobile Optimized */}
+            {/* Pool Lifecycle Diagram - Desktop & Mobile Optimized */}
             <div className="mb-12 overflow-hidden">
-              {/* Mobile vertical timeline */}
-              <div className="md:hidden">
-                <div className="relative">
-                  {/* Vertical timeline line */}
-                  <div className="absolute left-6 top-0 bottom-0 w-2 bg-gray-200 rounded-full"></div>
-                  
-                  {/* Warm-up Phase */}
-                  <div className="relative mb-16 pl-16">
-                    <div className="absolute left-4 w-6 h-6 -translate-x-1/2 rounded-full bg-[#FEF7CD] border-2 border-[#F0C000] flex items-center justify-center z-10">
-                      <Clock className="h-3 w-3 text-[#F0C000]" />
-                    </div>
-                    <div className="rounded-lg bg-[#FEF7CD]/30 p-4 border-l-4 border-[#F0C000]">
-                      <h3 className="text-lg font-semibold mb-2 text-[#F0C000] flex items-center gap-2">
-                        <Clock className="h-4 w-4" /> Warm-up Period
-                      </h3>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        Lenders can supply funds to the pool in exchange for LP tokens. Withdrawals are allowed, but a small fee applies to discourage spamming.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Active Phase */}
-                  <div className="relative mb-16 pl-16">
-                    <div className="absolute left-4 w-6 h-6 -translate-x-1/2 rounded-full bg-[#F2FCE2] border-2 border-[#6ABE39] flex items-center justify-center z-10">
-                      <Play className="h-3 w-3 text-[#6ABE39]" />
-                    </div>
-                    <div className="rounded-lg bg-[#F2FCE2]/30 p-4 border-l-4 border-[#6ABE39]">
-                      <h3 className="text-lg font-semibold mb-2 text-[#6ABE39] flex items-center gap-2">
-                        <Play className="h-4 w-4" /> Active Period
-                      </h3>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        Lenders can continue contributing funds, but withdrawals are no longer allowed. This is also when borrowers begin accessing the pool for loans.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Cooldown Phase */}
-                  <div className="relative mb-16 pl-16">
-                    <div className="absolute left-4 w-6 h-6 -translate-x-1/2 rounded-full bg-[#F1F0FB] border-2 border-[#9CA3AF] flex items-center justify-center z-10">
-                      <Pause className="h-3 w-3 text-[#9CA3AF]" />
-                    </div>
-                    <div className="rounded-lg bg-[#F1F0FB]/30 p-4 border-l-4 border-[#9CA3AF]">
-                      <h3 className="text-lg font-semibold mb-2 text-[#9CA3AF] flex items-center gap-2">
-                        <Pause className="h-4 w-4" /> Cooldown Period
-                      </h3>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        Borrowing is paused, and borrowers focus on repaying their outstanding loans. Lenders cannot contribute or withdraw during this time.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Withdrawal Phase */}
-                  <div className="relative mb-8 pl-16">
-                    <div className="absolute left-4 w-6 h-6 -translate-x-1/2 rounded-full bg-[#D6BCFA] border-2 border-[#9b87f5] flex items-center justify-center z-10">
-                      <Download className="h-3 w-3 text-[#9b87f5]" />
-                    </div>
-                    <div className="rounded-lg bg-[#D6BCFA]/30 p-4 border-l-4 border-[#9b87f5]">
-                      <h3 className="text-lg font-semibold mb-2 text-[#9b87f5] flex items-center gap-2">
-                        <Download className="h-4 w-4" /> Withdrawal Period
-                      </h3>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        The pool reaches maturity. LP token prices have stabilized, and lenders can redeem their tokens to withdraw their original funds along with any accrued yield.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Desktop horizontal timeline (original) */}
-              <div className="hidden md:block relative h-32 md:h-40 mb-10">
+              {/* Mobile & Desktop simplified timeline */}
+              <div className="relative h-32 md:h-40 mb-10">
                 {/* Timeline bar */}
                 <div className="absolute top-1/2 left-0 w-full h-2 bg-gray-200 -translate-y-1/2 rounded-full"></div>
                 
@@ -168,7 +99,7 @@ const LenderGuide = () => {
                     <Clock className="h-5 w-5 text-[#F0C000]" />
                   </div>
                   <div className="w-full h-2 bg-[#FEF7CD] absolute top-1/2 -translate-y-1/2 rounded-l-full"></div>
-                  <div className="absolute top-14 w-24 text-center">
+                  <div className="absolute top-14 w-24 text-center hidden md:block">
                     <h4 className="font-semibold text-[#F0C000] mb-1">Warm-Up</h4>
                     <p className="text-xs text-gray-600">Deposits allowed<br/>Withdrawals with fee</p>
                   </div>
@@ -180,7 +111,7 @@ const LenderGuide = () => {
                     <Play className="h-5 w-5 text-[#6ABE39]" />
                   </div>
                   <div className="w-full h-2 bg-[#F2FCE2] absolute top-1/2 -translate-y-1/2"></div>
-                  <div className="absolute top-14 w-24 text-center">
+                  <div className="absolute top-14 w-24 text-center hidden md:block">
                     <h4 className="font-semibold text-[#6ABE39] mb-1">Active</h4>
                     <p className="text-xs text-gray-600">Deposits allowed<br/>Borrowing active</p>
                   </div>
@@ -192,7 +123,7 @@ const LenderGuide = () => {
                     <Pause className="h-5 w-5 text-[#9CA3AF]" />
                   </div>
                   <div className="w-full h-2 bg-[#F1F0FB] absolute top-1/2 -translate-y-1/2"></div>
-                  <div className="absolute top-14 w-24 text-center">
+                  <div className="absolute top-14 w-24 text-center hidden md:block">
                     <h4 className="font-semibold text-[#9CA3AF] mb-1">Cooldown</h4>
                     <p className="text-xs text-gray-600">Borrowing paused<br/>Repayments only</p>
                   </div>
@@ -204,7 +135,7 @@ const LenderGuide = () => {
                     <Download className="h-5 w-5 text-[#9b87f5]" />
                   </div>
                   <div className="w-full h-2 bg-[#D6BCFA] absolute top-1/2 -translate-y-1/2 rounded-r-full"></div>
-                  <div className="absolute top-14 w-24 text-center">
+                  <div className="absolute top-14 w-24 text-center hidden md:block">
                     <h4 className="font-semibold text-[#9b87f5] mb-1">Withdrawal</h4>
                     <p className="text-xs text-gray-600">LP tokens redeemable<br/>Final yield determined</p>
                   </div>
@@ -390,7 +321,7 @@ const LenderGuide = () => {
                   Can I withdraw my funds before the pool ends?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
-                  You can withdraw during the warm-up period, but a small fee applies to discourage spamming. Once the pool enters the active phase, withdrawals are locked until the withdrawal period at the end of the pool's lifecycle.
+                  You can withdraw during the warm-up period, but a small fee applies to discourage spamming. Once the pool enters the active period, withdrawals are locked until the withdrawal period at the end of the pool's lifecycle.
                 </AccordionContent>
               </AccordionItem>
 

@@ -1,10 +1,12 @@
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   TrendingUp, 
   Lock,
   Calendar,
   Info,
-  ExternalLink
+  ExternalLink,
+  Clock
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { 
@@ -12,12 +14,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { 
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger
+} from "@/components/ui/hover-card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
-import { safeParseDate, formatToLocalTime } from "@/utils/dateUtils";
+import { safeParseDate, formatToLocalTime, formatToTimezone, formatUnlockDate } from "@/utils/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPoolAPY } from "@/utils/poolConstants";
 
@@ -64,12 +71,37 @@ export function PoolCard({
     return formatToLocalTime(dateStr, 'MMM d, yyyy');
   };
 
+  const formatFullDate = (dateStr?: string): string => {
+    if (!dateStr) return '';
+    return formatUnlockDate(dateStr);
+  };
+
+  const getExactTime = (dateStr?: string): string => {
+    if (!dateStr) return '';
+    const safeDate = safeParseDate(dateStr);
+    return format(safeDate, 'h:mm a');
+  };
+
+  const getTimeZone = (): string => {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  };
+
   const getLockPeriodDate = () => {
     if (isLoading) return '';
     if (status === 'warm-up' && startDate) {
       return formatDate(startDate);
     } else if (endDate) {
       return formatDate(endDate);
+    }
+    return '';
+  };
+
+  const getLockPeriodFullDate = () => {
+    if (isLoading) return '';
+    if (status === 'warm-up' && startDate) {
+      return formatFullDate(startDate);
+    } else if (endDate) {
+      return formatFullDate(endDate);
     }
     return '';
   };
@@ -192,8 +224,24 @@ export function PoolCard({
           {isLoading ? (
             <Skeleton className="h-5 w-32" />
           ) : (
-            <div className="font-bold text-sm sm:text-base text-gray-800">
+            <div className="font-bold text-sm sm:text-base text-gray-800 flex items-center gap-1">
               {getLockPeriodDate()}
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <button className="inline-flex ml-1">
+                    <Clock className="h-3.5 w-3.5 text-gray-500 hover:text-gray-700 transition-colors" />
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-auto p-3 space-y-2">
+                  <div className="space-y-1.5">
+                    <h4 className="text-sm font-semibold">{getLockPeriodLabel()} Details</h4>
+                    <div className="text-xs text-gray-600">
+                      <p className="font-medium">{getLockPeriodFullDate()}</p>
+                      <p className="mt-1 text-gray-500">Timezone: {getTimeZone()}</p>
+                    </div>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
             </div>
           )}
         </div>

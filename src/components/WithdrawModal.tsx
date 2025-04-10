@@ -317,8 +317,24 @@ export function WithdrawModal({
       }
   
       toast({
-        title: isRpcError ? "Network error (RPC issue)" : "Transaction error",
-        description: isRpcError
+        title:
+          err.message === "Wallet is not connected to World Chain."
+          ? "Wrong Network"
+          : err.message === "invalid_contract"
+          ? "Pending Approval"
+          : err.message === "user_rejected"
+          ? "Transaction Rejected" 
+          : isRpcError
+          ? "Network error (RPC issue)"
+          : "Transaction error",
+        description:
+          err.message === "Wallet is not connected to World Chain."
+          ? "Please switch to the World Chain network in your wallet and try again."
+          : err.message === "invalid_contract"
+          ? "This liquidity pool was just created and is currently pending approval by the World App team.\n\nContributions through World App will be enabled once the contract is reviewed and approved — usually within 24 hours.\n\nWe&apos;ll update this status automatically."
+          : err.message === "user_rejected"
+          ? "You rejected the transaction in your wallet. Please try again if you wish to proceed."
+          : isRpcError
           ? "The transaction could not be submitted due to an RPC issue. Please try again."
           : err.message || "Something went wrong",
         variant: "destructive",

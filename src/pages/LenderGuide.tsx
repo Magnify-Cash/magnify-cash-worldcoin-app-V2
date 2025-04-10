@@ -1,6 +1,7 @@
+
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
-import { ChevronUp, Info, AlertTriangle, Clock, Play, Pause, Download } from "lucide-react";
+import { ChevronUp, AlertTriangle, Clock, Play, Pause, Download } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -44,14 +45,9 @@ const LenderGuide = () => {
         </section>
 
         <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] flex items-center justify-center">
-              <Info className="h-5 w-5 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-              How Liquidity Pools Work
-            </h2>
-          </div>
+          <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+            How Liquidity Pools Work
+          </h2>
           <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
             <div className="space-y-6">
               <div className="rounded-lg bg-gradient-to-r from-[#f1f0fb]/50 to-white p-6 shadow-sm border border-[#5A1A8F]/10">
@@ -83,22 +79,86 @@ const LenderGuide = () => {
         </section>
 
         <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] flex items-center justify-center">
-              <Clock className="h-5 w-5 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-              Pool Lifecycle
-            </h2>
-          </div>
+          <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+            Pool Lifecycle
+          </h2>
           <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
             <p className="text-gray-700 mb-8 leading-relaxed">
               Each liquidity pool progresses through four defined phases, each with unique characteristics and rules:
             </p>
             
-            {/* Pool Lifecycle Diagram */}
+            {/* Pool Lifecycle Diagram - Mobile Optimized */}
             <div className="mb-12 overflow-hidden">
-              <div className="relative h-32 md:h-40 mb-10">
+              {/* Mobile vertical timeline */}
+              <div className="md:hidden">
+                <div className="relative">
+                  {/* Vertical timeline line */}
+                  <div className="absolute left-6 top-0 bottom-0 w-2 bg-gray-200 rounded-full"></div>
+                  
+                  {/* Warm-up Phase */}
+                  <div className="relative mb-16 pl-16">
+                    <div className="absolute left-4 w-6 h-6 -translate-x-1/2 rounded-full bg-[#FEF7CD] border-2 border-[#F0C000] flex items-center justify-center z-10">
+                      <Clock className="h-3 w-3 text-[#F0C000]" />
+                    </div>
+                    <div className="rounded-lg bg-[#FEF7CD]/30 p-4 border-l-4 border-[#F0C000]">
+                      <h3 className="text-lg font-semibold mb-2 text-[#F0C000] flex items-center gap-2">
+                        <Clock className="h-4 w-4" /> Warm-up Period
+                      </h3>
+                      <p className="text-gray-700 text-sm leading-relaxed">
+                        Lenders can supply funds to the pool in exchange for LP tokens. Withdrawals are allowed, but a small fee applies to discourage spamming.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Active Phase */}
+                  <div className="relative mb-16 pl-16">
+                    <div className="absolute left-4 w-6 h-6 -translate-x-1/2 rounded-full bg-[#F2FCE2] border-2 border-[#6ABE39] flex items-center justify-center z-10">
+                      <Play className="h-3 w-3 text-[#6ABE39]" />
+                    </div>
+                    <div className="rounded-lg bg-[#F2FCE2]/30 p-4 border-l-4 border-[#6ABE39]">
+                      <h3 className="text-lg font-semibold mb-2 text-[#6ABE39] flex items-center gap-2">
+                        <Play className="h-4 w-4" /> Active Period
+                      </h3>
+                      <p className="text-gray-700 text-sm leading-relaxed">
+                        Lenders can continue contributing funds, but withdrawals are no longer allowed. This is also when borrowers begin accessing the pool for loans.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Cooldown Phase */}
+                  <div className="relative mb-16 pl-16">
+                    <div className="absolute left-4 w-6 h-6 -translate-x-1/2 rounded-full bg-[#F1F0FB] border-2 border-[#9CA3AF] flex items-center justify-center z-10">
+                      <Pause className="h-3 w-3 text-[#9CA3AF]" />
+                    </div>
+                    <div className="rounded-lg bg-[#F1F0FB]/30 p-4 border-l-4 border-[#9CA3AF]">
+                      <h3 className="text-lg font-semibold mb-2 text-[#9CA3AF] flex items-center gap-2">
+                        <Pause className="h-4 w-4" /> Cooldown Period
+                      </h3>
+                      <p className="text-gray-700 text-sm leading-relaxed">
+                        Borrowing is paused, and borrowers focus on repaying their outstanding loans. Lenders cannot contribute or withdraw during this time.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Withdrawal Phase */}
+                  <div className="relative mb-8 pl-16">
+                    <div className="absolute left-4 w-6 h-6 -translate-x-1/2 rounded-full bg-[#D6BCFA] border-2 border-[#9b87f5] flex items-center justify-center z-10">
+                      <Download className="h-3 w-3 text-[#9b87f5]" />
+                    </div>
+                    <div className="rounded-lg bg-[#D6BCFA]/30 p-4 border-l-4 border-[#9b87f5]">
+                      <h3 className="text-lg font-semibold mb-2 text-[#9b87f5] flex items-center gap-2">
+                        <Download className="h-4 w-4" /> Withdrawal Period
+                      </h3>
+                      <p className="text-gray-700 text-sm leading-relaxed">
+                        The pool reaches maturity. LP token prices have stabilized, and lenders can redeem their tokens to withdraw their original funds along with any accrued yield.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Desktop horizontal timeline (original) */}
+              <div className="hidden md:block relative h-32 md:h-40 mb-10">
                 {/* Timeline bar */}
                 <div className="absolute top-1/2 left-0 w-full h-2 bg-gray-200 -translate-y-1/2 rounded-full"></div>
                 
@@ -194,14 +254,9 @@ const LenderGuide = () => {
         </section>
 
         <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] flex items-center justify-center">
-              <AlertTriangle className="h-5 w-5 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-              Risk Management
-            </h2>
-          </div>
+          <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+            Risk Management
+          </h2>
           <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
             <p className="text-gray-700 mb-8 leading-relaxed">
               Magnify Cash is designed with strong safeguards to protect lenders and support responsible borrowing.

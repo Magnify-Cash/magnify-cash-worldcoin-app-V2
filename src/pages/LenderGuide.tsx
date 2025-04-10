@@ -1,6 +1,5 @@
 
 import { Header } from "@/components/Header";
-import { LoanCard } from "@/components/LoanCard";
 import { useNavigate } from "react-router-dom";
 import { ChevronUp, Info, AlertTriangle, LineChart, DollarSign, Clock } from "lucide-react";
 import {
@@ -17,9 +16,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 const LenderGuide = () => {
   const navigate = useNavigate();
+  const [isMiniApp, setIsMiniApp] = useState(false);
+
+  useEffect(() => {
+    // Check if user is in MiniApp or in browser with MetaMask
+    const isMiniAppUser = !localStorage.getItem("ls_metamask_user");
+    setIsMiniApp(isMiniAppUser);
+  }, []);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -120,50 +127,109 @@ const LenderGuide = () => {
           </div>
         </section>
 
-      <section className="mb-12">
-      <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-            Stay Updated!
+        <section className="mb-12">
+          <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+            How Liquidity Pools Work
           </h1>
-        <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <div className="flex items-center justify-center mb-6">
-                <AlertTriangle className="w-16 h-16 text-primary" />
-              </div>
-              <p className="text-muted-foreground text-center text-lg mb-6">
-                Enable notifications to get instant alerts on new pools, APY changes, and important updates for lenders.
-              </p>
-              
-              <div className="bg-black/5 p-4 rounded-md mt-2">
-                <h4 className="font-medium mb-2 text-center">
-                  How to enable notifications:
-                </h4>
-                <ol className="list-decimal list-inside space-y-1 ml-2 text-sm text-left text-muted-foreground">
-                  <li>Open the <span className="font-bold">World App</span></li>
-                  <li>Tap the <span className="font-bold">settings icon</span> in the top right corner</li>
-                  <li>Select <span className="font-bold">Apps</span></li>
-                  <li>Find and tap on <span className="font-bold">Magnify Cash</span></li>
-                  <li>Enable <span className="font-bold">Notifications</span> to stay updated</li>
-                </ol>
-              </div>
-              
-              <div className="aspect-video w-full mt-6 rounded-md overflow-hidden flex justify-center items-center relative">
-                <video 
-                  src="/magnify_notification_tutorial.MP4" 
-                  className="w-full h-full object-cover"
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline
-                  controls={false}
-                  style={{ pointerEvents: "none" }}
-                />
-              </div>
-        </motion.div>
-      </section>
+          <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
+            <p className="text-gray-600 mb-6">
+              Magnify Cash offers termed liquidity pools, where lenders contribute funds during the warm-up and active periods. Once a pool opens for borrowing, funds become available to borrowers. Lenders receive LP tokens that represent their share of the specific pool. These tokens increase in value as loans are repaid with interest. Since pools operate on fixed terms, funds remain in the pool until maturity, at which point lenders can withdraw their balance along with any earnings.
+            </p>
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+            Pool Lifecycle
+          </h1>
+          <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
+            <p className="text-gray-600 mb-6">
+              Each liquidity pool progresses through four defined phases: Warm-up, Active, Cooldown, and Withdrawal.
+            </p>
+            <p className="text-gray-600 mb-6">
+              During the Warm-up period, lenders can supply funds to the pool in exchange for LP tokens. Withdrawals are allowed, but a small fee applies to discourage spamming.
+            </p>
+            <p className="text-gray-600 mb-6">
+              In the Active period, lenders can continue contributing funds, but withdrawals are no longer allowed. This is also when borrowers begin accessing the pool for loans.
+            </p>
+            <p className="text-gray-600 mb-6">
+              During the Cooldown period, borrowing is paused, and borrowers focus on repaying their outstanding loans. Lenders cannot contribute or withdraw during this time, allowing for a clear assessment of loan repayment outcomes and accurate calculation of final LP token value.
+            </p>
+            <p className="text-gray-600 mb-6">
+              In the Withdrawal period, the pool reaches maturity. LP token prices have stabilized based on the pool's performance, and lenders can redeem their tokens to withdraw their original funds along with any accrued yield.
+            </p>
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+            Risk Management
+          </h1>
+          <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
+            <p className="text-gray-600 mb-6">
+              Magnify Cash is designed with strong safeguards to protect lenders and support responsible borrowing.
+            </p>
+            <p className="text-gray-600 mb-6">
+              Borrowers can only access the platform through the World App and must complete World ID (ORB) verification, ensuring all borrowers are real, verified individuals.
+            </p>
+            <p className="text-gray-600 mb-6">
+              Each borrower is limited to one active loan at a time, regardless of how many liquidity pools exist.
+            </p>
+            <p className="text-gray-600 mb-6">
+              If a borrower defaults, they are blocked from accessing new loans across all pools until they repay their defaulted loan plus a defaulter's fee.
+            </p>
+            <p className="text-gray-600 mb-6">
+              Lenders are primarily encouraged to access the platform through the World App for a seamless in-app experience. However, access via MetaMask in browser is also supported for advanced users who prefer it.
+            </p>
+          </div>
+        </section>
+
+        {isMiniApp && (
+          <section className="mb-12">
+            <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
+                Stay Updated!
+              </h1>
+            <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <div className="flex items-center justify-center mb-6">
+                    <AlertTriangle className="w-16 h-16 text-primary" />
+                  </div>
+                  <p className="text-muted-foreground text-center text-lg mb-6">
+                    Enable notifications to get instant alerts on new pools, APY changes, and important updates for lenders.
+                  </p>
+                  
+                  <div className="bg-black/5 p-4 rounded-md mt-2">
+                    <h4 className="font-medium mb-2 text-center">
+                      How to enable notifications:
+                    </h4>
+                    <ol className="list-decimal list-inside space-y-1 ml-2 text-sm text-left text-muted-foreground">
+                      <li>Open the <span className="font-bold">World App</span></li>
+                      <li>Tap the <span className="font-bold">settings icon</span> in the top right corner</li>
+                      <li>Select <span className="font-bold">Apps</span></li>
+                      <li>Find and tap on <span className="font-bold">Magnify Cash</span></li>
+                      <li>Enable <span className="font-bold">Notifications</span> to stay updated</li>
+                    </ol>
+                  </div>
+                  
+                  <div className="aspect-video w-full mt-6 rounded-md overflow-hidden flex justify-center items-center relative">
+                    <video 
+                      src="/magnify_notification_tutorial.MP4" 
+                      className="w-full h-full object-cover"
+                      autoPlay 
+                      loop 
+                      muted 
+                      playsInline
+                      controls={false}
+                      style={{ pointerEvents: "none" }}
+                    />
+                  </div>
+            </motion.div>
+          </section>
+        )}
 
         <section className="mb-12">
           <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">

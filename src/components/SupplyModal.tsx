@@ -322,7 +322,7 @@ export function SupplyModal({
           ? "Please switch to the World Chain network in your wallet and try again."
           : isRpcError
             ? "The transaction could not be submitted due to an RPC issue. Please try again."
-            : err.message || "Something went wrong",
+            : err.message + " test test" || "Something went wrong",
         variant: "destructive",
       });
 

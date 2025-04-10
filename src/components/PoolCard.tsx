@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   TrendingUp, 
@@ -6,7 +5,6 @@ import {
   Calendar,
   Info,
   ExternalLink,
-  Clock
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { 
@@ -24,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
-import { safeParseDate, formatToLocalTime, formatToTimezone, formatUnlockDate } from "@/utils/dateUtils";
+import { safeParseDate, formatToLocalTime, formatUnlockDate } from "@/utils/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPoolAPY } from "@/utils/poolConstants";
 
@@ -80,10 +78,6 @@ export function PoolCard({
     if (!dateStr) return '';
     const safeDate = safeParseDate(dateStr);
     return format(safeDate, 'h:mm a');
-  };
-
-  const getTimeZone = (): string => {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
   };
 
   const getLockPeriodDate = () => {
@@ -220,28 +214,24 @@ export function PoolCard({
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
             <Calendar className="h-3 w-3 flex-shrink-0" />
             <span>{getLockPeriodLabel()}</span>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <button className="inline-flex">
+                  <Info className="h-3 w-3 text-gray-400 hover:text-gray-600 transition-colors" />
+                </button>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-auto p-3">
+                <div className="space-y-1">
+                  <p className="font-medium text-xs">{getLockPeriodFullDate()}</p>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
           </div>
           {isLoading ? (
             <Skeleton className="h-5 w-32" />
           ) : (
-            <div className="font-bold text-sm sm:text-base text-gray-800 flex items-center gap-1">
+            <div className="font-bold text-sm sm:text-base text-gray-800">
               {getLockPeriodDate()}
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <button className="inline-flex ml-1">
-                    <Clock className="h-3.5 w-3.5 text-gray-500 hover:text-gray-700 transition-colors" />
-                  </button>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-auto p-3 space-y-2">
-                  <div className="space-y-1.5">
-                    <h4 className="text-sm font-semibold">{getLockPeriodLabel()} Details</h4>
-                    <div className="text-xs text-gray-600">
-                      <p className="font-medium">{getLockPeriodFullDate()}</p>
-                      <p className="mt-1 text-gray-500">Timezone: {getTimeZone()}</p>
-                    </div>
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
             </div>
           )}
         </div>

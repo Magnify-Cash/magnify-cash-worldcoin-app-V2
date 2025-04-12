@@ -42,6 +42,7 @@ import {
   PoolPenaltyFeeResponse,
   UserDefaultedLoanData,
   UserDefaultedLoanStatus,
+  DefaultLoanIndexResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -845,6 +846,28 @@ export const getUserDefaultedLoanPoolStatus = async (
   ) {
     throw new Error(
       `Failed to fetch user defaulted loan pool status. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getDefaultLoanIndex = async (
+  wallet: string,
+  contract: string
+): Promise<DefaultLoanIndexResponse> => {
+  const response = await backendRequest<DefaultLoanIndexResponse>(
+    "GET",
+    "v3/default/loan/index",
+    { wallet, contract }
+  );
+
+  if (
+    !response.data ||
+    (!Number.isInteger(response.data.index) && response.data.index !== null)
+  ) {
+    throw new Error(
+      `Failed to fetch default loan index. Status: ${response.status}, Message: ${response.message}`
     );
   }
 

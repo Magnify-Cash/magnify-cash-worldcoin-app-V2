@@ -241,3 +241,7 @@ export interface UserDefaultedLoanData {
 export interface UserDefaultedLoanStatus {
   hasDefaultedLoan: boolean;
 }
+
+export interface DefaultLoanIndexResponse {
+  index: number | null;
+}

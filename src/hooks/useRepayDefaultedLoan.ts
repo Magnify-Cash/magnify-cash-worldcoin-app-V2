@@ -45,7 +45,7 @@ const useRepayDefaultedLoan = () => {
   const repayDefaultedLoanWithPermit2 = useCallback(async (
     poolAddress: string,
     loanAmount: bigint | string,
-    index: number = 1 // Default to 1 as mentioned by user
+    index: number = 2 // Default to 1 as mentioned by user
   ) => {
     setError(null);
     setTransactionId(null);

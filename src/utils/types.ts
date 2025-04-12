@@ -225,7 +225,7 @@ export interface PoolEarlyExitFeeResponse {
 }
 
 export interface PoolPenaltyFeeResponse {
-  penaltyFee: number;
+  defaultPenalty: number;
 };
 
 export interface UserDefaultedLoanData {

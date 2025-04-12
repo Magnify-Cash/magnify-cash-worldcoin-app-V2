@@ -792,7 +792,7 @@ export const getPoolPenaltyFee = async (
 
   if (
     !response.data ||
-    typeof response.data.penaltyFee !== "number"
+    typeof response.data.defaultPenalty !== "number"
   ) {
     throw new Error(
       `Failed to fetch penalty fee. Status: ${response.status}, Message: ${response.message}`

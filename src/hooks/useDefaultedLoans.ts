@@ -97,7 +97,7 @@ export function useDefaultedLoans(walletAddress: string) {
               const interestAmount = loanAmount * (interestRate / 100);
               
               // Calculate penalty amount
-              const penaltyAmount = (loanAmount + interestAmount) * (penaltyFee / 100);
+              const penaltyAmount = loanAmount * (penaltyFee / 100);
               
               // Calculate total due amount
               const totalDueAmount = loanAmount + interestAmount + penaltyAmount;

@@ -220,10 +220,24 @@ export interface LPTokenHistoryResponse {
   date: string;
 }
 
-export interface PoolEarlyExitFeeResponse  {
+export interface PoolEarlyExitFeeResponse {
   earlyExitFee: number;
 }
 
-export type PoolPenaltyFeeResponse = {
+export interface PoolPenaltyFeeResponse {
   penaltyFee: number;
 };
+
+export interface UserDefaultedLoanData {
+  loanID: string;
+  tokenId: string;
+  loanTimestamp: string;
+  repaymentTimestamp: string;
+  borrower: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+export interface UserDefaultedLoanStatus {
+  hasDefaultedLoan: boolean;
+}

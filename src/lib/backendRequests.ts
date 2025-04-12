@@ -40,6 +40,8 @@ import {
   LPTokenHistoryResponse,
   PoolEarlyExitFeeResponse,
   PoolPenaltyFeeResponse,
+  UserDefaultedLoanData,
+  UserDefaultedLoanStatus,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -794,6 +796,55 @@ export const getPoolPenaltyFee = async (
   ) {
     throw new Error(
       `Failed to fetch penalty fee. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getUserDefaultedLoanPoolData = async (
+  wallet: string,
+  contract: string
+): Promise<UserDefaultedLoanData> => {
+  const response = await backendRequest<{ 
+    loanID: string;
+    tokenId: string;
+    loanTimestamp: string;
+    repaymentTimestamp: string;
+    borrower: string;
+    isDefault: boolean;
+    isActive: boolean;
+  }>(
+    "GET",
+    "v3/user/default/data",
+    { wallet, contract }
+  );
+
+  if (!response.data || typeof response.data !== "object") {
+    throw new Error(
+      `Failed to fetch user defaulted loan pool data. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getUserDefaultedLoanPoolStatus = async (
+  wallet: string,
+  contract: string
+): Promise<UserDefaultedLoanStatus> => {
+  const response = await backendRequest<UserDefaultedLoanStatus>(
+    "GET",
+    "v3/user/default/status",
+    { wallet, contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.hasDefaultedLoan !== "boolean"
+  ) {
+    throw new Error(
+      `Failed to fetch user defaulted loan pool status. Status: ${response.status}, Message: ${response.message}`
     );
   }
 

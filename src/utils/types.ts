@@ -245,3 +245,28 @@ export interface UserDefaultedLoanStatus {
 export interface DefaultLoanIndexResponse {
   index: number | null;
 }
+
+interface LendingHistoryItem {
+  address: string;
+  eventname: string;
+  shares: string;
+  assets: string;
+  timestamp: string;
+  blocknumber: string;
+  pool_address: string;
+  name: string;
+  symbol: string;
+}
+
+interface LendingHistoryPagination {
+  totalRecords: string;
+  currentPage: number;
+  nextPage: number | null;
+  previousPage: number | null;
+  totalPages: number;
+}
+
+export interface UserLendingHistoryResponse {
+  history: LendingHistoryItem[];
+  pagination: LendingHistoryPagination;
+}

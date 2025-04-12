@@ -1,12 +1,13 @@
 
 import { formatUnits } from "viem";
 import { Button } from "@/components/ui/button";
-import { Calendar, DollarSign, AlertTriangle } from "lucide-react";
+import { Calendar, DollarSign, Clock } from "lucide-react";
 import { DefaultedLoanData } from "@/hooks/useDefaultedLoans";
 
 interface DefaultedLoanCardProps {
   loan: DefaultedLoanData;
   loanAmount: bigint;
+  penaltyFee?: number;
   onRepay: () => void;
   isProcessing: boolean;
 }
@@ -14,17 +15,22 @@ interface DefaultedLoanCardProps {
 export const DefaultedLoanCard = ({ 
   loan, 
   loanAmount, 
+  penaltyFee = 0,
   onRepay, 
   isProcessing 
 }: DefaultedLoanCardProps) => {
   // Convert timestamp to Date
   const loanDate = new Date(parseInt(loan.loanTimestamp) * 1000);
+  
+  // Calculate penalty amount if penalty percentage is provided
+  const loanAmountNumber = Number(formatUnits(loanAmount, 6));
+  const penaltyAmount = penaltyFee > 0 ? (loanAmountNumber * penaltyFee / 100) : 0;
+  const totalDue = loanAmountNumber + penaltyAmount;
 
   return (
     <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
       <div className="flex items-center justify-between">
-        <span className="px-3 py-1 rounded-full bg-red-300 text-black text-sm flex items-center gap-1">
-          <AlertTriangle className="w-4 h-4" />
+        <span className="px-3 py-1 rounded-full bg-red-300 text-black text-sm">
           <span>Defaulted Loan</span>
         </span>
       </div>
@@ -33,10 +39,29 @@ export const DefaultedLoanCard = ({
         <div className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-primary" />
           <div>
-            <p className="text-sm text-muted-foreground text-start">Amount Due</p>
-            <p className="text-start font-semibold">${formatUnits(loanAmount, 6)}</p>
+            <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
+            <p className="text-start font-semibold">${loanAmountNumber.toFixed(2)}</p>
           </div>
         </div>
+        
+        {penaltyFee > 0 && (
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground text-start">Default Penalty ({penaltyFee}%)</p>
+              <p className="text-start font-semibold">${penaltyAmount.toFixed(2)}</p>
+            </div>
+          </div>
+        )}
+        
+        <div className="flex items-center gap-2">
+          <DollarSign className="w-5 h-5 text-primary" />
+          <div>
+            <p className="text-sm text-muted-foreground text-start">Total Amount Due</p>
+            <p className="text-start font-semibold">${totalDue.toFixed(2)}</p>
+          </div>
+        </div>
+        
         <div className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-primary" />
           <div>

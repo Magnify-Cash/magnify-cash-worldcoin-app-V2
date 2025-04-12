@@ -1,7 +1,6 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
-import { Shield, User, FileText, Pi, Globe } from "lucide-react";
+import { Shield, User, FileText, Pi, Globe, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
 import { useMagnifyWorld, invalidateCache } from "@/hooks/useMagnifyWorld";
@@ -11,6 +10,7 @@ import { toast } from "@/components/ui/use-toast";
 import CreditScore from "@/components/CreditScore";
 import { getTransactionHistory, verify } from "@/lib/backendRequests";
 import { MAGNIFY_WORLD_ADDRESS_V3 } from "@/utils/constants";
+import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
 
 interface Transaction {
   status: "received" | "repaid";
@@ -23,6 +23,7 @@ const Dashboard = () => {
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
 
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const { hasDefaultedLoan, isLoading: isLoadingDefaultedLoans } = useDefaultedLoans(ls_wallet);
   const [verifying, setVerifying] = useState(false);
   const [creditScore, setCreditScore] = useState(2);
   const [isVerificationSuccessful, setIsVerificationSuccessful] = useState(false);
@@ -30,6 +31,7 @@ const Dashboard = () => {
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null, verificationStatus: { verification_level: "none" } };
   const hasActiveLoan = data?.hasActiveLoan || false;
   const isOrbVerified = nftInfo?.verificationStatus?.verification_level === "orb";
+  const hasLoanIssue = hasActiveLoan || hasDefaultedLoan;
 
   const verificationLevels = {
     orb: {
@@ -90,7 +92,6 @@ const Dashboard = () => {
       calculateCreditScore();
     }
 
-    // Reset verification success state when data changes
     setIsVerificationSuccessful(false);
   }, [ls_wallet, hasActiveLoan, isOrbVerified, data]);
 
@@ -168,7 +169,7 @@ const Dashboard = () => {
     }
   }, [ls_wallet, refetch]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingDefaultedLoans) {
     return (
       <div className="min-h-screen">
         <Header title="Profile" />
@@ -235,7 +236,6 @@ const Dashboard = () => {
                   buttonText = "Verify with Orb";
                 }
 
-                // Determine if button should be disabled
                 const isButtonDisabled = 
                   verifying || // Disable while verifying
                   isVerificationSuccessful || // Disable after successful verification until refresh
@@ -298,14 +298,19 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div
-                      className={`px-4 py-2 rounded-full text-sm my-3 font-medium text-center ${
-                        hasActiveLoan
+                      className={`px-4 py-2 rounded-full text-sm my-3 font-medium text-center flex items-center justify-center gap-1 ${
+                        hasLoanIssue
                           ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                           : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       }`}
                     >
-                      {hasActiveLoan
-                        ? "Unavailable for Collateral"
+                      {hasDefaultedLoan && (
+                        <AlertTriangle className="w-4 h-4" />
+                      )}
+                      {hasLoanIssue
+                        ? hasDefaultedLoan 
+                          ? "Unavailable for Collateral (Defaulted Loan)" 
+                          : "Unavailable for Collateral"
                         : "Available for Collateral"}
                     </div>
                   </Card>

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +10,7 @@ import { usePoolData } from "@/contexts/PoolDataContext";
 import { LoanPoolCard } from "@/components/LoanPoolCard";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { fetchBorrowerInfo, hasBorrowerInfoCache } from "@/utils/borrowerInfoUtils";
+import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
 
 const Loan = () => {
   // States
@@ -29,6 +29,7 @@ const Loan = () => {
   const { data, isLoading: isLoadingNFT, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
   const { requestNewLoan, isConfirming, isConfirmed, transactionId } = useRequestLoan();
   const { pools, loading: isLoadingPools } = usePoolData();
+  const { hasDefaultedLoan, isLoading: isLoadingDefaultedLoans } = useDefaultedLoans(ls_wallet);
   
   // Extract loan information from data
   const hasActiveLoan = data?.hasActiveLoan ?? false;
@@ -214,7 +215,7 @@ const Loan = () => {
   }; 
 
   // Determine if we're in a loading state - make sure we show loading until ALL data is ready
-  const isLoading = isLoadingNFT || isLoadingPools || (isLoadingBorrowerInfo && filteredPools.length > 0);
+  const isLoading = isLoadingNFT || isLoadingPools || (isLoadingBorrowerInfo && filteredPools.length > 0) || isLoadingDefaultedLoans;
 
   return (
     <div className="min-h-screen">
@@ -226,6 +227,19 @@ const Loan = () => {
             <div className="dot bg-[#4A3A9A]"></div>
             <div className="dot bg-[#7A2F8A]"></div>
             <div className="dot bg-[#A11F75]"></div>
+          </div>
+        </div>
+      ) : hasDefaultedLoan ? (
+        <div className="p-6 space-y-6">
+          <div className="glass-card p-6 text-center">
+            <Shield className="w-12 h-12 mx-auto mb-3 text-red-500" />
+            <h3 className="text-lg font-medium mb-2">You Have a Defaulted Loan</h3>
+            <p className="text-gray-600 mb-4">
+              You currently have a defaulted loan. Please repay it first before applying for a new loan.
+            </p>
+            <Button onClick={() => navigate("/repay-loan")} className="glass-button w-full sm:w-auto">
+              Repay Defaulted Loan
+            </Button>
           </div>
         </div>
       ) : hasActiveLoan ? (

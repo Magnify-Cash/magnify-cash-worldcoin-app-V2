@@ -2,31 +2,37 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Calendar, DollarSign, Clock } from "lucide-react";
+import { Calendar, DollarSign, Clock, AlertTriangle } from "lucide-react";
 import { Loan, useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import { calculateRemainingTime } from "@/utils/timeinfo";
 import useRepayLoan from "@/hooks/useRepayLoan";
+import useRepayDefaultedLoan from "@/hooks/useRepayDefaultedLoan";
 import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
 import { getUSDCBalance } from "@/lib/backendRequests";
+import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
+import { DefaultedLoanCard } from "@/components/DefaultedLoanCard";
 
 const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
+  const [selectedDefaultedLoan, setSelectedDefaultedLoan] = useState<string | null>(null);
 
   // hooks
   const { toast } = useToast();
   const navigate = useNavigate();
-  const ls_wallet = localStorage.getItem("ls_wallet_address");
+  const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const { 
+    defaultedLoans, 
+    hasDefaultedLoan, 
+    isLoading: isLoadingDefaultedLoans,
+    refetch: refetchDefaultedLoans 
+  } = useDefaultedLoans(ls_wallet);
+  
   const loan = data?.loan;
   const loanData: Loan | undefined = loan && loan[1];
   const loanVersion = loan ? loan[0] : "";
-
-  console.log("[RepayLoan] Loan data:", loanData);
-  console.log("[RepayLoan] Loan version:", loanVersion);
-  console.log("[RepayLoan] Pool address:", loanData?.poolAddress || "Not available");
-  console.log("[RepayLoan] Full data object:", data);
 
   // Update USDC balance on page load
   useEffect(() => {
@@ -44,7 +50,19 @@ const RepayLoan = () => {
     updateUSDCBalance();
   }, [ls_wallet]);
 
-  // loan repayment
+  // Active loan repayment
+  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
+  
+  // Defaulted loan repayment
+  const { 
+    repayDefaultedLoanWithPermit2, 
+    error: defaultedError, 
+    transactionId: defaultedTransactionId, 
+    isConfirming: isConfirmingDefaulted, 
+    isConfirmed: isConfirmedDefaulted 
+  } = useRepayDefaultedLoan();
+
+  // Amount due calculation for active loan
   const loanAmountDue = useMemo(() => {
     if (loanData) {
       // Check if we have valid number values for amount and interest rate
@@ -73,10 +91,23 @@ const RepayLoan = () => {
     }
     return 0n; // Default value if loanData is not available
   }, [loanData, loanVersion, data]);
-
-  const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
   
-  const handleApplyLoan = useCallback(
+  // For defaulted loans, assume the same loan amount as regular loans for now
+  // This would need to be adjusted with actual contract data in a production environment
+  const defaultedLoanAmount = useMemo(() => {
+    // For demo purposes, use a fixed amount or derive from tier data
+    if (data?.nftInfo?.tier && data.allTiers) {
+      const tierInfo = data.allTiers.find(t => t.tierId === data.nftInfo?.tier);
+      if (tierInfo) {
+        const amount = BigInt(Math.round(tierInfo.loanAmount * 1e6)); // Convert to micros
+        const interest = BigInt(Math.round((Number(amount) * tierInfo.interestRate) / 100));
+        return amount + interest;
+      }
+    }
+    return BigInt(1000000); // $1 default if we can't determine
+  }, [data]);
+
+  const handleRepayActiveLoan = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
       if (isClicked) return;
@@ -137,20 +168,68 @@ const RepayLoan = () => {
     },
     [loanVersion, repayLoanWithPermit2, loanAmountDue, toast, ls_wallet, loanData?.poolAddress]
   );
-  
+
+  const handleRepayDefaultedLoan = useCallback(async (poolAddress: string) => {
+    if (isClicked) return;
+    setIsClicked(true);
+    setSelectedDefaultedLoan(poolAddress);
+
+    try {
+      if(!sessionStorage.getItem("usdcBalance")) {
+        const balance = await getUSDCBalance(ls_wallet as string);
+        sessionStorage.setItem("usdcBalance", balance.toString());
+      }
+
+      const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
+      const amountDueFloat = Number(formatUnits(defaultedLoanAmount, 6));
+
+      if (currentBalance < amountDueFloat) {
+        toast({
+          title: "Insufficient USDC",
+          description: `You need $${amountDueFloat.toFixed(2)} to repay the defaulted loan, but only have $${currentBalance.toFixed(2)}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await repayDefaultedLoanWithPermit2(poolAddress, defaultedLoanAmount);
+
+      // Clear session storage
+      sessionStorage.removeItem("usdcBalance");
+      sessionStorage.removeItem("walletTokens");
+      sessionStorage.removeItem("walletCacheTimestamp");
+    } catch (error: any) {
+      console.error("Defaulted loan repayment error:", error);
+      toast({
+        title: "Error",
+        description: error?.message?.includes("user rejected transaction")
+          ? "Transaction rejected by user."
+          : error?.message || "Unable to pay back defaulted loan.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsClicked(false);
+    }
+  }, [repayDefaultedLoanWithPermit2, defaultedLoanAmount, toast, ls_wallet]);
+
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
-    if (isConfirmed) {
+    if (isConfirmed || isConfirmedDefaulted) {
       const timeout = setTimeout(async () => {
         await refetch();
+        if (isConfirmedDefaulted) {
+          await refetchDefaultedLoans();
+        }
       }, 1000);
 
       return () => clearTimeout(timeout);
     }
-  }, [isConfirmed, refetch]);
+  }, [isConfirmed, isConfirmedDefaulted, refetch, refetchDefaultedLoans]);
 
   // Loading & error states
-  if (isLoading) {
+  const allLoading = isLoading || isLoadingDefaultedLoans;
+  
+  if (allLoading) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
@@ -175,12 +254,13 @@ const RepayLoan = () => {
     );
   }
 
-  // Check if user has an active loan (from either the loan data or NFT data)
+  // Check if user has an active loan or defaulted loan
   const hasActiveLoan = data?.hasActiveLoan || 
                        (loanData && loanData.isActive) || 
                        (data?.nftInfo?.ongoingLoan);
 
-  if (!hasActiveLoan) {
+  // If user has no active loans and no defaulted loans, show the no loans screen
+  if (!hasActiveLoan && !hasDefaultedLoan) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -188,7 +268,7 @@ const RepayLoan = () => {
           <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
             <h3 className="text-lg font-semibold text-center">No Active Loans</h3>
             <p className="text-center text-muted-foreground">
-              It looks like you don't have any active loans. Would you like to request one?
+              It looks like you don't have any active or defaulted loans. Would you like to request one?
             </p>
             <Button onClick={() => navigate("/loan")} className="w-full mt-4">
               Request a Loan
@@ -199,9 +279,79 @@ const RepayLoan = () => {
     );
   }
 
+  // If user has defaulted loans, show those first
+  if (hasDefaultedLoan && defaultedLoans.length > 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header title="Loan Status" />
+        <div className="container max-w-2xl mx-auto p-6 space-y-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold mb-2 text-center">Defaulted Loans</h2>
+            <p className="text-gray-600 text-center">
+              The following loans have defaulted and need to be repaid
+            </p>
+          </div>
+          
+          {defaultedLoans.map((loan, index) => (
+            <DefaultedLoanCard
+              key={`${loan.poolAddress}-${index}`}
+              loan={loan}
+              loanAmount={defaultedLoanAmount}
+              onRepay={() => handleRepayDefaultedLoan(loan.poolAddress)}
+              isProcessing={isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress}
+            />
+          ))}
+          
+          {defaultedTransactionId && (
+            <div className="glass-card p-4 mt-4">
+              <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+                Transaction ID:{" "}
+                <span title={defaultedTransactionId}>
+                  {defaultedTransactionId.slice(0, 10)}...{defaultedTransactionId.slice(-10)}
+                </span>
+              </p>
+              {isConfirmingDefaulted && (
+                <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
+                  <div className="flex justify-center">
+                    <div className="orbit-spinner">
+                      <div className="orbit"></div>
+                      <div className="orbit"></div>
+                      <div className="center"></div>
+                    </div>
+                  </div>
+                  <p className="text-white text-center max-w-md px-4 text-lg font-medium">
+                    Confirming transaction, please do not leave this page until confirmation is complete.
+                  </p>
+                </div>
+              )}
+              {isConfirmedDefaulted && (
+                <>
+                  <p>Transaction confirmed!</p>
+                </>
+              )}
+            </div>
+          )}
+          
+          {hasActiveLoan && (
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold mb-2 text-center">Active Loan</h3>
+              <p className="text-gray-600 text-center mb-4">
+                You also have an active loan that needs to be repaid after addressing your defaulted loans
+              </p>
+              <Button onClick={() => refetch()} className="w-full">
+                Refresh Loan Status
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Regular active loan display - use the existing code
   // No NFT but has an active loan case (V1 or V2 loan)
   if (data && (!data.nftInfo?.tokenId || data.nftInfo.tokenId === "0") && data.hasActiveLoan && loan) {
-    // For user with no NFT but with active loan, show loan details card
+    // ... keep existing code (for no NFT but active loan)
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
       BigInt(loanData?.startTime || 0), 
       BigInt(loanData?.loanPeriod || 0)
@@ -263,7 +413,7 @@ const RepayLoan = () => {
               </div>
             </div>
             
-            <Button onClick={handleApplyLoan} className="w-full mt-4 primary-button" disabled={isClicked || isConfirming || isConfirmed}>
+            <Button onClick={handleRepayActiveLoan} className="w-full mt-4 primary-button" disabled={isClicked || isConfirming || isConfirmed}>
               {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
             </Button>
             {transactionId && (
@@ -388,7 +538,7 @@ const RepayLoan = () => {
             </div>
           </div>
           <Button
-            onClick={handleApplyLoan}
+            onClick={handleRepayActiveLoan}
             className="w-full primary-button"
             disabled={isClicked || isConfirming || isConfirmed}
           >

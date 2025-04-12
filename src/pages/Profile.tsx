@@ -187,6 +187,27 @@ const Dashboard = () => {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header title="Profile" />
+        <div className="max-w-4xl mx-auto space-y-8 px-4 py-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            <div className="flex items-center justify-center mb-6">
+              <User className="w-16 h-16 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold text-gradient mb-3 text-center break-words">@{ls_username}</h2>
+            <p className="text-muted-foreground text-center text-lg">Error loading profile</p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoading && data) {
     return (
       <div className="min-h-screen bg-background">
@@ -304,13 +325,8 @@ const Dashboard = () => {
                           : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       }`}
                     >
-                      {hasDefaultedLoan && (
-                        <AlertTriangle className="w-4 h-4" />
-                      )}
                       {hasLoanIssue
-                        ? hasDefaultedLoan 
-                          ? "Unavailable for Collateral (Defaulted Loan)" 
-                          : "Unavailable for Collateral"
+                        ? "Unavailable for Collateral"
                         : "Available for Collateral"}
                     </div>
                   </Card>

@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useState } from "react";
-import { getUserDefaultedLoanPoolData, getUserDefaultedLoanPoolStatus, getSoulboundPoolAddresses } from "@/lib/backendRequests";
+import { getUserDefaultedLoanPoolData, getUserDefaultedLoanPoolStatus, getSoulboundPoolAddresses, getPoolPenaltyFee } from "@/lib/backendRequests";
 
 export interface DefaultedLoanData {
   poolAddress: string;
@@ -11,6 +11,7 @@ export interface DefaultedLoanData {
   borrower: string;
   isDefault: boolean;
   isActive: boolean;
+  penaltyFee?: number;
 }
 
 export function useDefaultedLoans(walletAddress: string) {
@@ -47,9 +48,20 @@ export function useDefaultedLoans(walletAddress: string) {
               hasAnyDefaultedLoan = true;
               // Get detailed information about the defaulted loan
               const loanData = await getUserDefaultedLoanPoolData(walletAddress, poolAddress);
+              
+              // Fetch penalty fee for this pool
+              let penaltyFee = 0;
+              try {
+                const penaltyFeeResponse = await getPoolPenaltyFee(poolAddress);
+                penaltyFee = Number(penaltyFeeResponse.penaltyFee);
+              } catch (penaltyErr) {
+                console.error(`[useDefaultedLoans] Error fetching penalty fee for pool ${poolAddress}:`, penaltyErr);
+              }
+              
               defaultedLoansData.push({
                 ...loanData,
-                poolAddress
+                poolAddress,
+                penaltyFee
               });
             }
           } catch (err) {

@@ -297,6 +297,7 @@ const RepayLoan = () => {
               key={`${loan.poolAddress}-${index}`}
               loan={loan}
               loanAmount={defaultedLoanAmount}
+              penaltyFee={loan.penaltyFee}
               onRepay={() => handleRepayDefaultedLoan(loan.poolAddress)}
               isProcessing={isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress}
             />

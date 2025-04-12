@@ -169,6 +169,7 @@ const RepayLoan = () => {
     [loanVersion, repayLoanWithPermit2, loanAmountDue, toast, ls_wallet, loanData?.poolAddress]
   );
 
+  // For defaulted loans, use the actual loan details from the defaulted loan data
   const handleRepayDefaultedLoan = useCallback(async (poolAddress: string) => {
     if (isClicked) return;
     setIsClicked(true);
@@ -180,8 +181,20 @@ const RepayLoan = () => {
         sessionStorage.setItem("usdcBalance", balance.toString());
       }
 
+      // Find the specific defaulted loan we're repaying
+      const loanToRepay = defaultedLoans.find(loan => loan.poolAddress === poolAddress);
+      
+      if (!loanToRepay) {
+        toast({
+          title: "Error",
+          description: "Could not find loan details for the selected pool.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
-      const amountDueFloat = Number(formatUnits(defaultedLoanAmount, 6));
+      const amountDueFloat = loanToRepay.totalDueAmount;
 
       if (currentBalance < amountDueFloat) {
         toast({
@@ -192,7 +205,12 @@ const RepayLoan = () => {
         return;
       }
 
-      await repayDefaultedLoanWithPermit2(poolAddress, defaultedLoanAmount);
+      // Convert to microUSDC (6 decimals)
+      const microUsdcAmount = Math.round(loanToRepay.totalDueAmount * 1000000);
+
+      console.log(`[RepayLoan] Repaying defaulted loan with total amount: $${loanToRepay.totalDueAmount.toFixed(2)} (${microUsdcAmount} microUSDC)`);
+      
+      await repayDefaultedLoanWithPermit2(poolAddress, microUsdcAmount);
 
       // Clear session storage
       sessionStorage.removeItem("usdcBalance");
@@ -210,7 +228,7 @@ const RepayLoan = () => {
     } finally {
       setIsClicked(false);
     }
-  }, [repayDefaultedLoanWithPermit2, defaultedLoanAmount, toast, ls_wallet]);
+  }, [repayDefaultedLoanWithPermit2, defaultedLoans, toast, ls_wallet]);
 
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
@@ -296,8 +314,6 @@ const RepayLoan = () => {
             <DefaultedLoanCard
               key={`${loan.poolAddress}-${index}`}
               loan={loan}
-              loanAmount={defaultedLoanAmount}
-              penaltyFee={loan.penaltyFee}
               onRepay={() => handleRepayDefaultedLoan(loan.poolAddress)}
               isProcessing={isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress}
             />
@@ -352,7 +368,6 @@ const RepayLoan = () => {
   // Regular active loan display - use the existing code
   // No NFT but has an active loan case (V1 or V2 loan)
   if (data && (!data.nftInfo?.tokenId || data.nftInfo.tokenId === "0") && data.hasActiveLoan && loan) {
-    // ... keep existing code (for no NFT but active loan)
     const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
       BigInt(loanData?.startTime || 0), 
       BigInt(loanData?.loanPeriod || 0)

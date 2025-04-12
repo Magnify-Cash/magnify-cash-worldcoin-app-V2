@@ -11,6 +11,7 @@ import { LoanPoolCard } from "@/components/LoanPoolCard";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 import { fetchBorrowerInfo, hasBorrowerInfoCache } from "@/utils/borrowerInfoUtils";
 import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 
 const Loan = () => {
   // States
@@ -220,16 +221,12 @@ const Loan = () => {
   return (
     <div className="min-h-screen">
       <Header title="Get a Loan" />
-      {isLoading ? (
-        <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
-          <div className="dot-spinner">
-            <div className="dot bg-[#1A1E8E]"></div>
-            <div className="dot bg-[#4A3A9A]"></div>
-            <div className="dot bg-[#7A2F8A]"></div>
-            <div className="dot bg-[#A11F75]"></div>
-          </div>
-        </div>
-      ) : hasDefaultedLoan ? (
+      
+      {isLoading && (
+        <LoadingOverlay message="Loading loan pools..." />
+      )}
+      
+      {!isLoading && hasDefaultedLoan && (
         <div className="p-6 space-y-6">
           <div className="glass-card p-6 text-center">
             <Shield className="w-12 h-12 mx-auto mb-3 text-red-500" />
@@ -242,17 +239,21 @@ const Loan = () => {
             </Button>
           </div>
         </div>
-      ) : hasActiveLoan ? (
+      )}
+      
+      {!isLoading && !hasDefaultedLoan && hasActiveLoan && (
         <div className="p-6 space-y-6">
-            <h2 className="text-2xl font-semibold mb-2">You already have an active loan</h2>
-            <p className="mt-2 mb-6 text-gray-600">
-              You currently have an active loan. Please repay it first before applying for a new loan.
-            </p>
-            <Button onClick={() => navigate("/repay-loan")} className="glass-button w-full sm:w-auto">
-              Repay Loan
-            </Button>
+          <h2 className="text-2xl font-semibold mb-2">You already have an active loan</h2>
+          <p className="mt-2 mb-6 text-gray-600">
+            You currently have an active loan. Please repay it first before applying for a new loan.
+          </p>
+          <Button onClick={() => navigate("/repay-loan")} className="glass-button w-full sm:w-auto">
+            Repay Loan
+          </Button>
         </div>
-      ) : !data || data?.nftInfo.tokenId === null ? (
+      )}
+      
+      {!isLoading && !hasDefaultedLoan && !hasActiveLoan && (!data || data?.nftInfo.tokenId === null) && (
         <div className="p-6 space-y-6">
           <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
             <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
@@ -264,7 +265,9 @@ const Loan = () => {
             </Button>
           </div>
         </div> 
-      ) : data?.nftInfo?.tier === 0 ? (
+      )}
+      
+      {!isLoading && !hasDefaultedLoan && !hasActiveLoan && data?.nftInfo?.tier === 0 && (
         <div className="p-6 space-y-6">
           <div className="flex-column justify-center items-center h-[calc(100vh-80px)]">
             <h2 className="text-2xl font-semibold mb-4">You Don't Have the Required NFT</h2>
@@ -276,7 +279,9 @@ const Loan = () => {
             </Button>
           </div>
         </div> 
-      ) : (
+      )}
+      
+      {!isLoading && !hasDefaultedLoan && !hasActiveLoan && data?.nftInfo?.tokenId && data?.nftInfo?.tier !== 0 && (
         <div className="p-6 space-y-6">
           <div className="mb-4 text-center">
             <h2 className="text-xl font-semibold">Available Loan Pools</h2>
@@ -358,7 +363,11 @@ const Loan = () => {
             </div>
           )}
 
-          {transactionId && (
+          {isConfirming && (
+            <LoadingOverlay message="Confirming transaction, please do not leave this page until confirmation is complete." />
+          )}
+
+          {transactionId && !isConfirming && (
             <div className="glass-card p-4 mt-4">
               <p className="overflow-hidden text-ellipsis whitespace-nowrap">
                 Transaction ID:{" "}
@@ -366,20 +375,6 @@ const Loan = () => {
                   {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
                 </span>
               </p>
-              {isConfirming && (
-                <div className="fixed top-0 left-0 w-full h-full bg-black/70 flex flex-col items-center justify-center z-50">
-                  <div className="flex justify-center">
-                    <div className="orbit-spinner">
-                      <div className="orbit"></div>
-                      <div className="orbit"></div>
-                      <div className="center"></div>
-                    </div>
-                  </div>
-                  <p className="text-white text-center max-w-md px-4 text-lg font-medium">
-                    Confirming transaction, please do not leave this page until confirmation is complete.
-                  </p>
-                </div>
-              )}
               {isConfirmed && (
                 <>
                   <p>Transaction confirmed!</p>

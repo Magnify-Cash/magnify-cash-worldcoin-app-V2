@@ -141,11 +141,11 @@ const LendingHistory = () => {
                   <Card key={index} className="overflow-hidden hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="mb-2">
-                        <h3 className="font-medium text-sm flex items-center gap-1">
+                        <h3 className="font-medium text-sm flex items-center justify-center gap-1">
                           <span className={txInfo.colorClass}>{txInfo.icon}</span>
-                          {txInfo.type} to {tx.name}
+                          {txInfo.type} {txInfo.type === "Supplied" ? "to" : "from"} {tx.name}
                         </h3>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 text-center">
                           {format(new Date(tx.timestamp), "MMM dd, yyyy 'at' h:mm a")}
                         </p>
                       </div>

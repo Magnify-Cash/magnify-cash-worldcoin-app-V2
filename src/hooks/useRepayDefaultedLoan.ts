@@ -9,12 +9,15 @@ import {
   WORLDCOIN_CLIENT_ID,
   WORLDCHAIN_RPC_URL,
 } from "@/utils/constants";
+import { getDefaultLoanIndex } from "@/lib/backendRequests";
 
 const useRepayDefaultedLoan = () => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
+  const [loanIndex, setLoanIndex] = useState<number | null>(null);
+  const [isLoadingIndex, setIsLoadingIndex] = useState<boolean>(false);
 
   // Create a public client for transaction confirmation
   const client = createPublicClient({
@@ -42,16 +45,67 @@ const useRepayDefaultedLoan = () => {
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
+  const fetchLoanIndex = useCallback(async (wallet: string, poolAddress: string) => {
+    setIsLoadingIndex(true);
+    setError(null);
+    
+    try {
+      console.log(`[useRepayDefaultedLoan] Fetching loan index for wallet: ${wallet}, pool: ${poolAddress}`);
+      const response = await getDefaultLoanIndex(wallet, poolAddress);
+      console.log(`[useRepayDefaultedLoan] Loan index response:`, response);
+      
+      setLoanIndex(response.index);
+      return response.index;
+    } catch (err) {
+      console.error("[useRepayDefaultedLoan] Error fetching loan index:", err);
+      setError(`Failed to get loan index: ${(err as Error).message}`);
+      return null;
+    } finally {
+      setIsLoadingIndex(false);
+    }
+  }, []);
+
   const repayDefaultedLoanWithPermit2 = useCallback(async (
     poolAddress: string,
     loanAmount: bigint | string,
-    index: number = 2 // Default to 1 as mentioned by user
+    index?: number
   ) => {
     setError(null);
     setTransactionId(null);
     setIsConfirmed(false);
     
-    console.log(`[useRepayDefaultedLoan] Repaying defaulted loan with amount: ${loanAmount}, pool: ${poolAddress}, index: ${index}`);
+    // Use provided index or fetch it if not provided
+    let loanIndexToUse = index;
+    
+    if (loanIndexToUse === undefined) {
+      // Get wallet from localStorage
+      const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
+      
+      if (!ls_wallet) {
+        setError("Wallet address not found");
+        return;
+      }
+      
+      // Fetch the loan index if we don't have it yet
+      if (loanIndex === null) {
+        const fetchedIndex = await fetchLoanIndex(ls_wallet, poolAddress);
+        if (fetchedIndex === null) {
+          // fetchLoanIndex already sets error
+          return;
+        }
+        loanIndexToUse = fetchedIndex;
+      } else {
+        loanIndexToUse = loanIndex;
+      }
+    }
+    
+    // If loan index is still null or undefined, can't proceed
+    if (loanIndexToUse === null || loanIndexToUse === undefined) {
+      setError("Cannot repay loan: default loan index not found");
+      return;
+    }
+    
+    console.log(`[useRepayDefaultedLoan] Repaying defaulted loan with amount: ${loanAmount}, pool: ${poolAddress}, index: ${loanIndexToUse}`);
 
     // Ensure loan amount is not 0
     if (loanAmount === 0n || loanAmount === '0') {
@@ -166,7 +220,7 @@ const useRepayDefaultedLoan = () => {
               },
             ],
             functionName: "repayDefaultedLoanWithPermit2",
-            args: [index.toString(), permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
+            args: [loanIndexToUse.toString(), permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
           },
         ],
         permit2: [
@@ -192,14 +246,17 @@ const useRepayDefaultedLoan = () => {
       setError(`Transaction failed: ${(err as Error).message}`);
       setIsConfirming(false);
     }
-  }, []);
+  }, [loanIndex, fetchLoanIndex]);
 
   return {
     repayDefaultedLoanWithPermit2,
+    fetchLoanIndex,
     error,
     transactionId,
     isConfirming,
     isConfirmed,
+    loanIndex,
+    isLoadingIndex,
   };
 };
 

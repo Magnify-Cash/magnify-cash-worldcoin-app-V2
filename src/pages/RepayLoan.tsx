@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,13 @@ import { formatUnits } from "viem";
 import { getUSDCBalance } from "@/lib/backendRequests";
 import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
 import { DefaultedLoanCard } from "@/components/DefaultedLoanCard";
+import { LoadingState } from "@/components/portfolio/LoadingState";
 
 const RepayLoan = () => {
   // States
   const [isClicked, setIsClicked] = useState(false);
   const [selectedDefaultedLoan, setSelectedDefaultedLoan] = useState<string | null>(null);
+  const [isLoadingDefaultIndex, setIsLoadingDefaultIndex] = useState<boolean>(false);
 
   // hooks
   const { toast } = useToast();
@@ -56,11 +59,37 @@ const RepayLoan = () => {
   // Defaulted loan repayment
   const { 
     repayDefaultedLoanWithPermit2, 
+    fetchLoanIndex,
     error: defaultedError, 
     transactionId: defaultedTransactionId, 
     isConfirming: isConfirmingDefaulted, 
-    isConfirmed: isConfirmedDefaulted 
+    isConfirmed: isConfirmedDefaulted,
+    loanIndex,
+    isLoadingIndex,
   } = useRepayDefaultedLoan();
+
+  // Pre-fetch loan indices for defaulted loans
+  useEffect(() => {
+    const fetchIndices = async () => {
+      if (defaultedLoans.length > 0 && ls_wallet) {
+        setIsLoadingDefaultIndex(true);
+        try {
+          // We can pre-fetch indices for all defaulted loans
+          await Promise.all(
+            defaultedLoans.map(loan => 
+              fetchLoanIndex(ls_wallet, loan.poolAddress)
+            )
+          );
+        } catch (error) {
+          console.error("Failed to pre-fetch loan indices:", error);
+        } finally {
+          setIsLoadingDefaultIndex(false);
+        }
+      }
+    };
+
+    fetchIndices();
+  }, [defaultedLoans, ls_wallet, fetchLoanIndex]);
 
   // Amount due calculation for active loan
   const loanAmountDue = useMemo(() => {
@@ -210,7 +239,23 @@ const RepayLoan = () => {
 
       console.log(`[RepayLoan] Repaying defaulted loan with total amount: $${loanToRepay.totalDueAmount.toFixed(2)} (${microUsdcAmount} microUSDC)`);
       
-      await repayDefaultedLoanWithPermit2(poolAddress, microUsdcAmount);
+      // Fetch loan index if not already fetched
+      let indexToUse = loanIndex;
+      if (indexToUse === null) {
+        indexToUse = await fetchLoanIndex(ls_wallet, poolAddress);
+        if (indexToUse === null) {
+          toast({
+            title: "Error",
+            description: "Could not determine your loan index. Please try again.",
+            variant: "destructive",
+          });
+          setIsClicked(false);
+          return;
+        }
+      }
+      
+      // This now uses the dynamic index fetched from the backend
+      await repayDefaultedLoanWithPermit2(poolAddress, microUsdcAmount, indexToUse);
 
       // Clear session storage
       sessionStorage.removeItem("usdcBalance");
@@ -228,7 +273,7 @@ const RepayLoan = () => {
     } finally {
       setIsClicked(false);
     }
-  }, [repayDefaultedLoanWithPermit2, defaultedLoans, toast, ls_wallet]);
+  }, [repayDefaultedLoanWithPermit2, defaultedLoans, toast, ls_wallet, loanIndex, fetchLoanIndex]);
 
   // Call refetch after loan repayment is confirmed
   useEffect(() => {
@@ -245,19 +290,14 @@ const RepayLoan = () => {
   }, [isConfirmed, isConfirmedDefaulted, refetch, refetchDefaultedLoans]);
 
   // Loading & error states
-  const allLoading = isLoading || isLoadingDefaultedLoans;
+  const allLoading = isLoading || isLoadingDefaultedLoans || isLoadingDefaultIndex;
   
   if (allLoading) {
     return (
       <div className="min-h-screen">
         <Header title="Loan Status" />
-        <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
-            <div className="dot-spinner">
-              <div className="dot bg-[#1A1E8E]"></div>
-              <div className="dot bg-[#4A3A9A]"></div>
-              <div className="dot bg-[#7A2F8A]"></div>
-              <div className="dot bg-[#A11F75]"></div>
-            </div>
+        <div className="container max-w-2xl mx-auto p-6">
+          <LoadingState message="Loading loan details..." />
         </div>
       </div>
     );

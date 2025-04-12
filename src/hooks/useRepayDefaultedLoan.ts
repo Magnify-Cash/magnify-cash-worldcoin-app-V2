@@ -166,7 +166,7 @@ const useRepayDefaultedLoan = () => {
               },
             ],
             functionName: "repayDefaultedLoanWithPermit2",
-            args: [index, permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
+            args: [index.toString(), permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
           },
         ],
         permit2: [

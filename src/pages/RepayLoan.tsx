@@ -206,7 +206,7 @@ const RepayLoan = () => {
       }
 
       // Convert to microUSDC (6 decimals)
-      const microUsdcAmount = Math.round(loanToRepay.totalDueAmount * 1000000);
+      const microUsdcAmount = BigInt(Math.round(loanToRepay.totalDueAmount * 1000000));
 
       console.log(`[RepayLoan] Repaying defaulted loan with total amount: $${loanToRepay.totalDueAmount.toFixed(2)} (${microUsdcAmount} microUSDC)`);
       

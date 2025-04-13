@@ -32,7 +32,7 @@ export const DefaultedLoanCard = ({
       </div>
 
       <div className="p-6 space-y-6">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
               <span>Loan Amount</span>
@@ -42,14 +42,21 @@ export const DefaultedLoanCard = ({
           
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
-              <span>Interest ({loan.interestRate}%)</span>
+              <span>Interest Rate</span>
+            </div>
+            <p className="text-lg font-bold">{loan.interestRate.toFixed(2)}%</p>
+          </div>
+          
+          <div className="space-y-1">
+            <div className="text-gray-500 text-sm mb-1">
+              <span>Interest Amount</span>
             </div>
             <p className="text-lg font-bold">${loan.interestAmount.toFixed(2)}</p>
           </div>
           
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
-              <span>Default Penalty ({loan.penaltyFee}%)</span>
+              <span>Default Penalty ({loan.penaltyFee.toFixed(2)}%)</span>
             </div>
             <p className="text-lg font-bold">${loan.penaltyAmount.toFixed(2)}</p>
           </div>
@@ -61,7 +68,7 @@ export const DefaultedLoanCard = ({
             <p className="text-lg font-bold">${loan.totalDueAmount.toFixed(2)}</p>
           </div>
           
-          <div className="space-y-1 col-span-2">
+          <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
               <span>Loan Date</span>
             </div>
@@ -70,6 +77,9 @@ export const DefaultedLoanCard = ({
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZoneName: "short",
                 timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
               })}
             </p>

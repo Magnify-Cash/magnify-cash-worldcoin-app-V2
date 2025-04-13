@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -380,72 +379,12 @@ const RepayLoan = () => {
           </div>
           
           {defaultedLoans.map((loan, index) => (
-            <div 
+            <DefaultedLoanCard 
               key={`${loan.poolAddress}-${index}`}
-              className={cn(
-                "rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
-                LOAN_COLORS.defaulted.border,
-                "transform hover:-translate-y-1"
-              )}
-            >
-              <div className={cn(
-                "px-6 py-4 bg-gradient-to-r", 
-                LOAN_COLORS.defaulted.gradient
-              )}>
-                <div className="flex items-center justify-between">
-                  <span className={cn(
-                    "px-3 py-1 rounded-full text-black text-sm",
-                    LOAN_COLORS.defaulted.statusBg
-                  )}>
-                    Defaulted Loan
-                  </span>
-                </div>
-              </div>
-              
-              <div className="p-6 space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <div className="text-gray-500 text-sm mb-1">
-                      <span>Loan Amount</span>
-                    </div>
-                    <p className="text-lg font-bold">${loan.loanAmount.toFixed(2)}</p>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="text-gray-500 text-sm mb-1">
-                      <span>Interest ({loan.interestRate}%)</span>
-                    </div>
-                    <p className="text-lg font-bold">${loan.interestAmount.toFixed(2)}</p>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="text-gray-500 text-sm mb-1">
-                      <span>Default Penalty ({loan.penaltyFee}%)</span>
-                    </div>
-                    <p className="text-lg font-bold">${loan.penaltyAmount.toFixed(2)}</p>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="text-gray-500 text-sm mb-1">
-                      <span>Total Amount Due</span>
-                    </div>
-                    <p className="text-lg font-bold">${loan.totalDueAmount.toFixed(2)}</p>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={() => handleRepayDefaultedLoan(loan.poolAddress)}
-                  disabled={isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress}
-                  className={cn(
-                    "w-full bg-[#ea384c] hover:bg-[#d92d3f] text-white",
-                    "size-lg rounded-xl transition-all duration-300"
-                  )}
-                >
-                  {isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress ? 
-                    "Processing..." : "Repay Defaulted Loan"}
-                </Button>
-              </div>
-            </div>
+              loan={loan}
+              onRepay={() => handleRepayDefaultedLoan(loan.poolAddress)}
+              isProcessing={isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress}
+            />
           ))}
           
           {defaultedTransactionId && (
@@ -506,6 +445,9 @@ const RepayLoan = () => {
     loanPeriod,
   );
   
+  // Try to extract the interest rate from the data
+  const interestRate = loanData?.interestRate ? Number(loanData.interestRate) / 100 : 0;
+  
   return (
     <div className="min-h-screen bg-background">
       <Header title="Loan Status" />
@@ -532,14 +474,24 @@ const RepayLoan = () => {
           </div>
 
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-1">
                 <div className="text-gray-500 text-sm mb-1">
                   <span>Loan Amount</span>
                 </div>
                 <p className="text-lg font-bold">
-                  ${formatUnits(loanData?.amount || 0n, 6)}
+                  ${parseFloat(formatUnits(loanData?.amount || 0n, 6)).toFixed(2)}
                   {loanData?.amount === 0n && <span className="text-xs text-yellow-500"> (Data Unavailable)</span>}
+                </p>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="text-gray-500 text-sm mb-1">
+                  <span>Interest Rate</span>
+                </div>
+                <p className="text-lg font-bold">
+                  {interestRate > 0 ? `${interestRate.toFixed(2)}%` : 'N/A'}
+                  {interestRate === 0 && <span className="text-xs text-yellow-500"> (Data Unavailable)</span>}
                 </p>
               </div>
               
@@ -548,7 +500,7 @@ const RepayLoan = () => {
                   <span>Repayment Amount</span>
                 </div>
                 <p className="text-lg font-bold">
-                  ${formatUnits(loanAmountDue, 6)}
+                  ${parseFloat(formatUnits(loanAmountDue, 6)).toFixed(2)}
                   {loanAmountDue === 0n && <span className="text-xs text-yellow-500"> (Data Unavailable)</span>}
                 </p>
               </div>
@@ -561,6 +513,10 @@ const RepayLoan = () => {
                   {new Date(dueDate).toLocaleDateString("en-US", {
                     day: "2-digit",
                     month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZoneName: "short",
                     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                   })}
                   {startTime === 0 && <span className="text-xs text-yellow-500"> (Estimated)</span>}

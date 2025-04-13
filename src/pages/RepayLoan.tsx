@@ -15,8 +15,8 @@ import { DefaultedLoanCard } from "@/components/DefaultedLoanCard";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 import { TransactionOverlay } from "@/components/TransactionOverlay";
 import { cn } from "@/utils/tailwind";
+import { CircleCheck } from 'lucide-react';
 
-// Loan status card colors
 const LOAN_COLORS = {
   active: {
     gradient: "from-[#8B5CF6]/10 via-[#7E69AB]/5 to-transparent",
@@ -33,12 +33,10 @@ const LOAN_COLORS = {
 };
 
 const RepayLoan = () => {
-  // States
   const [isClicked, setIsClicked] = useState(false);
   const [selectedDefaultedLoan, setSelectedDefaultedLoan] = useState<string | null>(null);
   const [isLoadingDefaultIndex, setIsLoadingDefaultIndex] = useState<boolean>(false);
 
-  // hooks
   const { toast } = useToast();
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
@@ -54,7 +52,6 @@ const RepayLoan = () => {
   const loanData: Loan | undefined = loan && loan[1];
   const loanVersion = loan ? loan[0] : "";
 
-  // Update USDC balance on page load
   useEffect(() => {
     const updateUSDCBalance = async () => {
       if (ls_wallet) {
@@ -70,10 +67,8 @@ const RepayLoan = () => {
     updateUSDCBalance();
   }, [ls_wallet]);
 
-  // Active loan repayment
   const { repayLoanWithPermit2, error, transactionId, isConfirming, isConfirmed } = useRepayLoan();
   
-  // Defaulted loan repayment
   const { 
     repayDefaultedLoanWithPermit2, 
     fetchLoanIndex,
@@ -85,13 +80,11 @@ const RepayLoan = () => {
     isLoadingIndex,
   } = useRepayDefaultedLoan();
 
-  // Pre-fetch loan indices for defaulted loans
   useEffect(() => {
     const fetchIndices = async () => {
       if (defaultedLoans.length > 0 && ls_wallet) {
         setIsLoadingDefaultIndex(true);
         try {
-          // We can pre-fetch indices for all defaulted loans
           await Promise.all(
             defaultedLoans.map(loan => 
               fetchLoanIndex(ls_wallet, loan.poolAddress)
@@ -108,49 +101,40 @@ const RepayLoan = () => {
     fetchIndices();
   }, [defaultedLoans, ls_wallet, fetchLoanIndex]);
 
-  // Amount due calculation for active loan
   const loanAmountDue = useMemo(() => {
     if (loanData) {
-      // Check if we have valid number values for amount and interest rate
       if (loanData.amount > 0n && loanData.interestRate > 0n) {
         return loanData.amount + (loanData.amount * loanData.interestRate) / 10000n;
       }
-      // If interestRate is 0 or missing but we have an amount, use just the amount
       else if (loanData.amount > 0n) {
         return loanData.amount;
       }
       
-      // Fallback for V3 loans with empty data but we know they exist
       if (loanVersion === "V3" && data?.hasActiveLoan && data.nftInfo?.ongoingLoan) {
-        // Use a default value based on tier if available
         if (data.nftInfo.tier && data.allTiers) {
           const tierInfo = data.allTiers.find(t => t.tierId === data.nftInfo?.tier);
           if (tierInfo) {
-            const amount = BigInt(Math.round(tierInfo.loanAmount * 1e6)); // Convert to micros
-            const interest = BigInt(Math.round((Number(amount) * tierInfo.interestRate) / 100)); // Fix type conversion
+            const amount = BigInt(Math.round(tierInfo.loanAmount * 1e6));
+            const interest = BigInt(Math.round((Number(amount) * tierInfo.interestRate) / 100));
             return amount + interest;
           }
         }
-        // Last resort fallback - permit interface to appear with warning
-        return BigInt(1000000); // $1 placeholder to allow repayment flow to start
+        return BigInt(1000000);
       }
     }
-    return 0n; // Default value if loanData is not available
+    return 0n;
   }, [loanData, loanVersion, data]);
-  
-  // For defaulted loans, assume the same loan amount as regular loans for now
-  // This would need to be adjusted with actual contract data in a production environment
+
   const defaultedLoanAmount = useMemo(() => {
-    // For demo purposes, use a fixed amount or derive from tier data
     if (data?.nftInfo?.tier && data.allTiers) {
       const tierInfo = data.allTiers.find(t => t.tierId === data.nftInfo?.tier);
       if (tierInfo) {
-        const amount = BigInt(Math.round(tierInfo.loanAmount * 1e6)); // Convert to micros
+        const amount = BigInt(Math.round(tierInfo.loanAmount * 1e6));
         const interest = BigInt(Math.round((Number(amount) * tierInfo.interestRate) / 100));
         return amount + interest;
       }
     }
-    return BigInt(1000000); // $1 default if we can't determine
+    return BigInt(1000000);
   }, [data]);
 
   const handleRepayActiveLoan = useCallback(
@@ -179,16 +163,13 @@ const RepayLoan = () => {
       }
   
       try {
-        // If we have a loan and a version, proceed with repayment
         if (loanVersion) {
-          // Get the pool address for V3 loans
           const poolAddress = loanVersion === "V3" ? loanData?.poolAddress : undefined;
           
           console.log(`[RepayLoan] Repaying ${loanVersion} loan with amount: ${loanAmountDue}, pool address: ${poolAddress || 'N/A'}`);
           
           await repayLoanWithPermit2(loanAmountDue, loanVersion, poolAddress);
   
-          // Clear session storage
           sessionStorage.removeItem("usdcBalance");
           sessionStorage.removeItem("walletTokens");
           sessionStorage.removeItem("walletCacheTimestamp");
@@ -215,7 +196,6 @@ const RepayLoan = () => {
     [loanVersion, repayLoanWithPermit2, loanAmountDue, toast, ls_wallet, loanData?.poolAddress]
   );
 
-  // For defaulted loans, use the actual loan details from the defaulted loan data
   const handleRepayDefaultedLoan = useCallback(async (poolAddress: string) => {
     if (isClicked) return;
     setIsClicked(true);
@@ -227,7 +207,6 @@ const RepayLoan = () => {
         sessionStorage.setItem("usdcBalance", balance.toString());
       }
 
-      // Find the specific defaulted loan we're repaying
       const loanToRepay = defaultedLoans.find(loan => loan.poolAddress === poolAddress);
       
       if (!loanToRepay) {
@@ -251,12 +230,10 @@ const RepayLoan = () => {
         return;
       }
 
-      // Convert to microUSDC (6 decimals)
       const microUsdcAmount = BigInt(Math.round(loanToRepay.totalDueAmount * 1000000));
 
       console.log(`[RepayLoan] Repaying defaulted loan with total amount: $${loanToRepay.totalDueAmount.toFixed(2)} (${microUsdcAmount} microUSDC)`);
       
-      // Fetch loan index if not already fetched
       let indexToUse = loanIndex;
       if (indexToUse === null) {
         indexToUse = await fetchLoanIndex(ls_wallet, poolAddress);
@@ -271,10 +248,8 @@ const RepayLoan = () => {
         }
       }
       
-      // This now uses the dynamic index fetched from the backend
       await repayDefaultedLoanWithPermit2(poolAddress, microUsdcAmount, indexToUse);
 
-      // Clear session storage
       sessionStorage.removeItem("usdcBalance");
       sessionStorage.removeItem("walletTokens");
       sessionStorage.removeItem("walletCacheTimestamp");
@@ -292,7 +267,6 @@ const RepayLoan = () => {
     }
   }, [repayDefaultedLoanWithPermit2, defaultedLoans, toast, ls_wallet, loanIndex, fetchLoanIndex]);
 
-  // Call refetch after loan repayment is confirmed
   useEffect(() => {
     if (isConfirmed || isConfirmedDefaulted) {
       const timeout = setTimeout(async () => {
@@ -306,7 +280,6 @@ const RepayLoan = () => {
     }
   }, [isConfirmed, isConfirmedDefaulted, refetch, refetchDefaultedLoans]);
 
-  // Loading & error states
   const allLoading = isLoading || isLoadingDefaultedLoans || isLoadingDefaultIndex;
   
   if (allLoading) {
@@ -329,12 +302,10 @@ const RepayLoan = () => {
     );
   }
 
-  // Check if user has an active loan or defaulted loan
   const hasActiveLoan = data?.hasActiveLoan || 
                        (loanData && loanData.isActive) || 
                        (data?.nftInfo?.ongoingLoan);
 
-  // If user has no active loans and no defaulted loans, show the no loans screen
   if (!hasActiveLoan && !hasDefaultedLoan) {
     return (
       <div className="min-h-screen bg-background">
@@ -364,7 +335,6 @@ const RepayLoan = () => {
     );
   }
 
-  // If user has defaulted loans, show those first
   if (hasDefaultedLoan && defaultedLoans.length > 0) {
     return (
       <div className="min-h-screen bg-background">
@@ -419,14 +389,10 @@ const RepayLoan = () => {
     );
   }
 
-  // Regular active loan display with new UI styling
-  // Calculate time remaining for display
   let startTime = loanData?.startTime || 0; 
   let loanPeriod = loanData?.loanPeriod || BigInt(30 * 24 * 60 * 60); 
   
-  // For V3 loans that might have invalid/incomplete data
   if (loanVersion === "V3" && data?.nftInfo?.ongoingLoan && (startTime === 0 || loanPeriod === 0n)) {
-    // Try to get loan period from tier data
     if (data.nftInfo.tier && data.allTiers) {
       const tierInfo = data.allTiers.find(t => t.tierId === data.nftInfo?.tier);
       if (tierInfo) {
@@ -434,9 +400,8 @@ const RepayLoan = () => {
       }
     }
     
-    // If we still don't have a start time, use a reasonable default
     if (startTime === 0) {
-      startTime = Math.floor(Date.now() / 1000) - 86400; // Assume started yesterday
+      startTime = Math.floor(Date.now() / 1000) - 86400;
     }
   }
   
@@ -445,7 +410,6 @@ const RepayLoan = () => {
     loanPeriod,
   );
   
-  // Try to extract the interest rate from the data
   const interestRate = loanData?.interestRate ? Number(loanData.interestRate) / 100 : 0;
   
   return (
@@ -463,13 +427,13 @@ const RepayLoan = () => {
             "px-6 py-4 bg-gradient-to-r", 
             LOAN_COLORS.active.gradient
           )}>
-            <div className="flex items-center justify-between">
-              <span className={cn(
-                "px-3 py-1 rounded-full text-black text-sm",
-                LOAN_COLORS.active.statusBg
-              )}>
-                Active Loan
-              </span>
+            <div className="flex items-center justify-center">
+              <div className="flex items-center space-x-2">
+                <CircleCheck className="w-5 h-5 text-green-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  Active Loan
+                </span>
+              </div>
             </div>
           </div>
 

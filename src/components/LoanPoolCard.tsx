@@ -1,5 +1,4 @@
-
-import { Coins, Info, Percent, Calendar, Wallet } from "lucide-react";
+import { Coins, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -145,10 +144,9 @@ export const LoanPoolCard = ({
       <div className="p-6 space-y-6">
         {/* Key metrics in a grid */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Loan Amount */}
+          {/* Loan Amount - Icon removed */}
           <div className="space-y-1">
-            <div className="flex items-center text-gray-500 text-sm mb-1">
-              <Wallet className="w-4 h-4 mr-1" />
+            <div className="text-gray-500 text-sm mb-1">
               <span>Loan Amount</span>
             </div>
             {dataLoading ? (
@@ -158,10 +156,9 @@ export const LoanPoolCard = ({
             )}
           </div>
           
-          {/* Interest Rate */}
+          {/* Interest Rate - Icon removed */}
           <div className="space-y-1">
-            <div className="flex items-center text-gray-500 text-sm mb-1">
-              <Percent className="w-4 h-4 mr-1" />
+            <div className="text-gray-500 text-sm mb-1">
               <span>Interest Rate</span>
             </div>
             {dataLoading ? (
@@ -171,10 +168,9 @@ export const LoanPoolCard = ({
             )}
           </div>
           
-          {/* Duration */}
+          {/* Duration - Icon removed */}
           <div className="space-y-1">
-            <div className="flex items-center text-gray-500 text-sm mb-1">
-              <Calendar className="w-4 h-4 mr-1" />
+            <div className="text-gray-500 text-sm mb-1">
               <span>Duration</span>
             </div>
             {dataLoading ? (
@@ -184,11 +180,20 @@ export const LoanPoolCard = ({
             )}
           </div>
           
-          {/* Origination Fee (moved to the grid) */}
+          {/* Origination Fee - Icon removed + added popover here */}
           <div className="space-y-1">
             <div className="flex items-center text-gray-500 text-sm mb-1">
-              <Percent className="w-4 h-4 mr-1" />
               <span>Origination Fee</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="inline-flex ml-1">
+                    <Info className="h-3 w-3 text-gray-400 hover:text-gray-600 transition-colors" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4 text-sm">
+                  <p>Origination Fee is automatically deducted from your loan amount.</p>
+                </PopoverContent>
+              </Popover>
             </div>
             {dataLoading ? (
               <Skeleton className="h-6 w-16" />
@@ -198,22 +203,11 @@ export const LoanPoolCard = ({
           </div>
         </div>
         
-        {/* Available Liquidity Section (moved from grid to separate section) */}
+        {/* Available Liquidity Section - Icon removed */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <Coins className="w-4 h-4 text-gray-600" />
-              <span className="text-sm text-gray-600">Available Liquidity</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="inline-flex">
-                    <Info className="h-3 w-3 text-gray-400 hover:text-gray-600 transition-colors" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-4 text-sm">
-                  <p>The total amount available for borrowing in this pool.</p>
-                </PopoverContent>
-              </Popover>
+            <div className="text-sm text-gray-600">
+              Available Liquidity
             </div>
             {dataLoading ? (
               <Skeleton className="h-5 w-20" />
@@ -228,7 +222,7 @@ export const LoanPoolCard = ({
           </div>
         </div>
         
-        {/* Action Button - Updated with purple background */}
+        {/* Action Button */}
         <Button 
           onClick={handleSelectPool} 
           disabled={isLoading || disabled || !hasEnoughLiquidity || dataLoading} 

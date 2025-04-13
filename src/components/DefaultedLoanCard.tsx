@@ -7,20 +7,15 @@ interface DefaultedLoanCardProps {
   loan: DefaultedLoanData;
   onRepay: () => void;
   isProcessing: boolean;
-  isConfirming?: boolean; // Added the missing prop
 }
 
 export const DefaultedLoanCard = ({ 
   loan, 
   onRepay, 
-  isProcessing,
-  isConfirming = false // Default to false if not provided
+  isProcessing 
 }: DefaultedLoanCardProps) => {
   // Convert timestamp to Date
   const loanDate = new Date(parseInt(loan.loanTimestamp) * 1000);
-  
-  // Use either isProcessing or isConfirming to disable the button
-  const isDisabled = isProcessing || isConfirming;
   
   return (
     <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
@@ -82,9 +77,9 @@ export const DefaultedLoanCard = ({
       <Button
         onClick={onRepay}
         className="w-full primary-button"
-        disabled={isDisabled}
+        disabled={isProcessing}
       >
-        {isDisabled ? "Processing..." : "Repay Defaulted Loan"}
+        {isProcessing ? "Processing..." : "Repay Defaulted Loan"}
       </Button>
     </div>
   );

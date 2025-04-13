@@ -1,8 +1,8 @@
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { UseQueryResult } from "@tanstack/react-query";
 import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import { fromUnixTime, add } from "date-fns";
 import { formatUnits, parseUnits } from "viem";
@@ -30,25 +30,13 @@ const RepayLoan = () => {
 
   // Extract loan information from data
   const hasActiveLoan = data?.hasActiveLoan ?? false;
-  
-  // Type-safe access to loan data properties
-  const loanVersion = data?.loan && data.loan.length > 0 ? 
-    (typeof data.loan[0] === 'object' && 'version' in data.loan[0] ? data.loan[0].version : null) : null;
-    
-  const poolAddress = data?.loan && data.loan.length > 0 ? 
-    (typeof data.loan[0] === 'object' && 'poolAddress' in data.loan[0] ? data.loan[0].poolAddress : null) : null;
+  const loanVersion = data?.loan ? data.loan[0].version : null;
+  const poolAddress = data?.loan ? data.loan[0].poolAddress : null;
 
-  const loanAmount = data?.loan && data.loan.length > 0 ? 
-    (typeof data.loan[0] === 'object' && 'amount' in data.loan[0] ? data.loan[0].amount : 0) : 0;
-    
-  const loanStartTime = data?.loan && data.loan.length > 0 ? 
-    (typeof data.loan[0] === 'object' && 'startTime' in data.loan[0] ? data.loan[0].startTime : 0) : 0;
-    
-  const interestRate = data?.loan && data.loan.length > 0 ? 
-    (typeof data.loan[0] === 'object' && 'interestRate' in data.loan[0] ? data.loan[0].interestRate : 0) : 0;
-    
-  const loanPeriod = data?.loan && data.loan.length > 0 ? 
-    (typeof data.loan[0] === 'object' && 'loanPeriod' in data.loan[0] ? data.loan[0].loanPeriod : 0) : 0;
+  const loanAmount = data?.loan ? data.loan[0].amount : 0;
+  const loanStartTime = data?.loan ? data.loan[0].startTime : 0;
+  const interestRate = data?.loan ? data.loan[0].interestRate : 0;
+  const loanPeriod = data?.loan ? data.loan[0].loanPeriod : 0;
 
   const loanStartDate = useMemo(() => {
     return fromUnixTime(loanStartTime);
@@ -213,7 +201,7 @@ const RepayLoan = () => {
                   key={index}
                   loan={loan}
                   onRepay={() => handleRepayDefaultedLoan(loan)}
-                  isProcessing={isConfirmingDefaulted && selectedDefaultedLoan === loan}
+                  isConfirming={isConfirmingDefaulted && selectedDefaultedLoan === loan}
                 />
               ))
             ) : (

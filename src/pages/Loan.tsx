@@ -222,12 +222,6 @@ const Loan = () => {
     <div className="min-h-screen">
       <Header title="Get a Loan" />
       
-      {/* Global Transaction Overlay - visible during any loading state */}
-      <TransactionOverlay 
-        isVisible={isLoading} 
-        message="Loading loan information..."
-      />
-      
       {/* Transaction confirmation overlay */}
       <TransactionOverlay 
         isVisible={isConfirming} 

@@ -144,15 +144,15 @@ export const LoanPoolCard = ({
           )}
         </div>
         
-        {/* Available Liquidity - commented out as requested */}
-        {/* <div>
-          <p className="text-gray-600 text-sm">Available Liquidity</p>
+        {/* Available Liquidity */}
+        <div>
+          <p className="text-gray-600 text-sm mb-1">Available Liquidity</p>
           {dataLoading ? (
-            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-5 w-24" />
           ) : (
             <p className="font-medium">${liquidity.toLocaleString()}</p>
           )}
-        </div> */}
+        </div>
       </div>
       
       <Button 

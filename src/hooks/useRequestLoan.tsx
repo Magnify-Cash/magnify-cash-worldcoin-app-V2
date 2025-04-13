@@ -45,13 +45,17 @@ const useRequestLoan = (): RequestLoanResponse => {
   });
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
-    useWaitForTransactionReceipt({
-      client: client as any,
-      transactionId: transactionId as `0x${string}` || "0x",
-      appConfig: {
-        app_id: WORLDCOIN_CLIENT_ID,
-      },
-    });
+  useWaitForTransactionReceipt(
+    transactionId
+      ? {
+          client: client as any,
+          transactionId: transactionId as `0x${string}`,
+          appConfig: {
+            app_id: WORLDCOIN_CLIENT_ID,
+          },
+        }
+      : { enabled: false } as any
+  );
 
   useEffect(() => {
     if (isConfirmingTransaction) {
@@ -62,6 +66,20 @@ const useRequestLoan = (): RequestLoanResponse => {
       setIsConfirmed(true);
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
+
+  useEffect(() => {
+    if (!transactionId) return;
+  
+    if (isConfirmingTransaction) {
+      setIsConfirming(true);
+    }
+  
+    if (isTransactionConfirmed) {
+      setIsConfirming(false);
+      setIsConfirmed(true);
+      setTransactionId(null);
+    }
+  }, [transactionId, isConfirmingTransaction, isTransactionConfirmed]);
 
   const requestNewLoan = useCallback(async (poolAddress: string) => {
     setError(null);

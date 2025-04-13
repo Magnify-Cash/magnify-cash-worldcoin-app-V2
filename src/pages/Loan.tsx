@@ -12,6 +12,7 @@ import { LiquidityPool } from "@/types/supabase/liquidity";
 import { fetchBorrowerInfo, hasBorrowerInfoCache } from "@/utils/borrowerInfoUtils";
 import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
 import { TransactionOverlay } from "@/components/TransactionOverlay";
+import { LoadingState } from "@/components/portfolio/LoadingState";
 
 const Loan = () => {
   // States
@@ -217,6 +218,17 @@ const Loan = () => {
 
   // Determine if we're in a loading state - make sure we show loading until ALL data is ready
   const isLoading = isLoadingNFT || isLoadingPools || (isLoadingBorrowerInfo && filteredPools.length > 0) || isLoadingDefaultedLoans;
+    
+    if (isLoading) {
+      return (
+        <div className="min-h-screen">
+          <Header title="Loan Status" />
+          <div className="container max-w-2xl mx-auto p-6">
+            <LoadingState message="Loading loan pools..." />
+          </div>
+        </div>
+      );
+    }
 
   return (
     <div className="min-h-screen">

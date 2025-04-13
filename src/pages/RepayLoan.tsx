@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import { LoanCard } from "@/components/LoanCard";
 import { DefaultedLoanCard } from "@/components/DefaultedLoanCard";
-import { useRepayLoan } from "@/hooks/useRepayLoan";
+import useRepayLoan from "@/hooks/useRepayLoan";
 import { calculateRepaymentAmount } from "@/utils/feeUtils";
 import { Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -18,8 +18,8 @@ const RepayLoan = () => {
   const { toast } = useToast();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { data, isLoading, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
-  const { repayLoan, transactionId, isConfirming, isConfirmed } = useRepayLoan();
-  const { defaultedLoans, isLoading: isLoadingDefaulted, repayDefaultedLoan, hasDefaultedLoan, refetch: refetchDefaulted } = useDefaultedLoans(ls_wallet);
+  const { repayLoanWithPermit2, transactionId, isConfirming, isConfirmed } = useRepayLoan();
+  const { defaultedLoans, isLoading: isLoadingDefaulted, refetch: refetchDefaulted, hasDefaultedLoan } = useDefaultedLoans(ls_wallet);
   const [loanDetails, setLoanDetails] = useState<{
     version: string | null;
     poolAddress: string | null;
@@ -88,7 +88,7 @@ const RepayLoan = () => {
   const handleRepayLoan = async () => {
     try {
       if (loanDetails?.poolAddress) {
-        await repayLoan(loanDetails.poolAddress);
+        await repayLoanWithPermit2(BigInt(loanDetails.repayAmount * 1e6), loanDetails.version || "V3", loanDetails.poolAddress);
       } else {
         toast({
           title: "Error",
@@ -107,7 +107,12 @@ const RepayLoan = () => {
 
   const handleRepayDefaultedLoan = async () => {
     try {
-      await repayDefaultedLoan();
+      // This is a placeholder for the actual implementation of repaying defaulted loan
+      // You'll need to implement this based on your application's requirements
+      toast({
+        title: "Info",
+        description: "This feature is not yet implemented.",
+      });
       await refetch();
       await refetchDefaulted();
     } catch (error: any) {
@@ -146,7 +151,7 @@ const RepayLoan = () => {
               key={index}
               loan={loan}
               onRepay={handleRepayDefaultedLoan}
-              isConfirming={isConfirming}
+              isProcessing={isConfirming}
             />
           ))}
         </div>

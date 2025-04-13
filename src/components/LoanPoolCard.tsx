@@ -24,7 +24,6 @@ interface LoanPoolCardProps {
   poolIndex?: number;
 }
 
-// Array of colors for pool icons and gradients
 const POOL_COLORS = [
   {
     icon: "text-[#8B5CF6]", // Vivid Purple
@@ -77,41 +76,33 @@ export const LoanPoolCard = ({
     onSelect(contractAddress, tierId);
   };
 
-  // Format the loan period in days, ensuring it's a reasonable number
   const formattedLoanPeriod = typeof loanPeriod === 'number' 
     ? Math.max(1, Math.min(365, Math.ceil(loanPeriod / (60 * 60 * 24))))
-    : 30; // Default 30 days if invalid
+    : 30;
 
-  // Format interest rate to always show as percentage with proper decimal places
   const formattedInterestRate = (() => {
     if (typeof interestRate === 'number') {
       return `${interestRate.toFixed(2)}%`;
     }
     
     if (typeof interestRate === 'string') {
-      // If it already contains %, return it
       if (interestRate.includes('%')) {
         return interestRate;
       }
       
-      // Otherwise, parse it and add %
       const numericRate = parseFloat(interestRate);
       return isNaN(numericRate) ? '8.5%' : `${numericRate.toFixed(2)}%`;
     }
     
-    return '8.5%'; // Default fallback
+    return '8.5%';
   })();
 
-  // Format origination fee
   const formattedOriginationFee = `${originationFee.toFixed(2)}%`;
 
-  // Determine colors based on pool index
   const colorSet = POOL_COLORS[poolIndex % POOL_COLORS.length];
 
-  // Check if pool has enough liquidity
   const hasEnoughLiquidity = liquidity >= loanAmount;
 
-  // Format currency for better display - always showing 2 decimal places
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -129,7 +120,6 @@ export const LoanPoolCard = ({
         "transform hover:-translate-y-1"
       )}
     >
-      {/* Header Section with Gradient Background */}
       <div className={cn(
         "px-6 py-4 bg-gradient-to-r", 
         colorSet.gradient
@@ -140,11 +130,8 @@ export const LoanPoolCard = ({
         </div>
       </div>
       
-      {/* Content Section */}
       <div className="p-6 space-y-6">
-        {/* Key metrics in a grid */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Loan Amount - Icon removed */}
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
               <span>Loan Amount</span>
@@ -156,7 +143,6 @@ export const LoanPoolCard = ({
             )}
           </div>
           
-          {/* Interest Rate - Icon removed */}
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
               <span>Interest Rate</span>
@@ -168,7 +154,6 @@ export const LoanPoolCard = ({
             )}
           </div>
           
-          {/* Duration - Icon removed */}
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
               <span>Duration</span>
@@ -180,20 +165,9 @@ export const LoanPoolCard = ({
             )}
           </div>
           
-          {/* Origination Fee - Icon removed + added popover here */}
           <div className="space-y-1">
-            <div className="flex items-center text-gray-500 text-sm mb-1">
+            <div className="text-gray-500 text-sm mb-1">
               <span>Origination Fee</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="inline-flex ml-1">
-                    <Info className="h-3 w-3 text-gray-400 hover:text-gray-600 transition-colors" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-4 text-sm">
-                  <p>Origination Fee is automatically deducted from your loan amount.</p>
-                </PopoverContent>
-              </Popover>
             </div>
             {dataLoading ? (
               <Skeleton className="h-6 w-16" />
@@ -203,7 +177,6 @@ export const LoanPoolCard = ({
           </div>
         </div>
         
-        {/* Available Liquidity Section - Icon removed */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
@@ -222,7 +195,6 @@ export const LoanPoolCard = ({
           </div>
         </div>
         
-        {/* Action Button */}
         <Button 
           onClick={handleSelectPool} 
           disabled={isLoading || disabled || !hasEnoughLiquidity || dataLoading} 

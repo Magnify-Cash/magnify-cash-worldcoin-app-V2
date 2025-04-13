@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import { getUSDCBalance } from "@/lib/backendRequests";
 import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
 import { DefaultedLoanCard } from "@/components/DefaultedLoanCard";
 import { LoadingState } from "@/components/portfolio/LoadingState";
+import { TransactionOverlay } from "@/components/TransactionOverlay";
 
 const RepayLoan = () => {
   // States
@@ -536,6 +536,11 @@ const RepayLoan = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header title="Loan Status" />
+      
+      <TransactionOverlay isVisible={isConfirmingDefaulted} />
+      
+      <TransactionOverlay isVisible={isConfirming} />
+      
       <div className="container max-w-2xl mx-auto p-6 space-y-6">
         <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
           <div className="flex items-center justify-between">

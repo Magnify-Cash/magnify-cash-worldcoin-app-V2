@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +28,7 @@ const Loan = () => {
   const navigate = useNavigate();
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
   const { data, isLoading: isLoadingNFT, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
-  const { requestNewLoan, isConfirming, isConfirmed, transactionId, resetState } = useRequestLoan();
+  const { requestNewLoan, isConfirming, isConfirmed, transactionId } = useRequestLoan();
   const { pools, loading: isLoadingPools } = usePoolData();
   const { hasDefaultedLoan, isLoading: isLoadingDefaultedLoans } = useDefaultedLoans(ls_wallet);
   
@@ -39,14 +38,6 @@ const Loan = () => {
 
   console.log(data)
   console.log(`[Loan] Has active loan: ${hasActiveLoan}, version: ${loanVersion}`);
-  console.log(`[Loan] Transaction state: isConfirming=${isConfirming}, isConfirmed=${isConfirmed}, transactionId=${transactionId}`);
-
-  // Clean up transaction state when component unmounts
-  useEffect(() => {
-    return () => {
-      resetState();
-    };
-  }, [resetState]);
 
   // Filter active pools and pools with enough liquidity
   useEffect(() => {
@@ -133,14 +124,14 @@ const Loan = () => {
 
   // Call refetch after loan is confirmed
   useEffect(() => {
-    if (isConfirmed && transactionId) {
+    if (isConfirmed) {
       const timeout = setTimeout(async () => {
         await refetch();
       }, 1000);
 
       return () => clearTimeout(timeout);
     }
-  }, [isConfirmed, refetch, transactionId]);
+  }, [isConfirmed, refetch]);
   
   // Handle loan application
   const handleApplyLoan = useCallback(
@@ -160,7 +151,6 @@ const Loan = () => {
             description: "Failed to get loan information. Please try again.",
             variant: "destructive",
           });
-          setIsClicked(false);
           return;
         }
         
@@ -172,7 +162,6 @@ const Loan = () => {
             description: "Pool information not found. Please try again.",
             variant: "destructive",
           });
-          setIsClicked(false);
           return;
         }
         
@@ -188,7 +177,6 @@ const Loan = () => {
             description: "This lending pool is temporarily depleted. Please try again later or choose another pool.",
             variant: "destructive",
           });
-          setIsClicked(false);
           return;
         }
   
@@ -353,7 +341,7 @@ const Loan = () => {
                   liquidity={pool.available_liquidity || 0}
                   isLoading={isConfirming && selectedPool === contractAddress}
                   onSelect={(contractAddress) => handleApplyLoan(contractAddress)}
-                  disabled={isConfirming || (isConfirming && selectedPool === contractAddress)}
+                  disabled={isConfirming && selectedPool === contractAddress}
                   tierId={3}
                   dataLoading={isLoadingData}
                   originationFee={originationFee}

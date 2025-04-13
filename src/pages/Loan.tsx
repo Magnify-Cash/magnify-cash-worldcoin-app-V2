@@ -221,15 +221,21 @@ const Loan = () => {
   return (
     <div className="min-h-screen">
       <Header title="Get a Loan" />
+      
+      {/* Global Transaction Overlay - visible during any loading state */}
+      <TransactionOverlay 
+        isVisible={isLoading} 
+        message="Loading loan information..."
+      />
+      
+      {/* Transaction confirmation overlay */}
+      <TransactionOverlay 
+        isVisible={isConfirming} 
+        message="Confirming transaction, please do not leave this page until confirmation is complete."
+      />
+      
       {isLoading ? (
-        <div className="flex justify-center items-center h-[calc(100vh-80px)] gap-2">
-          <div className="dot-spinner">
-            <div className="dot bg-[#1A1E8E]"></div>
-            <div className="dot bg-[#4A3A9A]"></div>
-            <div className="dot bg-[#7A2F8A]"></div>
-            <div className="dot bg-[#A11F75]"></div>
-          </div>
-        </div>
+        <div className="h-[calc(100vh-80px)]"></div>
       ) : hasDefaultedLoan ? (
         <div className="p-6 space-y-6">
           <div className="glass-card p-6 text-center">
@@ -367,11 +373,6 @@ const Loan = () => {
                   {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
                 </span>
               </p>
-              
-              <TransactionOverlay 
-                isVisible={isConfirming} 
-                message="Confirming transaction, please do not leave this page until confirmation is complete."
-              />
               
               {isConfirmed && (
                 <>

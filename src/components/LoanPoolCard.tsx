@@ -1,5 +1,4 @@
-
-import { Coins, Info, Percent, Calendar, Wallet, Check } from "lucide-react";
+import { Coins, Info, Percent, Calendar, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -112,12 +111,13 @@ export const LoanPoolCard = ({
   // Check if pool has enough liquidity
   const hasEnoughLiquidity = liquidity >= loanAmount;
 
-  // Format currency for better display
+  // Format currency for better display - always showing 2 decimal places
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(value);
   };
 
@@ -134,17 +134,9 @@ export const LoanPoolCard = ({
         "px-6 py-4 bg-gradient-to-r", 
         colorSet.gradient
       )}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Coins className={cn("w-5 h-5", colorSet.icon)} />
-            <h3 className="text-lg font-semibold">{name}</h3>
-          </div>
-          <div className={cn(
-            "text-sm py-1 px-3 rounded-full bg-white/80 shadow-sm",
-            colorSet.icon
-          )}>
-            <span className="font-medium">Tier {tierId}</span>
-          </div>
+        <div className="flex items-center">
+          <Coins className={cn("w-5 h-5 mr-2", colorSet.icon)} />
+          <h3 className="text-lg font-semibold">{name}</h3>
         </div>
       </div>
       
@@ -191,7 +183,7 @@ export const LoanPoolCard = ({
             )}
           </div>
           
-          {/* Available Liquidity */}
+          {/* Available Liquidity (swapped with Origination Fee) */}
           <div className="space-y-1">
             <div className="flex items-center text-gray-500 text-sm mb-1">
               <Coins className="w-4 h-4 mr-1" />
@@ -210,7 +202,7 @@ export const LoanPoolCard = ({
           </div>
         </div>
         
-        {/* Origination Fee Section */}
+        {/* Origination Fee Section (swapped with Available Liquidity) */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
@@ -234,11 +226,11 @@ export const LoanPoolCard = ({
           </div>
         </div>
         
-        {/* Action Button */}
+        {/* Action Button - Updated to match Supply button style */}
         <Button 
           onClick={handleSelectPool} 
           disabled={isLoading || disabled || !hasEnoughLiquidity || dataLoading} 
-          className="w-full"
+          className="w-full glass-button"
           size="lg"
           variant={!hasEnoughLiquidity ? "destructive" : "default"}
         >
@@ -252,9 +244,7 @@ export const LoanPoolCard = ({
           ) : !hasEnoughLiquidity ? (
             "Insufficient Liquidity" 
           ) : (
-            <span className="flex items-center justify-center">
-              <Check className="w-4 h-4 mr-1" /> Apply Now
-            </span>
+            "Apply Now"
           )}
         </Button>
       </div>

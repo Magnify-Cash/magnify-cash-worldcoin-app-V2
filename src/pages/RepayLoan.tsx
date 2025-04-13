@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,23 @@ import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
 import { DefaultedLoanCard } from "@/components/DefaultedLoanCard";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 import { TransactionOverlay } from "@/components/TransactionOverlay";
+import { cn } from "@/utils/tailwind";
+
+// Loan status card colors
+const LOAN_COLORS = {
+  active: {
+    gradient: "from-[#8B5CF6]/10 via-[#7E69AB]/5 to-transparent",
+    border: "border-[#8B5CF6]/20",
+    icon: "text-[#8B5CF6]",
+    statusBg: "bg-green-300"
+  },
+  defaulted: {
+    gradient: "from-[#ea384c]/10 via-[#f87171]/5 to-transparent",
+    border: "border-[#ea384c]/20",
+    icon: "text-[#ea384c]",
+    statusBg: "bg-red-300"
+  }
+};
 
 const RepayLoan = () => {
   // States
@@ -323,12 +341,22 @@ const RepayLoan = () => {
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
-          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
+          <div className={cn(
+            "rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
+            "border-[#8B5CF6]/20",
+            "transform hover:-translate-y-1 p-6"
+          )}>
             <h3 className="text-lg font-semibold text-center">No Active Loans</h3>
-            <p className="text-center text-muted-foreground">
+            <p className="text-center text-muted-foreground mt-2 mb-4">
               It looks like you don't have any active or defaulted loans. Would you like to request one?
             </p>
-            <Button onClick={() => navigate("/loan")} className="w-full mt-4">
+            <Button 
+              onClick={() => navigate("/loan")} 
+              className={cn(
+                "w-full bg-[#8B5CF6] hover:bg-[#7c50e6] text-white",
+                "py-2 px-4 rounded-xl transition-all duration-300"
+              )}
+            >
               Request a Loan
             </Button>
           </div>
@@ -342,6 +370,7 @@ const RepayLoan = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
+        <TransactionOverlay isVisible={isConfirmingDefaulted} />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className="mb-4">
             <h2 className="text-xl font-semibold mb-2 text-center">Defaulted Loans</h2>
@@ -351,16 +380,76 @@ const RepayLoan = () => {
           </div>
           
           {defaultedLoans.map((loan, index) => (
-            <DefaultedLoanCard
+            <div 
               key={`${loan.poolAddress}-${index}`}
-              loan={loan}
-              onRepay={() => handleRepayDefaultedLoan(loan.poolAddress)}
-              isProcessing={isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress}
-            />
+              className={cn(
+                "rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
+                LOAN_COLORS.defaulted.border,
+                "transform hover:-translate-y-1"
+              )}
+            >
+              <div className={cn(
+                "px-6 py-4 bg-gradient-to-r", 
+                LOAN_COLORS.defaulted.gradient
+              )}>
+                <div className="flex items-center justify-between">
+                  <span className={cn(
+                    "px-3 py-1 rounded-full text-black text-sm",
+                    LOAN_COLORS.defaulted.statusBg
+                  )}>
+                    Defaulted Loan
+                  </span>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <div className="text-gray-500 text-sm mb-1">
+                      <span>Loan Amount</span>
+                    </div>
+                    <p className="text-lg font-bold">${loan.loanAmount.toFixed(2)}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="text-gray-500 text-sm mb-1">
+                      <span>Interest ({loan.interestRate}%)</span>
+                    </div>
+                    <p className="text-lg font-bold">${loan.interestAmount.toFixed(2)}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="text-gray-500 text-sm mb-1">
+                      <span>Default Penalty ({loan.penaltyFee}%)</span>
+                    </div>
+                    <p className="text-lg font-bold">${loan.penaltyAmount.toFixed(2)}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="text-gray-500 text-sm mb-1">
+                      <span>Total Amount Due</span>
+                    </div>
+                    <p className="text-lg font-bold">${loan.totalDueAmount.toFixed(2)}</p>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={() => handleRepayDefaultedLoan(loan.poolAddress)}
+                  disabled={isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress}
+                  className={cn(
+                    "w-full bg-[#ea384c] hover:bg-[#d92d3f] text-white",
+                    "size-lg rounded-xl transition-all duration-300"
+                  )}
+                >
+                  {isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress ? 
+                    "Processing..." : "Repay Defaulted Loan"}
+                </Button>
+              </div>
+            </div>
           ))}
           
           {defaultedTransactionId && (
-            <div className="glass-card p-4 mt-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
               <p className="overflow-hidden text-ellipsis whitespace-nowrap">
                 Transaction ID:{" "}
                 <span title={defaultedTransactionId}>
@@ -391,98 +480,10 @@ const RepayLoan = () => {
     );
   }
 
-  // Regular active loan display - use the existing code
-  // No NFT but has an active loan case (V1 or V2 loan)
-  if (data && (!data.nftInfo?.tokenId || data.nftInfo.tokenId === "0") && data.hasActiveLoan && loan) {
-    const [daysRemaining, hoursRemaining, minutesRemaining, dueDate] = calculateRemainingTime(
-      BigInt(loanData?.startTime || 0), 
-      BigInt(loanData?.loanPeriod || 0)
-    );
-    
-    const amountDue = loanData?.amount ? 
-      loanData.amount + (loanData.amount * (loanData?.interestRate || 0n)) / 10000n : 0n;
-
-    return (
-      <div className="min-h-screen bg-background">
-        <Header title="Loan Status" />
-        <div className="container max-w-2xl mx-auto p-6 space-y-6">
-          <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-            <div className="flex items-center justify-between mb-4">
-              <span className="px-3 py-1 rounded-full bg-green-300 text-black text-sm">
-                Active Loan
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
-                  <p className="text-start font-semibold">${formatUnits(loanData?.amount || 0n, 6)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground text-start">Repayment Amount</p>
-                  <p className="text-start font-semibold">${formatUnits(amountDue, 6)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground text-start">Due Date</p>
-                  <p className="text-start font-semibold">
-                    {new Date(dueDate).toLocaleDateString("en-US", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      timeZoneName: "short", 
-                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    })}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground text-start">Time Remaining</p>
-                  <p className="text-start font-semibold">
-                    {`${daysRemaining}d ${hoursRemaining}hr ${minutesRemaining}m`}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <Button onClick={handleRepayActiveLoan} className="w-full mt-4 primary-button" disabled={isClicked || isConfirming || isConfirmed}>
-              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
-            </Button>
-            {transactionId && (
-              <div className="mt-4">
-                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
-                  Transaction ID:{" "}
-                  <span title={transactionId}>
-                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-                  </span>
-                </p>
-                {isConfirmed && (
-                  <>
-                    <p>Transaction confirmed!</p>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Active loan with NFT case
-  // Check if we have valid loan data, otherwise use defaults
+  // Regular active loan display with new UI styling
+  // Calculate time remaining for display
   let startTime = loanData?.startTime || 0; 
-  let loanPeriod = loanData?.loanPeriod || BigInt(30 * 24 * 60 * 60); // Default to 30 days if missing
+  let loanPeriod = loanData?.loanPeriod || BigInt(30 * 24 * 60 * 60); 
   
   // For V3 loans that might have invalid/incomplete data
   if (loanVersion === "V3" && data?.nftInfo?.ongoingLoan && (startTime === 0 || loanPeriod === 0n)) {
@@ -508,90 +509,100 @@ const RepayLoan = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header title="Loan Status" />
-      
-      <TransactionOverlay isVisible={isConfirmingDefaulted} />
-      
       <TransactionOverlay isVisible={isConfirming} />
       
       <div className="container max-w-2xl mx-auto p-6 space-y-6">
-        <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span className="px-3 py-1 rounded-full bg-green-300 text-black text-sm">
-              Active Loan
-            </span>
+        <div className={cn(
+          "rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
+          LOAN_COLORS.active.border,
+          "transform hover:-translate-y-1"
+        )}>
+          <div className={cn(
+            "px-6 py-4 bg-gradient-to-r", 
+            LOAN_COLORS.active.gradient
+          )}>
+            <div className="flex items-center justify-between">
+              <span className={cn(
+                "px-3 py-1 rounded-full text-black text-sm",
+                LOAN_COLORS.active.statusBg
+              )}>
+                Active Loan
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
-                <p className="text-start font-semibold">
-                  ${formatUnits(loanData?.amount || 0n, 6)} 
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="text-gray-500 text-sm mb-1">
+                  <span>Loan Amount</span>
+                </div>
+                <p className="text-lg font-bold">
+                  ${formatUnits(loanData?.amount || 0n, 6)}
                   {loanData?.amount === 0n && <span className="text-xs text-yellow-500"> (Data Unavailable)</span>}
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground text-start">Repayment Amount</p>
-                <p className="text-start font-semibold">
+              
+              <div className="space-y-1">
+                <div className="text-gray-500 text-sm mb-1">
+                  <span>Repayment Amount</span>
+                </div>
+                <p className="text-lg font-bold">
                   ${formatUnits(loanAmountDue, 6)}
                   {loanAmountDue === 0n && <span className="text-xs text-yellow-500"> (Data Unavailable)</span>}
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground text-start">Due Date</p>
-                <p className="text-start font-semibold">
+              
+              <div className="space-y-1">
+                <div className="text-gray-500 text-sm mb-1">
+                  <span>Due Date</span>
+                </div>
+                <p className="text-lg font-bold">
                   {new Date(dueDate).toLocaleDateString("en-US", {
                     day: "2-digit",
                     month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    timeZoneName: "short", 
                     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                   })}
                   {startTime === 0 && <span className="text-xs text-yellow-500"> (Estimated)</span>}
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground text-start">Time Remaining</p>
-                <p className="text-start font-semibold">
+              
+              <div className="space-y-1">
+                <div className="text-gray-500 text-sm mb-1">
+                  <span>Time Remaining</span>
+                </div>
+                <p className="text-lg font-bold">
                   {`${daysRemaining}d ${hoursRemaining}hr ${minutesRemaining}m`}
                   {startTime === 0 && <span className="text-xs text-yellow-500"> (Estimated)</span>}
                 </p>
               </div>
             </div>
-          </div>
-          <Button
-            onClick={handleRepayActiveLoan}
-            className="w-full primary-button"
-            disabled={isClicked || isConfirming || isConfirmed}
-          >
-            {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
-          </Button>
-          {transactionId && (
-            <div className="mt-4">
-              <p className="overflow-hidden text-ellipsis whitespace-nowrap">
-                Transaction ID:{" "}
-                <span title={transactionId}>
-                  {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-                </span>
-              </p>
-              {isConfirmed && (
-                <>
-                  <p>Transaction confirmed!</p>
-                </>
+            
+            <Button
+              onClick={handleRepayActiveLoan}
+              className={cn(
+                "w-full bg-[#8B5CF6] hover:bg-[#7c50e6] text-white",
+                "size-lg rounded-xl transition-all duration-300"
               )}
-            </div>
-          )}
+              disabled={isClicked || isConfirming || isConfirmed}
+            >
+              {isConfirming ? "Confirming..." : isConfirmed ? "Confirmed" : "Repay Loan"}
+            </Button>
+            
+            {transactionId && (
+              <div className="bg-gray-50 p-4 rounded-lg mt-4">
+                <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+                  Transaction ID:{" "}
+                  <span title={transactionId}>
+                    {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+                  </span>
+                </p>
+                {isConfirmed && (
+                  <p className="text-green-600 font-medium mt-2">Transaction confirmed!</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

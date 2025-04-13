@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Calendar, DollarSign, Clock, Percent } from "lucide-react";
 import { DefaultedLoanData } from "@/hooks/useDefaultedLoans";
+import { cn } from "@/utils/tailwind";
 
 interface DefaultedLoanCardProps {
   loan: DefaultedLoanData;
@@ -18,51 +18,54 @@ export const DefaultedLoanCard = ({
   const loanDate = new Date(parseInt(loan.loanTimestamp) * 1000);
   
   return (
-    <div className="glass-card p-6 space-y-4 hover:shadow-lg transition-all duration-200">
-      <div className="flex items-center justify-between">
-        <span className="px-3 py-1 rounded-full bg-red-300 text-black text-sm">
-          <span>Defaulted Loan</span>
-        </span>
+    <div className={cn(
+      "rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
+      "border-[#ea384c]/20",
+      "transform hover:-translate-y-1"
+    )}>
+      <div className="bg-gradient-to-r from-[#ea384c]/10 via-[#f87171]/5 to-transparent px-6 py-4">
+        <div className="flex items-center justify-between">
+          <span className="px-3 py-1 rounded-full bg-red-300 text-black text-sm">
+            Defaulted Loan
+          </span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        <div className="flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground text-start">Loan Amount</p>
-            <p className="text-start font-semibold">${loan.loanAmount.toFixed(2)}</p>
+      <div className="p-6 space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <div className="text-gray-500 text-sm mb-1">
+              <span>Loan Amount</span>
+            </div>
+            <p className="text-lg font-bold">${loan.loanAmount.toFixed(2)}</p>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Percent className="w-5 h-5 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground text-start">Interest ({loan.interestRate}%)</p>
-            <p className="text-start font-semibold">${loan.interestAmount.toFixed(2)}</p>
+          
+          <div className="space-y-1">
+            <div className="text-gray-500 text-sm mb-1">
+              <span>Interest ({loan.interestRate}%)</span>
+            </div>
+            <p className="text-lg font-bold">${loan.interestAmount.toFixed(2)}</p>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Percent className="w-5 h-5 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground text-start">Default Penalty ({loan.penaltyFee}%)</p>
-            <p className="text-start font-semibold">${loan.penaltyAmount.toFixed(2)}</p>
+          
+          <div className="space-y-1">
+            <div className="text-gray-500 text-sm mb-1">
+              <span>Default Penalty ({loan.penaltyFee}%)</span>
+            </div>
+            <p className="text-lg font-bold">${loan.penaltyAmount.toFixed(2)}</p>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground text-start">Total Amount Due</p>
-            <p className="text-start font-semibold">${loan.totalDueAmount.toFixed(2)}</p>
+          
+          <div className="space-y-1">
+            <div className="text-gray-500 text-sm mb-1">
+              <span>Total Amount Due</span>
+            </div>
+            <p className="text-lg font-bold">${loan.totalDueAmount.toFixed(2)}</p>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground text-start">Loan Date</p>
-            <p className="text-start font-semibold">
+          
+          <div className="space-y-1 col-span-2">
+            <div className="text-gray-500 text-sm mb-1">
+              <span>Loan Date</span>
+            </div>
+            <p className="text-lg font-bold">
               {loanDate.toLocaleDateString("en-US", {
                 day: "2-digit",
                 month: "short",
@@ -72,15 +75,18 @@ export const DefaultedLoanCard = ({
             </p>
           </div>
         </div>
-      </div>
 
-      <Button
-        onClick={onRepay}
-        className="w-full primary-button"
-        disabled={isProcessing}
-      >
-        {isProcessing ? "Processing..." : "Repay Defaulted Loan"}
-      </Button>
+        <Button
+          onClick={onRepay}
+          className={cn(
+            "w-full bg-[#ea384c] hover:bg-[#d92d3f] text-white",
+            "size-lg rounded-xl transition-all duration-300"
+          )}
+          disabled={isProcessing}
+        >
+          {isProcessing ? "Processing..." : "Repay Defaulted Loan"}
+        </Button>
+      </div>
     </div>
   );
 };

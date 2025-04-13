@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
@@ -29,6 +30,7 @@ export interface RequestLoanResponse {
   activeLoan: ActiveLoan | null;
   borrowerInfo: BorrowerInfo | null;
   refreshLoanData: () => void;
+  resetState: () => void;
 }
 
 const useRequestLoan = (): RequestLoanResponse => {
@@ -47,30 +49,54 @@ const useRequestLoan = (): RequestLoanResponse => {
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
       client: client as any,
-      transactionId: transactionId as `0x${string}` || "0x",
+      transactionId: transactionId ? transactionId as `0x${string}` : undefined,
       appConfig: {
         app_id: WORLDCOIN_CLIENT_ID,
       },
     });
 
+  // Reset all states to initial values
+  const resetState = useCallback(() => {
+    setError(null);
+    setTransactionId(null);
+    setIsConfirming(false);
+    setIsConfirmed(false);
+  }, []);
+
+  // Update transaction states based on confirmation status
   useEffect(() => {
+    if (!transactionId) {
+      setIsConfirming(false);
+      setIsConfirmed(false);
+      return;
+    }
+
     if (isConfirmingTransaction) {
       setIsConfirming(true);
-    }
-    if (isTransactionConfirmed) {
+      setIsConfirmed(false);
+    } else if (isTransactionConfirmed) {
       setIsConfirming(false);
       setIsConfirmed(true);
     }
-  }, [isConfirmingTransaction, isTransactionConfirmed]);
+  }, [transactionId, isConfirmingTransaction, isTransactionConfirmed]);
+
+  // Clean up effect when component unmounts
+  useEffect(() => {
+    return () => {
+      resetState();
+    };
+  }, [resetState]);
 
   const requestNewLoan = useCallback(async (poolAddress: string) => {
     setError(null);
     setTransactionId(null);
+    setIsConfirming(false);
     setIsConfirmed(false);
 
     try {
       if(!poolAddress) {
         console.error("No pool address provided");
+        setError("No pool address provided");
         return;
       }
       
@@ -95,19 +121,16 @@ const useRequestLoan = (): RequestLoanResponse => {
         ],
       });
       
-
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
-        setIsConfirming(true);
+        // Don't set isConfirming manually here, it will be set by the useEffect
       } else {
         console.error("Error sending transaction", finalPayload);
         setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
-        setIsConfirming(false);
       }
     } catch (err) {
       console.error("Error sending transaction", err);
       setError(`Transaction failed: ${(err as Error).message}`);
-      setIsConfirming(false);
     }
   }, []);
 
@@ -136,7 +159,8 @@ const useRequestLoan = (): RequestLoanResponse => {
     isConfirmed,
     activeLoan,
     borrowerInfo,
-    refreshLoanData
+    refreshLoanData,
+    resetState
   };
 };
 

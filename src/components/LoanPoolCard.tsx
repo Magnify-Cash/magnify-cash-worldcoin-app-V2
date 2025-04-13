@@ -1,3 +1,4 @@
+
 import { Coins, Info, Percent, Calendar, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -183,30 +184,26 @@ export const LoanPoolCard = ({
             )}
           </div>
           
-          {/* Available Liquidity (swapped with Origination Fee) */}
+          {/* Origination Fee (moved to the grid) */}
           <div className="space-y-1">
             <div className="flex items-center text-gray-500 text-sm mb-1">
-              <Coins className="w-4 h-4 mr-1" />
-              <span>Available</span>
+              <Percent className="w-4 h-4 mr-1" />
+              <span>Origination Fee</span>
             </div>
             {dataLoading ? (
-              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-6 w-16" />
             ) : (
-              <p className={cn(
-                "text-lg font-bold",
-                !hasEnoughLiquidity && "text-red-500"
-              )}>
-                {formatCurrency(liquidity)}
-              </p>
+              <p className="text-lg font-bold">{formattedOriginationFee}</p>
             )}
           </div>
         </div>
         
-        {/* Origination Fee Section (swapped with Available Liquidity) */}
+        {/* Available Liquidity Section (moved from grid to separate section) */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
-              <span className="text-sm text-gray-600">Origination Fee</span>
+              <Coins className="w-4 h-4 text-gray-600" />
+              <span className="text-sm text-gray-600">Available Liquidity</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="inline-flex">
@@ -214,24 +211,31 @@ export const LoanPoolCard = ({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-4 text-sm">
-                  <p>Origination Fee is automatically deducted from your loan amount.</p>
+                  <p>The total amount available for borrowing in this pool.</p>
                 </PopoverContent>
               </Popover>
             </div>
             {dataLoading ? (
-              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-5 w-20" />
             ) : (
-              <span className="font-medium">{formattedOriginationFee}</span>
+              <span className={cn(
+                "font-medium",
+                !hasEnoughLiquidity && "text-red-500"
+              )}>
+                {formatCurrency(liquidity)}
+              </span>
             )}
           </div>
         </div>
         
-        {/* Action Button - Updated to match Supply button style */}
+        {/* Action Button - Updated with purple background */}
         <Button 
           onClick={handleSelectPool} 
           disabled={isLoading || disabled || !hasEnoughLiquidity || dataLoading} 
-          className="w-full glass-button"
-          size="lg"
+          className={cn(
+            "w-full bg-[#8B5CF6] hover:bg-[#7c50e6] text-white",
+            "size-lg rounded-xl transition-all duration-300"
+          )}
           variant={!hasEnoughLiquidity ? "destructive" : "default"}
         >
           {isLoading ? (

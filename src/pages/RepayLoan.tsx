@@ -166,8 +166,8 @@ const RepayLoan = () => {
           
           <LoanCard
             version={loanDetails.version || "V3"}
-            amount={loanDetails.loanAmount.toString()}
-            interest={loanDetails.interestRate.toString()}
+            amount={loanDetails.loanAmount}
+            interestRate={loanDetails.interestRate}
             repayAmount={loanDetails.repayAmount}
             startTime={loanDetails.startTime}
             loanPeriod={loanDetails.loanPeriod}

@@ -21,7 +21,6 @@ export interface BorrowerInfo {
 }
 
 export interface LoanCardProps {
-  version?: string;
   title?: string;
   amount?: string;
   interest?: string;
@@ -32,11 +31,6 @@ export interface LoanCardProps {
   borrowerInfo?: BorrowerInfo;
   showPayButton?: boolean;
   showStatus?: boolean;
-  repayAmount?: number;
-  startTime?: number;
-  loanPeriod?: number;
-  onRepay?: () => void;
-  isLoading?: boolean;
 }
 
 export const LoanCard = ({

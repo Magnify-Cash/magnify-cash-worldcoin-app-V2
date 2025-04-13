@@ -67,3 +67,26 @@ export const calculateNetAmountAfterContractFee = async (
   const fee = await calculateEarlyExitFeeFromContract(withdrawAmount, poolContract);
   return withdrawAmount - fee;
 };
+
+/**
+ * Calculates the repayment amount with interest
+ * @param loanAmount The borrowed amount (principal)
+ * @param interestRate Interest rate (in basis points, e.g., 250 for 2.5%)
+ * @param loanPeriod Loan period in seconds
+ * @returns Total repayment amount including interest
+ */
+export const calculateRepaymentAmount = (
+  loanAmount: bigint,
+  interestRate: number,
+  loanPeriod: number
+): bigint => {
+  // Interest rate is in basis points (1/100 of a percent)
+  // Convert to decimal (e.g., 250 basis points = 0.025)
+  const interestRateDecimal = interestRate / 10000;
+  
+  // Calculate interest amount
+  const interestAmount = (loanAmount * BigInt(Math.floor(interestRateDecimal * 10000))) / BigInt(10000);
+  
+  // Return principal + interest
+  return loanAmount + interestAmount;
+};

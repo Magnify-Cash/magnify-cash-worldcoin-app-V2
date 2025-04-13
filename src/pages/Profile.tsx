@@ -1,16 +1,16 @@
-
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from "@worldcoin/minikit-js";
-import { Shield, User, FileText, Pi, AlertTriangle, Bell, Globe } from "lucide-react";
+import { Shield, User, FileText, Pi, Globe, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
-import { useMagnifyWorld, Tier, invalidateCache } from "@/hooks/useMagnifyWorld";
+import { useMagnifyWorld, invalidateCache } from "@/hooks/useMagnifyWorld";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import CreditScore from "@/components/CreditScore";
 import { getTransactionHistory, verify } from "@/lib/backendRequests";
+import { MAGNIFY_WORLD_ADDRESS_V3 } from "@/utils/constants";
+import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
 
 interface Transaction {
   status: "received" | "repaid";
@@ -19,31 +19,26 @@ interface Transaction {
 }
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const ls_username = localStorage.getItem("ls_username");
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
 
-  const { data, isLoading, isError } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
+  const { hasDefaultedLoan, isLoading: isLoadingDefaultedLoans } = useDefaultedLoans(ls_wallet);
   const [verifying, setVerifying] = useState(false);
-  const [currentTier, setCurrentTier] = useState<Tier | null>(null);
   const [creditScore, setCreditScore] = useState(2);
   const [isVerificationSuccessful, setIsVerificationSuccessful] = useState(false);
 
-  const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
-  console.log("NFT Info:", nftInfo);
-  const hasActiveLoan = data?.loan?.[1]?.isActive === true;
-  const loan = data?.loan;
-
-  const isOrbVerified = nftInfo?.tier?.verificationStatus?.verification_level === "orb";
-  const isDeviceVerified = nftInfo?.tier?.verificationStatus?.verification_level === "device";
+  const nftInfo = data?.nftInfo || { tokenId: null, tier: null, verificationStatus: { verification_level: "none" } };
+  const hasActiveLoan = data?.hasActiveLoan || false;
+  const isOrbVerified = nftInfo?.verificationStatus?.verification_level === "orb";
+  const hasLoanIssue = hasActiveLoan || hasDefaultedLoan;
 
   const verificationLevels = {
     orb: {
-      tierId: BigInt(2),
+      tierId: 1,
       level: "Orb Scan",
       icon: Globe,
       action: "mint-orb-verified-nft",
-      upgradeAction: "upgrade-orb-verified-nft",
       verification_level: VerificationLevel.Orb,
     },
   };
@@ -63,7 +58,7 @@ const Dashboard = () => {
           return;
         }
   
-        if (hasActiveLoan && loan) {
+        if (hasActiveLoan) {
           const receivedLoans = transactions.filter((tx) => tx.status === "received");
   
           if (receivedLoans.length > 0) {
@@ -97,9 +92,8 @@ const Dashboard = () => {
       calculateCreditScore();
     }
 
-    // Reset verification success state when data changes
     setIsVerificationSuccessful(false);
-  }, [ls_wallet, hasActiveLoan, loan, isOrbVerified, data]);
+  }, [ls_wallet, hasActiveLoan, isOrbVerified, data]);
 
   const handleVerify = useCallback(async (tier: typeof verificationLevels.orb) => {
     if (!MiniKit.isInstalled()) {
@@ -112,29 +106,15 @@ const Dashboard = () => {
     }
   
     setVerifying(true);
-    setCurrentTier(tier as unknown as Tier);
-  
-    const isUpgradeAction = isDeviceVerified || nftInfo.tokenId !== null;
-    console.log("Is upgrade action:", isUpgradeAction, "NFT Token ID:", nftInfo.tokenId);
     
     const verificationStatus = {
-      claimAction: isUpgradeAction ? null : tier.action,
-      upgradeAction: isUpgradeAction ? tier.upgradeAction : null,
+      claimAction: tier.action,
       verification_level: tier.verification_level,
       level: tier.level,
     };
     
-    const action = isUpgradeAction ? verificationStatus.upgradeAction : verificationStatus.claimAction;
-    console.log("Using action:", action);
-    
-    if (!action) {
-      console.error("No valid action found for verification");
-      setVerifying(false);
-      return;
-    }
-  
     const verifyPayload: VerifyCommandInput = {
-      action: action,
+      action: verificationStatus.claimAction,
       signal: ls_wallet,
       verification_level: verificationStatus.verification_level as VerificationLevel,
     };
@@ -162,12 +142,9 @@ const Dashboard = () => {
         return;
       }
   
-      const tokenId = isUpgradeAction ? nftInfo.tokenId?.toString() : undefined;
-      console.log("Using tokenId for verification:", tokenId);
-  
-      const isVerified = await verify(finalPayload, verificationStatus, ls_wallet, tokenId);
+      const isVerified = await verify(finalPayload, verificationStatus, ls_wallet);
       if (isVerified) {
-        invalidateCache(ls_wallet as `0x${string}`);
+        await refetch();
         setIsVerificationSuccessful(true);
         toast({
           title: "Verification Successful",
@@ -176,16 +153,6 @@ const Dashboard = () => {
       }
     } catch (error: any) {
       console.error("Error during verification:", error);
-      console.error("NFT Info: ", nftInfo);
-      console.error("Nft TokenId: ", nftInfo.tokenId);
-      console.error("Tier: ", tier);
-      console.error("Verification Status: ", verificationStatus);
-      console.error("Is Upgrade Action: ", verificationStatus.upgradeAction === "upgrade-orb-verified-nft");
-      console.error("Is orb verified: ", isOrbVerified);
-      console.error("Is device verified: ", nftInfo?.tier?.verificationStatus.verification_level === "device");
-      console.error("Wallet: " , ls_wallet);
-      console.error("Action: ", action);
-      console.error("Final Payload: ", JSON.stringify(verifyPayload));
   
       let errorMessage = "We are not able to verify you right now. Please try again later.";
       if (error?.message?.includes("credential_unavailable")) {
@@ -200,9 +167,9 @@ const Dashboard = () => {
     } finally {
       setVerifying(false);
     }
-  }, [ls_wallet, isDeviceVerified, nftInfo.tokenId, nftInfo, isOrbVerified]);
+  }, [ls_wallet, refetch]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingDefaultedLoans) {
     return (
       <div className="min-h-screen">
         <Header title="Profile" />
@@ -220,11 +187,28 @@ const Dashboard = () => {
     );
   }
 
-  if (!isLoading && data) {
-    const nftInfo = data?.nftInfo || { tokenId: null, tier: null };
-    const userTierId = nftInfo?.tier?.tierId || BigInt(0);
-    const isDeviceVerified = nftInfo?.tier?.verificationStatus?.verification_level === "device";
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header title="Profile" />
+        <div className="max-w-4xl mx-auto space-y-8 px-4 py-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            <div className="flex items-center justify-center mb-6">
+              <User className="w-16 h-16 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold text-gradient mb-3 text-center break-words">@{ls_username}</h2>
+            <p className="text-muted-foreground text-center text-lg">Error loading profile</p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
+  if (!isLoading && data) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Profile" />
@@ -240,8 +224,6 @@ const Dashboard = () => {
             <h2 className="text-xl font-bold text-gradient mb-3 text-center break-words">@{ls_username}</h2>
             {isOrbVerified || isVerificationSuccessful ? (
               <p className="text-muted-foreground text-center text-lg">ORB Verified User</p>
-            ) : isDeviceVerified ? (
-              <p className="text-muted-foreground text-center text-lg">Not Orb Verified</p>
             ) : (
               <p className="text-muted-foreground text-center text-lg">Unverified</p>
             )}
@@ -259,33 +241,26 @@ const Dashboard = () => {
             <p className="text-muted-foreground text-center text-lg mb-6">
               {isOrbVerified || isVerificationSuccessful
                 ? "Currently: Orb Verified"
-                : isDeviceVerified || nftInfo.tokenId === null
-                ? "Unverified"
-                : `Currently: ${nftInfo.tier?.verificationStatus.level.charAt(0).toUpperCase() + nftInfo.tier?.verificationStatus.level.slice(1).toLowerCase()} Verified`}
+                : "Unverified"}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               {Object.values(verificationLevels).map((tier) => {
                 const IconComponent = tier.icon;
-                const isDeviceOrHasNFT = isDeviceVerified || nftInfo.tokenId !== null;
                 
                 let buttonText;
-                if (verifying && currentTier?.tierId === tier.tierId) {
+                if (verifying) {
                   buttonText = "Verifying...";
-                } else if (isOrbVerified || (tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level) || isVerificationSuccessful) {
-                  buttonText = "Already Claimed";
-                } else if (isDeviceOrHasNFT) {
-                  buttonText = "Upgrade NFT";
+                } else if (isOrbVerified || isVerificationSuccessful) {
+                  buttonText = "Already Verified";
                 } else {
-                  buttonText = "Claim NFT";
+                  buttonText = "Verify with Orb";
                 }
 
-                // Determine if button should be disabled
                 const isButtonDisabled = 
                   verifying || // Disable while verifying
                   isVerificationSuccessful || // Disable after successful verification until refresh
-                  userTierId > tier.tierId || // User already at a higher tier
-                  tier.verification_level === nftInfo?.tier?.verificationStatus.verification_level;
+                  isOrbVerified; // Disable if already verified
 
                 return (
                   <motion.div
@@ -309,26 +284,10 @@ const Dashboard = () => {
                   </motion.div>
                 );
               })}
-
-              {nftInfo.tokenId === null && !isDeviceVerified && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="glass-card p-6"
-                >
-                  <Shield className="w-12 h-12 mx-auto mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2 text-center">Device Verification</h3>
-
-                  <Button className="w-full" variant="default" disabled>
-                    No longer supported
-                  </Button>
-                </motion.div>
-              )}
             </div>
           </motion.div>
 
-          {isOrbVerified || isDeviceVerified || isVerificationSuccessful ? (
+          {isOrbVerified || isVerificationSuccessful ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -338,7 +297,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-center mb-6">
                 <Shield className="w-16 h-16 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Your NFT Tier</h2>
+              <h2 className="text-2xl font-bold text-gradient mb-6 text-center">Your NFT</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                 <motion.div
@@ -354,24 +313,21 @@ const Dashboard = () => {
                         <FileText className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                      <h4 className="font-medium text-lg">
-                        {(isOrbVerified || isVerificationSuccessful) ? "ORB" : "Not Orb Verified"}
-                      </h4>
+                        <h4 className="font-medium text-lg">
+                          ORB
+                        </h4>
                       </div>
                     </div>
                     <div
-                      className={`px-4 py-2 rounded-full text-sm my-3 font-medium text-center ${
-                        isVerificationSuccessful
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : hasActiveLoan || isDeviceVerified
+                      className={`px-4 py-2 rounded-full text-sm my-3 font-medium text-center flex items-center justify-center gap-1 ${
+                        hasLoanIssue
                           ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                           : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       }`}
                     >
-                      {hasActiveLoan || (isDeviceVerified && !isVerificationSuccessful)
-                      ? "Unavailable for Collateral"
-                      : "Available for Collateral"}
-
+                      {hasLoanIssue
+                        ? "Unavailable for Collateral"
+                        : "Available for Collateral"}
                     </div>
                   </Card>
                 </motion.div>

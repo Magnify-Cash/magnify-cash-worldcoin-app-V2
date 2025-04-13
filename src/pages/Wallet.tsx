@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { MiniKit, RequestPermissionPayload, Permission } from "@worldcoin/minikit-js";
 import { checkWallet, saveWallet, getWalletTokens } from "@/lib/backendRequests";
 
-const CACHE_EXPIRATION_MS = 60 * 1000; // 1 minute cache expiration
 const MIN_BALANCE_THRESHOLD = 0.00049; // Minimum balance threshold to display tokens
 
 const Wallet = () => {
@@ -93,19 +92,6 @@ const Wallet = () => {
     checkAndSaveWallet();
   }, [requestPermission, checkWalletExists]);
 
-  const loadCachedBalances = () => {
-    const cachedTokens = sessionStorage.getItem("walletTokens");
-    const cacheTimestamp = sessionStorage.getItem("walletCacheTimestamp");
-
-    if (cacheTimestamp && Date.now() - Number(cacheTimestamp) < CACHE_EXPIRATION_MS) {
-      if (cachedTokens) {
-        setTokens(JSON.parse(cachedTokens));
-        setLoadingTokens(false);
-      }
-      setDataLoaded(true);
-    }
-  };
-
   const fetchBalances = async () => {
     try {
       setIsRefreshing(true);
@@ -115,7 +101,6 @@ const Wallet = () => {
       try {
         const tokenList = await getWalletTokens(ls_wallet);
         setTokens(tokenList);
-        sessionStorage.setItem("walletTokens", JSON.stringify(tokenList));
       } catch (error) {
         console.error("Failed to fetch wallet tokens:", error);
         setError("Failed to fetch wallet tokens");
@@ -123,7 +108,6 @@ const Wallet = () => {
         setLoadingTokens(false);
       }
 
-      sessionStorage.setItem("walletCacheTimestamp", String(Date.now()));
       setTimeout(() => {
         setIsRefreshing(false);
         setDataLoaded(true);
@@ -139,10 +123,7 @@ const Wallet = () => {
 
   useEffect(() => {
     if (!ls_wallet) return;
-    loadCachedBalances();
-    if (!sessionStorage.getItem("walletCacheTimestamp") || Date.now() - Number(sessionStorage.getItem("walletCacheTimestamp")) >= CACHE_EXPIRATION_MS) {
-      fetchBalances();
-    }
+    fetchBalances();
   }, [ls_wallet]);
 
   // Filter tokens based on minimum balance threshold

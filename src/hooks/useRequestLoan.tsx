@@ -1,38 +1,58 @@
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { MAGNIFY_WORLD_ADDRESS, WORLDCOIN_CLIENT_ID } from "@/utils/constants";
+import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
 
-type LoanDetails = {
-  amount: number;
-  duration: number;
-  transactionId: string;
-};
+export interface BorrowerInfo {
+  contractAddress?: string;
+  loanAmount?: number;
+  interestRate?: number;
+  loanPeriod?: number;
+}
 
-const useRequestLoan = () => {
+export interface ActiveLoan {
+  loanAmount: number;
+  startTimestamp: number;
+  isActive: boolean;
+  interestRate: number;
+  loanPeriod: number;
+}
+
+export interface RequestLoanResponse {
+  requestNewLoan: (poolAddress: string) => Promise<void>;
+  error: string | null;
+  transactionId: string | null;
+  isConfirming: boolean;
+  isConfirmed: boolean;
+  activeLoan: ActiveLoan | null;
+  borrowerInfo: BorrowerInfo | null;
+  refreshLoanData: () => void;
+}
+
+const useRequestLoan = (): RequestLoanResponse => {
   const [error, setError] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
-  const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
+  const [activeLoan, setActiveLoan] = useState<ActiveLoan | null>(null);
+  const [borrowerInfo, setBorrowerInfo] = useState<BorrowerInfo | null>(null);
 
   const client = createPublicClient({
     chain: worldchain,
-    transport: http("https://worldchain-mainnet.g.alchemy.com/public"),
+    transport: http('https://worldchain-mainnet.g.alchemy.com/public'),
   });
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
     useWaitForTransactionReceipt({
-      client: client,
-      transactionId: transactionId || "",
+      client: client as any,
+      transactionId: transactionId as `0x${string}` || "0x",
       appConfig: {
         app_id: WORLDCOIN_CLIENT_ID,
       },
     });
 
-  // Sync `isConfirming` and `isConfirmed`
   useEffect(() => {
     if (isConfirmingTransaction) {
       setIsConfirming(true);
@@ -43,26 +63,26 @@ const useRequestLoan = () => {
     }
   }, [isConfirmingTransaction, isTransactionConfirmed]);
 
-  const requestNewLoan = useCallback(async (requestedTierId: bigint) => {
+  const requestNewLoan = useCallback(async (poolAddress: string) => {
     setError(null);
     setTransactionId(null);
     setIsConfirmed(false);
-    setLoanDetails(null);
 
     try {
-      const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
+      if(!poolAddress) {
+        console.error("No pool address provided");
+        return;
+      }
+      
+      console.log(`[CoT] Requesting loan with from pool: ${poolAddress}`);
+      
+      const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: MAGNIFY_WORLD_ADDRESS,
+            address: poolAddress as `0x${string}`,
             abi: [
               {
-                inputs: [
-                  {
-                    internalType: "uint256",
-                    name: "requestedTierId",
-                    type: "uint256",
-                  },
-                ],
+                inputs: [],
                 name: "requestLoan",
                 outputs: [],
                 stateMutability: "nonpayable",
@@ -70,20 +90,15 @@ const useRequestLoan = () => {
               },
             ],
             functionName: "requestLoan",
-            args: [requestedTierId.toString()],
+            args: [],
           },
         ],
       });
+      
 
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
-        
-        setLoanDetails({
-          amount: 1000, // Replace with actual logic if amount comes from transaction or another source
-          duration: 30, // Replace with actual logic for duration
-          transactionId: finalPayload.transaction_id,
-        });
       } else {
         console.error("Error sending transaction", finalPayload);
         setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
@@ -96,7 +111,33 @@ const useRequestLoan = () => {
     }
   }, []);
 
-  return { requestNewLoan, error, transactionId, isConfirming, isConfirmed, loanDetails };
+  const refreshLoanData = useCallback(() => {
+    setBorrowerInfo({
+      contractAddress: "0x1234567890123456789012345678901234567890",
+      loanAmount: 100,
+      interestRate: 5,
+      loanPeriod: 30 * 24 * 60 * 60
+    });
+    
+    setActiveLoan({
+      loanAmount: 100,
+      startTimestamp: Math.floor(Date.now() / 1000) - 60 * 60 * 24,
+      isActive: true,
+      interestRate: 5,
+      loanPeriod: 30 * 24 * 60 * 60
+    });
+  }, []);
+
+  return { 
+    requestNewLoan, 
+    error, 
+    transactionId, 
+    isConfirming, 
+    isConfirmed,
+    activeLoan,
+    borrowerInfo,
+    refreshLoanData
+  };
 };
 
 export default useRequestLoan;

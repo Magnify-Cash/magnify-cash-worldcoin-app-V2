@@ -30,6 +30,20 @@ import {
   SoulboundPoolAddressesResponse,
   SoulboundTokenURIResponse,
   SoulboundUserNFTResponse,
+  PoolLiquidityResponse,
+  PoolDeactivationResponse,
+  PoolNameResponse,
+  PoolLoanAmountResponse,
+  PoolOriginationFeeResponse,
+  PoolWarmupPeriodResponse,
+  UserLPBalanceResponse,
+  LPTokenHistoryResponse,
+  PoolEarlyExitFeeResponse,
+  PoolPenaltyFeeResponse,
+  UserDefaultedLoanData,
+  UserDefaultedLoanStatus,
+  DefaultLoanIndexResponse,
+  UserLendingHistoryResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -139,11 +153,11 @@ export const previewMint = async (
 ): Promise<PreviewMintResponse> => {
   const response = await backendRequest<PreviewMintResponse>(
     "GET",
-    "preview/mint",
+    "v3/preview/mint",
     { shares, contract }
   );
 
-  if (!response.data || typeof response.data.lpAmount !== "string") {
+  if (!response.data || typeof response.data.lpAmount !== "number") {
     throw new Error(
       `Failed to preview mint. Status: ${response.status}, Message: ${response.message}`
     );
@@ -158,11 +172,11 @@ export const previewDeposit = async (
 ): Promise<PreviewDepositResponse> => {
   const response = await backendRequest<PreviewDepositResponse>(
     "GET",
-    "preview/deposit",
+    "v3/preview/deposit",
     { assets, contract }
   );
 
-  if (!response.data || typeof response.data.usdcAmount !== "string") {
+  if (!response.data || typeof response.data.lpAmount !== "number") {
     throw new Error(
       `Failed to preview deposit. Status: ${response.status}, Message: ${response.message}`
     );
@@ -177,11 +191,11 @@ export const previewRedeem = async (
 ): Promise<PreviewRedeemResponse> => {
   const response = await backendRequest<PreviewRedeemResponse>(
     "GET",
-    "preview/redeem",
+    "v3/preview/redeem",
     { shares, contract }
   );
 
-  if (!response.data || typeof response.data.usdcAmount !== "string") {
+  if (!response.data || typeof response.data.usdcAmount !== "number") {
     throw new Error(
       `Failed to preview redeem. Status: ${response.status}, Message: ${response.message}`
     );
@@ -197,11 +211,11 @@ export const previewWithdraw = async (
 ): Promise<PreviewWithdrawResponse> => {
   const response = await backendRequest<PreviewWithdrawResponse>(
     "GET",
-    "preview/withdraw",
+    "v3/preview/withdraw",
     { assets, contract }
   );
 
-  if (!response.data || typeof response.data.lpAmount !== "string") {
+  if (!response.data || typeof response.data.lpAmount !== "number") {
     throw new Error(
       `Failed to preview withdraw. Status: ${response.status}, Message: ${response.message}`
     );
@@ -216,7 +230,7 @@ export const getActiveLoan = async (
 ): Promise<ActiveLoanData> => {
   const response = await backendRequest<ActiveLoanData>(
     "GET",
-    "loan/active",
+    "v3/loan/active",
     { wallet, contract }
   );
 
@@ -229,14 +243,13 @@ export const getActiveLoan = async (
   return response.data;
 };
 
-//TODO: Add type for LoanHistoryEntry
 export const getLoanHistory = async (
   wallet: string,
   contract: string
 ): Promise<LoanHistoryEntry> => {
   const response = await backendRequest<LoanHistoryEntry>(
     "GET",
-    "loan/history",
+    "v3/loan/history",
     { wallet, contract }
   );
 
@@ -249,7 +262,6 @@ export const getLoanHistory = async (
   return response.data;
 };
 
-//TODO: Add type for AllLoansEntry
 export const getAllLoans = async (
   contract: string
 ): Promise<AllLoansEntry> => {
@@ -273,7 +285,7 @@ export const getPoolUSDCBalance = async (
 ): Promise<PoolBalanceUSDCResponse> => {
   const response = await backendRequest<PoolBalanceUSDCResponse>(
     "GET",
-    "pool/balance/usdc",
+    "v3/pool/balance/usdc",
     { contract }
   );
 
@@ -294,7 +306,7 @@ export const getPoolTreasuryFee = async (
 ): Promise<PoolTreasuryFeeResponse> => {
   const response = await backendRequest<PoolTreasuryFeeResponse>(
     "GET",
-    "pool/fee/treasury",
+    "v3/pool/fee/treasury",
     { contract }
   );
 
@@ -312,7 +324,7 @@ export const getPoolLPBalance = async (
 ): Promise<PoolLPBalanceResponse> => {
   const response = await backendRequest<PoolLPBalanceResponse>(
     "GET",
-    "pool/balance/lp",
+    "v3/pool/balance/lp",
     { contract }
   );
 
@@ -330,7 +342,7 @@ export const getPoolActivationDate = async (
 ): Promise<PoolActivationResponse> => {
   const response = await backendRequest<PoolActivationResponse>(
     "GET",
-    "pool/activation",
+    "v3/pool/activation",
     { contract }
   );
 
@@ -352,7 +364,7 @@ export const getPoolLPSymbol = async (
 ): Promise<PoolSymbolResponse> => {
   const response = await backendRequest<PoolSymbolResponse>(
     "GET",
-    "pool/symbol",
+    "v3/pool/symbol",
     { contract }
   );
 
@@ -370,7 +382,7 @@ export const getPoolTier = async (
 ): Promise<PoolTierResponse> => {
   const response = await backendRequest<PoolTierResponse>(
     "GET",
-    "pool/tier",
+    "v3/pool/tier",
     { contract }
   );
 
@@ -388,7 +400,7 @@ export const getPoolLoanDuration = async (
 ): Promise<PoolLoanDurationResponse> => {
   const response = await backendRequest<{ loanDuration: string }>(
     "GET",
-    "pool/loan/duration",
+    "v3/pool/loan/duration",
     { contract }
   );
 
@@ -413,7 +425,7 @@ export const getPoolLoanInterestRate = async (
 ): Promise<PoolLoanInterestResponse> => {
   const response = await backendRequest<PoolLoanInterestResponse>(
     "GET",
-    "pool/loan/interest",
+    "v3/pool/loan/interest",
     { contract }
   );
 
@@ -431,7 +443,7 @@ export const getPoolStatus = async (
 ): Promise<PoolStatusResponse> => {
   const response = await backendRequest<PoolStatusResponse>(
     "GET",
-    "pool/status",
+    "v3/pool/status",
     { contract }
   );
 
@@ -580,6 +592,305 @@ export const getSoulboundPoolAddresses = async (): Promise<SoulboundPoolAddresse
   if (!response.data || !Array.isArray(response.data)) {
     throw new Error(
       `Failed to fetch Soulbound pool addresses. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolLiquidity = async (
+  contract: string
+): Promise<PoolLiquidityResponse> => {
+  const response = await backendRequest<PoolLiquidityResponse>(
+    "GET",
+    "v3/pool/liquidity",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.liquidity !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch pool liquidity. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolName = async (
+  contract: string
+): Promise<PoolNameResponse> => {
+  const response = await backendRequest<PoolNameResponse>(
+    "GET",
+    "v3/pool/name",
+    { contract }
+  );
+
+  if (!response.data || typeof response.data.name !== "string") {
+    throw new Error(
+      `Failed to retrieve pool name. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolDeactivationDate = async (
+  contract: string
+): Promise<PoolDeactivationResponse> => {
+  const response = await backendRequest<PoolDeactivationResponse>(
+    "GET",
+    "v3/pool/deactivation",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.timestamp !== "string" ||
+    typeof response.data.formattedDate !== "string"
+  ) {
+    throw new Error(
+      `Failed to fetch pool deactivation date. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolOriginationFee = async (
+  contract: string
+): Promise<PoolOriginationFeeResponse> => {
+  const response = await backendRequest<PoolOriginationFeeResponse>(
+    "GET",
+    "v3/pool/fee/origination",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.originationFee !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch origination fee. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolLoanAmount = async (
+  contract: string
+): Promise<PoolLoanAmountResponse> => {
+  const response = await backendRequest<PoolLoanAmountResponse>(
+    "GET",
+    "v3/pool/loan/amount",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.loanAmount !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch loan amount. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolWarmupPeriod = async (
+  contract: string
+): Promise<PoolWarmupPeriodResponse> => {
+  const response = await backendRequest<PoolWarmupPeriodResponse>(
+    "GET",
+    "v3/pool/warmup",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.warmupPeriodDays !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch warmup period. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getUserLPBalance = async (
+  wallet: string,
+  contract: string
+): Promise<UserLPBalanceResponse> => {
+  const response = await backendRequest<UserLPBalanceResponse>(
+    "GET",
+    "v3/user/lp/balance",
+    { wallet, contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.balance !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch user LP balance. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getLPTokenHistory = async (
+  contract: string,
+): Promise <LPTokenHistoryResponse[]> => {
+  const response = await backendRequest<LPTokenHistoryResponse[]>(
+    "GET",
+    "v3/pool/lp/history",
+    { contract }
+  );
+
+  if (!response.data || !Array.isArray(response.data)) {
+    throw new Error(
+      `Failed to fetch LP token history. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+}
+
+export const getPoolEarlyExitFee = async (
+  contract: string
+): Promise<{ earlyExitFee: number }> => {
+  const response = await backendRequest<PoolEarlyExitFeeResponse>(
+    "GET",
+    "v3/pool/fee/exit",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.earlyExitFee !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch early exit fee. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getPoolPenaltyFee = async (
+  contract: string
+): Promise<PoolPenaltyFeeResponse> => {
+  const response = await backendRequest<PoolPenaltyFeeResponse>(
+    "GET",
+    "v3/pool/fee/penalty",
+    { contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.defaultPenalty !== "number"
+  ) {
+    throw new Error(
+      `Failed to fetch penalty fee. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getUserDefaultedLoanPoolData = async (
+  wallet: string,
+  contract: string
+): Promise<UserDefaultedLoanData> => {
+  const response = await backendRequest<{ 
+    loanID: string;
+    tokenId: string;
+    loanTimestamp: string;
+    repaymentTimestamp: string;
+    borrower: string;
+    isDefault: boolean;
+    isActive: boolean;
+  }>(
+    "GET",
+    "v3/user/default/data",
+    { wallet, contract }
+  );
+
+  if (!response.data || typeof response.data !== "object") {
+    throw new Error(
+      `Failed to fetch user defaulted loan pool data. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getUserDefaultedLoanPoolStatus = async (
+  wallet: string,
+  contract: string
+): Promise<UserDefaultedLoanStatus> => {
+  const response = await backendRequest<UserDefaultedLoanStatus>(
+    "GET",
+    "v3/user/default/status",
+    { wallet, contract }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.hasDefaultedLoan !== "boolean"
+  ) {
+    throw new Error(
+      `Failed to fetch user defaulted loan pool status. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getDefaultLoanIndex = async (
+  wallet: string,
+  contract: string
+): Promise<DefaultLoanIndexResponse> => {
+  const response = await backendRequest<DefaultLoanIndexResponse>(
+    "GET",
+    "v3/default/loan/index",
+    { wallet, contract }
+  );
+
+  if (
+    !response.data ||
+    (!Number.isInteger(response.data.index) && response.data.index !== null)
+  ) {
+    throw new Error(
+      `Failed to fetch default loan index. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getUserLendingHistory = async (
+  wallet: string
+): Promise<UserLendingHistoryResponse> => {
+  const response = await backendRequest<UserLendingHistoryResponse>(
+    "GET",
+    "v3/user/lending/history",
+    { wallet }
+  );
+
+  if (
+    !response.data ||
+    !Array.isArray(response.data.history) ||
+    typeof response.data.pagination !== "object"
+  ) {
+    throw new Error(
+      `Failed to fetch user lending history. Status: ${response.status}, Message: ${response.message}`
     );
   }
 

@@ -3,7 +3,7 @@ export interface BackendResponse<T> {
   message: string;
   data: T;
 }
-  
+
 export interface TokenMetadata {
   metadata: {
     tokenName: string;
@@ -44,19 +44,19 @@ export interface RequestParams {
 export type HttpMethod = "GET" | "POST";
 
 export interface PreviewMintResponse {
-  lpAmount: string;
+  lpAmount: number;
 }
 
 export interface PreviewDepositResponse {
-  usdcAmount: string;
+  lpAmount: number;
 }
 
 export interface PreviewRedeemResponse {
-  usdcAmount: string;
+  usdcAmount: number;
 }
 
 export interface PreviewWithdrawResponse {
-  lpAmount: string;
+  lpAmount: number;
 }
 
 export interface ActiveLoanData {
@@ -69,11 +69,19 @@ export interface ActiveLoanData {
   isActive: boolean;
 }
 
-// TODO: Replace `any[]` with proper type once response structure is known
-export type LoanHistoryEntry = any[];
+export interface LoanEntry {
+  loanID: string;
+  tokenId: string;
+  loanTimestamp: string;
+  repaymentTimestamp: string;
+  borrower: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
 
-// TODO: Replace `any[]` with proper type once response structure is known
-export type AllLoansEntry = any[]; 
+export type LoanHistoryEntry = LoanEntry[];
+
+export type AllLoansEntry = LoanEntry[];
 
 export interface PoolBalanceUSDCResponse {
   totalAssets: number;
@@ -137,7 +145,26 @@ export interface SoulboundDataResponse {
   loansDefaulted: string;
   owner: string;
   tier: number;
+  hasActiveLoan: boolean;
   ongoingLoan: boolean;
+  loan?: {
+    version: string;
+    amount: number;
+    startTime: number;
+    isActive: boolean;
+    interestRate: number;
+    loanPeriod: number;
+    poolAddress?: string;
+  };
+  tiers?: Array<{
+    loanAmount: number;
+    interestRate: number;
+    loanPeriod: number;
+    tierId: number;
+    verificationStatus?: {
+      description: string;
+    };
+  }>;
 }
 
 export interface SoulboundTokenURIResponse {
@@ -157,3 +184,89 @@ export interface SoulboundUserNFTResponse {
 }
 
 export type SoulboundPoolAddressesResponse = string[];
+
+export interface PoolLiquidityResponse {
+  liquidity: number;
+}
+
+export interface PoolNameResponse {
+  name: string;
+}
+
+export interface PoolDeactivationResponse {
+  timestamp: string;
+  formattedDate: string;
+}
+
+export interface PoolOriginationFeeResponse {
+  originationFee: number;
+}
+
+export interface PoolLoanAmountResponse {
+  loanAmount: number;
+}
+
+export interface PoolWarmupPeriodResponse {
+  warmupPeriodDays: number; 
+}
+
+export interface UserLPBalanceResponse {
+  balance: number;
+}
+
+export interface LPTokenHistoryResponse {
+  token_price: number;
+  timestamp: string;
+  date: string;
+}
+
+export interface PoolEarlyExitFeeResponse {
+  earlyExitFee: number;
+}
+
+export interface PoolPenaltyFeeResponse {
+  defaultPenalty: number;
+};
+
+export interface UserDefaultedLoanData {
+  loanID: string;
+  tokenId: string;
+  loanTimestamp: string;
+  repaymentTimestamp: string;
+  borrower: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+export interface UserDefaultedLoanStatus {
+  hasDefaultedLoan: boolean;
+}
+
+export interface DefaultLoanIndexResponse {
+  index: number | null;
+}
+
+interface LendingHistoryItem {
+  address: string;
+  eventname: string;
+  shares: string;
+  assets: string;
+  timestamp: string;
+  blocknumber: string;
+  pool_address: string;
+  name: string;
+  symbol: string;
+}
+
+interface LendingHistoryPagination {
+  totalRecords: string;
+  currentPage: number;
+  nextPage: number | null;
+  previousPage: number | null;
+  totalPages: number;
+}
+
+export interface UserLendingHistoryResponse {
+  history: LendingHistoryItem[];
+  pagination: LendingHistoryPagination;
+}

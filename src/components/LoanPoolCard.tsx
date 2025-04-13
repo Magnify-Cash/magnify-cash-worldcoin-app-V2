@@ -1,5 +1,5 @@
 
-import { Coins, Info } from "lucide-react";
+import { Coins, Info, Percent, Calendar, Wallet, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/utils/tailwind";
 
 interface LoanPoolCardProps {
   name: string;
@@ -24,14 +25,38 @@ interface LoanPoolCardProps {
   poolIndex?: number;
 }
 
-// Array of colors for pool icons
+// Array of colors for pool icons and gradients
 const POOL_COLORS = [
-  "text-[#8B5CF6]", // Vivid Purple
-  "text-[#F97316]", // Bright Orange
-  "text-[#0EA5E9]", // Ocean Blue
-  "text-[#1EAEDB]", // Bright Blue
-  "text-[#33C3F0]", // Sky Blue
-  "text-[#ea384c]", // Red
+  {
+    icon: "text-[#8B5CF6]", // Vivid Purple
+    gradient: "from-[#8B5CF6]/10 via-[#7E69AB]/5 to-transparent",
+    border: "border-[#8B5CF6]/20",
+  },
+  {
+    icon: "text-[#F97316]", // Bright Orange
+    gradient: "from-[#F97316]/10 via-[#F9A366]/5 to-transparent",
+    border: "border-[#F97316]/20",
+  },
+  {
+    icon: "text-[#0EA5E9]", // Ocean Blue
+    gradient: "from-[#0EA5E9]/10 via-[#38BDF8]/5 to-transparent",
+    border: "border-[#0EA5E9]/20",
+  },
+  {
+    icon: "text-[#1EAEDB]", // Bright Blue
+    gradient: "from-[#1EAEDB]/10 via-[#33C3F0]/5 to-transparent",
+    border: "border-[#1EAEDB]/20",
+  },
+  {
+    icon: "text-[#D946EF]", // Magenta Pink
+    gradient: "from-[#D946EF]/10 via-[#E879F9]/5 to-transparent",
+    border: "border-[#D946EF]/20",
+  },
+  {
+    icon: "text-[#ea384c]", // Red
+    gradient: "from-[#ea384c]/10 via-[#f87171]/5 to-transparent",
+    border: "border-[#ea384c]/20",
+  },
 ];
 
 export const LoanPoolCard = ({
@@ -81,87 +106,158 @@ export const LoanPoolCard = ({
   // Format origination fee
   const formattedOriginationFee = `${originationFee.toFixed(2)}%`;
 
-  // Determine icon color based on pool index
-  const iconColor = POOL_COLORS[poolIndex % POOL_COLORS.length];
+  // Determine colors based on pool index
+  const colorSet = POOL_COLORS[poolIndex % POOL_COLORS.length];
 
   // Check if pool has enough liquidity
   const hasEnoughLiquidity = liquidity >= loanAmount;
 
+  // Format currency for better display
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   return (
-    <div className="glass-card p-6 mb-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center">
-          <Coins className={`w-6 h-6 mr-2 ${iconColor}`} />
-          <h3 className="text-lg font-medium">{name}</h3>
+    <div 
+      className={cn(
+        "bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
+        colorSet.border,
+        "transform hover:-translate-y-1"
+      )}
+    >
+      {/* Header Section with Gradient Background */}
+      <div className={cn(
+        "px-6 py-4 bg-gradient-to-r", 
+        colorSet.gradient
+      )}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Coins className={cn("w-5 h-5", colorSet.icon)} />
+            <h3 className="text-lg font-semibold">{name}</h3>
+          </div>
+          <div className={cn(
+            "text-sm py-1 px-3 rounded-full bg-white/80 shadow-sm",
+            colorSet.icon
+          )}>
+            <span className="font-medium">Tier {tierId}</span>
+          </div>
         </div>
       </div>
       
-      <div className="space-y-2 mb-4">
-        <div>
-          <p className="text-gray-600 text-sm mb-1">Loan Amount</p>
-          {dataLoading ? (
-            <Skeleton className="h-5 w-24" />
-          ) : (
-            <p className="font-medium">${loanAmount.toLocaleString()}</p>
-          )}
-        </div>
-        <div>
-          <p className="text-gray-600 text-sm mb-1">Interest Rate</p>
-          {dataLoading ? (
-            <Skeleton className="h-5 w-16" />
-          ) : (
-            <p className="font-medium">{formattedInterestRate}</p>
-          )}
-        </div>
-        <div>
-          <p className="text-gray-600 text-sm mb-1 flex items-center justify-center">
-            Origination Fee
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="ml-1 inline-flex">
-                  <Info className="h-3 w-3 text-gray-400 hover:text-gray-600 transition-colors" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4 bg-white shadow-md rounded-md">
-                <p className="text-sm">
-                  Origination Fee is automatically deducted from your loan amount.
-                </p>
-              </PopoverContent>
-            </Popover>
-          </p>
-          {dataLoading ? (
-            <Skeleton className="h-5 w-16" />
-          ) : (
-            <p className="font-medium text-center">{formattedOriginationFee}</p>
-          )}
-        </div>
-        <div>
-          <p className="text-gray-600 text-sm mb-1">Duration</p>
-          {dataLoading ? (
-            <Skeleton className="h-5 w-20" />
-          ) : (
-            <p className="font-medium">{formattedLoanPeriod} days</p>
-          )}
+      {/* Content Section */}
+      <div className="p-6 space-y-6">
+        {/* Key metrics in a grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Loan Amount */}
+          <div className="space-y-1">
+            <div className="flex items-center text-gray-500 text-sm mb-1">
+              <Wallet className="w-4 h-4 mr-1" />
+              <span>Loan Amount</span>
+            </div>
+            {dataLoading ? (
+              <Skeleton className="h-6 w-24" />
+            ) : (
+              <p className="text-lg font-bold">{formatCurrency(loanAmount)}</p>
+            )}
+          </div>
+          
+          {/* Interest Rate */}
+          <div className="space-y-1">
+            <div className="flex items-center text-gray-500 text-sm mb-1">
+              <Percent className="w-4 h-4 mr-1" />
+              <span>Interest Rate</span>
+            </div>
+            {dataLoading ? (
+              <Skeleton className="h-6 w-16" />
+            ) : (
+              <p className="text-lg font-bold">{formattedInterestRate}</p>
+            )}
+          </div>
+          
+          {/* Duration */}
+          <div className="space-y-1">
+            <div className="flex items-center text-gray-500 text-sm mb-1">
+              <Calendar className="w-4 h-4 mr-1" />
+              <span>Duration</span>
+            </div>
+            {dataLoading ? (
+              <Skeleton className="h-6 w-20" />
+            ) : (
+              <p className="text-lg font-bold">{formattedLoanPeriod} days</p>
+            )}
+          </div>
+          
+          {/* Available Liquidity */}
+          <div className="space-y-1">
+            <div className="flex items-center text-gray-500 text-sm mb-1">
+              <Coins className="w-4 h-4 mr-1" />
+              <span>Available</span>
+            </div>
+            {dataLoading ? (
+              <Skeleton className="h-6 w-24" />
+            ) : (
+              <p className={cn(
+                "text-lg font-bold",
+                !hasEnoughLiquidity && "text-red-500"
+              )}>
+                {formatCurrency(liquidity)}
+              </p>
+            )}
+          </div>
         </div>
         
-        {/* Available Liquidity */}
-        <div>
-          <p className="text-gray-600 text-sm mb-1">Available Liquidity</p>
-          {dataLoading ? (
-            <Skeleton className="h-5 w-24" />
-          ) : (
-            <p className="font-medium">${liquidity.toLocaleString()}</p>
-          )}
+        {/* Origination Fee Section */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-gray-600">Origination Fee</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="inline-flex">
+                    <Info className="h-3 w-3 text-gray-400 hover:text-gray-600 transition-colors" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4 text-sm">
+                  <p>Origination Fee is automatically deducted from your loan amount.</p>
+                </PopoverContent>
+              </Popover>
+            </div>
+            {dataLoading ? (
+              <Skeleton className="h-5 w-16" />
+            ) : (
+              <span className="font-medium">{formattedOriginationFee}</span>
+            )}
+          </div>
         </div>
+        
+        {/* Action Button */}
+        <Button 
+          onClick={handleSelectPool} 
+          disabled={isLoading || disabled || !hasEnoughLiquidity || dataLoading} 
+          className="w-full"
+          size="lg"
+          variant={!hasEnoughLiquidity ? "destructive" : "default"}
+        >
+          {isLoading ? (
+            <span className="flex items-center">
+              <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+              Processing...
+            </span>
+          ) : dataLoading ? (
+            "Loading Pool Data..." 
+          ) : !hasEnoughLiquidity ? (
+            "Insufficient Liquidity" 
+          ) : (
+            <span className="flex items-center justify-center">
+              <Check className="w-4 h-4 mr-1" /> Apply Now
+            </span>
+          )}
+        </Button>
       </div>
-      
-      <Button 
-        onClick={handleSelectPool} 
-        disabled={isLoading || disabled || !hasEnoughLiquidity || dataLoading} 
-        className="w-full"
-      >
-        {isLoading ? "Loading..." : dataLoading ? "Loading Pool Data..." : !hasEnoughLiquidity ? "Insufficient Liquidity" : "Apply Now"}
-      </Button>
     </div>
   );
 };

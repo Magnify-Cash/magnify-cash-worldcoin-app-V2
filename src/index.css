@@ -83,6 +83,12 @@
   }
 }
 
+/* Custom dropdown styling */
+[data-radix-select-item][data-highlighted],
+[data-radix-select-item][data-state="checked"] {
+  @apply bg-[#9b87f5] text-white;
+}
+
 .glass-card {
   @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm 
          shadow-lg hover:shadow-xl transition-all duration-300 

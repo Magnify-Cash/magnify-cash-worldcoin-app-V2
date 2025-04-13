@@ -2,23 +2,6 @@
 import { getPoolEarlyExitFee } from "@/lib/backendRequests";
 
 /**
- * Calculates the repayment amount (loan + interest)
- * @param loanAmount The original loan amount
- * @param interestRate The interest rate as a percentage (e.g., 5 for 5%)
- * @returns The total repayment amount (principal + interest)
- */
-export const calculateRepaymentAmount = (
-  loanAmount: number, 
-  interestRate: number
-): number => {
-  // Interest rate is stored as a percentage, convert to decimal for calculation
-  // For example, if interestRate is 5, we use 0.05 for calculation
-  const interestDecimal = interestRate / 100;
-  const interestAmount = loanAmount * interestDecimal;
-  return loanAmount + interestAmount;
-};
-
-/**
  * Calculates the early exit fee for withdrawals during warm-up period using contract-specific rate
  * @param withdrawAmount The amount being withdrawn in USDC
  * @param poolContract The address of the pool contract

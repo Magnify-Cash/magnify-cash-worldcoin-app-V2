@@ -121,6 +121,16 @@ const Dashboard = () => {
       });
       return;
     }
+
+    if (hasActiveLoan) {
+      toast({
+        title: "Cannot Verify",
+        description: "You need to repay your active loan first",
+        variant: "destructive",
+      });
+      navigate('/repay-loan');
+      return;
+    }
   
     setVerifying(true);
     
@@ -184,7 +194,7 @@ const Dashboard = () => {
     } finally {
       setVerifying(false);
     }
-  }, [ls_wallet, refetch, navigate]);
+  }, [ls_wallet, refetch, navigate, hasActiveLoan]);
 
   if (isLoading || isLoadingDefaultedLoans) {
     return (

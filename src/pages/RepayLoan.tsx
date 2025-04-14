@@ -7,6 +7,7 @@ import { Loan, useMagnifyWorld } from "@/hooks/useMagnifyWorld";
 import { calculateRemainingTime } from "@/utils/timeinfo";
 import useRepayLoan from "@/hooks/useRepayLoan";
 import useRepayDefaultedLoan from "@/hooks/useRepayDefaultedLoan";
+import useDefaultedLegacyLoan from "@/hooks/useDefaultedLegacyLoan";
 import { useToast } from "@/hooks/use-toast";
 import { formatUnits } from "viem";
 import { getUSDCBalance } from "@/lib/backendRequests";
@@ -16,6 +17,7 @@ import { LoadingState } from "@/components/portfolio/LoadingState";
 import { TransactionOverlay } from "@/components/TransactionOverlay";
 import { cn } from "@/utils/tailwind";
 import { CircleCheck } from 'lucide-react';
+import { LegacyDefaultedLoanCard } from "@/components/LegacyDefaultedLoanCard";
 
 const LOAN_COLORS = {
   active: {
@@ -79,6 +81,23 @@ const RepayLoan = () => {
     loanIndex,
     isLoadingIndex,
   } = useRepayDefaultedLoan();
+
+  const {
+    loanData: legacyLoanData,
+    isLoading: isLoadingLegacyLoan,
+    fetchLegacyLoanData,
+    repayLegacyDefaultedLoan,
+    isConfirming: isConfirmingLegacy,
+    isConfirmed: isConfirmedLegacy,
+    error: legacyError,
+    transactionId: legacyTransactionId,
+  } = useDefaultedLegacyLoan();
+
+  useEffect(() => {
+    if (ls_wallet) {
+      fetchLegacyLoanData(ls_wallet);
+    }
+  }, [ls_wallet, fetchLegacyLoanData]);
 
   useEffect(() => {
     const fetchIndices = async () => {
@@ -267,6 +286,49 @@ const RepayLoan = () => {
     }
   }, [repayDefaultedLoanWithPermit2, defaultedLoans, toast, ls_wallet, loanIndex, fetchLoanIndex]);
 
+  const handleRepayLegacyLoan = useCallback(async () => {
+    if (isClicked || !legacyLoanData) return;
+    setIsClicked(true);
+
+    try {
+      if(!sessionStorage.getItem("usdcBalance")) {
+        const balance = await getUSDCBalance(ls_wallet as string);
+        sessionStorage.setItem("usdcBalance", balance.toString());
+      }
+
+      const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
+      const totalDueAmount = legacyLoanData.loan.amount * (1 + legacyLoanData.loan.interestRate / 100);
+
+      if (currentBalance < totalDueAmount) {
+        toast({
+          title: "Insufficient USDC",
+          description: `You need $${totalDueAmount.toFixed(2)} to repay the defaulted loan, but only have $${currentBalance.toFixed(2)}.`,
+          variant: "destructive",
+        });
+        setIsClicked(false);
+        return;
+      }
+
+      const microUsdcAmount = BigInt(Math.round(totalDueAmount * 1000000));
+      await repayLegacyDefaultedLoan(microUsdcAmount);
+
+      sessionStorage.removeItem("usdcBalance");
+      sessionStorage.removeItem("walletTokens");
+      sessionStorage.removeItem("walletCacheTimestamp");
+    } catch (error: any) {
+      console.error("Legacy loan repayment error:", error);
+      toast({
+        title: "Error",
+        description: error?.message?.includes("user rejected transaction")
+          ? "Transaction rejected by user."
+          : error?.message || "Unable to pay back legacy defaulted loan.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsClicked(false);
+    }
+  }, [repayLegacyDefaultedLoan, legacyLoanData, toast, ls_wallet]);
+
   useEffect(() => {
     if (isConfirmed || isConfirmedDefaulted) {
       const timeout = setTimeout(async () => {
@@ -280,7 +342,7 @@ const RepayLoan = () => {
     }
   }, [isConfirmed, isConfirmedDefaulted, refetch, refetchDefaultedLoans]);
 
-  const allLoading = isLoading || isLoadingDefaultedLoans || isLoadingDefaultIndex;
+  const allLoading = isLoading || isLoadingDefaultedLoans || isLoadingDefaultIndex || isLoadingLegacyLoan;
   
   if (allLoading) {
     return (
@@ -382,6 +444,36 @@ const RepayLoan = () => {
               <Button onClick={() => refetch()} className="w-full">
                 Refresh Loan Status
               </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (legacyLoanData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header title="Loan Status" />
+        <TransactionOverlay isVisible={isConfirmingLegacy} />
+        <div className="container max-w-2xl mx-auto p-6 space-y-6">
+          <LegacyDefaultedLoanCard 
+            loan={legacyLoanData}
+            onRepay={handleRepayLegacyLoan}
+            isProcessing={isConfirmingLegacy}
+          />
+          
+          {legacyTransactionId && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+                Transaction ID:{" "}
+                <span title={legacyTransactionId}>
+                  {legacyTransactionId.slice(0, 10)}...{legacyTransactionId.slice(-10)}
+                </span>
+              </p>
+              {isConfirmedLegacy && (
+                <p className="text-green-600 font-medium mt-2">Transaction confirmed!</p>
+              )}
             </div>
           )}
         </div>

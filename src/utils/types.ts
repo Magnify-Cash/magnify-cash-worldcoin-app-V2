@@ -287,3 +287,14 @@ export interface GetDefaultedLegacyLoanResponse {
   borrower: string;
   loan: DefaultedLoanData;
 }
+
+export interface LegacyDefaultedLoanResponse {
+  borrower: string;
+  loan: {
+    amount: number;
+    startTime: number;
+    isActive: boolean;
+    interestRate: number;
+    loanPeriod: number;
+  };
+}

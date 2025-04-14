@@ -298,3 +298,7 @@ export interface LegacyDefaultedLoanResponse {
     loanPeriod: number;
   };
 }
+
+export interface GetDefaultedLoanFeeResponse {
+  repaymentFee: number;
+}

@@ -9,3 +9,4 @@ export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 export const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT;
 export const MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 export const WALLETCONNECT_PROJECT_ID = "3571da39c0621f656a9547e1c1f32f52"
+export const MAGNIFY_DEFAULTS_ADDRESS = import.meta.env.VITE_DEFAULTS_ADDRESS;

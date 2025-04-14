@@ -5,17 +5,25 @@ import { cn } from "@/utils/tailwind";
 
 interface LegacyDefaultedLoanCardProps {
   loan: LegacyDefaultedLoanResponse;
+  defaultPenaltyFee: number;
   onRepay: () => void;
   isProcessing: boolean;
 }
 
 export const LegacyDefaultedLoanCard = ({ 
   loan, 
+  defaultPenaltyFee,
   onRepay, 
   isProcessing 
 }: LegacyDefaultedLoanCardProps) => {
   // Calculate due date from startTime + loanPeriod
   const dueDate = new Date((loan.loan.startTime + loan.loan.loanPeriod) * 1000);
+  
+  // Calculate amounts
+  const loanAmount = loan.loan.amount;
+  const interestAmount = loanAmount * (loan.loan.interestRate / 100);
+  const penaltyAmount = loanAmount * (defaultPenaltyFee / 100);
+  const totalDueAmount = loanAmount + interestAmount + penaltyAmount;
   
   return (
     <div className={cn(
@@ -26,7 +34,7 @@ export const LegacyDefaultedLoanCard = ({
       <div className="bg-gradient-to-r from-[#ea384c]/10 via-[#f87171]/5 to-transparent px-6 py-4">
         <div className="flex items-center justify-center">
           <span className="text-lg font-semibold text-center">
-            Defaulted Loan
+            Defaulted Legacy Loan
           </span>
         </div>
       </div>
@@ -37,7 +45,7 @@ export const LegacyDefaultedLoanCard = ({
             <div className="text-gray-500 text-sm mb-1">
               <span>Loan Amount</span>
             </div>
-            <p className="text-lg font-bold">${loan.loan.amount.toFixed(2)}</p>
+            <p className="text-lg font-bold">${loanAmount.toFixed(2)}</p>
           </div>
           
           <div className="space-y-1">
@@ -45,16 +53,25 @@ export const LegacyDefaultedLoanCard = ({
               <span>Interest ({loan.loan.interestRate}%)</span>
             </div>
             <p className="text-lg font-bold">
-              ${(loan.loan.amount * (loan.loan.interestRate / 100)).toFixed(2)}
+              ${interestAmount.toFixed(2)}
             </p>
           </div>
 
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
+              <span>Default Penalty ({defaultPenaltyFee}%)</span>
+            </div>
+            <p className="text-lg font-bold">
+              ${penaltyAmount.toFixed(2)}
+            </p>
+          </div>
+          
+          <div className="space-y-1">
+            <div className="text-gray-500 text-sm mb-1">
               <span>Total Amount Due</span>
             </div>
             <p className="text-lg font-bold">
-              ${(loan.loan.amount * (1 + loan.loan.interestRate / 100)).toFixed(2)}
+              ${totalDueAmount.toFixed(2)}
             </p>
           </div>
           
@@ -90,3 +107,4 @@ export const LegacyDefaultedLoanCard = ({
     </div>
   );
 };
+

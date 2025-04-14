@@ -10,7 +10,7 @@ import {
   WORLDCHAIN_RPC_URL,
   MAGNIFY_DEFAULTS_ADDRESS,
 } from "@/utils/constants";
-import { hasDefaultedLoan, getDefaultedLegacyLoanData } from "@/lib/backendRequests";
+import { hasDefaultedLoan, getDefaultedLegacyLoanData, getDefaultedLoanFee } from "@/lib/backendRequests";
 import { LegacyDefaultedLoanResponse } from "@/utils/types";
 import { magnifyDefaultsAbi } from "@/utils/defaultsAbi";
 
@@ -20,6 +20,7 @@ const useDefaultedLegacyLoan = () => {
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [loanData, setLoanData] = useState<LegacyDefaultedLoanResponse | null>(null);
+  const [defaultPenaltyFee, setDefaultPenaltyFee] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
 
   // Create public client
@@ -42,9 +43,13 @@ const useDefaultedLegacyLoan = () => {
     try {
       const hasDefaulted = await hasDefaultedLoan(wallet);
       if (hasDefaulted.hasDefaulted) {
-        const data = await getDefaultedLegacyLoanData(wallet);
+        const [data, feeData] = await Promise.all([
+          getDefaultedLegacyLoanData(wallet),
+          getDefaultedLoanFee()
+        ]);
         setLoanData(data);
-        return data;
+        setDefaultPenaltyFee(feeData.repaymentFee);
+        return { loan: data, penaltyFee: feeData.repaymentFee };
       }
       return null;
     } catch (err) {
@@ -121,6 +126,7 @@ const useDefaultedLegacyLoan = () => {
     isConfirming,
     isConfirmed,
     loanData,
+    defaultPenaltyFee,
     isLoading,
     fetchLegacyLoanData,
     repayLegacyDefaultedLoan,
@@ -128,3 +134,4 @@ const useDefaultedLegacyLoan = () => {
 };
 
 export default useDefaultedLegacyLoan;
+

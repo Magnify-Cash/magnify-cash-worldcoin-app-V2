@@ -297,7 +297,11 @@ const RepayLoan = () => {
       }
 
       const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
-      const totalDueAmount = legacyLoanData.loan.amount * (1 + legacyLoanData.loan.interestRate / 100);
+      const totalDueAmount = legacyLoanData.loan.amount * (
+        1 + 
+        legacyLoanData.loan.interestRate / 100 + 
+        defaultPenaltyFee / 100
+      );
 
       if (currentBalance < totalDueAmount) {
         toast({
@@ -327,7 +331,7 @@ const RepayLoan = () => {
     } finally {
       setIsClicked(false);
     }
-  }, [repayLegacyDefaultedLoan, legacyLoanData, toast, ls_wallet]);
+  }, [repayLegacyDefaultedLoan, legacyLoanData, toast, ls_wallet, defaultPenaltyFee]);
 
   useEffect(() => {
     if (isConfirmed || isConfirmedDefaulted) {
@@ -459,6 +463,7 @@ const RepayLoan = () => {
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <LegacyDefaultedLoanCard 
             loan={legacyLoanData}
+            defaultPenaltyFee={defaultPenaltyFee}
             onRepay={handleRepayLegacyLoan}
             isProcessing={isConfirmingLegacy}
           />

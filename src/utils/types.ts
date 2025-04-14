@@ -274,3 +274,16 @@ export interface UserLendingHistoryResponse {
 export interface HasDefaultedLoanResponse {
   hasDefaulted: boolean;
 }
+
+export interface DefaultedLoanData {
+  amount: number;
+  startTime: number;
+  isActive: boolean;
+  interestRate: number;
+  loanPeriod: number;
+}
+
+export interface GetDefaultedLegacyLoanResponse {
+  borrower: string;
+  loan: DefaultedLoanData;
+}

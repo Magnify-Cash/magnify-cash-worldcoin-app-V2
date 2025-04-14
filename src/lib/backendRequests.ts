@@ -45,6 +45,7 @@ import {
   DefaultLoanIndexResponse,
   UserLendingHistoryResponse,
   HasDefaultedLoanResponse,
+  GetDefaultedLegacyLoanResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -913,6 +914,28 @@ export const hasDefaultedLoan = async (
   ) {
     throw new Error(
       `Failed to fetch defaulted loan status. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const getDefaultedLegacyLoanData = async (
+  user: string
+): Promise<GetDefaultedLegacyLoanResponse> => {
+  const response = await backendRequest<GetDefaultedLegacyLoanResponse>(
+    "GET",
+    "get/user/defaultedLoan/data",
+    { user }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.borrower !== "string" ||
+    typeof response.data.loan !== "object"
+  ) {
+    throw new Error(
+      `Failed to fetch defaulted legacy loan. Status: ${response.status}, Message: ${response.message}`
     );
   }
 

@@ -24,9 +24,9 @@ export const DefaultedLoanCard = ({
       "transform hover:-translate-y-1"
     )}>
       <div className="bg-gradient-to-r from-[#ea384c]/10 via-[#f87171]/5 to-transparent px-6 py-4">
-        <div className="flex items-center justify-between">
-          <span className="px-3 py-1 rounded-full bg-red-300 text-black text-sm">
-            Defaulted Loan
+        <div className="flex items-center justify-center">
+          <span className="text-[#ea384c] text-sm font-semibold">
+            Defaulted
           </span>
         </div>
       </div>
@@ -42,23 +42,9 @@ export const DefaultedLoanCard = ({
           
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
-              <span>Interest Rate</span>
-            </div>
-            <p className="text-lg font-bold">{loan.interestRate.toFixed(2)}%</p>
-          </div>
-          
-          <div className="space-y-1">
-            <div className="text-gray-500 text-sm mb-1">
-              <span>Interest Amount</span>
+              <span>Interest ({loan.penaltyFee.toFixed(2)}%)</span>
             </div>
             <p className="text-lg font-bold">${loan.interestAmount.toFixed(2)}</p>
-          </div>
-          
-          <div className="space-y-1">
-            <div className="text-gray-500 text-sm mb-1">
-              <span>Default Penalty ({loan.penaltyFee.toFixed(2)}%)</span>
-            </div>
-            <p className="text-lg font-bold">${loan.penaltyAmount.toFixed(2)}</p>
           </div>
           
           <div className="space-y-1">

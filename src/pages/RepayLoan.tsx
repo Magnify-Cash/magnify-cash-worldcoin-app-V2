@@ -91,6 +91,7 @@ const RepayLoan = () => {
     isConfirmed: isConfirmedLegacy,
     error: legacyError,
     transactionId: legacyTransactionId,
+    defaultPenaltyFee,
   } = useDefaultedLegacyLoan();
 
   useEffect(() => {

@@ -44,6 +44,7 @@ import {
   UserDefaultedLoanStatus,
   DefaultLoanIndexResponse,
   UserLendingHistoryResponse,
+  HasDefaultedLoanResponse,
  } from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
@@ -891,6 +892,27 @@ export const getUserLendingHistory = async (
   ) {
     throw new Error(
       `Failed to fetch user lending history. Status: ${response.status}, Message: ${response.message}`
+    );
+  }
+
+  return response.data;
+};
+
+export const hasDefaultedLoan = async (
+  user: string
+): Promise<HasDefaultedLoanResponse> => {
+  const response = await backendRequest<HasDefaultedLoanResponse>(
+    "GET",
+    "get/user/defaultedLoan",
+    { user }
+  );
+
+  if (
+    !response.data ||
+    typeof response.data.hasDefaulted !== "boolean"
+  ) {
+    throw new Error(
+      `Failed to fetch defaulted loan status. Status: ${response.status}, Message: ${response.message}`
     );
   }
 

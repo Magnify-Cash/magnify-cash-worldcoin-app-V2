@@ -270,3 +270,7 @@ export interface UserLendingHistoryResponse {
   history: LendingHistoryItem[];
   pagination: LendingHistoryPagination;
 }
+
+export interface HasDefaultedLoanResponse {
+  hasDefaulted: boolean;
+}

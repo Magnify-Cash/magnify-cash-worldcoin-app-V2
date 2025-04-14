@@ -33,8 +33,8 @@ export const LegacyDefaultedLoanCard = ({
     )}>
       <div className="bg-gradient-to-r from-[#ea384c]/10 via-[#f87171]/5 to-transparent px-6 py-4">
         <div className="flex items-center justify-center">
-          <span className="text-lg font-semibold text-center">
-            Defaulted Legacy Loan
+          <span className="text-[#ea384c] text-sm font-semibold">
+            Defaulted Loan
           </span>
         </div>
       </div>
@@ -101,7 +101,7 @@ export const LegacyDefaultedLoanCard = ({
           )}
           disabled={isProcessing}
         >
-          {isProcessing ? "Processing..." : "Repay Legacy Defaulted Loan"}
+          {isProcessing ? "Processing..." : "Repay Defaulted Loan"}
         </Button>
       </div>
     </div>

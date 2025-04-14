@@ -411,6 +411,9 @@ const RepayLoan = () => {
   );
   
   const interestRate = loanData?.interestRate ? Number(loanData.interestRate) / 100 : 0;
+
+  const interestAmount = (parseFloat(formatUnits(loanData?.amount || 0n, 6)) / 100) * interestRate;
+    
   
   return (
     <div className="min-h-screen bg-background">
@@ -429,8 +432,7 @@ const RepayLoan = () => {
           )}>
             <div className="flex items-center justify-center">
               <div className="flex items-center space-x-2">
-                <CircleCheck className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-semibold text-[#8B5CF6]">
                   Active Loan
                 </span>
               </div>
@@ -451,10 +453,10 @@ const RepayLoan = () => {
               
               <div className="space-y-1">
                 <div className="text-gray-500 text-sm mb-1">
-                  <span>Interest Rate</span>
+                  <span>Interest ({interestRate.toFixed(2)}%)</span>
                 </div>
                 <p className="text-lg font-bold">
-                  {interestRate > 0 ? `${interestRate.toFixed(2)}%` : 'N/A'}
+                  {interestRate > 0 ? `$${interestAmount}` : 'N/A'}
                   {interestRate === 0 && <span className="text-xs text-yellow-500"> (Data Unavailable)</span>}
                 </p>
               </div>

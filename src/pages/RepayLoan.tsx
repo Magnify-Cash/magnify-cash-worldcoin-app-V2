@@ -191,11 +191,10 @@ const RepayLoan = () => {
       try {
         console.log(`[RepayLoan] Repaying ${loanVersion} loan with amount: ${loanAmountDue}`);
 
-        if (loanVersion === "V1" && !legacyLoanData?.hasOwnProperty('loan')) {
-          await repayLoanWithPermit2(v1LoanData?.loanInfo.totalDue || 0n, "V1");
-        } else if (loanVersion === "V2" || loanVersion === "V3") {
+        if (loanVersion === "V1" || loanVersion === "V2" || loanVersion === "V3") {
           const poolAddress = loanVersion === "V3" ? loanData?.poolAddress : undefined;
-          await repayLoanWithPermit2(loanAmountDue, loanVersion, poolAddress);
+          const amount = loanVersion === "V1" ? v1LoanData?.loanInfo.totalDue || loanAmountDue : loanAmountDue;
+          await repayLoanWithPermit2(amount, loanVersion, poolAddress);
         }
   
         sessionStorage.removeItem("usdcBalance");
@@ -222,83 +221,11 @@ const RepayLoan = () => {
       ls_wallet,
       loanData?.poolAddress,
       v1LoanData?.loanInfo.totalDue,
-      legacyLoanData
     ]
   );
 
-  const handleRepayDefaultedLoan = useCallback(async (poolAddress: string) => {
-    if (isClicked) return;
-    setIsClicked(true);
-    setSelectedDefaultedLoan(poolAddress);
-
-    try {
-      if(!sessionStorage.getItem("usdcBalance")) {
-        const balance = await getUSDCBalance(ls_wallet as string);
-        sessionStorage.setItem("usdcBalance", balance.toString());
-      }
-
-      const loanToRepay = defaultedLoans.find(loan => loan.poolAddress === poolAddress);
-      
-      if (!loanToRepay) {
-        toast({
-          title: "Error",
-          description: "Could not find loan details for the selected pool.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
-      const amountDueFloat = loanToRepay.totalDueAmount;
-
-      if (currentBalance < amountDueFloat) {
-        toast({
-          title: "Insufficient USDC",
-          description: `You need $${amountDueFloat.toFixed(2)} to repay the defaulted loan, but only have $${currentBalance.toFixed(2)}.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const microUsdcAmount = BigInt(Math.round(loanToRepay.totalDueAmount * 1000000));
-
-      console.log(`[RepayLoan] Repaying defaulted loan with total amount: $${loanToRepay.totalDueAmount.toFixed(2)} (${microUsdcAmount} microUSDC)`);
-      
-      let indexToUse = loanIndex;
-      if (indexToUse === null) {
-        indexToUse = await fetchLoanIndex(ls_wallet, poolAddress);
-        if (indexToUse === null) {
-          toast({
-            title: "Error",
-            description: "Could not determine your loan index. Please try again.",
-            variant: "destructive",
-          });
-          setIsClicked(false);
-          return;
-        }
-      }
-      
-      await repayDefaultedLoanWithPermit2(poolAddress, microUsdcAmount, indexToUse);
-
-      sessionStorage.removeItem("usdcBalance");
-      sessionStorage.removeItem("walletTokens");
-      sessionStorage.removeItem("walletCacheTimestamp");
-    } catch (error: any) {
-      console.error("Defaulted loan repayment error:", error);
-      toast({
-        title: "Error",
-        description: error?.message?.includes("user rejected transaction")
-          ? "Transaction rejected by user."
-          : error?.message || "Unable to pay back defaulted loan.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsClicked(false);
-    }
-  }, [repayDefaultedLoanWithPermit2, defaultedLoans, toast, ls_wallet, loanIndex, fetchLoanIndex]);
-
   const handleRepayLegacyLoan = useCallback(async () => {
-    if (isClicked || !legacyLoanData) return;
+    if (isClicked || !legacyLoanData?.loan) return;
     setIsClicked(true);
 
     try {
@@ -429,7 +356,66 @@ const RepayLoan = () => {
             <DefaultedLoanCard 
               key={`${loan.poolAddress}-${index}`}
               loan={loan}
-              onRepay={() => handleRepayDefaultedLoan(loan.poolAddress)}
+              onRepay={() => {
+                if (isClicked) return;
+                setIsClicked(true);
+                setSelectedDefaultedLoan(loan.poolAddress);
+
+                (async () => {
+                  try {
+                    if(!sessionStorage.getItem("usdcBalance")) {
+                      const balance = await getUSDCBalance(ls_wallet as string);
+                      sessionStorage.setItem("usdcBalance", balance.toString());
+                    }
+
+                    const currentBalance = Number(sessionStorage.getItem("usdcBalance"));
+                    const amountDueFloat = loan.totalDueAmount;
+
+                    if (currentBalance < amountDueFloat) {
+                      toast({
+                        title: "Insufficient USDC",
+                        description: `You need $${amountDueFloat.toFixed(2)} to repay the defaulted loan, but only have $${currentBalance.toFixed(2)}.`,
+                        variant: "destructive",
+                      });
+                      setIsClicked(false);
+                      return;
+                    }
+
+                    const microUsdcAmount = BigInt(Math.round(loan.totalDueAmount * 1000000));
+                    
+                    let indexToUse = loanIndex;
+                    if (indexToUse === null) {
+                      indexToUse = await fetchLoanIndex(ls_wallet, loan.poolAddress);
+                      if (indexToUse === null) {
+                        toast({
+                          title: "Error",
+                          description: "Could not determine your loan index. Please try again.",
+                          variant: "destructive",
+                        });
+                        setIsClicked(false);
+                        return;
+                      }
+                    }
+                    
+                    await repayDefaultedLoanWithPermit2(loan.poolAddress, microUsdcAmount, indexToUse);
+
+                    sessionStorage.removeItem("usdcBalance");
+                    sessionStorage.removeItem("walletTokens");
+                    sessionStorage.removeItem("walletCacheTimestamp");
+                  } catch (error: any) {
+                    console.error("Defaulted loan repayment error:", error);
+                    toast({
+                      title: "Error",
+                      description: error?.message?.includes("user rejected transaction")
+                        ? "Transaction rejected by user."
+                        : error?.message || "Unable to pay back defaulted loan.",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setIsClicked(false);
+                  }
+                })();
+              }}
               isProcessing={isConfirmingDefaulted && selectedDefaultedLoan === loan.poolAddress}
             />
           ))}

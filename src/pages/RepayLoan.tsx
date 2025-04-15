@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -189,23 +189,18 @@ const RepayLoan = () => {
       }
   
       try {
-        if (loanVersion) {
+        console.log(`[RepayLoan] Repaying ${loanVersion} loan with amount: ${loanAmountDue}`);
+
+        if (loanVersion === "V1" && !legacyLoanData?.hasOwnProperty('loan')) {
+          await repayLoanWithPermit2(v1LoanData?.loanInfo.totalDue || 0n, "V1");
+        } else if (loanVersion === "V2" || loanVersion === "V3") {
           const poolAddress = loanVersion === "V3" ? loanData?.poolAddress : undefined;
-          
-          console.log(`[RepayLoan] Repaying ${loanVersion} loan with amount: ${loanAmountDue}, pool address: ${poolAddress || 'N/A'}`);
-          
           await repayLoanWithPermit2(loanAmountDue, loanVersion, poolAddress);
-  
-          sessionStorage.removeItem("usdcBalance");
-          sessionStorage.removeItem("walletTokens");
-          sessionStorage.removeItem("walletCacheTimestamp");
-        } else {
-          toast({
-            title: "Error",
-            description: "Unable to pay back loan. No active loan found.",
-            variant: "destructive",
-          });
         }
+  
+        sessionStorage.removeItem("usdcBalance");
+        sessionStorage.removeItem("walletTokens");
+        sessionStorage.removeItem("walletCacheTimestamp");
       } catch (error: any) {
         console.error("Loan repayment error:", error);
         toast({
@@ -219,7 +214,16 @@ const RepayLoan = () => {
         setIsClicked(false);
       }
     },
-    [loanVersion, repayLoanWithPermit2, loanAmountDue, toast, ls_wallet, loanData?.poolAddress]
+    [
+      loanVersion,
+      repayLoanWithPermit2,
+      loanAmountDue,
+      toast,
+      ls_wallet,
+      loanData?.poolAddress,
+      v1LoanData?.loanInfo.totalDue,
+      legacyLoanData
+    ]
   );
 
   const handleRepayDefaultedLoan = useCallback(async (poolAddress: string) => {

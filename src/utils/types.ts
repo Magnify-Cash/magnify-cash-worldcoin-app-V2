@@ -270,3 +270,35 @@ export interface UserLendingHistoryResponse {
   history: LendingHistoryItem[];
   pagination: LendingHistoryPagination;
 }
+
+export interface HasDefaultedLoanResponse {
+  hasDefaulted: boolean;
+}
+
+export interface DefaultedLoanData {
+  amount: number;
+  startTime: number;
+  isActive: boolean;
+  interestRate: number;
+  loanPeriod: number;
+}
+
+export interface GetDefaultedLegacyLoanResponse {
+  borrower: string;
+  loan: DefaultedLoanData;
+}
+
+export interface LegacyDefaultedLoanResponse {
+  borrower: string;
+  loan: {
+    amount: number;
+    startTime: number;
+    isActive: boolean;
+    interestRate: number;
+    loanPeriod: number;
+  };
+}
+
+export interface GetDefaultedLoanFeeResponse {
+  repaymentFee: number;
+}

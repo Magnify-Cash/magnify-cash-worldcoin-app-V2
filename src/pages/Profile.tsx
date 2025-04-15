@@ -8,22 +8,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import CreditScore from "@/components/CreditScore";
-import { getTransactionHistory, verify } from "@/lib/backendRequests";
+import { getTransactionHistory, verify, hasDefaultedLoan } from "@/lib/backendRequests";
 import { MAGNIFY_WORLD_ADDRESS_V3 } from "@/utils/constants";
 import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
-
-interface Transaction {
-  status: "received" | "repaid";
-  timestamp: string;
-  amount: string;
-}
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const ls_username = localStorage.getItem("ls_username");
   const ls_wallet = localStorage.getItem("ls_wallet_address") || "";
+  const navigate = useNavigate();
 
   const { data, isLoading, isError, refetch } = useMagnifyWorld(ls_wallet as `0x${string}`);
-  const { hasDefaultedLoan, isLoading: isLoadingDefaultedLoans } = useDefaultedLoans(ls_wallet);
+  const { hasDefaultedLoan: hasDefaulted, isLoading: isLoadingDefaultedLoans } = useDefaultedLoans(ls_wallet);
   const [verifying, setVerifying] = useState(false);
   const [creditScore, setCreditScore] = useState(2);
   const [isVerificationSuccessful, setIsVerificationSuccessful] = useState(false);
@@ -31,7 +27,7 @@ const Dashboard = () => {
   const nftInfo = data?.nftInfo || { tokenId: null, tier: null, verificationStatus: { verification_level: "none" } };
   const hasActiveLoan = data?.hasActiveLoan || false;
   const isOrbVerified = nftInfo?.verificationStatus?.verification_level === "orb";
-  const hasLoanIssue = hasActiveLoan || hasDefaultedLoan;
+  const hasLoanIssue = hasActiveLoan || hasDefaulted;
 
   const verificationLevels = {
     orb: {
@@ -104,6 +100,37 @@ const Dashboard = () => {
       });
       return;
     }
+
+    try {
+      const defaultedLoanCheck = await hasDefaultedLoan(ls_wallet);
+      if (defaultedLoanCheck.hasDefaulted) {
+        toast({
+          title: "Cannot Verify",
+          description: "You need to repay your defaulted loan first",
+          variant: "destructive",
+        });
+        navigate('/repay-loan');
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking defaulted loan status:", error);
+      toast({
+        title: "Error",
+        description: "Unable to verify loan status. Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (hasActiveLoan) {
+      toast({
+        title: "Cannot Verify",
+        description: "You need to repay your active loan first",
+        variant: "destructive",
+      });
+      navigate('/repay-loan');
+      return;
+    }
   
     setVerifying(true);
     
@@ -167,7 +194,7 @@ const Dashboard = () => {
     } finally {
       setVerifying(false);
     }
-  }, [ls_wallet, refetch]);
+  }, [ls_wallet, refetch, navigate, hasActiveLoan]);
 
   if (isLoading || isLoadingDefaultedLoans) {
     return (

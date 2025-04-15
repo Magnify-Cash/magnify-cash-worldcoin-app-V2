@@ -1,21 +1,29 @@
 
 import { Button } from "@/components/ui/button";
-import { DefaultedLoanData } from "@/hooks/useDefaultedLoans";
+import { LegacyDefaultedLoanResponse } from "@/utils/types";
 import { cn } from "@/utils/tailwind";
 
-interface DefaultedLoanCardProps {
-  loan: DefaultedLoanData;
+interface LegacyDefaultedLoanCardProps {
+  loan: LegacyDefaultedLoanResponse;
+  defaultPenaltyFee: number;
   onRepay: () => void;
   isProcessing: boolean;
 }
 
-export const DefaultedLoanCard = ({ 
+export const LegacyDefaultedLoanCard = ({ 
   loan, 
+  defaultPenaltyFee,
   onRepay, 
   isProcessing 
-}: DefaultedLoanCardProps) => {
-  // Convert timestamp to Date
-  const loanDate = new Date(parseInt(loan.loanTimestamp) * 1000);
+}: LegacyDefaultedLoanCardProps) => {
+  // Calculate due date from startTime + loanPeriod
+  const dueDate = new Date((loan.loan.startTime + loan.loan.loanPeriod) * 1000);
+  
+  // Calculate amounts
+  const loanAmount = loan.loan.amount;
+  const interestAmount = loanAmount * (loan.loan.interestRate / 100);
+  const penaltyAmount = loanAmount * (defaultPenaltyFee / 100);
+  const totalDueAmount = loanAmount + interestAmount + penaltyAmount;
   
   return (
     <div className={cn(
@@ -37,36 +45,42 @@ export const DefaultedLoanCard = ({
             <div className="text-gray-500 text-sm mb-1">
               <span>Loan Amount</span>
             </div>
-            <p className="text-lg font-bold">${loan.loanAmount.toFixed(2)}</p>
+            <p className="text-lg font-bold">${loanAmount.toFixed(2)}</p>
           </div>
           
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
-              <span>Interest ({loan.interestRate.toFixed(2)}%)</span>
+              <span>Interest ({loan.loan.interestRate}%)</span>
             </div>
-            <p className="text-lg font-bold">${loan.interestAmount.toFixed(2)}</p>
+            <p className="text-lg font-bold">
+              ${interestAmount.toFixed(2)}
+            </p>
           </div>
 
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
-              <span>Default Penalty ({loan.penaltyFee.toFixed(2)}%)</span>
+              <span>Default Penalty ({defaultPenaltyFee}%)</span>
             </div>
-            <p className="text-lg font-bold">${loan.penaltyAmount.toFixed(2)}</p>
+            <p className="text-lg font-bold">
+              ${penaltyAmount.toFixed(2)}
+            </p>
           </div>
           
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
               <span>Total Amount Due</span>
             </div>
-            <p className="text-lg font-bold">${loan.totalDueAmount.toFixed(2)}</p>
+            <p className="text-lg font-bold">
+              ${totalDueAmount.toFixed(2)}
+            </p>
           </div>
           
           <div className="space-y-1">
             <div className="text-gray-500 text-sm mb-1">
-              <span>Loan Date</span>
+              <span>Due Date</span>
             </div>
             <p className="text-lg font-bold">
-              {loanDate.toLocaleDateString("en-US", {
+              {dueDate.toLocaleDateString("en-US", {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
@@ -93,3 +107,4 @@ export const DefaultedLoanCard = ({
     </div>
   );
 };
+

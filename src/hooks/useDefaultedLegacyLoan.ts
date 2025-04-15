@@ -8,7 +8,7 @@ import {
   WORLDCOIN_TOKEN_COLLATERAL,
   WORLDCOIN_CLIENT_ID,
   WORLDCHAIN_RPC_URL,
-  MAGNIFY_WORLD_ADDRESS_V1,
+  MAGNIFY_DEFAULTS_ADDRESS
 } from "@/utils/constants";
 import { hasDefaultedLoan, getDefaultedLegacyLoanData, getDefaultedLoanFee } from "@/lib/backendRequests";
 import { fetchLoanByAddress, fetchLoanInfo, type V1LoanInfo } from "@/lib/v1LoanRequests";
@@ -127,7 +127,7 @@ const useDefaultedLegacyLoan = () => {
       };
 
       const transferDetails = {
-        to: MAGNIFY_WORLD_ADDRESS_V1,
+        to: MAGNIFY_DEFAULTS_ADDRESS,
         requestedAmount: amount.toString(),
       };
 
@@ -142,7 +142,7 @@ const useDefaultedLegacyLoan = () => {
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
-            address: MAGNIFY_WORLD_ADDRESS_V1,
+            address: MAGNIFY_DEFAULTS_ADDRESS,
             abi: magnifyDefaultsAbi,
             functionName: "repayDefaultedLegacyLoanWithPermit2",
             args: [permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
@@ -151,7 +151,7 @@ const useDefaultedLegacyLoan = () => {
         permit2: [
           {
             ...permitTransfer,
-            spender: MAGNIFY_WORLD_ADDRESS_V1,
+            spender: MAGNIFY_DEFAULTS_ADDRESS,
           },
         ],
       });

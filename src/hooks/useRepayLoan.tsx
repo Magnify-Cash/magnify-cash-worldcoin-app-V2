@@ -185,11 +185,7 @@ const useRepayLoan = () => {
           transactionId: finalPayload.transaction_id,
         });
       } else {
-        const wallet = localStorage.getItem("ls_wallet_address") || "null";
         console.error("Error sending transaction", finalPayload, commandPayload);
-        console.error("Error sending tx: ", finalPayload.details)
-        console.error("User wallet: ", wallet);
-        console.error("Loan amount:" , loanAmount);
         setError(finalPayload.error_code === "user_rejected" ? `User rejected transaction` : `Transaction failed`);
         setIsConfirming(false); // Reset `isConfirming` in case of error
       }

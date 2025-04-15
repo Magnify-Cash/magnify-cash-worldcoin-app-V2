@@ -9,7 +9,7 @@ import {
   MAGNIFY_WORLD_ADDRESS_V1,
   MAGNIFY_WORLD_ADDRESS,
 } from "@/utils/constants";
-
+import { fetchLoanInfo } from "@/lib/v1LoanRequests";
 import { magnifyV1Abi } from "@/utils/magnifyV1Abi";
 import { magnifyV2Abi } from "@/utils/magnifyV2Abi";
 
@@ -112,14 +112,26 @@ export function useMagnifyWorld(walletAddress: `0x${string}`): {
         })) as bigint[];
 
         if (loanIds.length > 0) {
+          const latestLoanId = loanIds[loanIds.length - 1];
+          const loanInfo = await fetchLoanInfo(MAGNIFY_WORLD_ADDRESS_V1, latestLoanId);
+          
+          // Calculate interest rate as percentage
+          const amountBorrowed = Number(loanInfo.amountBorrowed);
+          const totalDue = Number(loanInfo.totalDue);
+          const interestRate = ((totalDue - amountBorrowed) / amountBorrowed) * 100;
+          
+          const now = BigInt(Math.floor(Date.now() / 1000));
+          const isActive = now < loanInfo.dueDate;
+          
           return [
             "V1",
             {
-              amount: BigInt(0),
-              startTime: 0,
-              isActive: true,
-              interestRate: BigInt(0),
-              loanPeriod: BigInt(0),
+              amount: loanInfo.amountBorrowed,
+              startTime: Number(loanInfo.dueDate) - (30 * 24 * 60 * 60), // Assuming 30-day loans
+              isActive,
+              interestRate: BigInt(Math.round(interestRate * 100)), // Convert to basis points
+              loanPeriod: BigInt(30 * 24 * 60 * 60), // 30 days in seconds
+              poolAddress: MAGNIFY_WORLD_ADDRESS_V1,
             },
           ];
         }

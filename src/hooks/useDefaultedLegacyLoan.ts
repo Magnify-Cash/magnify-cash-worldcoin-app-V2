@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
@@ -12,6 +13,7 @@ import {
 import { hasDefaultedLoan, getDefaultedLegacyLoanData, getDefaultedLoanFee } from "@/lib/backendRequests";
 import { fetchLoanByAddress, fetchLoanInfo, type V1LoanInfo } from "@/lib/v1LoanRequests";
 import type { LegacyDefaultedLoanResponse } from "@/utils/types";
+import { magnifyDefaultsAbi } from "@/utils/defaultsAbi";
 
 interface V1LoanData {
   isActive: boolean;

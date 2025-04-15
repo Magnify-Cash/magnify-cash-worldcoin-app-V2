@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { getSoulboundUserNFT, getSoulboundData, getSoulboundPoolAddresses, getPoolLoanAmount, getPoolLoanInterestRate, getPoolLoanDuration, getActiveLoan } from "@/lib/backendRequests";
@@ -8,7 +9,7 @@ import {
   MAGNIFY_WORLD_ADDRESS_V1,
   MAGNIFY_WORLD_ADDRESS,
 } from "@/utils/constants";
-
+import { fetchLoanInfo } from "@/lib/v1LoanRequests";
 import { magnifyV1Abi } from "@/utils/magnifyV1Abi";
 import { magnifyV2Abi } from "@/utils/magnifyV2Abi";
 

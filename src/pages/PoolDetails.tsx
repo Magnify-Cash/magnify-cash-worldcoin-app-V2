@@ -42,6 +42,7 @@ import { usePoolModals } from "@/hooks/usePoolModals";
 import { useCacheListener, EVENTS } from "@/hooks/useCacheListener";
 import { getPoolAPY } from "@/utils/poolConstants";
 import { formatDays } from "@/utils/timeinfo";
+import { previewRedeem } from "@/lib/backendRequests";
 
 const PoolDetails = () => {
   const { contract, id } = useParams();
@@ -57,6 +58,8 @@ const PoolDetails = () => {
     totalValueLocked?: number;
     availableLiquidity?: number;
   } | null>(null);
+  const [lpTokenPrice, setLpTokenPrice] = useState<number | null>(null);
+
 
   const userPosition = useUserPoolPosition(pool?.contract_address, refreshTrigger);
 
@@ -393,9 +396,15 @@ const PoolDetails = () => {
     }
   };
 
-  const getLPTokenPrice = (): number => {
-    return 1.25;
-  };
+  useEffect(() => {
+    const fetchLPTokenPrice = async () => {
+      if (pool) {
+        const tokenPrice = await previewRedeem(1, pool.contract_address);
+        setLpTokenPrice(parseFloat(tokenPrice.usdcAmount.toFixed(4)));
+      }
+    };
+    fetchLPTokenPrice();
+  }, [pool]);
 
   const getLockDaysRemaining = (): number => {
     const now = new Date();
@@ -591,7 +600,7 @@ const PoolDetails = () => {
                     {pool.status === 'withdrawal' && (
                       <div>
                         <p className="text-xs sm:text-sm text-gray-500">Final LP Price</p>
-                        <p className="text-sm sm:text-lg font-semibold">${getLPTokenPrice().toFixed(2)}</p>
+                        <p className="text-sm sm:text-lg font-semibold">${lpTokenPrice}</p>
                       </div>
                     )}
                   </div>

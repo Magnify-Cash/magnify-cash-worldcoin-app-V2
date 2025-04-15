@@ -1,5 +1,4 @@
-
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
@@ -8,11 +7,15 @@ import {
   WORLDCOIN_TOKEN_COLLATERAL,
   WORLDCOIN_CLIENT_ID,
   WORLDCHAIN_RPC_URL,
-  MAGNIFY_DEFAULTS_ADDRESS,
 } from "@/utils/constants";
 import { hasDefaultedLoan, getDefaultedLegacyLoanData, getDefaultedLoanFee } from "@/lib/backendRequests";
-import { LegacyDefaultedLoanResponse } from "@/utils/types";
-import { magnifyDefaultsAbi } from "@/utils/defaultsAbi";
+import { fetchLoanByAddress, fetchLoanInfo, type V1LoanInfo } from "@/lib/v1LoanRequests";
+
+interface V1LoanData {
+  isActive: boolean;
+  tokenId: bigint;
+  loanInfo: V1LoanInfo;
+}
 
 const useDefaultedLegacyLoan = () => {
   const [error, setError] = useState<string | null>(null);
@@ -22,8 +25,9 @@ const useDefaultedLegacyLoan = () => {
   const [loanData, setLoanData] = useState<LegacyDefaultedLoanResponse | null>(null);
   const [defaultPenaltyFee, setDefaultPenaltyFee] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [v1LoanData, setV1LoanData] = useState<V1LoanData | null>(null);
+  const [isLoadingV1, setIsLoadingV1] = useState(false);
 
-  // Create public client
   const client = createPublicClient({
     chain: worldchain,
     transport: http(WORLDCHAIN_RPC_URL)
@@ -37,6 +41,46 @@ const useDefaultedLegacyLoan = () => {
         app_id: WORLDCOIN_CLIENT_ID,
       },
     });
+
+  const fetchV1LoanData = useCallback(async (wallet: string, contractAddress: string) => {
+    setIsLoadingV1(true);
+    try {
+      console.log("[useDefaultedLegacyLoan] Fetching V1 loan data for wallet:", wallet);
+      
+      const loanIds = await fetchLoanByAddress(contractAddress, wallet);
+      
+      if (loanIds.length === 0) {
+        console.log("[useDefaultedLegacyLoan] No V1 loans found for wallet");
+        setV1LoanData(null);
+        return;
+      }
+
+      const latestLoanId = loanIds[loanIds.length - 1];
+      
+      const loanInfo = await fetchLoanInfo(contractAddress, latestLoanId);
+      
+      const now = BigInt(Math.floor(Date.now() / 1000));
+      const isActive = now < loanInfo.dueDate;
+      
+      console.log("[useDefaultedLegacyLoan] V1 loan data:", {
+        tokenId: latestLoanId,
+        isActive,
+        loanInfo
+      });
+
+      setV1LoanData({
+        tokenId: latestLoanId,
+        isActive,
+        loanInfo
+      });
+    } catch (error) {
+      console.error("[useDefaultedLegacyLoan] Error fetching V1 loan data:", error);
+      setError((error as Error).message);
+      setV1LoanData(null);
+    } finally {
+      setIsLoadingV1(false);
+    }
+  }, []);
 
   const fetchLegacyLoanData = useCallback(async (wallet: string) => {
     setIsLoading(true);
@@ -53,7 +97,7 @@ const useDefaultedLegacyLoan = () => {
       }
       return null;
     } catch (err) {
-      console.error("Error fetching legacy loan data:", err);
+      console.error("[useDefaultedLegacyLoan] Error fetching legacy loan data:", err);
       setError((err as Error).message);
       return null;
     } finally {
@@ -130,8 +174,10 @@ const useDefaultedLegacyLoan = () => {
     isLoading,
     fetchLegacyLoanData,
     repayLegacyDefaultedLoan,
+    v1LoanData,
+    isLoadingV1,
+    fetchV1LoanData,
   };
 };
 
 export default useDefaultedLegacyLoan;
-

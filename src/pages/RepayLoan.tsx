@@ -310,7 +310,7 @@ const RepayLoan = () => {
                        (loanData && loanData.isActive) || 
                        (data?.nftInfo?.ongoingLoan);
 
-  if (!hasActiveLoan && !hasDefaultedLoan) {
+  if (!hasActiveLoan && !hasDefaultedLoan && !legacyLoanData && (!v1LoanData || !v1LoanData.isDefaulted)) {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
@@ -333,6 +333,119 @@ const RepayLoan = () => {
             >
               Request a Loan
             </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (v1LoanData && v1LoanData.isDefaulted) {
+    const dueDate = new Date(Number(v1LoanData.loanInfo.dueDate) * 1000);
+    const loanAmount = Number(v1LoanData.loanInfo.amountBorrowed) / 1e6;
+    const totalDueAmount = Number(v1LoanData.loanInfo.totalDue) / 1e6;
+    const interestAmount = totalDueAmount - loanAmount;
+    const penaltyAmount = loanAmount * (defaultPenaltyFee / 100);
+    const finalAmount = totalDueAmount + penaltyAmount;
+
+    return (
+      <div className="min-h-screen bg-background">
+        <Header title="Loan Status" />
+        <TransactionOverlay isVisible={isConfirmingLegacy} />
+        <div className="container max-w-2xl mx-auto p-6 space-y-6">
+          <div className={cn(
+            "rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
+            "border-[#ea384c]/20",
+            "transform hover:-translate-y-1"
+          )}>
+            <div className={cn(
+              "bg-gradient-to-r from-[#ea384c]/10 via-[#f87171]/5 to-transparent px-6 py-4"
+            )}>
+              <div className="flex items-center justify-center">
+                <span className="text-[#ea384c] text-sm font-semibold">
+                  Defaulted V1 Loan
+                </span>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1">
+                  <div className="text-gray-500 text-sm mb-1">
+                    <span>Loan Amount</span>
+                  </div>
+                  <p className="text-lg font-bold">${loanAmount.toFixed(2)}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="text-gray-500 text-sm mb-1">
+                    <span>Interest</span>
+                  </div>
+                  <p className="text-lg font-bold">
+                    ${interestAmount.toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-gray-500 text-sm mb-1">
+                    <span>Default Penalty ({defaultPenaltyFee}%)</span>
+                  </div>
+                  <p className="text-lg font-bold">
+                    ${penaltyAmount.toFixed(2)}
+                  </p>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="text-gray-500 text-sm mb-1">
+                    <span>Total Amount Due</span>
+                  </div>
+                  <p className="text-lg font-bold">
+                    ${finalAmount.toFixed(2)}
+                  </p>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="text-gray-500 text-sm mb-1">
+                    <span>Due Date</span>
+                  </div>
+                  <p className="text-lg font-bold">
+                    {dueDate.toLocaleDateString("en-US", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZoneName: "short",
+                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleRepayLegacyLoan}
+                className={cn(
+                  "w-full bg-[#ea384c] hover:bg-[#d92d3f] text-white",
+                  "size-lg rounded-xl transition-all duration-300"
+                )}
+                disabled={isConfirmingLegacy}
+              >
+                {isConfirmingLegacy ? "Processing..." : "Repay Defaulted V1 Loan"}
+              </Button>
+
+              {legacyTransactionId && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="overflow-hidden text-ellipsis whitespace-nowrap">
+                    Transaction ID:{" "}
+                    <span title={legacyTransactionId}>
+                      {legacyTransactionId.slice(0, 10)}...{legacyTransactionId.slice(-10)}
+                    </span>
+                  </p>
+                  {isConfirmedLegacy && (
+                    <p className="text-green-600 font-medium mt-2">Transaction confirmed!</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -483,111 +596,6 @@ const RepayLoan = () => {
     );
   }
 
-  if (v1LoanData && v1LoanData.isActive) {
-    const dueDate = new Date(Number(v1LoanData.loanInfo.dueDate) * 1000);
-    const totalDueAmount = Number(v1LoanData.loanInfo.totalDue);
-    const loanAmount = Number(v1LoanData.loanInfo.amountBorrowed);
-    const interestAmount = totalDueAmount - loanAmount;
-
-    return (
-      <div className="min-h-screen bg-background">
-        <Header title="Loan Status" />
-        <TransactionOverlay isVisible={isConfirming} />
-        <div className="container max-w-2xl mx-auto p-6 space-y-6">
-          <div className={cn(
-            "rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
-            "border-[#8B5CF6]/20",
-            "transform hover:-translate-y-1"
-          )}>
-            <div className={cn(
-              "px-6 py-4 bg-gradient-to-r", 
-              "from-[#8B5CF6]/10 via-[#7E69AB]/5 to-transparent"
-            )}>
-              <div className="flex items-center justify-center">
-                <span className="text-[#8B5CF6] text-sm font-semibold">
-                  Active V1 Loan
-                </span>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-1">
-                  <div className="text-gray-500 text-sm mb-1">
-                    <span>Loan Amount</span>
-                  </div>
-                  <p className="text-lg font-bold">
-                    ${(loanAmount / 1e6).toFixed(2)}
-                  </p>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="text-gray-500 text-sm mb-1">
-                    <span>Interest</span>
-                  </div>
-                  <p className="text-lg font-bold">
-                    ${(interestAmount / 1e6).toFixed(2)}
-                  </p>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="text-gray-500 text-sm mb-1">
-                    <span>Total Amount Due</span>
-                  </div>
-                  <p className="text-lg font-bold">
-                    ${(totalDueAmount / 1e6).toFixed(2)}
-                  </p>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="text-gray-500 text-sm mb-1">
-                    <span>Due Date</span>
-                  </div>
-                  <p className="text-lg font-bold">
-                    {dueDate.toLocaleDateString("en-US", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      timeZoneName: "short",
-                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    })}
-                  </p>
-                </div>
-              </div>
-              
-              <Button
-                onClick={handleRepayActiveLoan}
-                className={cn(
-                  "w-full bg-[#8B5CF6] hover:bg-[#7c50e6] text-white",
-                  "size-lg rounded-xl transition-all duration-300"
-                )}
-                disabled={isConfirming}
-              >
-                {isConfirming ? "Processing..." : "Repay V1 Loan"}
-              </Button>
-              
-              {transactionId && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="overflow-hidden text-ellipsis whitespace-nowrap">
-                    Transaction ID:{" "}
-                    <span title={transactionId}>
-                      {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
-                    </span>
-                  </p>
-                  {isConfirmed && (
-                    <p className="text-green-600 font-medium mt-2">Transaction confirmed!</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   let startTime = loanData?.startTime || 0; 
   let loanPeriod = loanData?.loanPeriod || BigInt(30 * 24 * 60 * 60); 
   
@@ -655,7 +663,7 @@ const RepayLoan = () => {
                   <span>Interest ({interestRate.toFixed(2)}%)</span>
                 </div>
                 <p className="text-lg font-bold">
-                  {interestRate > 0 ? `$${interestAmount}` : 'N/A'}
+                  {interestRate > 0 ? `$${interestAmount.toFixed(2)}` : 'N/A'}
                   {interestRate === 0 && <span className="text-xs text-yellow-500"> (Data Unavailable)</span>}
                 </p>
               </div>

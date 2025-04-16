@@ -117,39 +117,53 @@ const useDefaultedLegacyLoan = () => {
     setError(null);
     setTransactionId(null);
     setIsConfirmed(false);
-
+  
     try {
-      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
-
+      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); 
+  
       const permitTransfer = {
         permitted: {
           token: WORLDCOIN_TOKEN_COLLATERAL,
           amount: amount.toString(),
         },
-        nonce: Date.now().toString(),
-        deadline,
+        nonce: Date.now().toString(), 
+        deadline, 
       };
-
+  
       const transferDetails = {
         to: MAGNIFY_DEFAULTS_ADDRESS,
         requestedAmount: amount.toString(),
       };
-
+  
       const permitTransferArgsForm = [
         [permitTransfer.permitted.token, permitTransfer.permitted.amount],
         permitTransfer.nonce,
         permitTransfer.deadline,
       ];
-
-      const transferDetailsArgsForm = [transferDetails.to, transferDetails.requestedAmount];
-
+  
+      const transferDetailsArgsForm = [
+        transferDetails.to,
+        transferDetails.requestedAmount,
+      ];
+  
       const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
         transaction: [
           {
             address: MAGNIFY_DEFAULTS_ADDRESS as `0x${string}`,
             abi: magnifyDefaultsAbi,
             functionName: "repayDefaultedLegacyLoanWithPermit2",
-            args: [permitTransferArgsForm, transferDetailsArgsForm, "PERMIT2_SIGNATURE_PLACEHOLDER_0"],
+            args: [
+              [
+                [String(permitTransferArgsForm[0][0]), String(permitTransferArgsForm[0][1])],
+                String(permitTransferArgsForm[1]),
+                String(permitTransferArgsForm[2]),
+              ],
+              [
+                String(transferDetailsArgsForm[0]),
+                String(transferDetailsArgsForm[1]),
+              ],
+              "PERMIT2_SIGNATURE_PLACEHOLDER_0"
+            ],
           },
         ],
         permit2: [
@@ -159,18 +173,23 @@ const useDefaultedLegacyLoan = () => {
           },
         ],
       });
-
+  
       if (finalPayload.status === "success") {
         setTransactionId(finalPayload.transaction_id);
         setIsConfirming(true);
       } else {
-        setError(finalPayload.error_code === "user_rejected" ? "User rejected transaction" : "Transaction failed");
+        setError(
+          finalPayload.error_code === "user_rejected"
+            ? "User rejected transaction"
+            : "Transaction failed"
+        );
       }
     } catch (err) {
       console.error("Error repaying legacy defaulted loan:", err);
       setError((err as Error).message);
     }
   }, []);
+  
 
   useEffect(() => {
     if (isConfirmingTransaction) {

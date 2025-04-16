@@ -483,29 +483,30 @@ const RepayLoan = () => {
     );
   }
 
-  if (v1LoanData && v1LoanData.isActive) {
+  if (v1LoanData && v1LoanData.isDefaulted) {
     const dueDate = new Date(Number(v1LoanData.loanInfo.dueDate) * 1000);
-    const totalDueAmount = Number(v1LoanData.loanInfo.totalDue);
-    const loanAmount = Number(v1LoanData.loanInfo.amountBorrowed);
+    const loanAmount = Number(v1LoanData.loanInfo.amountBorrowed) / 1e6;
+    const totalDueAmount = Number(v1LoanData.loanInfo.totalDue) / 1e6;
     const interestAmount = totalDueAmount - loanAmount;
+    const penaltyAmount = loanAmount * (defaultPenaltyFee / 100);
+    const finalAmount = totalDueAmount + penaltyAmount;
 
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
-        <TransactionOverlay isVisible={isConfirming} />
+        <TransactionOverlay isVisible={isConfirmingLegacy} />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className={cn(
             "rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
-            "border-[#8B5CF6]/20",
+            "border-[#ea384c]/20",
             "transform hover:-translate-y-1"
           )}>
             <div className={cn(
-              "px-6 py-4 bg-gradient-to-r", 
-              "from-[#8B5CF6]/10 via-[#7E69AB]/5 to-transparent"
+              "bg-gradient-to-r from-[#ea384c]/10 via-[#f87171]/5 to-transparent px-6 py-4"
             )}>
               <div className="flex items-center justify-center">
-                <span className="text-[#8B5CF6] text-sm font-semibold">
-                  Active V1 Loan
+                <span className="text-[#ea384c] text-sm font-semibold">
+                  Defaulted V1 Loan
                 </span>
               </div>
             </div>
@@ -516,9 +517,7 @@ const RepayLoan = () => {
                   <div className="text-gray-500 text-sm mb-1">
                     <span>Loan Amount</span>
                   </div>
-                  <p className="text-lg font-bold">
-                    ${(loanAmount / 1e6).toFixed(2)}
-                  </p>
+                  <p className="text-lg font-bold">${loanAmount.toFixed(2)}</p>
                 </div>
                 
                 <div className="space-y-1">
@@ -526,7 +525,16 @@ const RepayLoan = () => {
                     <span>Interest</span>
                   </div>
                   <p className="text-lg font-bold">
-                    ${(interestAmount / 1e6).toFixed(2)}
+                    ${interestAmount.toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-gray-500 text-sm mb-1">
+                    <span>Default Penalty ({defaultPenaltyFee}%)</span>
+                  </div>
+                  <p className="text-lg font-bold">
+                    ${penaltyAmount.toFixed(2)}
                   </p>
                 </div>
                 
@@ -535,7 +543,7 @@ const RepayLoan = () => {
                     <span>Total Amount Due</span>
                   </div>
                   <p className="text-lg font-bold">
-                    ${(totalDueAmount / 1e6).toFixed(2)}
+                    ${finalAmount.toFixed(2)}
                   </p>
                 </div>
                 
@@ -556,27 +564,27 @@ const RepayLoan = () => {
                   </p>
                 </div>
               </div>
-              
+
               <Button
-                onClick={handleRepayActiveLoan}
+                onClick={handleRepayLegacyLoan}
                 className={cn(
-                  "w-full bg-[#8B5CF6] hover:bg-[#7c50e6] text-white",
+                  "w-full bg-[#ea384c] hover:bg-[#d92d3f] text-white",
                   "size-lg rounded-xl transition-all duration-300"
                 )}
-                disabled={isConfirming}
+                disabled={isConfirmingLegacy}
               >
-                {isConfirming ? "Processing..." : "Repay V1 Loan"}
+                {isConfirmingLegacy ? "Processing..." : "Repay Defaulted V1 Loan"}
               </Button>
-              
-              {transactionId && (
+
+              {legacyTransactionId && (
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="overflow-hidden text-ellipsis whitespace-nowrap">
                     Transaction ID:{" "}
-                    <span title={transactionId}>
-                      {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
+                    <span title={legacyTransactionId}>
+                      {legacyTransactionId.slice(0, 10)}...{legacyTransactionId.slice(-10)}
                     </span>
                   </p>
-                  {isConfirmed && (
+                  {isConfirmedLegacy && (
                     <p className="text-green-600 font-medium mt-2">Transaction confirmed!</p>
                   )}
                 </div>

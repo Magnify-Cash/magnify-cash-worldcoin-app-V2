@@ -492,7 +492,7 @@ const RepayLoan = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header title="Loan Status" />
-        <TransactionOverlay isVisible={isConfirmingLegacy} />
+        <TransactionOverlay isVisible={isConfirming} />
         <div className="container max-w-2xl mx-auto p-6 space-y-6">
           <div className={cn(
             "rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border",
@@ -558,25 +558,25 @@ const RepayLoan = () => {
               </div>
               
               <Button
-                onClick={handleRepayLegacyLoan}
+                onClick={handleRepayActiveLoan}
                 className={cn(
                   "w-full bg-[#8B5CF6] hover:bg-[#7c50e6] text-white",
                   "size-lg rounded-xl transition-all duration-300"
                 )}
-                disabled={isConfirmingLegacy}
+                disabled={isConfirming}
               >
-                {isConfirmingLegacy ? "Processing..." : "Repay V1 Loan"}
+                {isConfirming ? "Processing..." : "Repay V1 Loan"}
               </Button>
               
-              {legacyTransactionId && (
+              {transactionId && (
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="overflow-hidden text-ellipsis whitespace-nowrap">
                     Transaction ID:{" "}
-                    <span title={legacyTransactionId}>
-                      {legacyTransactionId.slice(0, 10)}...{legacyTransactionId.slice(-10)}
+                    <span title={transactionId}>
+                      {transactionId.slice(0, 10)}...{transactionId.slice(-10)}
                     </span>
                   </p>
-                  {isConfirmedLegacy && (
+                  {isConfirmed && (
                     <p className="text-green-600 font-medium mt-2">Transaction confirmed!</p>
                   )}
                 </div>

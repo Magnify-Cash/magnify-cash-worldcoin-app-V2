@@ -663,7 +663,7 @@ const RepayLoan = () => {
                   <span>Interest ({interestRate.toFixed(2)}%)</span>
                 </div>
                 <p className="text-lg font-bold">
-                  {interestRate > 0 ? `$${interestAmount}` : 'N/A'}
+                  {interestRate > 0 ? `$${interestAmount.toFixed(2)}` : 'N/A'}
                   {interestRate === 0 && <span className="text-xs text-yellow-500"> (Data Unavailable)</span>}
                 </p>
               </div>

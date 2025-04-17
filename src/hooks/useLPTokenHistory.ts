@@ -12,6 +12,12 @@ export function useLPTokenHistory(
 
   useEffect(() => {
     const fetchTokenHistory = async () => {
+      if (!contractAddress) {
+        console.log("[useLPTokenHistory] No contract address provided, skipping fetch");
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         setIsLoading(true);
         setError(null);
@@ -20,7 +26,7 @@ export function useLPTokenHistory(
         const response = await getPoolLpTokenPrice(contractAddress);
         
         if (!response || !Array.isArray(response)) {
-          console.error("Invalid response format for LP token prices:", response);
+          console.error("[useLPTokenHistory] Invalid response format for LP token prices:", response);
           throw new Error("Invalid response format");
         }
         
@@ -31,7 +37,7 @@ export function useLPTokenHistory(
         
         setPriceData(sortedData);
       } catch (err) {
-        console.error("Error fetching LP token history:", err);
+        console.error("[useLPTokenHistory] Error fetching LP token history:", err);
         setError(err instanceof Error ? err : new Error("Failed to fetch token price history"));
         setPriceData([]);
       } finally {

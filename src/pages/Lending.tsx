@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 const Lending = () => {
-  const { pools, loading, error: fetchError, refreshPools, lastFetched } = usePoolData();
+  const { pools, loading, error: fetchError, refreshPools, lastFetched, loadDetailedPoolsData } = usePoolData();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -32,21 +32,30 @@ const Lending = () => {
     setLocalLoading(false);
   }, [navigate]);
 
-  // Smarter pool data loading logic
+  // Smarter pool data loading logic with two-phase approach
   useEffect(() => {
     console.log("Lending page checking if pool data needs refresh");
     
     // Use the shared lastFetched timestamp from context
     // This ensures consistent checking across page navigations
     if (!lastFetched || Date.now() - lastFetched > REFRESH_THRESHOLD_MS) {
-      console.log(`Refreshing pool data from Lending page (last fetched: ${lastFetched ? new Date(lastFetched).toLocaleTimeString() : 'never'})`);
+      console.log(`Refreshing basic pool data from Lending page (last fetched: ${lastFetched ? new Date(lastFetched).toLocaleTimeString() : 'never'})`);
       refreshPools(false); // Don't force invalidate cache here, let the cache logic decide
     } else {
       // Log that we're using cached data and how old it is
       const ageSeconds = lastFetched ? Math.round((Date.now() - lastFetched) / 1000) : 0;
       console.log(`Using cached pool data (${ageSeconds}s old)`);
     }
-  }, [refreshPools, lastFetched]);
+    
+    // Load detailed data in the background after a short delay
+    // This allows the basic data to render first
+    const timer = setTimeout(() => {
+      console.log("Loading detailed pool data in background");
+      loadDetailedPoolsData();
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [refreshPools, lastFetched, loadDetailedPoolsData]);
 
   useEffect(() => {
     if (fetchError) {
@@ -109,7 +118,7 @@ const Lending = () => {
                   pool.metadata?.warmupStartTimestampMs}
                 endDate={pool.metadata?.deactivationTimestampMs}
                 contract={pool.contract_address}
-                isLoading={loading}
+                isLoading={false} // Don't show loading on individual cards
               />
             ))
           ) : (

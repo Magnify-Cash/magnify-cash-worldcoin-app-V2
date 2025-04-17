@@ -21,6 +21,7 @@ import { getPoolAPY } from "@/utils/poolConstants";
 
 // Cache keys
 const POOLS_CACHE_KEY = 'pool_data_all';
+const BASIC_POOLS_CACHE_KEY = 'basic_pool_data_all';
 const poolContractCacheKey = (contract: string) => `pool_data_contract_${contract}`;
 const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
 const ID_TO_CONTRACT_CACHE_KEY = 'pool_id_to_contract_map';
@@ -61,12 +62,12 @@ const getContractAddressFromId = async (id: number): Promise<string | null> => {
   }
 };
 
-export const getPools = async (): Promise<LiquidityPool[]> => {
+export const getBasicPools = async (): Promise<LiquidityPool[]> => {
   try {
     // Check cache first
-    const cachedPools = Cache.get<LiquidityPool[]>(POOLS_CACHE_KEY);
+    const cachedPools = Cache.get<LiquidityPool[]>(BASIC_POOLS_CACHE_KEY);
     if (cachedPools && cachedPools.length > 0) {
-      console.log("[poolRequests] Using cached pool data");
+      console.log("[poolRequests] Using cached basic pool data");
       return cachedPools;
     }
     
@@ -83,28 +84,20 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
       return [];
     }
     
-    // For each pool address, fetch details in parallel
+    // For each pool address, fetch basic details in parallel
     const poolDataPromises = poolAddresses.map(async (contract, index) => {
       try {
-        // Check for individual pool cache by contract address
-        const contractCached = Cache.get<LiquidityPool>(poolContractCacheKey(contract));
-        if (contractCached) {
-          return contractCached;
-        }
-        
-        // Fetch all pool data in parallel with retries
+        // Fetch only basic pool data in parallel with retries
         const [
           nameResponse, 
           statusResponse, 
           deactivationResponse, 
           activationResponse,
           symbolResponse,
-          liquidityResponse,
-          balanceResponse,
           warmupPeriodResponse
         ] = await Promise.all([
           retry(() => getPoolName(contract), 3),
-          retry(() => getPoolStatus(contract), 3, 1000, () => ({ status: 'isActive' })), // Default to active on failure
+          retry(() => getPoolStatus(contract), 3, 1000, () => ({ status: 'isActive' })),
           retry(() => getPoolDeactivationDate(contract), 3, 1000, () => ({ 
             timestamp: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(), 
             formattedDate: 'N/A' 
@@ -114,8 +107,6 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
             formattedDate: 'N/A' 
           })),
           retry(() => getPoolLPSymbol(contract), 3, 1000, () => ({ symbol: 'LP' })),
-          retry(() => getPoolLiquidity(contract), 3, 1000, () => ({ liquidity: 0 })),
-          retry(() => getPoolUSDCBalance(contract), 3, 1000, () => ({ totalAssets: 0 })),
           retry(() => getPoolWarmupPeriod(contract), 3, 1000, () => ({ warmupPeriodDays: 14 }))
         ]);
         
@@ -178,18 +169,18 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
           name: nameResponse.name || `Pool ${index + 1}`,
           token_a: "USDC",
           token_b: symbolResponse.symbol || 'LP',
-          token_a_amount: balanceResponse.totalAssets || 0,
-          token_b_amount: balanceResponse.totalAssets || 0,
+          token_a_amount: 0, // Set to 0 for basic data - will be populated in detailed fetch
+          token_b_amount: 0, // Set to 0 for basic data - will be populated in detailed fetch
           // Get APY from poolConstants.ts - first try contract address, then ID
           apy: getPoolAPY(contract, 8.5),
-          total_value_locked: balanceResponse.totalAssets || 0,
-          available_liquidity: liquidityResponse.liquidity || 0,
+          total_value_locked: 0, // Set to 0 for basic data - will be populated in detailed fetch
+          available_liquidity: 0, // Set to 0 for basic data - will be populated in detailed fetch
           status: statusMap[statusResponse.status] || 'active',
           metadata: {
             description: `${nameResponse.name || 'Lending'} pool`,
             minDeposit: 10,
             maxDeposit: 30000,
-            lockDurationDays: lockDurationDays || 1800,
+            lockDurationDays: lockDurationDays || 180,
             // Store the raw timestamp for later use, also add a timestamp in milliseconds
             activationTimestamp: activationResponse.timestamp || '',
             activationTimestampMs: activationResponse.timestamp ? 
@@ -215,14 +206,11 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
         };
         
         // Add debug log to see APY values
-        console.log(`[poolRequests] Created pool ID: ${pool.id}, Contract: ${contract}, APY: ${pool.apy}%`);
-        
-        // Cache the individual pool by contract
-        Cache.set(poolContractCacheKey(contract), pool, 15);
+        console.log(`[poolRequests] Created basic pool ID: ${pool.id}, Contract: ${contract}, APY: ${pool.apy}%`);
         
         return pool;
       } catch (error) {
-        console.error(`Error fetching details for pool ${contract}:`, error);
+        console.error(`Error fetching basic details for pool ${contract}:`, error);
         // Return default pool object on error
         return {
           id: index + 1,
@@ -269,22 +257,37 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
     // Filter out any failed pool fetches and return the successful ones
     const validPools = poolsData.filter(Boolean) as LiquidityPool[];
     
-    // Cache the complete pools data
-    if (validPools.length > 0) {
-      Cache.set(POOLS_CACHE_KEY, validPools, 15);
+    // Sort pools by status priority
+    const sortedPools = [...validPools].sort((a, b) => {
+      const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): number => {
+        switch (status) {
+          case 'warm-up': return 1;
+          case 'active': return 2;
+          case 'withdrawal': return 3;
+          case 'cooldown': return 4;
+          default: return 5;
+        }
+      };
+      
+      return getPoolStatusPriority(a.status) - getPoolStatusPriority(b.status);
+    });
+    
+    // Cache the basic pools data
+    if (sortedPools.length > 0) {
+      Cache.set(BASIC_POOLS_CACHE_KEY, sortedPools, 15);
       // Also create and cache the ID to contract mapping
-      createIdToContractMapping(validPools);
+      createIdToContractMapping(sortedPools);
     }
     
-    return validPools;
+    return sortedPools;
   } catch (error) {
-    console.error("Error fetching pools:", error);
+    console.error("Error fetching basic pools:", error);
     
     // Return cached data if available, even if it's expired
     try {
-      const cachedPools = Cache.get<LiquidityPool[]>(POOLS_CACHE_KEY);
+      const cachedPools = Cache.get<LiquidityPool[]>(BASIC_POOLS_CACHE_KEY);
       if (cachedPools && cachedPools.length > 0) {
-        console.log("Using expired cached data as fallback");
+        console.log("Using expired cached basic pool data as fallback");
         return cachedPools;
       }
     } catch (e) {
@@ -293,6 +296,86 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
     
     // If all else fails, return empty array
     return [];
+  }
+};
+
+export const getPools = async (): Promise<LiquidityPool[]> => {
+  try {
+    // Check cache first
+    const cachedPools = Cache.get<LiquidityPool[]>(POOLS_CACHE_KEY);
+    if (cachedPools && cachedPools.length > 0) {
+      console.log("[poolRequests] Using cached full pool data");
+      return cachedPools;
+    }
+    
+    // Get basic pools first - this will be faster and already has most of the data we need
+    const basicPools = await getBasicPools();
+    
+    if (!basicPools.length) {
+      console.log("No pools found");
+      return [];
+    }
+    
+    // Now enhance basic pools with additional data in parallel
+    const enhancedPoolsPromises = basicPools.map(async (pool) => {
+      try {
+        if (!pool.contract_address) {
+          return pool;
+        }
+        
+        // Check for individual pool cache by contract address
+        const contractCached = Cache.get<LiquidityPool>(poolContractCacheKey(pool.contract_address));
+        if (contractCached) {
+          return contractCached;
+        }
+        
+        // Fetch liquidity and balance data in parallel - only the heavy parts
+        const [
+          liquidityResponse,
+          balanceResponse
+        ] = await Promise.all([
+          retry(() => getPoolLiquidity(pool.contract_address!), 3, 1000, () => ({ liquidity: 0 })),
+          retry(() => getPoolUSDCBalance(pool.contract_address!), 3, 1000, () => ({ totalAssets: 0 }))
+        ]);
+        
+        // Copy the basic pool and add the additional data
+        const enhancedPool: LiquidityPool = {
+          ...pool,
+          token_a_amount: balanceResponse.totalAssets || 0,
+          token_b_amount: balanceResponse.totalAssets || 0,
+          total_value_locked: balanceResponse.totalAssets || 0,
+          available_liquidity: liquidityResponse.liquidity || 0
+        };
+        
+        // Cache the individual pool by contract
+        Cache.set(poolContractCacheKey(pool.contract_address), enhancedPool, 15);
+        
+        return enhancedPool;
+      } catch (error) {
+        console.error(`Error fetching detailed data for pool ${pool.contract_address}:`, error);
+        return pool; // Return the basic pool if enhancement fails
+      }
+    });
+    
+    // Wait for all enhancements to complete
+    const enhancedPools = await Promise.all(enhancedPoolsPromises);
+    
+    // Cache the complete pools data
+    if (enhancedPools.length > 0) {
+      Cache.set(POOLS_CACHE_KEY, enhancedPools, 15);
+    }
+    
+    return enhancedPools;
+  } catch (error) {
+    console.error("Error enhancing pools with detailed data:", error);
+    
+    // If we fail to enhance, return the basic pools
+    try {
+      return await getBasicPools();
+    } catch (e) {
+      console.error("Error retrieving basic pools as fallback:", e);
+      return [];
+    }
   }
 };
 

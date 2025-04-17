@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { getPools, invalidatePoolsCache } from "@/lib/poolRequests";
+import { getPools, getBasicPools, invalidatePoolsCache } from "@/lib/poolRequests";
 import { LiquidityPool } from "@/types/supabase/liquidity";
 
 interface PoolDataContextType {
@@ -7,9 +7,11 @@ interface PoolDataContextType {
   loading: boolean;
   error: string | null;
   refreshPools: (invalidateCache?: boolean) => Promise<void>;
+  loadDetailedPoolsData: () => Promise<void>;
   lastFetched: number | null;
   isPrefetching: boolean;
   hasFetchStarted: boolean;
+  isLoadingDetails: boolean;
 }
 
 const PoolDataContext = createContext<PoolDataContextType>({
@@ -17,9 +19,11 @@ const PoolDataContext = createContext<PoolDataContextType>({
   loading: true,
   error: null,
   refreshPools: async () => {},
+  loadDetailedPoolsData: async () => {},
   lastFetched: null,
   isPrefetching: false,
-  hasFetchStarted: false
+  hasFetchStarted: false,
+  isLoadingDetails: false
 });
 
 export const usePoolData = () => useContext(PoolDataContext);
@@ -28,14 +32,16 @@ interface PoolDataProviderProps {
   children: ReactNode;
 }
 
-// Cache key for localStorage
+// Cache keys for localStorage
 const POOLS_LAST_FETCHED_KEY = 'pools_last_fetched';
+const DETAILED_POOLS_LAST_FETCHED_KEY = 'detailed_pools_last_fetched';
 // Cache timeout - 5 minutes in milliseconds
 const CACHE_TIMEOUT_MS = 5 * 60 * 1000;
 
 export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   const [pools, setPools] = useState<LiquidityPool[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPrefetching, setIsPrefetching] = useState(false);
   const [hasFetchStarted, setHasFetchStarted] = useState(false);
@@ -52,13 +58,32 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       try {
         // Check if we have cached pools
         const cachedPoolsKey = 'pool_data_all';
-        const cachedPoolsData = localStorage.getItem(cachedPoolsKey);
+        const cachedBasicPoolsKey = 'basic_pool_data_all';
         
+        // Try basic pools first (we prefer to show something quickly)
+        const cachedBasicPoolsData = localStorage.getItem(cachedBasicPoolsKey);
+        if (cachedBasicPoolsData) {
+          try {
+            const parsed = JSON.parse(cachedBasicPoolsData);
+            if (parsed.data && Array.isArray(parsed.data) && parsed.data.length > 0) {
+              console.log("[PoolDataContext] Found cached basic pools data on initial load");
+              setPools(parsed.data);
+              setLoading(false);
+              setHasFetchStarted(true); // Mark as fetch started since we have data
+              return true;
+            }
+          } catch (e) {
+            console.error("[PoolDataContext] Error parsing cached basic pools:", e);
+          }
+        }
+        
+        // If no basic pools, try full pools data
+        const cachedPoolsData = localStorage.getItem(cachedPoolsKey);
         if (cachedPoolsData) {
           try {
             const parsed = JSON.parse(cachedPoolsData);
             if (parsed.data && Array.isArray(parsed.data) && parsed.data.length > 0) {
-              console.log("[PoolDataContext] Found cached pools data on initial load");
+              console.log("[PoolDataContext] Found cached full pools data on initial load");
               setPools(parsed.data);
               setLoading(false);
               setHasFetchStarted(true); // Mark as fetch started since we have data
@@ -68,6 +93,7 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
             console.error("[PoolDataContext] Error parsing cached pools:", e);
           }
         }
+        
         return false;
       } catch (e) {
         console.error("[PoolDataContext] Error checking localStorage for cached pools:", e);
@@ -85,6 +111,7 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
     }
   }, []);
 
+  // This function loads basic pool data quickly
   const refreshPools = async (invalidateCache: boolean = false) => {
     // Skip if we're already prefetching to prevent concurrent fetch operations
     if (isPrefetching) {
@@ -123,48 +150,77 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       setHasFetchStarted(true);
       setError(null);
       
-      console.log(`[PoolDataContext] Fetching pools data. Invalidate cache: ${invalidateCache}`);
+      console.log(`[PoolDataContext] Fetching basic pools data. Invalidate cache: ${invalidateCache}`);
       
       if (invalidateCache) {
         // This will clear all pool-related caches
         invalidatePoolsCache();
       }
       
-      // Fetch pools data
-      const poolsData = await getPools();
+      // Fetch BASIC pools data (faster)
+      const basicPoolsData = await getBasicPools();
       
-      if (poolsData.length === 0) {
+      if (basicPoolsData.length === 0) {
         setError("No pools available at this time");
       } else {
-        // Sort pools by status priority
-        const sortedPools = [...poolsData].sort((a, b) => {
-          const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): number => {
-            switch (status) {
-              case 'warm-up': return 1;
-              case 'active': return 2;
-              case 'withdrawal': return 3;
-              case 'cooldown': return 4;
-              default: return 5;
-            }
-          };
-          
-          return getPoolStatusPriority(a.status) - getPoolStatusPriority(b.status);
-        });
-        
-        setPools(sortedPools);
+        setPools(basicPoolsData);
         
         // Update both state and localStorage with the fetch timestamp
         const now = Date.now();
         setLastFetched(now);
         localStorage.setItem(POOLS_LAST_FETCHED_KEY, now.toString());
-        console.log(`[PoolDataContext] Pools data fetched successfully at ${new Date(now).toLocaleTimeString()}`);
+        console.log(`[PoolDataContext] Basic pools data fetched successfully at ${new Date(now).toLocaleTimeString()}`);
       }
     } catch (err) {
-      console.error("[PoolDataContext] Error fetching pools:", err);
+      console.error("[PoolDataContext] Error fetching basic pools:", err);
       setError("Failed to load pool data. Please try again later.");
     } finally {
       setLoading(false);
       setIsPrefetching(false);
+    }
+  };
+
+  // This function loads detailed pool data in the background
+  const loadDetailedPoolsData = async () => {
+    // Skip if already loading details
+    if (isLoadingDetails) {
+      console.log("[PoolDataContext] Already loading detailed pool data, skipping duplicate request");
+      return;
+    }
+    
+    // Get the last fetched time for detailed data
+    const storedDetailedLastFetched = localStorage.getItem(DETAILED_POOLS_LAST_FETCHED_KEY);
+    const detailedLastFetched = storedDetailedLastFetched ? parseInt(storedDetailedLastFetched, 10) : null;
+    
+    // Skip if detailed data was fetched recently
+    if (
+      detailedLastFetched && 
+      Date.now() - detailedLastFetched < CACHE_TIMEOUT_MS
+    ) {
+      console.log(`[PoolDataContext] Detailed pools data fetched recently (${Math.round((Date.now() - detailedLastFetched) / 1000)}s ago), skipping`);
+      return;
+    }
+    
+    try {
+      setIsLoadingDetails(true);
+      console.log("[PoolDataContext] Loading detailed pool data in background");
+      
+      // Fetch full pools data (includes liquidity and balance)
+      const detailedPoolsData = await getPools();
+      
+      if (detailedPoolsData.length > 0) {
+        setPools(detailedPoolsData);
+        
+        // Update localStorage with the detailed fetch timestamp
+        const now = Date.now();
+        localStorage.setItem(DETAILED_POOLS_LAST_FETCHED_KEY, now.toString());
+        console.log(`[PoolDataContext] Detailed pools data loaded successfully at ${new Date(now).toLocaleTimeString()}`);
+      }
+    } catch (err) {
+      console.error("[PoolDataContext] Error loading detailed pools data:", err);
+      // Don't set error state here, we already have basic data
+    } finally {
+      setIsLoadingDetails(false);
     }
   };
 
@@ -191,9 +247,11 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       loading, 
       error, 
       refreshPools, 
+      loadDetailedPoolsData,
       lastFetched, 
       isPrefetching,
-      hasFetchStarted 
+      hasFetchStarted,
+      isLoadingDetails
     }}>
       {children}
     </PoolDataContext.Provider>

@@ -2,6 +2,9 @@
 import { useCallback } from 'react';
 import { usePortfolio } from '@/contexts/PortfolioContext';
 
+// Minimum USD value to display a position
+const MIN_POSITION_VALUE_USD = 0.1;
+
 export interface UserPoolPosition {
   poolId: number;
   poolName: string;
@@ -30,8 +33,11 @@ export const useUserPoolPositions = (
 ): UseUserPoolPositionsResult => {
   const { state, refreshPortfolio, updatePositionOptimistically } = usePortfolio();
   
-  // Forward the portfolio context data
-  const { positions, totalValue, loading, error, hasPositions } = state;
+  // Forward the portfolio context data - filter out positions with very low values
+  const { loading, error } = state;
+  const positions = state.positions;
+  const totalValue = state.totalValue;
+  const hasPositions = positions.length > 0;
   
   // Call refreshPortfolio when updateTrigger changes
   useCallback(() => {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -116,6 +117,32 @@ export function SupplyModal({
     return !isNaN(numAmount) && numAmount >= 0.1 && (usdcBalance !== null ? numAmount <= usdcBalance : false);
   };
 
+  // Format input to 4 decimal places
+  const formatAmount = (value: string): string => {
+    const parsed = parseFloat(value);
+    if (isNaN(parsed)) return "";
+    return parsed.toFixed(4);
+  };
+
+  // Handler for input change
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAmount(e.target.value);
+  };
+
+  // Handler for blur event to format
+  const handleAmountBlur = () => {
+    if (amount) {
+      setAmount(formatAmount(amount));
+    }
+  };
+
+  // Handler for MAX button
+  const handleSetMax = () => {
+    if (usdcBalance !== null) {
+      setAmount(usdcBalance.toFixed(4));
+    }
+  };
+
   const handleSupply = async () => {
     const retrySupply = async () => {
       setTransactionMessage("Retrying transaction...");
@@ -125,6 +152,7 @@ export function SupplyModal({
     try {
       if (!walletAddress || !poolContractAddress || !amount) return;
   
+      const formattedAmount = formatAmount(amount);
       const isMiniApp = MiniKit.isInstalled();
 
       if (!isMiniApp) {
@@ -145,9 +173,9 @@ export function SupplyModal({
       setTransactionMessage("Preparing transaction...");
   
       let expectedLpAmount = previewLpAmount;
-      if (!expectedLpAmount && parseFloat(amount) >= 0.1) {
+      if (!expectedLpAmount && parseFloat(formattedAmount) >= 0.1) {
         try {
-          const preview = await previewDeposit(parseFloat(amount), poolContractAddress);
+          const preview = await previewDeposit(parseFloat(formattedAmount), poolContractAddress);
           expectedLpAmount = preview.lpAmount;
         } catch (e) {
           console.error("Failed to get final LP preview:", e);
@@ -155,8 +183,8 @@ export function SupplyModal({
         }
       }
   
-      const loanAmount = parseFloat(amount);
-      const loanAmountBaseUnits = parseUnits(amount, 6);
+      const loanAmount = parseFloat(formattedAmount);
+      const loanAmountBaseUnits = parseUnits(formattedAmount, 6);
   
       if (isMiniApp) {
         const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString();
@@ -364,7 +392,7 @@ export function SupplyModal({
     if (balanceLoading) return "Loading...";
     if (balanceError) return "Error loading balance";
     if (usdcBalance === null) return "0.00";
-    return usdcBalance.toFixed(2);
+    return usdcBalance.toFixed(4); // Changed from 2 to 4 decimals
   };
 
   const handleRetryConfirm = () => {
@@ -414,12 +442,13 @@ export function SupplyModal({
                 </div>
                 <Input
                   id="amount"
-                  placeholder="0.00"
+                  placeholder="0.0000"
                   className="pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={handleAmountChange}
+                  onBlur={handleAmountBlur}
                   type="number"
-                  step="0.01"
+                  step="0.0001"
                   min="0.1"
                   autoComplete="off"
                   inputMode="decimal"
@@ -430,7 +459,7 @@ export function SupplyModal({
                   type="button"
                   variant="ghost"
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
-                  onClick={() => usdcBalance !== null && setAmount(usdcBalance.toString())}
+                  onClick={handleSetMax}
                   disabled={balanceLoading || usdcBalance === null}
                 >
                   MAX

@@ -208,12 +208,20 @@ export function PoolPriceGraph({
                       ? `Today at ${payload[0].payload.date}`
                       : payload[0].payload.date;
                     
+                    // Fixed: Ensure the value is a number before calling toFixed
+                    const price = payload[0].value;
+                    const formattedPrice = typeof price === 'number' 
+                      ? price.toFixed(4) 
+                      : typeof price === 'string' 
+                        ? parseFloat(price).toFixed(4)
+                        : '0.0000';
+                    
                     return (
                       <div className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-md rounded-md p-2 text-xs">
                         <p className="font-medium">{formattedDate}</p>
                         <div className="pt-1">
                           <p style={{ color: poolColor }} className="font-semibold">
-                            ${payload[0].value.toFixed(4)}
+                            ${formattedPrice}
                           </p>
                         </div>
                       </div>

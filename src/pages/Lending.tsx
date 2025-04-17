@@ -9,16 +9,20 @@ import { usePoolData } from "@/contexts/PoolDataContext";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/portfolio/LoadingState";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePrefetchData } from "@/hooks/usePrefetchData";
 
 // Cache timeout threshold
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 const Lending = () => {
-  const { pools, loading, error: fetchError, refreshPools, lastFetched, loadDetailedPoolsData } = usePoolData();
+  const { pools, loading, error: fetchError, refreshPools, lastFetched } = usePoolData();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
+  
+  // Use the prefetch hook to load data in background
+  usePrefetchData();
 
   // Check for wallet address in localStorage and redirect if not found
   useEffect(() => {
@@ -32,30 +36,34 @@ const Lending = () => {
     setLocalLoading(false);
   }, [navigate]);
 
-  // Smarter pool data loading logic with two-phase approach
+  // Smarter pool data loading with early display strategy
   useEffect(() => {
     console.log("Lending page checking if pool data needs refresh");
     
-    // Use the shared lastFetched timestamp from context
-    // This ensures consistent checking across page navigations
-    if (!lastFetched || Date.now() - lastFetched > REFRESH_THRESHOLD_MS) {
-      console.log(`Refreshing basic pool data from Lending page (last fetched: ${lastFetched ? new Date(lastFetched).toLocaleTimeString() : 'never'})`);
-      refreshPools(false); // Don't force invalidate cache here, let the cache logic decide
-    } else {
-      // Log that we're using cached data and how old it is
-      const ageSeconds = lastFetched ? Math.round((Date.now() - lastFetched) / 1000) : 0;
-      console.log(`Using cached pool data (${ageSeconds}s old)`);
-    }
+    const performInitialLoad = async () => {
+      try {
+        // Set localLoading to false after a short timeout to improve perceived performance
+        // This will show skeleton loaders instead of a full page loader
+        setTimeout(() => {
+          if (loading) setLocalLoading(false);
+        }, 300);
+        
+        // If cache is expired or missing, refresh basic pool data
+        if (!lastFetched || Date.now() - lastFetched > REFRESH_THRESHOLD_MS) {
+          console.log(`Refreshing basic pool data from Lending page (last fetched: ${lastFetched ? new Date(lastFetched).toLocaleTimeString() : 'never'})`);
+          await refreshPools(false); // Don't force invalidate cache
+        } else {
+          // Log that we're using cached data and how old it is
+          const ageSeconds = lastFetched ? Math.round((Date.now() - lastFetched) / 1000) : 0;
+          console.log(`Using cached pool data (${ageSeconds}s old)`);
+        }
+      } catch (error) {
+        console.error("Error loading pools:", error);
+      }
+    };
     
-    // Load detailed data in the background after a short delay
-    // This allows the basic data to render first
-    const timer = setTimeout(() => {
-      console.log("Loading detailed pool data in background");
-      loadDetailedPoolsData();
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [refreshPools, lastFetched, loadDetailedPoolsData]);
+    performInitialLoad();
+  }, [refreshPools, lastFetched, loading]);
 
   useEffect(() => {
     if (fetchError) {
@@ -94,7 +102,7 @@ const Lending = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
-          {loading ? (
+          {loading && pools.length === 0 ? (
             <>
               <PoolCardSkeleton />
               <PoolCardSkeleton />

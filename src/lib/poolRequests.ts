@@ -26,6 +26,11 @@ const poolContractCacheKey = (contract: string) => `pool_data_contract_${contrac
 const borrowerInfoCacheKey = (contractAddress: string) => `borrower_info_${contractAddress}`;
 const ID_TO_CONTRACT_CACHE_KEY = 'pool_id_to_contract_map';
 
+// Longer cache durations for better performance
+const BASIC_POOLS_CACHE_DURATION = 15; // 15 minutes
+const FULL_POOLS_CACHE_DURATION = 15; // 15 minutes
+const CONTRACT_POOLS_CACHE_DURATION = 20; // 20 minutes
+
 // Helper function to create a mapping of pool IDs to contract addresses
 const createIdToContractMapping = (pools: LiquidityPool[]): Record<number, string> => {
   const mapping: Record<number, string> = {};
@@ -71,11 +76,11 @@ export const getBasicPools = async (): Promise<LiquidityPool[]> => {
       return cachedPools;
     }
     
-    // Fetch all pool addresses with retry
+    // Fetch all pool addresses with retry and shorter timeout
     const poolAddresses = await retry(
       () => getSoulboundPoolAddresses(),
-      3,
-      1000,
+      2, // Reduce retries from 3 to 2
+      800, // Reduce timeout from 1000 to 800ms
       (error, retriesLeft) => console.warn(`Error fetching pool addresses, retries left: ${retriesLeft}`, error)
     );
     
@@ -84,181 +89,194 @@ export const getBasicPools = async (): Promise<LiquidityPool[]> => {
       return [];
     }
     
-    // For each pool address, fetch basic details in parallel
-    const poolDataPromises = poolAddresses.map(async (contract, index) => {
-      try {
-        // Fetch only basic pool data in parallel with retries
-        const [
-          nameResponse, 
-          statusResponse, 
-          deactivationResponse, 
-          activationResponse,
-          symbolResponse,
-          warmupPeriodResponse
-        ] = await Promise.all([
-          retry(() => getPoolName(contract), 3),
-          retry(() => getPoolStatus(contract), 3, 1000, () => ({ status: 'isActive' })),
-          retry(() => getPoolDeactivationDate(contract), 3, 1000, () => ({ 
-            timestamp: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(), 
-            formattedDate: 'N/A' 
-          })),
-          retry(() => getPoolActivationDate(contract), 3, 1000, () => ({ 
-            timestamp: new Date().toISOString(), 
-            formattedDate: 'N/A' 
-          })),
-          retry(() => getPoolLPSymbol(contract), 3, 1000, () => ({ symbol: 'LP' })),
-          retry(() => getPoolWarmupPeriod(contract), 3, 1000, () => ({ warmupPeriodDays: 14 }))
-        ]);
-        
-        // Parse dates for calculating lock duration
-        let lockDurationDays = 180; // Default fallback
-        try {
-          // Convert timestamp strings to milliseconds (from seconds) for Date objects
-          const activationTimestamp = activationResponse.timestamp ? 
-            parseInt(activationResponse.timestamp) * 1000 : Date.now();
-          const deactivationTimestamp = deactivationResponse.timestamp ? 
-            parseInt(deactivationResponse.timestamp) * 1000 : Date.now() + 180 * 24 * 60 * 60 * 1000;
-          
-          const activationDate = new Date(activationTimestamp);
-          const deactivationDate = new Date(deactivationTimestamp);
-          
-          const msDiff = deactivationDate.getTime() - activationDate.getTime();
-          const fractionalDays = msDiff / (1000 * 60 * 60 * 24); 
-          lockDurationDays = Math.round(fractionalDays * 10) / 10;
-          
-          if (isNaN(lockDurationDays) || lockDurationDays <= 0) {
-            console.log("Invalid lock duration calculation", { 
-              activationTimestamp, 
-              deactivationTimestamp, 
-              activationDate, 
-              deactivationDate 
-            });
-            lockDurationDays = 180; // Fallback if calculation fails
-          }
-        } catch (error) {
-          console.error('Error calculating lock duration:', error);
-        }
-        
-        // Calculate warmup start time based on the activation date and warmup period
-        const warmupPeriodDays = warmupPeriodResponse.warmupPeriodDays || 14; // Default to 14 days if API fails
-        
-        // Get activation timestamp in milliseconds
-        const activationTimestamp = activationResponse.timestamp ? 
-          parseInt(activationResponse.timestamp) * 1000 : Date.now();
-          
-        // Calculate warmup start by subtracting warmup period from activation date
-        const activationDate = new Date(activationTimestamp);
-        const warmupStartDate = new Date(activationDate);
-        warmupStartDate.setDate(activationDate.getDate() - warmupPeriodDays);
-        const warmupStartFormattedDate = format(warmupStartDate, 'MMM d, yyyy');
-        
-        // Map API status to UI status
-        const statusMap: Record<string, 'warm-up' | 'active' | 'cooldown' | 'withdrawal'> = {
-          isWarmup: 'warm-up',
-          isActive: 'active',
-          isCooldown: 'cooldown',
-          isExpired: 'withdrawal'
-        };
-        
-        const pool: LiquidityPool = {
-          id: index + 1, // Use index + 1 as ID for now
-          contract_address: contract, // Store contract address for reference
-          created_at: activationResponse.timestamp ? 
-            new Date(parseInt(activationResponse.timestamp) * 1000).toISOString() : new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          name: nameResponse.name || `Pool ${index + 1}`,
-          token_a: "USDC",
-          token_b: symbolResponse.symbol || 'LP',
-          token_a_amount: 0, // Set to 0 for basic data - will be populated in detailed fetch
-          token_b_amount: 0, // Set to 0 for basic data - will be populated in detailed fetch
-          // Get APY from poolConstants.ts - first try contract address, then ID
-          apy: getPoolAPY(contract, 8.5),
-          total_value_locked: 0, // Set to 0 for basic data - will be populated in detailed fetch
-          available_liquidity: 0, // Set to 0 for basic data - will be populated in detailed fetch
-          status: statusMap[statusResponse.status] || 'active',
-          metadata: {
-            description: `${nameResponse.name || 'Lending'} pool`,
-            minDeposit: 10,
-            maxDeposit: 30000,
-            lockDurationDays: lockDurationDays || 180,
-            // Store the raw timestamp for later use, also add a timestamp in milliseconds
-            activationTimestamp: activationResponse.timestamp || '',
-            activationTimestampMs: activationResponse.timestamp ? 
-              (parseInt(activationResponse.timestamp) * 1000).toString() : '',
-            activationFormattedDate: activationResponse.formattedDate || 'N/A',
-            deactivationTimestamp: deactivationResponse.timestamp || '',
-            deactivationTimestampMs: deactivationResponse.timestamp ? 
-              (parseInt(deactivationResponse.timestamp) * 1000).toString() : '',
-            deactivationFormattedDate: deactivationResponse.formattedDate || 'N/A',
-            warmupStartTimestamp: (warmupStartDate.getTime() / 1000).toString(), // Store as seconds
-            warmupStartTimestampMs: warmupStartDate.getTime().toString(), // Store as milliseconds
-            warmupStartFormattedDate: warmupStartFormattedDate,
-            symbol: symbolResponse.symbol || 'LP'
-          },
-          // Initialize with placeholder borrower info that will be updated later
-          borrower_info: {
-            loanPeriodDays: 0,
-            interestRate: '0%',
-            loanAmount: '$0',
-            originationFee: '0%',
-            warmupPeriod: `${warmupPeriodDays} days`
-          }
-        };
-        
-        // Add debug log to see APY values
-        console.log(`[poolRequests] Created basic pool ID: ${pool.id}, Contract: ${contract}, APY: ${pool.apy}%`);
-        
-        return pool;
-      } catch (error) {
-        console.error(`Error fetching basic details for pool ${contract}:`, error);
-        // Return default pool object on error
-        return {
-          id: index + 1,
-          contract_address: contract,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          name: `Pool ${index + 1}`,
-          token_a: "USDC",
-          token_b: "LP",
-          token_a_amount: 0,
-          token_b_amount: 0,
-          // Use getPoolAPY for the hardcoded value, default to 8.5 if not found
-          apy: getPoolAPY(contract, 8.5),
-          total_value_locked: 0,
-          available_liquidity: 0,
-          status: 'active' as 'warm-up' | 'active' | 'cooldown' | 'withdrawal',
-          metadata: {
-            description: "Lending pool",
-            minDeposit: 10,
-            maxDeposit: 30000,
-            lockDurationDays: 180,
-            activationTimestamp: new Date().toISOString(),
-            activationFormattedDate: 'N/A',
-            deactivationTimestamp: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
-            deactivationFormattedDate: 'N/A',
-            warmupStartTimestamp: new Date().toISOString(),
-            warmupStartFormattedDate: 'N/A',
-            symbol: 'LP'
-          },
-          borrower_info: {
-            loanPeriodDays: 0,
-            interestRate: '0%',
-            loanAmount: '$0',
-            originationFee: '0%',
-            warmupPeriod: '14 days'
-          }
-        };
-      }
-    });
+    // Batch pool requests to reduce load and improve overall response times
+    const batchSize = 5; // Process 5 pools at a time
+    const allPoolData: LiquidityPool[] = [];
     
-    // Wait for all promises to resolve
-    const poolsData = await Promise.all(poolDataPromises);
-    
-    // Filter out any failed pool fetches and return the successful ones
-    const validPools = poolsData.filter(Boolean) as LiquidityPool[];
+    for (let i = 0; i < poolAddresses.length; i += batchSize) {
+      const currentBatch = poolAddresses.slice(i, i + batchSize);
+      console.log(`[poolRequests] Processing batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(poolAddresses.length/batchSize)}`);
+      
+      // Process each batch in parallel
+      const batchResults = await Promise.all(
+        currentBatch.map(async (contract, batchIndex) => {
+          try {
+            const index = i + batchIndex;
+            
+            // Check if we have a cached individual pool first
+            const cachedPool = Cache.get<LiquidityPool>(poolContractCacheKey(contract));
+            if (cachedPool) {
+              return cachedPool;
+            }
+            
+            // Fetch only basic pool data in parallel with shorter timeouts
+            const [
+              nameResponse, 
+              statusResponse, 
+              deactivationResponse, 
+              activationResponse,
+              symbolResponse,
+              warmupPeriodResponse
+            ] = await Promise.all([
+              retry(() => getPoolName(contract), 2, 800),
+              retry(() => getPoolStatus(contract), 2, 800, () => ({ status: 'isActive' })),
+              retry(() => getPoolDeactivationDate(contract), 2, 800, () => ({ 
+                timestamp: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(), 
+                formattedDate: 'N/A' 
+              })),
+              retry(() => getPoolActivationDate(contract), 2, 800, () => ({ 
+                timestamp: new Date().toISOString(), 
+                formattedDate: 'N/A' 
+              })),
+              retry(() => getPoolLPSymbol(contract), 2, 800, () => ({ symbol: 'LP' })),
+              retry(() => getPoolWarmupPeriod(contract), 2, 800, () => ({ warmupPeriodDays: 14 }))
+            ]);
+            
+            // Process dates and other data
+            let lockDurationDays = 180; // Default fallback
+            try {
+              // Convert timestamp strings to milliseconds (from seconds) for Date objects
+              const activationTimestamp = activationResponse.timestamp ? 
+                parseInt(activationResponse.timestamp) * 1000 : Date.now();
+              const deactivationTimestamp = deactivationResponse.timestamp ? 
+                parseInt(deactivationResponse.timestamp) * 1000 : Date.now() + 180 * 24 * 60 * 60 * 1000;
+              
+              const activationDate = new Date(activationTimestamp);
+              const deactivationDate = new Date(deactivationTimestamp);
+              
+              const msDiff = deactivationDate.getTime() - activationDate.getTime();
+              const fractionalDays = msDiff / (1000 * 60 * 60 * 24); 
+              lockDurationDays = Math.round(fractionalDays * 10) / 10;
+              
+              if (isNaN(lockDurationDays) || lockDurationDays <= 0) {
+                console.log("Invalid lock duration calculation", { 
+                  activationTimestamp, 
+                  deactivationTimestamp, 
+                  activationDate, 
+                  deactivationDate 
+                });
+                lockDurationDays = 180; // Fallback if calculation fails
+              }
+            } catch (error) {
+              console.error('Error calculating lock duration:', error);
+            }
+            
+            // Calculate warmup start time based on the activation date and warmup period
+            const warmupPeriodDays = warmupPeriodResponse.warmupPeriodDays || 14; // Default to 14 days if API fails
+            
+            // Get activation timestamp in milliseconds
+            const activationTimestamp = activationResponse.timestamp ? 
+              parseInt(activationResponse.timestamp) * 1000 : Date.now();
+              
+            // Calculate warmup start by subtracting warmup period from activation date
+            const activationDate = new Date(activationTimestamp);
+            const warmupStartDate = new Date(activationDate);
+            warmupStartDate.setDate(activationDate.getDate() - warmupPeriodDays);
+            const warmupStartFormattedDate = format(warmupStartDate, 'MMM d, yyyy');
+            
+            // Map API status to UI status
+            const statusMap: Record<string, 'warm-up' | 'active' | 'cooldown' | 'withdrawal'> = {
+              isWarmup: 'warm-up',
+              isActive: 'active',
+              isCooldown: 'cooldown',
+              isExpired: 'withdrawal'
+            };
+            
+            // Create pool object
+            const pool: LiquidityPool = {
+              id: index + 1,
+              contract_address: contract,
+              created_at: activationResponse.timestamp ? 
+                new Date(parseInt(activationResponse.timestamp) * 1000).toISOString() : new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              name: nameResponse.name || `Pool ${index + 1}`,
+              token_a: "USDC",
+              token_b: symbolResponse.symbol || 'LP',
+              token_a_amount: 0,
+              token_b_amount: 0,
+              apy: getPoolAPY(contract, 8.5),
+              total_value_locked: 0,
+              available_liquidity: 0,
+              status: statusMap[statusResponse.status] || 'active',
+              metadata: {
+                description: `${nameResponse.name || 'Lending'} pool`,
+                minDeposit: 10,
+                maxDeposit: 30000,
+                lockDurationDays: lockDurationDays || 180,
+                activationTimestamp: activationResponse.timestamp || '',
+                activationTimestampMs: activationResponse.timestamp ? 
+                  (parseInt(activationResponse.timestamp) * 1000).toString() : '',
+                activationFormattedDate: activationResponse.formattedDate || 'N/A',
+                deactivationTimestamp: deactivationResponse.timestamp || '',
+                deactivationTimestampMs: deactivationResponse.timestamp ? 
+                  (parseInt(deactivationResponse.timestamp) * 1000).toString() : '',
+                deactivationFormattedDate: deactivationResponse.formattedDate || 'N/A',
+                warmupStartTimestamp: (warmupStartDate.getTime() / 1000).toString(),
+                warmupStartTimestampMs: warmupStartDate.getTime().toString(),
+                warmupStartFormattedDate: warmupStartFormattedDate,
+                symbol: symbolResponse.symbol || 'LP'
+              },
+              borrower_info: {
+                loanPeriodDays: 0,
+                interestRate: '0%',
+                loanAmount: '$0',
+                originationFee: '0%',
+                warmupPeriod: `${warmupPeriodDays} days`
+              }
+            };
+            
+            // Cache individual pool contract with longer duration
+            Cache.set(poolContractCacheKey(contract), pool, CONTRACT_POOLS_CACHE_DURATION);
+            
+            return pool;
+          } catch (error) {
+            console.error(`Error fetching basic details for pool ${contract}:`, error);
+            // Return default pool object on error
+            return {
+              id: i + batchIndex + 1,
+              contract_address: contract,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              name: `Pool ${i + batchIndex + 1}`,
+              token_a: "USDC",
+              token_b: "LP",
+              token_a_amount: 0,
+              token_b_amount: 0,
+              apy: getPoolAPY(contract, 8.5),
+              total_value_locked: 0,
+              available_liquidity: 0,
+              status: 'active' as 'warm-up' | 'active' | 'cooldown' | 'withdrawal',
+              metadata: {
+                description: "Lending pool",
+                minDeposit: 10,
+                maxDeposit: 30000,
+                lockDurationDays: 180,
+                activationTimestamp: new Date().toISOString(),
+                activationFormattedDate: 'N/A',
+                deactivationTimestamp: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+                deactivationFormattedDate: 'N/A',
+                warmupStartTimestamp: new Date().toISOString(),
+                warmupStartFormattedDate: 'N/A',
+                symbol: 'LP'
+              },
+              borrower_info: {
+                loanPeriodDays: 0,
+                interestRate: '0%',
+                loanAmount: '$0',
+                originationFee: '0%',
+                warmupPeriod: '14 days'
+              }
+            };
+          }
+        })
+      );
+      
+      // Add batch results to all pool data
+      allPoolData.push(...batchResults);
+    }
     
     // Sort pools by status priority
-    const sortedPools = [...validPools].sort((a, b) => {
+    const sortedPools = [...allPoolData].sort((a, b) => {
       const getPoolStatusPriority = (status: 'warm-up' | 'active' | 'cooldown' | 'withdrawal'): number => {
         switch (status) {
           case 'warm-up': return 1;
@@ -272,9 +290,9 @@ export const getBasicPools = async (): Promise<LiquidityPool[]> => {
       return getPoolStatusPriority(a.status) - getPoolStatusPriority(b.status);
     });
     
-    // Cache the basic pools data
+    // Cache the basic pools data with increased duration
     if (sortedPools.length > 0) {
-      Cache.set(BASIC_POOLS_CACHE_KEY, sortedPools, 15);
+      Cache.set(BASIC_POOLS_CACHE_KEY, sortedPools, BASIC_POOLS_CACHE_DURATION);
       // Also create and cache the ID to contract mapping
       createIdToContractMapping(sortedPools);
     }
@@ -316,53 +334,65 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
       return [];
     }
     
-    // Now enhance basic pools with additional data in parallel
-    const enhancedPoolsPromises = basicPools.map(async (pool) => {
-      try {
-        if (!pool.contract_address) {
-          return pool;
-        }
-        
-        // Check for individual pool cache by contract address
-        const contractCached = Cache.get<LiquidityPool>(poolContractCacheKey(pool.contract_address));
-        if (contractCached) {
-          return contractCached;
-        }
-        
-        // Fetch liquidity and balance data in parallel - only the heavy parts
-        const [
-          liquidityResponse,
-          balanceResponse
-        ] = await Promise.all([
-          retry(() => getPoolLiquidity(pool.contract_address!), 3, 1000, () => ({ liquidity: 0 })),
-          retry(() => getPoolUSDCBalance(pool.contract_address!), 3, 1000, () => ({ totalAssets: 0 }))
-        ]);
-        
-        // Copy the basic pool and add the additional data
-        const enhancedPool: LiquidityPool = {
-          ...pool,
-          token_a_amount: balanceResponse.totalAssets || 0,
-          token_b_amount: balanceResponse.totalAssets || 0,
-          total_value_locked: balanceResponse.totalAssets || 0,
-          available_liquidity: liquidityResponse.liquidity || 0
-        };
-        
-        // Cache the individual pool by contract
-        Cache.set(poolContractCacheKey(pool.contract_address), enhancedPool, 15);
-        
-        return enhancedPool;
-      } catch (error) {
-        console.error(`Error fetching detailed data for pool ${pool.contract_address}:`, error);
-        return pool; // Return the basic pool if enhancement fails
-      }
-    });
+    // Batch processing for detailed pool info
+    const batchSize = 5;
+    const enhancedPools: LiquidityPool[] = [];
     
-    // Wait for all enhancements to complete
-    const enhancedPools = await Promise.all(enhancedPoolsPromises);
+    for (let i = 0; i < basicPools.length; i += batchSize) {
+      const batch = basicPools.slice(i, i + batchSize);
+      console.log(`[poolRequests] Enhancing batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(basicPools.length/batchSize)}`);
+      
+      // Process each batch in parallel
+      const batchResults = await Promise.all(
+        batch.map(async (pool) => {
+          try {
+            if (!pool.contract_address) {
+              return pool;
+            }
+            
+            // Check for individual pool cache by contract address
+            const contractCached = Cache.get<LiquidityPool>(poolContractCacheKey(pool.contract_address));
+            if (contractCached && 
+                contractCached.token_a_amount > 0 && 
+                contractCached.available_liquidity > 0) {
+              return contractCached;
+            }
+            
+            // Fetch liquidity and balance data in parallel - only the heavy parts
+            const [
+              liquidityResponse,
+              balanceResponse
+            ] = await Promise.all([
+              retry(() => getPoolLiquidity(pool.contract_address!), 2, 800, () => ({ liquidity: 0 })),
+              retry(() => getPoolUSDCBalance(pool.contract_address!), 2, 800, () => ({ totalAssets: 0 }))
+            ]);
+            
+            // Copy the basic pool and add the additional data
+            const enhancedPool: LiquidityPool = {
+              ...pool,
+              token_a_amount: balanceResponse.totalAssets || 0,
+              token_b_amount: balanceResponse.totalAssets || 0,
+              total_value_locked: balanceResponse.totalAssets || 0,
+              available_liquidity: liquidityResponse.liquidity || 0
+            };
+            
+            // Cache the individual pool by contract (longer duration since rarely changes)
+            Cache.set(poolContractCacheKey(pool.contract_address), enhancedPool, CONTRACT_POOLS_CACHE_DURATION);
+            
+            return enhancedPool;
+          } catch (error) {
+            console.error(`Error fetching detailed data for pool ${pool.contract_address}:`, error);
+            return pool; // Return the basic pool if enhancement fails
+          }
+        })
+      );
+      
+      enhancedPools.push(...batchResults);
+    }
     
-    // Cache the complete pools data
+    // Cache the complete pools data with longer duration
     if (enhancedPools.length > 0) {
-      Cache.set(POOLS_CACHE_KEY, enhancedPools, 15);
+      Cache.set(POOLS_CACHE_KEY, enhancedPools, FULL_POOLS_CACHE_DURATION);
     }
     
     return enhancedPools;

@@ -36,7 +36,7 @@ interface PoolDataProviderProps {
 const POOLS_LAST_FETCHED_KEY = 'pools_last_fetched';
 const DETAILED_POOLS_LAST_FETCHED_KEY = 'detailed_pools_last_fetched';
 // Cache timeout - 5 minutes in milliseconds
-const CACHE_TIMEOUT_MS = 5 * 60 * 1000;
+const CACHE_TIMEOUT_MS = 10 * 60 * 1000;
 
 export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   const [pools, setPools] = useState<LiquidityPool[]>([]);
@@ -157,7 +157,7 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
         invalidatePoolsCache();
       }
       
-      // Fetch BASIC pools data (faster)
+      // Fetch BASIC pools data (faster) with a shortened timeout to fail fast
       const basicPoolsData = await getBasicPools();
       
       if (basicPoolsData.length === 0) {
@@ -170,6 +170,14 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
         setLastFetched(now);
         localStorage.setItem(POOLS_LAST_FETCHED_KEY, now.toString());
         console.log(`[PoolDataContext] Basic pools data fetched successfully at ${new Date(now).toLocaleTimeString()}`);
+        
+        // Immediately start loading detailed data in the background
+        // This runs in parallel with rendering, so the UI can update faster
+        setTimeout(() => {
+          loadDetailedPoolsData().catch(err => {
+            console.error("[PoolDataContext] Background load of detailed data failed:", err);
+          });
+        }, 300);
       }
     } catch (err) {
       console.error("[PoolDataContext] Error fetching basic pools:", err);
@@ -231,7 +239,7 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       console.log("[PoolDataContext] Initial pools data fetch triggered");
       refreshPools();
       
-      // Set up background refresh every 5 minutes (matching cache timeout)
+      // Set up background refresh every 10 minutes (matching cache timeout)
       const refreshInterval = setInterval(() => {
         console.log("[PoolDataContext] Background refreshing pools data...");
         refreshPools(true);

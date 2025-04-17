@@ -60,7 +60,6 @@ const PoolDetails = () => {
   } | null>(null);
   const [lpTokenPrice, setLpTokenPrice] = useState<number | null>(null);
 
-
   const userPosition = useUserPoolPosition(pool?.contract_address, refreshTrigger);
 
   useCacheListener(EVENTS.POOL_DATA_UPDATED, (data) => {
@@ -495,7 +494,7 @@ const PoolDetails = () => {
   const shouldShowSupplyButton = pool?.status !== 'withdrawal';
   const shouldShowWithdrawButton = pool?.status !== 'active';
   
-  const showPriceChart = false;
+  const showPriceChart = true;
 
   return (
     <div className="min-h-screen bg-white pb-20">

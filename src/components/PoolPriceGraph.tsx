@@ -33,7 +33,7 @@ export function PoolPriceGraph({
   contractAddress 
 }: PoolPriceGraphProps) {
   const isMobile = useIsMobile();
-  const [timeframe, setTimeframe] = useState<"days" | "weeks">("days");
+  const [timeframe, setTimeframe] = useState<"hours" | "days" | "weeks">("hours");
   
   // Fallback contract address for development if not provided
   const poolContract = contractAddress || `0x${poolId}abc123def456`;
@@ -41,18 +41,21 @@ export function PoolPriceGraph({
   // Use our new hook to fetch price data
   const { priceData, isLoading, error } = useLPTokenHistory(poolContract, timeframe);
   
-  // Check if we have enough data to show weekly view
+  // Check if we have enough data to show the different views
+  const hasEnoughDataForDailyView = priceData.length >= 3;
   const hasEnoughDataForWeeklyView = priceData.length >= 14;
   
   // Check if we have enough data to show the graph (at least 2 points)
   const hasEnoughDataForGraph = priceData.length >= 2;
   
-  // Force back to days view if we don't have enough data for weekly view
+  // Force back to hours view if we don't have enough data for the selected view
   useEffect(() => {
     if (timeframe === "weeks" && !hasEnoughDataForWeeklyView) {
       setTimeframe("days");
+    } else if (timeframe === "days" && !hasEnoughDataForDailyView) {
+      setTimeframe("hours");
     }
-  }, [timeframe, hasEnoughDataForWeeklyView]);
+  }, [timeframe, hasEnoughDataForWeeklyView, hasEnoughDataForDailyView]);
   
   // Calculate min and max for yAxis domain with some padding
   const prices = priceData.map(d => d.price);
@@ -75,7 +78,9 @@ export function PoolPriceGraph({
   
   // Get tick interval based on device and timeframe
   const getTickInterval = () => {
-    if (timeframe === "days") {
+    if (timeframe === "hours") {
+      return isMobile ? 3 : 2; // Show every 2nd or 3rd hour
+    } else if (timeframe === "days") {
       return isMobile ? 6 : 3; // Show every 3rd or 6th day
     } else {
       return isMobile ? 2 : 1; // Show every 1st or 2nd week
@@ -99,16 +104,27 @@ export function PoolPriceGraph({
             <ToggleGroup 
               type="single" 
               value={timeframe} 
-              onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}
+              onValueChange={(value) => value && setTimeframe(value as "hours" | "days" | "weeks")}
               className="mx-auto"
             >
               <ToggleGroupItem 
-                value="days" 
-                aria-label="View by days" 
+                value="hours" 
+                aria-label="View by hours" 
                 className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
               >
-                Days
+                Hours
               </ToggleGroupItem>
+              
+              {/* Only show days toggle if we have enough data */}
+              {hasEnoughDataForDailyView && (
+                <ToggleGroupItem 
+                  value="days" 
+                  aria-label="View by days" 
+                  className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
+                >
+                  Days
+                </ToggleGroupItem>
+              )}
               
               {/* Only show weeks toggle if we have enough data */}
               {hasEnoughDataForWeeklyView && (
@@ -178,7 +194,7 @@ export function PoolPriceGraph({
                 tick={{ fontSize: isMobile ? 11 : 12, fill: "#333" }} // Darker text
                 tickFormatter={(value) => {
                   if (typeof value !== 'number') return value;
-                  return "$" + value.toFixed(3);
+                  return "$" + value.toFixed(4);
                 }}
                 width={isMobile ? 45 : 50}
                 tickCount={isMobile ? 5 : 6}
@@ -188,12 +204,16 @@ export function PoolPriceGraph({
               <Tooltip 
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
+                    const formattedDate = timeframe === 'hours' 
+                      ? `Today at ${payload[0].payload.date}`
+                      : payload[0].payload.date;
+                    
                     return (
                       <div className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-md rounded-md p-2 text-xs">
-                        <p className="font-medium">{payload[0].payload.date}</p>
+                        <p className="font-medium">{formattedDate}</p>
                         <div className="pt-1">
                           <p style={{ color: poolColor }} className="font-semibold">
-                            ${payload[0].value}
+                            ${payload[0].value.toFixed(4)}
                           </p>
                         </div>
                       </div>

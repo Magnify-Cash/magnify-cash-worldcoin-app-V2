@@ -4,6 +4,22 @@ import { prefetchBorrowerInfo } from '@/utils/borrowerInfoUtils';
 import { usePoolData } from '@/contexts/PoolDataContext';
 
 /**
+ * Define TypeScript interfaces for requestIdleCallback to avoid type errors
+ */
+interface IdleRequestOptions {
+  timeout: number;
+}
+
+interface IdleRequestCallback {
+  (deadline: IdleDeadline): void;
+}
+
+interface IdleDeadline {
+  didTimeout: boolean;
+  timeRemaining: () => number;
+}
+
+/**
  * This hook prefetches data in the background when the app is idle
  * to improve perceived performance on subsequent navigation
  */
@@ -17,7 +33,11 @@ export function usePrefetchData() {
     }
     
     // Use requestIdleCallback (or polyfill) to run in the background when browser is idle
-    const idleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+    const idleCallback = window.requestIdleCallback || 
+      ((cb: IdleRequestCallback): number => {
+        // Cast the timeout to number to match the expected return type
+        return setTimeout(cb, 1) as unknown as number;
+      });
     
     const handle = idleCallback(() => {
       console.log("[usePrefetchData] Background prefetching borrower info for pools");
@@ -40,7 +60,7 @@ export function usePrefetchData() {
       if (window.cancelIdleCallback) {
         window.cancelIdleCallback(handle);
       } else {
-        clearTimeout(handle);
+        clearTimeout(handle as unknown as number);
       }
     };
   }, [pools, lastFetched]);
@@ -49,9 +69,10 @@ export function usePrefetchData() {
 }
 
 // Polyfill for requestIdleCallback
-if (!window.requestIdleCallback) {
-  window.requestIdleCallback = function(callback) {
+if (typeof window !== 'undefined' && !window.requestIdleCallback) {
+  window.requestIdleCallback = function(callback: IdleRequestCallback): number {
     const start = Date.now();
+    // Cast the timeout to number to match the expected return type
     return setTimeout(function() {
       callback({
         didTimeout: false,
@@ -59,10 +80,18 @@ if (!window.requestIdleCallback) {
           return Math.max(0, 50 - (Date.now() - start));
         }
       });
-    }, 1);
+    }, 1) as unknown as number;
   };
   
-  window.cancelIdleCallback = function(id) {
-    clearTimeout(id);
+  window.cancelIdleCallback = function(id: number): void {
+    clearTimeout(id as unknown as number);
   };
+}
+
+// Add TypeScript declarations for the global window object
+declare global {
+  interface Window {
+    requestIdleCallback: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+    cancelIdleCallback: (handle: number) => void;
+  }
 }

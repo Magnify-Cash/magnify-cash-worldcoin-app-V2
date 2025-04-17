@@ -119,7 +119,11 @@ export interface PoolLoanInterestResponse {
   interestRate: string;
 }
 
-export type PoolStatusType = "isWarmup" | "isActive" | "isCooldown" | "isExpired";
+export type PoolStatusType =
+  | "isWarmup"
+  | "isActive"
+  | "isCooldown"
+  | "isExpired";
 
 export interface PoolStatusResponse {
   status: PoolStatusType;
@@ -141,7 +145,7 @@ export interface UserMaxDataParsed {
 
 export interface SoulboundDataResponse {
   loansRepaid: string;
-  interestPaid: string;      
+  interestPaid: string;
   loansDefaulted: string;
   owner: string;
   tier: number;
@@ -172,15 +176,15 @@ export interface SoulboundTokenURIResponse {
 }
 
 export interface SoulboundLoanHistoryResponse {
-  data: any
+  data: any;
 }
 
 export interface SoulboundLoanHistoryDetailedResponse {
-  data: any
+  data: any;
 }
 
 export interface SoulboundUserNFTResponse {
-  tokenId: string; 
+  tokenId: string;
 }
 
 export type SoulboundPoolAddressesResponse = string[];
@@ -207,7 +211,7 @@ export interface PoolLoanAmountResponse {
 }
 
 export interface PoolWarmupPeriodResponse {
-  warmupPeriodDays: number; 
+  warmupPeriodDays: number;
 }
 
 export interface UserLPBalanceResponse {
@@ -226,7 +230,7 @@ export interface PoolEarlyExitFeeResponse {
 
 export interface PoolPenaltyFeeResponse {
   defaultPenalty: number;
-};
+}
 
 export interface UserDefaultedLoanData {
   loanID: string;
@@ -301,4 +305,10 @@ export interface LegacyDefaultedLoanResponse {
 
 export interface GetDefaultedLoanFeeResponse {
   repaymentFee: number;
+}
+
+export interface PoolLpTokenPrice {
+  token_price: string;
+  timestamp: string;
+  created_at: string;
 }

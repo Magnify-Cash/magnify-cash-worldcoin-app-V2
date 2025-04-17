@@ -162,6 +162,12 @@ export function WithdrawModal({
     calculateFees();
   }, [amount, isWarmupPeriod, poolContractAddress]);
 
+  const safelyFormatAmount = (value: number): string => {
+    return (Math.floor(value * 10000) / 10000).toString();
+  };
+
+  const SAFETY_BUFFER = 0.0001; // 0.01% safety buffer
+
   const isAmountValid = () => {
     const numAmount = parseFloat(amount);
     return !isNaN(numAmount) && numAmount >= 0.1 && numAmount <= lpValue;
@@ -183,7 +189,7 @@ export function WithdrawModal({
     }
     
     if (!isNaN(numAmount) && numAmount >= 0.1 && exchangeRate > 0) {
-      return (numAmount / exchangeRate).toFixed(4);
+      return (Math.floor((numAmount / exchangeRate) * 10000) / 10000).toFixed(4);
     }
     
     if (!isNaN(numAmount) && numAmount >= 0.1) {
@@ -233,18 +239,20 @@ export function WithdrawModal({
       setTransactionPending(true);
       setTransactionMessage("Processing your withdrawal...");
   
+      let withdrawAmount = parseFloat(amount);
       let estimatedLpAmount = parseFloat(calculateLpTokenAmount());
+      
       if (isNaN(estimatedLpAmount) || calculateLpTokenAmount() === "...") {
         try {
-          const res = await previewRedeem(parseFloat(amount), poolContractAddress);
-          estimatedLpAmount = parseFloat(amount) / res.usdcAmount;
+          const res = await previewRedeem(withdrawAmount, poolContractAddress);
+          estimatedLpAmount = Math.floor((withdrawAmount / res.usdcAmount) * 10000) / 10000;
         } catch (err) {
           console.error("Failed to calculate LP amount for withdrawal", err);
-          estimatedLpAmount = parseFloat(amount) / exchangeRate || parseFloat(amount);
+          estimatedLpAmount = Math.floor((withdrawAmount / exchangeRate || withdrawAmount) * 10000) / 10000;
         }
       }
   
-      const lpTokenAmountWithDecimals = parseUnits(estimatedLpAmount.toFixed(6), 6);
+      const lpTokenAmountWithDecimals = parseUnits(estimatedLpAmount.toFixed(4), 6);
   
       if (isMiniApp) {
         const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
@@ -298,7 +306,7 @@ export function WithdrawModal({
       });
   
       if (onSuccessfulWithdraw && typeof onSuccessfulWithdraw === "function") {
-        onSuccessfulWithdraw(parseFloat(amount), estimatedLpAmount, `tx-${Date.now()}`);
+        onSuccessfulWithdraw(withdrawAmount, estimatedLpAmount, `tx-${Date.now()}`);
       }
   
       onClose();
@@ -346,8 +354,14 @@ export function WithdrawModal({
       setEarlyWithdrawalDialogOpen(false);
     }
   };
-  
-  
+
+  const handleMaxButtonClick = () => {
+    if (lpValue > 0) {
+      const safeMaxAmount = lpValue * (1 - SAFETY_BUFFER);
+      setAmount(safelyFormatAmount(safeMaxAmount));
+    }
+  };
+
   const handleRetryConfirm = () => {
     setShowRetryDialog(false);
     handleWithdraw();
@@ -411,7 +425,7 @@ export function WithdrawModal({
                   type="button"
                   variant="ghost"
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-xs"
-                  onClick={() => setAmount(lpValue.toString())}
+                  onClick={handleMaxButtonClick}
                 >
                   MAX
                 </Button>

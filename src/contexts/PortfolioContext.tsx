@@ -7,6 +7,8 @@ import { UserPoolPosition } from '@/hooks/useUserPoolPositions';
 import { getPools } from '@/lib/poolRequests';
 import { getUserLPBalance, previewRedeem } from '@/lib/backendRequests';
 
+const MIN_POSITION_VALUE_USD = 0.1;
+
 interface PortfolioState {
   positions: UserPoolPosition[];
   totalValue: number;
@@ -45,50 +47,41 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const optimisticUpdatesActive = useRef<Set<number>>(new Set());
   const disableAutoRefresh = useRef<boolean>(false);
   
-  // Get user's wallet address from localStorage
   useEffect(() => {
     const ls_wallet = localStorage.getItem("ls_wallet_address");
     if (!ls_wallet) {
-      // Redirect to welcome page if no wallet address is found
       navigate("/welcome");
       return;
     }
     setWalletAddress(ls_wallet);
   }, [navigate]);
 
-  // Fetch portfolio data - without caching
   const fetchPortfolio = useCallback(async (forceRefresh = false) => {
     if (!walletAddress) {
       setState(prev => ({ ...prev, loading: false, positions: [], hasPositions: false }));
       return;
     }
     
-    // Prevent multiple concurrent fetches
     if (isFetchingRef.current) {
       console.log('[PortfolioProvider] Already fetching data, skipping this request');
       return;
     }
     
-    // Skip fetching if we have recent optimistic updates (unless forced)
     if (!forceRefresh) {
-      // Enhanced cooldown logic - don't auto-refresh for a longer period after optimistic updates
       if (Date.now() - optimisticUpdateTimestampRef.current < 30000 && 
           optimisticUpdatesActive.current.size > 0) {
         console.log('[PortfolioProvider] Skipping fetch due to recent optimistic updates');
         return;
       }
       
-      // Also respect the global auto-refresh disable flag
       if (disableAutoRefresh.current) {
         console.log('[PortfolioProvider] Skipping fetch due to disabled auto-refresh');
         return;
       }
     }
     
-    // Set the fetching flag
     isFetchingRef.current = true;
     
-    // Record fetch start time to avoid race conditions
     const fetchStartTime = Date.now();
 
     try {
@@ -112,8 +105,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       const positionPromises = pools.map(async (pool) => {
         if (!pool.contract_address) return null;
         
-        // Skip fetching this pool if there's an active optimistic update for it
-        // and we're not forcing a refresh
         if (!forceRefresh && optimisticUpdatesActive.current.has(pool.id)) {
           console.log(`[PortfolioProvider] Skipping fetch for pool ${pool.id} due to active optimistic update`);
           const cachedPosition = positionsCache.current[pool.id];
@@ -121,7 +112,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
-          // Always fetch fresh data
           const lpBalance = await getUserLPBalance(walletAddress, pool.contract_address);
           if (lpBalance.balance <= 0) return null;
 
@@ -138,26 +128,23 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             apy: pool.apy
           };
           
-          // Update local reference
           positionsCache.current[pool.id] = position;
 
           return position;
         } catch (err) {
           console.error(`Error fetching position for pool ${pool.id}:`, err);
-          // Return the cached position if we have one rather than null
           return positionsCache.current[pool.id] || null;
         }
       });
 
       const resolvedPositions = await Promise.all(positionPromises);
-      const validPositions = resolvedPositions.filter(
-        (position): position is UserPoolPosition => position !== null
-      );
+      
+      const validPositions = resolvedPositions
+        .filter((position): position is UserPoolPosition => position !== null)
+        .filter(position => position.currentValue >= MIN_POSITION_VALUE_USD);
       
       const newTotalValue = validPositions.reduce((sum, position) => sum + position.currentValue, 0);
       
-      // Don't apply the fetched data if it's older than the last optimistic update
-      // or if there's an active optimistic update and we're not forcing a refresh
       if (!forceRefresh && fetchStartTime < optimisticUpdateTimestampRef.current && 
           optimisticUpdatesActive.current.size > 0) {
         console.log('[PortfolioProvider] Not applying fetch results because there was a more recent optimistic update');
@@ -191,7 +178,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     }
   }, [walletAddress, navigate]);
 
-  // Initialize the portfolio
   useEffect(() => {
     if (walletAddress) {
       fetchPortfolio(true);
@@ -204,39 +190,32 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     };
   }, [walletAddress, fetchPortfolio]);
 
-  // Force refresh function
   const refreshPortfolio = useCallback((forceRefresh = true) => {
     console.log('[PortfolioProvider] Refreshing portfolio. Force refresh:', forceRefresh);
     
-    // Clear any pending refresh to avoid multiple refreshes
     if (refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current);
     }
     
-    // If it's a force refresh, temporarily allow it regardless of auto-refresh setting
     if (forceRefresh) {
       disableAutoRefresh.current = false;
     }
     
-    // Set a short timeout to avoid multiple rapid refreshes
     refreshTimeoutRef.current = window.setTimeout(() => {
       fetchPortfolio(forceRefresh);
       refreshTimeoutRef.current = null;
       
-      // If it was a force refresh, restore the auto-refresh setting
       if (forceRefresh) {
         disableAutoRefresh.current = true;
         
-        // Re-enable auto-refresh after a long period (5 minutes)
         setTimeout(() => {
           console.log('[PortfolioProvider] Re-enabling auto-refresh after timeout');
           disableAutoRefresh.current = false;
-        }, 300000); // 5 minutes
+        }, 300000);
       }
     }, 100);
   }, [fetchPortfolio]);
 
-  // Update position optimistically
   const updatePositionOptimistically = useCallback((
     poolId: number, 
     amount: number, 
@@ -245,18 +224,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   ) => {
     console.log(`[PortfolioProvider] Optimistically updating poolId ${poolId} with amount ${amount}, isWithdrawal: ${isWithdrawal}`);
     
-    // Set the optimistic update timestamp and mark this pool as having an active update
     optimisticUpdateTimestampRef.current = Date.now();
     optimisticUpdatesActive.current.add(poolId);
     
-    // Disable auto-refresh for a longer period after manual updates
     disableAutoRefresh.current = true;
     
     setState(currentState => {
-      // Find the position to update
       const position = currentState.positions.find(p => p.poolId === poolId);
       
-      // If the position doesn't exist and we're trying to withdraw, nothing to do
       if (!position && isWithdrawal) {
         console.log(`[PortfolioProvider] Position not found for withdrawal from poolId ${poolId}`);
         return currentState;
@@ -266,62 +241,44 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       let updatedTotalValue = currentState.totalValue;
       
       if (position) {
-        // Update existing position
         if (isWithdrawal) {
-          // For withdrawals
-          // Calculate LP amount using the position's current ratio or use provided lpAmount
           const estimatedLpAmount = lpAmount || (position.balance > 0 ? 
             (amount / position.currentValue) * position.balance : amount * 0.95);
           
           const newBalance = Math.max(0, position.balance - estimatedLpAmount);
           const newValue = Math.max(0, position.currentValue - amount);
           
-          console.log(`[PortfolioProvider] Optimistically updating position ${poolId} for withdrawal:`, {
-            oldBalance: position.balance,
-            newBalance,
-            oldValue: position.currentValue,
-            newValue,
-            estimatedLpAmount
-          });
-          
-          const updatedPosition = {
-            ...position,
-            balance: newBalance,
-            currentValue: newValue
-          };
-          
-          // Update position in state and cache
-          updatedPositions = currentState.positions.map(p => 
-            p.poolId === poolId ? updatedPosition : p
-          );
-          
-          positionsCache.current[poolId] = updatedPosition;
+          if (newValue < MIN_POSITION_VALUE_USD) {
+            updatedPositions = currentState.positions.filter(p => p.poolId !== poolId);
+            console.log(`[PortfolioProvider] Removing position ${poolId} as value is below minimum threshold`);
+          } else {
+            const updatedPosition = {
+              ...position,
+              balance: newBalance,
+              currentValue: newValue
+            };
+            
+            updatedPositions = currentState.positions.map(p => 
+              p.poolId === poolId ? updatedPosition : p
+            );
+            
+            positionsCache.current[poolId] = updatedPosition;
+          }
           
           updatedTotalValue = Math.max(0, currentState.totalValue - amount);
         } else {
-          // For deposits to existing positions
-          // Use provided LP amount or estimate based on the current ratio
           const estimatedLpAmount = lpAmount || (position.balance > 0 && position.currentValue > 0 ?
             (amount / position.currentValue) * position.balance : amount * 0.95);
             
           const newBalance = position.balance + estimatedLpAmount;
           const newValue = position.currentValue + amount;
           
-          console.log(`[PortfolioProvider] Optimistically updating position ${poolId} for deposit:`, {
-            oldBalance: position.balance,
-            newBalance,
-            oldValue: position.currentValue,
-            newValue,
-            estimatedLpAmount
-          });
-          
           const updatedPosition = {
             ...position,
             balance: newBalance,
             currentValue: newValue
           };
           
-          // Update position in state and cache
           updatedPositions = currentState.positions.map(p => 
             p.poolId === poolId ? updatedPosition : p
           );
@@ -331,44 +288,43 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           updatedTotalValue = currentState.totalValue + amount;
         }
       } else {
-        // Position doesn't exist, creating a new one for a deposit
-        // We need to find the pool details first
         getPools().then(pools => {
           const pool = pools.find(p => p.id === poolId);
           if (pool && pool.contract_address) {
             const estimatedLpAmount = lpAmount || amount * 0.95;
             
-            const newPosition: UserPoolPosition = {
-              poolId: pool.id,
-              poolName: pool.name,
-              symbol: pool.metadata?.symbol || 'LP',
-              contractAddress: pool.contract_address,
-              balance: estimatedLpAmount,
-              currentValue: amount,
-              status: pool.status as 'warm-up' | 'active' | 'cooldown' | 'withdrawal',
-              apy: pool.apy
-            };
-            
-            console.log(`[PortfolioProvider] Adding new position for poolId ${poolId}:`, newPosition);
-            
-            // Update state with the new position
-            setState(prevState => ({
-              ...prevState,
-              positions: [...prevState.positions, newPosition],
-              totalValue: prevState.totalValue + amount,
-              hasPositions: true,
-              lastUpdated: Date.now()
-            }));
-            
-            // Update cache
-            positionsCache.current[poolId] = newPosition;
+            if (amount >= MIN_POSITION_VALUE_USD) {
+              const newPosition: UserPoolPosition = {
+                poolId: pool.id,
+                poolName: pool.name,
+                symbol: pool.metadata?.symbol || 'LP',
+                contractAddress: pool.contract_address,
+                balance: estimatedLpAmount,
+                currentValue: amount,
+                status: pool.status as 'warm-up' | 'active' | 'cooldown' | 'withdrawal',
+                apy: pool.apy
+              };
+              
+              console.log(`[PortfolioProvider] Adding new position for poolId ${poolId}:`, newPosition);
+              
+              setState(prevState => ({
+                ...prevState,
+                positions: [...prevState.positions, newPosition],
+                totalValue: prevState.totalValue + amount,
+                hasPositions: true,
+                lastUpdated: Date.now()
+              }));
+              
+              positionsCache.current[poolId] = newPosition;
+            } else {
+              console.log(`[PortfolioProvider] Not adding position for poolId ${poolId} as value is below minimum threshold`);
+            }
           }
         }).catch(err => {
           console.error(`Error creating new position for pool ${poolId}:`, err);
         });
       }
       
-      // Create and emit transaction event
       const transactionId = `manual-tx-${Date.now()}`;
       const poolAddress = position?.contractAddress;
       
@@ -384,7 +340,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         });
       }
       
-      // Schedule clearing the optimistic flag after some time
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
@@ -393,17 +348,15 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         console.log(`[PortfolioProvider] Clearing optimistic update flag for pool ${poolId}`);
         optimisticUpdatesActive.current.delete(poolId);
         
-        // Only reset auto-refresh disable if all optimistic updates are done
         if (optimisticUpdatesActive.current.size === 0) {
           console.log(`[PortfolioProvider] All optimistic updates cleared, re-enabling auto-refresh`);
-          // Wait 5 minutes before re-enabling auto-refresh
           setTimeout(() => {
             disableAutoRefresh.current = false;
-          }, 300000); // 5 minutes
+          }, 300000);
         }
         
         refreshTimeoutRef.current = null;
-      }, 30000); // Longer delay before clearing optimistic state
+      }, 30000);
       
       return {
         ...currentState,
@@ -415,28 +368,23 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Listen for transaction events
   useCacheListener(EVENTS.TRANSACTION_COMPLETED, (data) => {
     if (!data || !walletAddress) return;
     
-    // Skip if we've already processed this transaction
     if (data.transactionId && processedTransactions.current.has(data.transactionId)) {
       console.log('[PortfolioProvider] Skipping already processed transaction:', data.transactionId);
       return;
     }
     
-    // Track processed transactions to avoid duplicates
     if (data.transactionId) {
       console.log('[PortfolioProvider] Processing transaction:', data.transactionId);
       processedTransactions.current.add(data.transactionId);
       
-      // Disable auto-refresh when processing a transaction
       disableAutoRefresh.current = true;
     }
     
     console.log('[PortfolioProvider] Transaction event received:', data);
     
-    // Find the affected position by contract address
     setState(currentState => {
       const affectedPosition = currentState.positions.find(
         p => p.contractAddress === data.poolContractAddress
@@ -444,10 +392,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       
       if (!affectedPosition) return currentState;
       
-      // Find pool ID for this contract address
       const poolId = affectedPosition.poolId;
       
-      // Set the optimistic update flag
       optimisticUpdateTimestampRef.current = Date.now();
       optimisticUpdatesActive.current.add(poolId);
       
@@ -467,7 +413,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         
         updatedTotalValue += data.amount;
         
-        // Update cache
         positionsCache.current[poolId] = updatedPosition;
         
         console.log(`[PortfolioProvider] Updating position ${affectedPosition.poolId} for supply:`, {
@@ -492,7 +437,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         
         updatedTotalValue -= data.amount;
         
-        // Update cache
         positionsCache.current[poolId] = updatedPosition;
         
         console.log(`[PortfolioProvider] Updating position ${affectedPosition.poolId} for withdrawal:`, {
@@ -507,12 +451,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         return currentState;
       }
       
-      // Update position in state
       const updatedPositions = currentState.positions.map(p => 
         p.poolId === affectedPosition.poolId ? updatedPosition : p
       );
       
-      // Schedule clearing the optimistic flag after some time
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
@@ -521,17 +463,15 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         console.log(`[PortfolioProvider] Clearing optimistic update flag for pool ${poolId}`);
         optimisticUpdatesActive.current.delete(poolId);
         
-        // Only re-enable auto-refresh if all optimistic updates are done
         if (optimisticUpdatesActive.current.size === 0) {
           console.log(`[PortfolioProvider] All optimistic updates cleared, scheduling re-enabling of auto-refresh`);
-          // Wait 5 minutes before re-enabling auto-refresh
           setTimeout(() => {
             disableAutoRefresh.current = false;
-          }, 300000); // 5 minutes
+          }, 300000);
         }
         
         refreshTimeoutRef.current = null;
-      }, 30000); // Longer delay before clearing optimistic state
+      }, 30000);
       
       return {
         ...currentState,
@@ -556,7 +496,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Custom hook to use the portfolio context
 export const usePortfolio = (): PortfolioContextType => {
   const context = useContext(PortfolioContext);
   if (context === undefined) {

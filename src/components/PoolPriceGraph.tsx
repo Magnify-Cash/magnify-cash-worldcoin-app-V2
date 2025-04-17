@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   AreaChart, 
   Area, 
@@ -33,29 +33,74 @@ export function PoolPriceGraph({
   contractAddress 
 }: PoolPriceGraphProps) {
   const isMobile = useIsMobile();
-  const [timeframe, setTimeframe] = useState<"days" | "weeks">("days");
+  const [timeframe, setTimeframe] = useState<"hours" | "days">("hours");
   
   // Fallback contract address for development if not provided
   const poolContract = contractAddress || `0x${poolId}abc123def456`;
   
-  // Use our new hook to fetch price data
-  const { priceData, isLoading, error } = useLPTokenHistory(poolContract, timeframe);
+  // Use our hook to fetch price data
+  const { priceData, isLoading, error } = useLPTokenHistory(poolContract);
   
-  // Check if we have enough data to show weekly view
-  const hasEnoughDataForWeeklyView = priceData.length >= 14;
+  // Process the data based on selected timeframe
+  const processedData = (() => {
+    if (!priceData.length) return [];
+    
+    if (timeframe === "hours") {
+      // For hourly view, take the last 24 hours of data
+      const hourlyData = priceData
+        .map(item => ({
+          date: new Date(parseInt(item.timestamp) * 1000),
+          price: parseFloat(item.token_price)
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+      
+      return hourlyData.slice(-24).map(item => ({
+        date: item.date.getHours() + ':00',
+        price: item.price
+      }));
+    } else {
+      // For daily view, group by day
+      const dailyMap = new Map();
+      
+      priceData.forEach(item => {
+        const date = new Date(parseInt(item.timestamp) * 1000);
+        const dayKey = `${date.getMonth() + 1}/${date.getDate()}`;
+        
+        if (!dailyMap.has(dayKey)) {
+          dailyMap.set(dayKey, []);
+        }
+        
+        dailyMap.get(dayKey).push(parseFloat(item.token_price));
+      });
+      
+      // Calculate daily averages
+      const dailyData = Array.from(dailyMap.entries()).map(([date, prices]) => {
+        const avgPrice = prices.reduce((sum: number, price: number) => sum + price, 0) / prices.length;
+        return {
+          date,
+          price: parseFloat(avgPrice.toFixed(4))
+        };
+      });
+      
+      // Sort by date and limit to 30 days
+      return dailyData
+        .sort((a, b) => {
+          const [aMonth, aDay] = a.date.split('/').map(Number);
+          const [bMonth, bDay] = b.date.split('/').map(Number);
+          return (aMonth * 100 + aDay) - (bMonth * 100 + bDay);
+        })
+        .slice(-30);
+    }
+  })();
+  
+  // Check if we have enough data to show the different views
+  const hasEnoughDataForDailyView = priceData.length >= 3;
   
   // Check if we have enough data to show the graph (at least 2 points)
-  const hasEnoughDataForGraph = priceData.length >= 2;
-  
-  // Force back to days view if we don't have enough data for weekly view
-  useEffect(() => {
-    if (timeframe === "weeks" && !hasEnoughDataForWeeklyView) {
-      setTimeframe("days");
-    }
-  }, [timeframe, hasEnoughDataForWeeklyView]);
+  const hasEnoughDataForGraph = processedData.length >= 2;
   
   // Calculate min and max for yAxis domain with some padding
-  const prices = priceData.map(d => d.price);
+  const prices = processedData.map(d => d.price);
   const minPrice = prices.length > 0 ? Math.min(...prices) * 0.995 : 0.9;
   const maxPrice = prices.length > 0 ? Math.max(...prices) * 1.005 : 1.1;
   
@@ -75,15 +120,15 @@ export function PoolPriceGraph({
   
   // Get tick interval based on device and timeframe
   const getTickInterval = () => {
-    if (timeframe === "days") {
-      return isMobile ? 6 : 3; // Show every 3rd or 6th day
+    if (timeframe === "hours") {
+      return isMobile ? 3 : 2; // Show every 2nd or 3rd hour
     } else {
-      return isMobile ? 2 : 1; // Show every 1st or 2nd week
+      return isMobile ? 6 : 3; // Show every 3rd or 6th day
     }
   };
 
   // Calculate initial reference line value (starting price)
-  const referencePrice = priceData.length > 0 ? priceData[0].price : 1.0;
+  const referencePrice = processedData.length > 0 ? processedData[0].price : 1.0;
 
   return (
     <Card className="w-full border border-[#9b87f5]/20 overflow-hidden">
@@ -99,25 +144,25 @@ export function PoolPriceGraph({
             <ToggleGroup 
               type="single" 
               value={timeframe} 
-              onValueChange={(value) => value && setTimeframe(value as "days" | "weeks")}
+              onValueChange={(value) => value && setTimeframe(value as "hours" | "days")}
               className="mx-auto"
             >
               <ToggleGroupItem 
-                value="days" 
-                aria-label="View by days" 
+                value="hours" 
+                aria-label="View by hours" 
                 className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
               >
-                Days
+                Hours
               </ToggleGroupItem>
               
-              {/* Only show weeks toggle if we have enough data */}
-              {hasEnoughDataForWeeklyView && (
+              {/* Only show days toggle if we have enough data */}
+              {hasEnoughDataForDailyView && (
                 <ToggleGroupItem 
-                  value="weeks" 
-                  aria-label="View by weeks" 
+                  value="days" 
+                  aria-label="View by days" 
                   className="text-xs px-3 py-1 bg-white hover:bg-gray-100 data-[state=on]:bg-[#9b87f5] data-[state=on]:text-white"
                 >
-                  Weeks
+                  Days
                 </ToggleGroupItem>
               )}
             </ToggleGroup>
@@ -145,7 +190,7 @@ export function PoolPriceGraph({
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={priceData}
+              data={processedData}
               margin={{
                 top: 10,
                 right: isMobile ? 5 : 20,
@@ -178,7 +223,7 @@ export function PoolPriceGraph({
                 tick={{ fontSize: isMobile ? 11 : 12, fill: "#333" }} // Darker text
                 tickFormatter={(value) => {
                   if (typeof value !== 'number') return value;
-                  return "$" + value.toFixed(3);
+                  return "$" + value.toFixed(4);
                 }}
                 width={isMobile ? 45 : 50}
                 tickCount={isMobile ? 5 : 6}
@@ -188,12 +233,24 @@ export function PoolPriceGraph({
               <Tooltip 
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
+                    const formattedDate = timeframe === 'hours' 
+                      ? `Today at ${payload[0].payload.date}`
+                      : payload[0].payload.date;
+                    
+                    // Fixed: Ensure the value is a number before calling toFixed
+                    const price = payload[0].value;
+                    const formattedPrice = typeof price === 'number' 
+                      ? price.toFixed(4) 
+                      : typeof price === 'string' 
+                        ? parseFloat(price).toFixed(4)
+                        : '0.0000';
+                    
                     return (
                       <div className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-md rounded-md p-2 text-xs">
-                        <p className="font-medium">{payload[0].payload.date}</p>
+                        <p className="font-medium">{formattedDate}</p>
                         <div className="pt-1">
                           <p style={{ color: poolColor }} className="font-semibold">
-                            ${payload[0].value}
+                            ${formattedPrice}
                           </p>
                         </div>
                       </div>

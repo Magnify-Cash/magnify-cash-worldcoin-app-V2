@@ -1,93 +1,67 @@
 
-import { useState, useEffect } from "react";
-import { getLPTokenHistory } from "@/lib/backendRequests";
-import { LPTokenHistoryResponse } from "@/utils/types";
+import { useState, useEffect, useMemo } from "react";
+import { getPoolLpTokenPrice } from "@/lib/backendRequests";
+import { PoolLpTokenPrice } from "@/utils/types";
+import { Cache } from "@/utils/cacheUtils";
 
-interface ProcessedPriceData {
-  date: string;
-  price: number;
-}
-
-interface UseLPTokenHistoryResult {
-  priceData: ProcessedPriceData[];
-  isLoading: boolean;
-  error: Error | null;
-}
+// Cache key for LP token price history
+const getTokenPriceHistoryCacheKey = (contractAddress: string) => `lp_token_price_history_${contractAddress}`;
+// Cache duration in minutes (price history doesn't change often)
+const CACHE_DURATION_MINUTES = 30;
 
 export function useLPTokenHistory(
-  contractAddress: string,
-  timeframe: "days" | "weeks" = "days"
-): UseLPTokenHistoryResult {
-  const [priceData, setPriceData] = useState<ProcessedPriceData[]>([]);
+  contractAddress: string
+) {
+  const [priceData, setPriceData] = useState<PoolLpTokenPrice[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Memoize the contract address to avoid unnecessary re-fetches
+  const memoizedContractAddress = useMemo(() => contractAddress, [contractAddress]);
+
   useEffect(() => {
     const fetchTokenHistory = async () => {
+      if (!memoizedContractAddress) {
+        console.log("[useLPTokenHistory] No contract address provided, skipping fetch");
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         setIsLoading(true);
         setError(null);
         
-        // Fetch token history from the backend
-        const response = await getLPTokenHistory(contractAddress);
+        // Check cache first
+        const cacheKey = getTokenPriceHistoryCacheKey(memoizedContractAddress);
+        const cachedData = Cache.get<PoolLpTokenPrice[]>(cacheKey);
+        
+        if (cachedData && cachedData.length > 0) {
+          console.log("[useLPTokenHistory] Using cached LP token price history");
+          setPriceData(cachedData);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Fetch token price history from the backend if not in cache
+        console.log("[useLPTokenHistory] Fetching LP token price history from API");
+        const response = await getPoolLpTokenPrice(memoizedContractAddress);
         
         if (!response || !Array.isArray(response)) {
+          console.error("[useLPTokenHistory] Invalid response format for LP token prices:", response);
           throw new Error("Invalid response format");
         }
         
-        // Process and transform the data
-        let processedData = response.map((item) => ({
-          date: item.date,
-          price: item.token_price
-        }));
-        
         // Sort by timestamp in ascending order (oldest to newest)
-        processedData.sort((a, b) => {
-          const timestampA = response.find(item => item.date === a.date)?.timestamp || "0";
-          const timestampB = response.find(item => item.date === b.date)?.timestamp || "0";
-          return parseInt(timestampA) - parseInt(timestampB);
+        const sortedData = [...response].sort((a, b) => {
+          return parseInt(a.timestamp) - parseInt(b.timestamp);
         });
         
-        // Filter data based on timeframe
-        if (timeframe === "weeks" && processedData.length > 12) {
-          // Group by week and take the average or latest price for each week
-          const weeklyData: Record<string, number[]> = {};
-          
-          // Group prices by week (using date as a rough approximation)
-          processedData.forEach((item) => {
-            const week = item.date.split("/")[1]; // Extract day part
-            if (!weeklyData[week]) {
-              weeklyData[week] = [];
-            }
-            weeklyData[week].push(item.price);
-          });
-          
-          // Calculate average price for each week or take the latest
-          processedData = Object.entries(weeklyData).map(([week, prices]) => {
-            // Calculate average price
-            const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-            
-            // Find a date that belongs to this week
-            const dateForWeek = response.find(item => item.date.split("/")[1] === week)?.date || "";
-            
-            return {
-              date: dateForWeek,
-              price: parseFloat(avgPrice.toFixed(4))
-            };
-          });
-          
-          // Limit to 12 weeks if needed
-          if (processedData.length > 12) {
-            processedData = processedData.slice(-12);
-          }
-        } else if (timeframe === "days" && processedData.length > 30) {
-          // Limit to 30 days
-          processedData = processedData.slice(-30);
-        }
+        // Cache the result for future use
+        Cache.set(cacheKey, sortedData, CACHE_DURATION_MINUTES);
         
-        setPriceData(processedData);
+        setPriceData(sortedData);
       } catch (err) {
-        console.error("Error fetching LP token history:", err);
+        console.error("[useLPTokenHistory] Error fetching LP token history:", err);
         setError(err instanceof Error ? err : new Error("Failed to fetch token price history"));
         setPriceData([]);
       } finally {
@@ -96,7 +70,7 @@ export function useLPTokenHistory(
     };
 
     fetchTokenHistory();
-  }, [contractAddress, timeframe]);
+  }, [memoizedContractAddress]);
 
   return { priceData, isLoading, error };
 }

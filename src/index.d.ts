@@ -27,4 +27,20 @@ declare module '*.json' {
 interface Window {
   // Add any window extensions here
   ethereum?: any;
+  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+  cancelIdleCallback?: (handle: number) => void;
+}
+
+// Define the interfaces needed for requestIdleCallback
+interface IdleRequestOptions {
+  timeout: number;
+}
+
+interface IdleRequestCallback {
+  (deadline: IdleDeadline): void;
+}
+
+interface IdleDeadline {
+  didTimeout: boolean;
+  timeRemaining: () => number;
 }

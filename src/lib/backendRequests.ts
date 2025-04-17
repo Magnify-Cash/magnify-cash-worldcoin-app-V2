@@ -1,10 +1,10 @@
 import backendRequest from "@/lib/request";
 import { MAX_UINT256 } from "@/utils/constants";
-import { 
-  BackendResponse, 
-  TokenMetadata, 
-  WalletData, 
-  TransactionData, 
+import {
+  BackendResponse,
+  TokenMetadata,
+  WalletData,
+  TransactionData,
   WalletTokens,
   PreviewMintResponse,
   PreviewDepositResponse,
@@ -47,11 +47,16 @@ import {
   HasDefaultedLoanResponse,
   GetDefaultedLegacyLoanResponse,
   GetDefaultedLoanFeeResponse,
- } from "@/utils/types";
+  PoolLpTokenPrice,
+} from "@/utils/types";
 import { ISuccessResult } from "@worldcoin/minikit-js";
 
 export const getETHBalance = async (wallet: string): Promise<number> => {
-  const response = await backendRequest<{ ethBalance: number }>("GET", "getEthBalance", { wallet });
+  const response = await backendRequest<{ ethBalance: number }>(
+    "GET",
+    "getEthBalance",
+    { wallet }
+  );
 
   if (!response.data || typeof response.data.ethBalance !== "number") {
     console.error(`Invalid ETH balance response:`, response);
@@ -61,63 +66,102 @@ export const getETHBalance = async (wallet: string): Promise<number> => {
   return response.data.ethBalance;
 };
 
-
 export const getUSDCBalance = async (wallet: string): Promise<number> => {
-  const response = await backendRequest<{ usdcBalance: number }>("GET", "getUSDCBalance", { wallet });
+  const response = await backendRequest<{ usdcBalance: number }>(
+    "GET",
+    "getUSDCBalance",
+    { wallet }
+  );
 
   if (!response.data || typeof response.data.usdcBalance !== "number") {
-    console.error(`Failed to fetch USDC balance. Status: ${response.status}, Message: ${response.message}`);
+    console.error(
+      `Failed to fetch USDC balance. Status: ${response.status}, Message: ${response.message}`
+    );
     return 0;
   }
 
   return response.data.usdcBalance;
 };
 
-export const getWalletTokens = async (wallet: string): Promise<WalletTokens[]> => {
-  const response = await backendRequest<WalletTokens[]>("GET", "getWalletTokens", { wallet });
+export const getWalletTokens = async (
+  wallet: string
+): Promise<WalletTokens[]> => {
+  const response = await backendRequest<WalletTokens[]>(
+    "GET",
+    "getWalletTokens",
+    { wallet }
+  );
 
   if (!response.data || !Array.isArray(response.data)) {
-    throw new Error(`Failed to fetch token balance. Status: ${response.status}, Message: ${response.message}`);
+    throw new Error(
+      `Failed to fetch token balance. Status: ${response.status}, Message: ${response.message}`
+    );
   }
 
   return response.data.length > 0 ? response.data : [];
 };
 
-export const getTokenMetadata = async (tokenAddress: string): Promise<TokenMetadata> => {
-  const response = await backendRequest<TokenMetadata>("GET", "getTokenMetadata", { tokenAddress });
+export const getTokenMetadata = async (
+  tokenAddress: string
+): Promise<TokenMetadata> => {
+  const response = await backendRequest<TokenMetadata>(
+    "GET",
+    "getTokenMetadata",
+    { tokenAddress }
+  );
 
   if (!response.data || !response.data.metadata) {
-    throw new Error(`Failed to fetch token metadata. Status: ${response.status}, Message: ${response.message}`);
+    throw new Error(
+      `Failed to fetch token metadata. Status: ${response.status}, Message: ${response.message}`
+    );
   }
 
   return response.data;
 };
 
 export const checkWallet = async (wallet: string): Promise<boolean> => {
-  const response = await backendRequest<{ exists: boolean }>("GET", "checkWallet", { wallet });
+  const response = await backendRequest<{ exists: boolean }>(
+    "GET",
+    "checkWallet",
+    { wallet }
+  );
 
   if (!response.data || response.data.exists === undefined) {
-    throw new Error(`Failed to fetch wallet existence. Status: ${response.status}, Message: ${response.message}`);
+    throw new Error(
+      `Failed to fetch wallet existence. Status: ${response.status}, Message: ${response.message}`
+    );
   }
 
   return response.data.exists;
 };
 
 export const saveWallet = async (wallet: string): Promise<WalletData[]> => {
-  const response = await backendRequest<WalletData[]>("POST", "saveWallet", { wallet });
+  const response = await backendRequest<WalletData[]>("POST", "saveWallet", {
+    wallet,
+  });
 
   if (!response.data) {
-    throw new Error(`Failed to save wallet. Status: ${response.status}, Message: ${response.message}`);
+    throw new Error(
+      `Failed to save wallet. Status: ${response.status}, Message: ${response.message}`
+    );
   }
 
   return response.data;
 };
 
-export const getTransactionHistory = async (wallet: string): Promise<TransactionData[]> => {
-  const response = await backendRequest<TransactionData[]>("GET", "getTransactionHistory", { wallet });
+export const getTransactionHistory = async (
+  wallet: string
+): Promise<TransactionData[]> => {
+  const response = await backendRequest<TransactionData[]>(
+    "GET",
+    "getTransactionHistory",
+    { wallet }
+  );
 
   if (!response.data) {
-    throw new Error(`Failed to fetch transaction history. Status: ${response.status}, Message: ${response.message}`);
+    throw new Error(
+      `Failed to fetch transaction history. Status: ${response.status}, Message: ${response.message}`
+    );
   }
 
   return response.data;
@@ -139,12 +183,18 @@ export const verify = async (
     requestBody.tokenId = tokenId;
   }
 
-  const response = await backendRequest<BackendResponse<any>>("POST", "verify", requestBody);
+  const response = await backendRequest<BackendResponse<any>>(
+    "POST",
+    "verify",
+    requestBody
+  );
 
   if (response.status === 200) {
     return true;
   } else {
-    throw new Error(`Verification failed with status: ${response.status}, Message: ${response.message}`);
+    throw new Error(
+      `Verification failed with status: ${response.status}, Message: ${response.message}`
+    );
   }
 };
 
@@ -207,7 +257,6 @@ export const previewRedeem = async (
   return response.data;
 };
 
-
 export const previewWithdraw = async (
   assets: number,
   contract: string
@@ -265,14 +314,10 @@ export const getLoanHistory = async (
   return response.data;
 };
 
-export const getAllLoans = async (
-  contract: string
-): Promise<AllLoansEntry> => {
-  const response = await backendRequest<AllLoansEntry>(
-    "GET",
-    "loans",
-    { contract }
-  );
+export const getAllLoans = async (contract: string): Promise<AllLoansEntry> => {
+  const response = await backendRequest<AllLoansEntry>("GET", "loans", {
+    contract,
+  });
 
   if (!response.data || !Array.isArray(response.data)) {
     throw new Error(
@@ -292,10 +337,7 @@ export const getPoolUSDCBalance = async (
     { contract }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.totalAssets !== "number"
-  ) {
+  if (!response.data || typeof response.data.totalAssets !== "number") {
     throw new Error(
       `Failed to fetch USDC pool balance. Status: ${response.status}, Message: ${response.message}`
     );
@@ -450,7 +492,12 @@ export const getPoolStatus = async (
     { contract }
   );
 
-  if (!response.data || !["isWarmup", "isActive", "isCooldown", "isExpired"].includes(response.data.status)) {
+  if (
+    !response.data ||
+    !["isWarmup", "isActive", "isCooldown", "isExpired"].includes(
+      response.data.status
+    )
+  ) {
     throw new Error(
       `Invalid pool status. Status: ${response.status}, Message: ${response.message}`
     );
@@ -586,20 +633,21 @@ export const getSoulboundUserNFT = async (
   return response.data;
 };
 
-export const getSoulboundPoolAddresses = async (): Promise<SoulboundPoolAddressesResponse> => {
-  const response = await backendRequest<SoulboundPoolAddressesResponse>(
-    "GET",
-    "soulbound/pools/address"
-  );
-
-  if (!response.data || !Array.isArray(response.data)) {
-    throw new Error(
-      `Failed to fetch Soulbound pool addresses. Status: ${response.status}, Message: ${response.message}`
+export const getSoulboundPoolAddresses =
+  async (): Promise<SoulboundPoolAddressesResponse> => {
+    const response = await backendRequest<SoulboundPoolAddressesResponse>(
+      "GET",
+      "soulbound/pools/address"
     );
-  }
 
-  return response.data;
-};
+    if (!response.data || !Array.isArray(response.data)) {
+      throw new Error(
+        `Failed to fetch Soulbound pool addresses. Status: ${response.status}, Message: ${response.message}`
+      );
+    }
+
+    return response.data;
+  };
 
 export const getPoolLiquidity = async (
   contract: string
@@ -610,10 +658,7 @@ export const getPoolLiquidity = async (
     { contract }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.liquidity !== "number"
-  ) {
+  if (!response.data || typeof response.data.liquidity !== "number") {
     throw new Error(
       `Failed to fetch pool liquidity. Status: ${response.status}, Message: ${response.message}`
     );
@@ -671,10 +716,7 @@ export const getPoolOriginationFee = async (
     { contract }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.originationFee !== "number"
-  ) {
+  if (!response.data || typeof response.data.originationFee !== "number") {
     throw new Error(
       `Failed to fetch origination fee. Status: ${response.status}, Message: ${response.message}`
     );
@@ -692,10 +734,7 @@ export const getPoolLoanAmount = async (
     { contract }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.loanAmount !== "number"
-  ) {
+  if (!response.data || typeof response.data.loanAmount !== "number") {
     throw new Error(
       `Failed to fetch loan amount. Status: ${response.status}, Message: ${response.message}`
     );
@@ -713,10 +752,7 @@ export const getPoolWarmupPeriod = async (
     { contract }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.warmupPeriodDays !== "number"
-  ) {
+  if (!response.data || typeof response.data.warmupPeriodDays !== "number") {
     throw new Error(
       `Failed to fetch warmup period. Status: ${response.status}, Message: ${response.message}`
     );
@@ -735,10 +771,7 @@ export const getUserLPBalance = async (
     { wallet, contract }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.balance !== "number"
-  ) {
+  if (!response.data || typeof response.data.balance !== "number") {
     throw new Error(
       `Failed to fetch user LP balance. Status: ${response.status}, Message: ${response.message}`
     );
@@ -748,8 +781,8 @@ export const getUserLPBalance = async (
 };
 
 export const getLPTokenHistory = async (
-  contract: string,
-): Promise <LPTokenHistoryResponse[]> => {
+  contract: string
+): Promise<LPTokenHistoryResponse[]> => {
   const response = await backendRequest<LPTokenHistoryResponse[]>(
     "GET",
     "v3/pool/lp/history",
@@ -763,7 +796,7 @@ export const getLPTokenHistory = async (
   }
 
   return response.data;
-}
+};
 
 export const getPoolEarlyExitFee = async (
   contract: string
@@ -774,10 +807,7 @@ export const getPoolEarlyExitFee = async (
     { contract }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.earlyExitFee !== "number"
-  ) {
+  if (!response.data || typeof response.data.earlyExitFee !== "number") {
     throw new Error(
       `Failed to fetch early exit fee. Status: ${response.status}, Message: ${response.message}`
     );
@@ -795,10 +825,7 @@ export const getPoolPenaltyFee = async (
     { contract }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.defaultPenalty !== "number"
-  ) {
+  if (!response.data || typeof response.data.defaultPenalty !== "number") {
     throw new Error(
       `Failed to fetch penalty fee. Status: ${response.status}, Message: ${response.message}`
     );
@@ -811,7 +838,7 @@ export const getUserDefaultedLoanPoolData = async (
   wallet: string,
   contract: string
 ): Promise<UserDefaultedLoanData> => {
-  const response = await backendRequest<{ 
+  const response = await backendRequest<{
     loanID: string;
     tokenId: string;
     loanTimestamp: string;
@@ -819,11 +846,7 @@ export const getUserDefaultedLoanPoolData = async (
     borrower: string;
     isDefault: boolean;
     isActive: boolean;
-  }>(
-    "GET",
-    "v3/user/default/data",
-    { wallet, contract }
-  );
+  }>("GET", "v3/user/default/data", { wallet, contract });
 
   if (!response.data || typeof response.data !== "object") {
     throw new Error(
@@ -844,10 +867,7 @@ export const getUserDefaultedLoanPoolStatus = async (
     { wallet, contract }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.hasDefaultedLoan !== "boolean"
-  ) {
+  if (!response.data || typeof response.data.hasDefaultedLoan !== "boolean") {
     throw new Error(
       `Failed to fetch user defaulted loan pool status. Status: ${response.status}, Message: ${response.message}`
     );
@@ -909,10 +929,7 @@ export const hasDefaultedLoan = async (
     { user }
   );
 
-  if (
-    !response.data ||
-    typeof response.data.hasDefaulted !== "boolean"
-  ) {
+  if (!response.data || typeof response.data.hasDefaulted !== "boolean") {
     throw new Error(
       `Failed to fetch defaulted loan status. Status: ${response.status}, Message: ${response.message}`
     );
@@ -943,18 +960,38 @@ export const getDefaultedLegacyLoanData = async (
   return response.data;
 };
 
-export const getDefaultedLoanFee = async (): Promise<GetDefaultedLoanFeeResponse> => {
-  const response = await backendRequest<GetDefaultedLoanFeeResponse>(
+export const getDefaultedLoanFee =
+  async (): Promise<GetDefaultedLoanFeeResponse> => {
+    const response = await backendRequest<GetDefaultedLoanFeeResponse>(
+      "GET",
+      "get/defaultedLoan/fee"
+    );
+
+    if (!response.data || typeof response.data.repaymentFee !== "number") {
+      throw new Error(
+        `Failed to fetch repayment fee. Status: ${response.status}, Message: ${response.message}`
+      );
+    }
+
+    return response.data;
+  };
+
+export const getPoolLpTokenPrice = async (
+  contract: string
+): Promise<PoolLpTokenPrice[]> => {
+  const response = await backendRequest<PoolLpTokenPrice>(
     "GET",
-    "get/defaultedLoan/fee"
+    `v3/pool/lp/price`,
+    { contract }
   );
 
   if (
     !response.data ||
-    typeof response.data.repaymentFee !== "number"
+    !Array.isArray(response.data) ||
+    response.data.some((entry) => typeof entry.token_price !== "string")
   ) {
     throw new Error(
-      `Failed to fetch repayment fee. Status: ${response.status}, Message: ${response.message}`
+      `Failed to fetch LP token price. Status: ${response.status}, Message: ${response.message}`
     );
   }
 

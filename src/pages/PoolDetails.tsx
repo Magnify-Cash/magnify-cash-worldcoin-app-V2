@@ -60,7 +60,6 @@ const PoolDetails = () => {
   } | null>(null);
   const [lpTokenPrice, setLpTokenPrice] = useState<number | null>(null);
 
-
   const userPosition = useUserPoolPosition(pool?.contract_address, refreshTrigger);
 
   useCacheListener(EVENTS.POOL_DATA_UPDATED, (data) => {
@@ -495,7 +494,7 @@ const PoolDetails = () => {
   const shouldShowSupplyButton = pool?.status !== 'withdrawal';
   const shouldShowWithdrawButton = pool?.status !== 'active';
   
-  const showPriceChart = false;
+  const showPriceChart = true;
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -652,14 +651,6 @@ const PoolDetails = () => {
                 </CardContent>
               </Card>
 
-              {showPriceChart && (
-                <PoolPriceGraph 
-                  poolId={pool.id} 
-                  symbol={poolSymbol} 
-                  contractAddress={pool.contract_address}
-                />
-              )}
-
               <UserPortfolioCard
                 balance={userPosition.balance}
                 currentValue={userPosition.currentValue}
@@ -674,6 +665,14 @@ const PoolDetails = () => {
                 poolContractAddress={pool.contract_address}
                 key={`position-${refreshTrigger}`}
               />
+
+              {showPriceChart && (
+                <PoolPriceGraph 
+                  poolId={pool.id} 
+                  symbol={poolSymbol} 
+                  contractAddress={pool.contract_address}
+                />
+              )}
             </div>
 
             <Card className="bg-gradient-to-r from-[#1A1E8F]/5 via-[#5A1A8F]/10 to-[#A11F75]/5 border-[#8B5CF6]/20">

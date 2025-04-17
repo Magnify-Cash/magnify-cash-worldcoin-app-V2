@@ -88,10 +88,5 @@ if (typeof window !== 'undefined' && !window.requestIdleCallback) {
   };
 }
 
-// Add TypeScript declarations for the global window object
-declare global {
-  interface Window {
-    requestIdleCallback: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
-    cancelIdleCallback: (handle: number) => void;
-  }
-}
+// Modify the TypeScript declarations for the global window object to avoid conflicts
+// Instead of redeclaring the interface, add the declarations to the index.d.ts file

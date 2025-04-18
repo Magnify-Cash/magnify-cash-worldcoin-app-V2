@@ -252,7 +252,7 @@ const RepayLoan = () => {
       }
 
       const microUsdcAmount = BigInt(Math.round(totalDueAmount * 1000000));
-      await repayLegacyDefaultedLoan(microUsdcAmount);
+      await repayLegacyDefaultedLoan(microUsdcAmount, ls_wallet as string);
 
       sessionStorage.removeItem("usdcBalance");
       sessionStorage.removeItem("walletTokens");

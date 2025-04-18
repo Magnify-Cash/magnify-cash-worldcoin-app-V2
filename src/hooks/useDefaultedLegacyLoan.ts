@@ -20,7 +20,6 @@ import {
   type V1LoanInfo,
 } from "@/lib/v1LoanRequests";
 import { LegacyDefaultedLoanResponse } from "@/utils/types";
-import { magnifyDefaultsAbi } from "@/utils/defaultsAbi";
 
 interface V1LoanData {
   isActive: boolean;
@@ -175,7 +174,78 @@ const useDefaultedLegacyLoan = () => {
           transaction: [
             {
               address: MAGNIFY_DEFAULTS_ADDRESS as `0x${string}`,
-              abi: magnifyDefaultsAbi,
+              abi: [
+                {
+                  inputs: [
+                    {
+                      internalType: "address",
+                      name: "_user",
+                      type: "address",
+                    },
+                    {
+                      components: [
+                        {
+                          components: [
+                            {
+                              internalType: "address",
+                              name: "token",
+                              type: "address",
+                            },
+                            {
+                              internalType: "uint256",
+                              name: "amount",
+                              type: "uint256",
+                            },
+                          ],
+                          internalType: "struct ISignatureTransfer.TokenPermissions",
+                          name: "permitted",
+                          type: "tuple",
+                        },
+                        {
+                          internalType: "uint256",
+                          name: "nonce",
+                          type: "uint256",
+                        },
+                        {
+                          internalType: "uint256",
+                          name: "deadline",
+                          type: "uint256",
+                        },
+                      ],
+                      internalType: "struct ISignatureTransfer.PermitTransferFrom",
+                      name: "permitTransferFrom",
+                      type: "tuple",
+                    },
+                    {
+                      components: [
+                        {
+                          internalType: "address",
+                          name: "to",
+                          type: "address",
+                        },
+                        {
+                          internalType: "uint256",
+                          name: "requestedAmount",
+                          type: "uint256",
+                        },
+                      ],
+                      internalType:
+                        "struct ISignatureTransfer.SignatureTransferDetails",
+                      name: "transferDetails",
+                      type: "tuple",
+                    },
+                    {
+                      internalType: "bytes",
+                      name: "signature",
+                      type: "bytes",
+                    },
+                  ],
+                  name: "repayDefaultedLegacyLoanWithPermit2",
+                  outputs: [],
+                  stateMutability: "nonpayable",
+                  type: "function",
+                },
+              ],
               functionName: "repayDefaultedLegacyLoanWithPermit2",
               args: [
                 userAddress,

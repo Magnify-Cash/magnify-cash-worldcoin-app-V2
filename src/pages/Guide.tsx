@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import { LoanCard } from "@/components/LoanCard";
 import { useNavigate } from "react-router-dom";
@@ -144,6 +145,73 @@ const Guide = () => {
           </h1>
           <div className="glass-card p-8 hover:shadow-[0_0_15px_rgba(90,26,143,0.1)] transition-all duration-300">
             <Accordion type="single" collapsible className="space-y-4">
+              {/* Moved these items to the top as requested */}
+              <AccordionItem value="item-9" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  I was previously device-verified, but now I can&apos;t apply for new loans. Why?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                We have updated our eligibility criteria to offer loans exclusively to Orb-verified users. This change ensures that every borrower is a real, unique human, as Orb verification provides a higher level of identity assurance. Unfortunately, device verification does not offer the same level of certainty, meaning we cannot reliably distinguish between real users and potential fraudulent accounts. By serving only Orb-verified users, we can maintain a fair and secure lending environment for everyone.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-10" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  What's different about borrowing in V3?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  In previous versions, there was just one perpetual pool for all borrowers. In V3, you can choose from multiple liquidity pools, each with different terms — like loan amount, interest rate, and loan duration. You decide which pool to borrow from based on what's available and what best fits your needs.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-11" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  I already claimed an NFT before — why do I need to claim it again in V3?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  With the launch of V3, Magnify Cash uses a new borrower NFT to support updated borrowing logic. Even if you claimed an NFT in V1 or V2, you'll need to claim the new V3 borrower NFT to continue borrowing. This NFT still verifies your ORB status via World ID and is required to unlock borrowing in V3. You can claim it from the Profile page of the Magnify Cash app. Claiming is quick and only needs to be done once.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-12" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  What is the origination fee, and how does it affect my loan?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  An origination fee is a small percentage taken upfront when your loan is issued. For example, if you borrow 1 USDC with a 1% origination fee, you'll receive 0.99 USDC — but you'll still repay the full 1 USDC plus interest.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-13" className="border-b border-gray-200">
+                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
+                  I have an existing loan from V1 or V2 — can I borrow in V3?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pt-2">
+                  If you currently have an active or defaulted loan from V1 or V2, you won't be able to borrow in V3 until that loan is fully resolved.
+                  
+                  <div className="mt-2 space-y-4">
+                    <p className="flex items-start">
+                      <span className="text-green-500 font-bold mr-2">✅</span> 
+                      <span>If your loan is still active, you'll need to repay it in full before accessing any V3 liquidity pools.</span>
+                    </p>
+                    
+                    <p className="flex items-start">
+                      <span className="text-red-500 font-bold mr-2">❌</span> 
+                      <span>If your loan was defaulted, your borrowing access is currently locked.</span>
+                    </p>
+                  </div>
+                  
+                  <p className="mt-4">
+                    We're working on a path to bring V1/V2 defaulters back into the system. You may be able to unlock borrowing again by paying a re-entry fee in the future. More details will be shared soon in the app and on our social channels.
+                  </p>
+                  
+                  <p className="mt-2">
+                    <strong>Note:</strong> All borrowers — including those returning from V1/V2 — must also claim the new V3 borrower NFT from the Profile page in the Magnify Cash app before borrowing.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Original FAQ items continue below */}
               <AccordionItem value="item-1" className="border-b border-gray-200">
                 <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
                   How many loans can I apply for at a time?
@@ -158,7 +226,13 @@ const Guide = () => {
                   What happens if I don't repay my loan before the due date?
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600 pt-2">
-                  If you default on your loan, you will lose the ability to repay it. Defaulting also means you will no longer be eligible to apply for new loans. To avoid this, ensure you repay your loans on time! For current defaulters who wish to continue borrowing in the future, stay tuned for further updates.
+                  If you miss your repayment deadline, your loan will be marked as defaulted. When this happens:
+                  <ul className="list-disc pl-5 space-y-2 mt-2">
+                    <li>You will be blocked from taking any new loans from any liquidity pool.</li>
+                    <li>To regain borrowing access, you must repay the full overdue loan plus a defaulter fee.</li>
+                    <li>The default may negatively affect the value of LP tokens held by lenders in that pool.</li>
+                    <li>Timely repayment helps maintain your access to future loans and supports a healthy lending environment for everyone.</li>
+                  </ul>
                 </AccordionContent>
               </AccordionItem>
 
@@ -223,15 +297,6 @@ const Guide = () => {
                 <a className="text-[#5A1A8F] hover:text-[#1A1E8F] transition-colors underline" href="https://discord.gg/magnifycash">
                     Discord
                   </a>, where you&apos;ll be able to ask questions and raise a Support Ticket so that our team can help you out.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-9" className="border-b border-gray-200">
-                <AccordionTrigger className="text-xl font-semibold hover:text-[#5A1A8F] transition-colors">
-                  I was previously device-verified, but now I can&apos;t apply for new loans. Why?
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-600 pt-2">
-                We have updated our eligibility criteria to offer loans exclusively to Orb-verified users. This change ensures that every borrower is a real, unique human, as Orb verification provides a higher level of identity assurance. Unfortunately, device verification does not offer the same level of certainty, meaning we cannot reliably distinguish between real users and potential fraudulent accounts. By serving only Orb-verified users, we can maintain a fair and secure lending environment for everyone.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

@@ -1,9 +1,15 @@
+
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Sentry from "@sentry/react";
 import App from "./App.tsx";
 import "./index.css";
 import { ENVIRONMENT } from "@/utils/constants";
+
+import { WagmiProvider } from "wagmi";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { config } from "@/lib/rainbowKit";
+import "@rainbow-me/rainbowkit/styles.css";
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -70,12 +76,23 @@ Sentry.setUser({
   wallet: walletAddress,
 });
 
-const AppWithSentry = () => (
+// Add pool details route to App.tsx
+if (import.meta.hot) {
+  import.meta.hot.accept('./App.tsx', () => {
+    console.log('App.tsx updated');
+  });
+}
+
+const AppWithProviders = () => (
   <Sentry.ErrorBoundary fallback={<h2>Something went wrong</h2>}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
+          <App />
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   </Sentry.ErrorBoundary>
 );
 
-createRoot(document.getElementById("root")!).render(<AppWithSentry />);
+createRoot(document.getElementById("root")!).render(<AppWithProviders />);

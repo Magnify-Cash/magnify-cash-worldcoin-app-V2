@@ -2,7 +2,36 @@
 import { Globe, IdCard, ScanLine } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-type IconType = "passport" | "world" | "orb";
+export type IconType = "passport" | "world" | "orb";
+
+// Define interfaces for the loan and borrower info
+export interface ActiveLoan {
+  loanAmount: number;
+  startTimestamp: number;
+  isActive: boolean;
+  interestRate: number;
+  loanPeriod: number;
+}
+
+export interface BorrowerInfo {
+  contractAddress?: string;
+  loanAmount?: number;
+  interestRate?: number;
+  loanPeriod?: number;
+}
+
+export interface LoanCardProps {
+  title?: string;
+  amount?: string;
+  interest?: string;
+  duration?: string;
+  icon?: IconType;
+  // Add new props for compatibility with RepayLoan.tsx
+  loan?: ActiveLoan;
+  borrowerInfo?: BorrowerInfo;
+  showPayButton?: boolean;
+  showStatus?: boolean;
+}
 
 export const LoanCard = ({
   title,
@@ -10,13 +39,17 @@ export const LoanCard = ({
   interest,
   duration,
   icon = "world",
-}: {
-  title: string;
-  amount: string;
-  interest: string;
-  duration: string;
-  icon?: IconType;
-}) => {
+  loan,
+  borrowerInfo,
+  showPayButton = false,
+  showStatus = false,
+}: LoanCardProps) => {
+  // Calculate derived props from loan object if provided
+  const displayTitle = title || (loan && borrowerInfo ? "Active Loan" : "Loan");
+  const displayAmount = amount || (loan ? `$${loan.loanAmount}` : "$0");
+  const displayInterest = interest || (loan ? `${loan.interestRate / 100}%` : "0%");
+  const displayDuration = duration || (loan ? `${loan.loanPeriod / (24 * 60 * 60)} days` : "0 days");
+
   const getIcon = (): { Icon: LucideIcon; color: string } => {
     switch (icon) {
       case "passport":
@@ -40,23 +73,31 @@ export const LoanCard = ({
         <div className="flex items-center mb-4">
           <Icon className={`w-8 h-8 mr-3 ${color}`} />
           <h3 className="text-lg font-medium bg-gradient-to-r from-[#1A1E8F] via-[#5A1A8F] to-[#A11F75] bg-clip-text text-transparent">
-            {title}
+            {displayTitle}
           </h3>
         </div>
       </div>
       <div className="space-y-2 mt-auto">
         <p className="text-gray-600 flex items-center justify-between">
           <span>Loan Amount:</span>
-          <span className="font-medium">{amount}</span>
+          <span className="font-medium">{displayAmount}</span>
         </p>
         <p className="text-gray-600 flex items-center justify-between">
           <span>Interest Rate:</span>
-          <span className="font-medium">{interest}</span>
+          <span className="font-medium">{displayInterest}</span>
         </p>
         <p className="text-gray-600 flex items-center justify-between">
           <span>Duration:</span>
-          <span className="font-medium">{duration}</span>
+          <span className="font-medium">{displayDuration}</span>
         </p>
+        {showStatus && loan && (
+          <p className="text-gray-600 flex items-center justify-between">
+            <span>Status:</span>
+            <span className={`font-medium ${loan.isActive ? "text-green-600" : "text-red-600"}`}>
+              {loan.isActive ? "Active" : "Inactive"}
+            </span>
+          </p>
+        )}
       </div>
     </div>
   );

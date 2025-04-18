@@ -7,12 +7,19 @@ import {
   WORLDCOIN_TOKEN_COLLATERAL,
   WORLDCOIN_CLIENT_ID,
   WORLDCHAIN_RPC_URL,
-  MAGNIFY_DEFAULTS_ADDRESS
+  MAGNIFY_DEFAULTS_ADDRESS,
 } from "@/utils/constants";
-import { hasDefaultedLoan, getDefaultedLegacyLoanData, getDefaultedLoanFee } from "@/lib/backendRequests";
-import { fetchLoanByAddress, fetchLoanInfo, type V1LoanInfo } from "@/lib/v1LoanRequests";
+import {
+  hasDefaultedLoan,
+  getDefaultedLegacyLoanData,
+  getDefaultedLoanFee,
+} from "@/lib/backendRequests";
+import {
+  fetchLoanByAddress,
+  fetchLoanInfo,
+  type V1LoanInfo,
+} from "@/lib/v1LoanRequests";
 import { LegacyDefaultedLoanResponse } from "@/utils/types";
-import { magnifyDefaultsAbi } from "@/utils/defaultsAbi";
 
 interface V1LoanData {
   isActive: boolean;
@@ -26,7 +33,9 @@ const useDefaultedLegacyLoan = () => {
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
-  const [loanData, setLoanData] = useState<LegacyDefaultedLoanResponse | null>(null);
+  const [loanData, setLoanData] = useState<LegacyDefaultedLoanResponse | null>(
+    null
+  );
   const [defaultPenaltyFee, setDefaultPenaltyFee] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [v1LoanData, setV1LoanData] = useState<V1LoanData | null>(null);
@@ -34,61 +43,54 @@ const useDefaultedLegacyLoan = () => {
 
   const client = createPublicClient({
     chain: worldchain,
-    transport: http(WORLDCHAIN_RPC_URL)
+    transport: http(WORLDCHAIN_RPC_URL),
   }) as any;
 
-  const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =
-    useWaitForTransactionReceipt({
-      client,
-      transactionId: transactionId ? transactionId as `0x${string}` : undefined,
-      appConfig: {
-        app_id: WORLDCOIN_CLIENT_ID,
-      },
-    });
+  const {
+    isLoading: isConfirmingTransaction,
+    isSuccess: isTransactionConfirmed,
+  } = useWaitForTransactionReceipt({
+    client,
+    transactionId: transactionId ? (transactionId as `0x${string}`) : undefined,
+    appConfig: {
+      app_id: WORLDCOIN_CLIENT_ID,
+    },
+  });
 
-  const fetchV1LoanData = useCallback(async (wallet: string, contractAddress: string) => {
-    setIsLoadingV1(true);
-    try {
-      console.log("[useDefaultedLegacyLoan] Fetching V1 loan data for wallet:", wallet);
-      
-      const loanIds = await fetchLoanByAddress(contractAddress, wallet);
-      
-      if (loanIds.length === 0) {
-        console.log("[useDefaultedLegacyLoan] No V1 loans found for wallet");
+  const fetchV1LoanData = useCallback(
+    async (wallet: string, contractAddress: string) => {
+      setIsLoadingV1(true);
+      try {
+        const loanIds = await fetchLoanByAddress(contractAddress, wallet);
+        if (loanIds.length === 0) {
+          setV1LoanData(null);
+          return;
+        }
+
+        const latestLoanId = loanIds[loanIds.length - 1];
+        const loanInfo = await fetchLoanInfo(contractAddress, latestLoanId);
+
+        const hasDefaulted = await hasDefaultedLoan(wallet);
+        const isDefaulted = hasDefaulted.hasDefaulted;
+
+        const now = BigInt(Math.floor(Date.now() / 1000));
+        const isActive = now < loanInfo.dueDate;
+
+        setV1LoanData({
+          tokenId: latestLoanId,
+          isActive,
+          isDefaulted,
+          loanInfo,
+        });
+      } catch (error) {
+        setError((error as Error).message);
         setV1LoanData(null);
-        return;
+      } finally {
+        setIsLoadingV1(false);
       }
-
-      const latestLoanId = loanIds[loanIds.length - 1];
-      const loanInfo = await fetchLoanInfo(contractAddress, latestLoanId);
-      
-      const hasDefaulted = await hasDefaultedLoan(wallet);
-      const isDefaulted = hasDefaulted.hasDefaulted;
-      
-      const now = BigInt(Math.floor(Date.now() / 1000));
-      const isActive = now < loanInfo.dueDate;
-      
-      console.log("[useDefaultedLegacyLoan] V1 loan data:", {
-        tokenId: latestLoanId,
-        isActive,
-        isDefaulted,
-        loanInfo
-      });
-
-      setV1LoanData({
-        tokenId: latestLoanId,
-        isActive,
-        isDefaulted,
-        loanInfo
-      });
-    } catch (error) {
-      console.error("[useDefaultedLegacyLoan] Error fetching V1 loan data:", error);
-      setError((error as Error).message);
-      setV1LoanData(null);
-    } finally {
-      setIsLoadingV1(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   const fetchLegacyLoanData = useCallback(async (wallet: string) => {
     setIsLoading(true);
@@ -97,7 +99,7 @@ const useDefaultedLegacyLoan = () => {
       if (hasDefaulted.hasDefaulted) {
         const [data, feeData] = await Promise.all([
           getDefaultedLegacyLoanData(wallet),
-          getDefaultedLoanFee()
+          getDefaultedLoanFee(),
         ]);
         setLoanData(data);
         setDefaultPenaltyFee(feeData.repaymentFee);
@@ -105,7 +107,6 @@ const useDefaultedLegacyLoan = () => {
       }
       return null;
     } catch (err) {
-      console.error("[useDefaultedLegacyLoan] Error fetching legacy loan data:", err);
       setError((err as Error).message);
       return null;
     } finally {
@@ -113,88 +114,220 @@ const useDefaultedLegacyLoan = () => {
     }
   }, []);
 
-  const repayLegacyDefaultedLoan = useCallback(async (amount: bigint) => {
-    setError(null);
-    setTransactionId(null);
-    setIsConfirmed(false);
-  
-    try {
-      const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); 
-  
-      const permitTransfer = {
-        permitted: {
-          token: WORLDCOIN_TOKEN_COLLATERAL,
-          amount: amount.toString(),
-        },
-        nonce: Date.now().toString(), 
-        deadline, 
-      };
-  
-      const transferDetails = {
-        to: MAGNIFY_DEFAULTS_ADDRESS,
-        requestedAmount: amount.toString(),
-      };
-  
-      const permitTransferArgsForm = [
-        [permitTransfer.permitted.token, permitTransfer.permitted.amount],
-        permitTransfer.nonce,
-        permitTransfer.deadline,
-      ];
-  
-      const transferDetailsArgsForm = [
-        transferDetails.to,
-        transferDetails.requestedAmount,
-      ];
-  
-      const { commandPayload, finalPayload } = await MiniKit.commandsAsync.sendTransaction({
-        transaction: [
-          {
-            address: MAGNIFY_DEFAULTS_ADDRESS as `0x${string}`,
-            abi: magnifyDefaultsAbi,
-            functionName: "repayDefaultedLegacyLoanWithPermit2",
-            args: [
-              [
-                [String(permitTransferArgsForm[0][0]), String(permitTransferArgsForm[0][1])],
-                String(permitTransferArgsForm[1]),
-                String(permitTransferArgsForm[2]),
-              ],
-              [
-                String(transferDetailsArgsForm[0]),
-                String(transferDetailsArgsForm[1]),
-              ],
-              "PERMIT2_SIGNATURE_PLACEHOLDER_0"
-            ],
+  const repayLegacyDefaultedLoan = useCallback(
+    async (amount: bigint, loanIndexToUse: number = 0) => {
+      setError(null);
+      setTransactionId(null);
+      setIsConfirmed(false);
+
+      try {
+        const loanAmountString = amount.toString();
+        const deadline = Math.floor(
+          (Date.now() + 30 * 60 * 1000) / 1000
+        ).toString();
+        const nonce = Date.now().toString();
+
+        const permitTransfer = {
+          permitted: {
+            token: WORLDCOIN_TOKEN_COLLATERAL,
+            amount: loanAmountString,
           },
-        ],
-        permit2: [
-          {
-            ...permitTransfer,
-            spender: MAGNIFY_DEFAULTS_ADDRESS,
-          },
-        ],
-      });
-  
-      if (finalPayload.status === "success") {
-        setTransactionId(finalPayload.transaction_id);
-        setIsConfirming(true);
-      } else {
-        setError(
-          finalPayload.error_code === "user_rejected"
-            ? "User rejected transaction"
-            : "Transaction failed"
+          nonce,
+          deadline,
+        };
+
+        const transferDetails = {
+          to: MAGNIFY_DEFAULTS_ADDRESS,
+          requestedAmount: loanAmountString,
+        };
+
+        const permitTransferArgsForm = [
+          [permitTransfer.permitted.token, permitTransfer.permitted.amount],
+          permitTransfer.nonce,
+          permitTransfer.deadline,
+        ];
+
+        const transferDetailsArgsForm = [
+          transferDetails.to,
+          transferDetails.requestedAmount,
+        ];
+
+        // Logging values and types before the transaction
+        console.log("======== Transaction Debug Logs ========");
+        console.log(
+          "loanIndexToUse:",
+          loanIndexToUse,
+          "| type:",
+          typeof loanIndexToUse
         );
+        console.log(
+          "permitTransfer.permitted.token:",
+          permitTransfer.permitted.token,
+          "| type:",
+          typeof permitTransfer.permitted.token
+        );
+        console.log(
+          "permitTransfer.permitted.amount:",
+          permitTransfer.permitted.amount,
+          "| type:",
+          typeof permitTransfer.permitted.amount
+        );
+        console.log(
+          "permitTransfer.nonce:",
+          permitTransfer.nonce,
+          "| type:",
+          typeof permitTransfer.nonce
+        );
+        console.log(
+          "permitTransfer.deadline:",
+          permitTransfer.deadline,
+          "| type:",
+          typeof permitTransfer.deadline
+        );
+        console.log(
+          "transferDetails.to:",
+          transferDetails.to,
+          "| type:",
+          typeof transferDetails.to
+        );
+        console.log(
+          "transferDetails.requestedAmount:",
+          transferDetails.requestedAmount,
+          "| type:",
+          typeof transferDetails.requestedAmount
+        );
+        console.log(
+          "permitTransferArgsForm:",
+          permitTransferArgsForm,
+          "| type:",
+          typeof permitTransferArgsForm
+        );
+        console.log(
+          "transferDetailsArgsForm:",
+          transferDetailsArgsForm,
+          "| type:",
+          typeof transferDetailsArgsForm
+        );
+        console.log("=========================================");
+
+        const { commandPayload, finalPayload } =
+          await MiniKit.commandsAsync.sendTransaction({
+            transaction: [
+              {
+                address: MAGNIFY_DEFAULTS_ADDRESS as `0x${string}`,
+                abi: [
+                  {
+                    inputs: [
+                      {
+                        internalType: "uint256",
+                        name: "_index",
+                        type: "uint256",
+                      },
+                      {
+                        components: [
+                          {
+                            components: [
+                              {
+                                internalType: "address",
+                                name: "token",
+                                type: "address",
+                              },
+                              {
+                                internalType: "uint256",
+                                name: "amount",
+                                type: "uint256",
+                              },
+                            ],
+                            internalType:
+                              "struct ISignatureTransfer.TokenPermissions",
+                            name: "permitted",
+                            type: "tuple",
+                          },
+                          {
+                            internalType: "uint256",
+                            name: "nonce",
+                            type: "uint256",
+                          },
+                          {
+                            internalType: "uint256",
+                            name: "deadline",
+                            type: "uint256",
+                          },
+                        ],
+                        internalType:
+                          "struct ISignatureTransfer.PermitTransferFrom",
+                        name: "permitTransferFrom",
+                        type: "tuple",
+                      },
+                      {
+                        components: [
+                          {
+                            internalType: "address",
+                            name: "to",
+                            type: "address",
+                          },
+                          {
+                            internalType: "uint256",
+                            name: "requestedAmount",
+                            type: "uint256",
+                          },
+                        ],
+                        internalType:
+                          "struct ISignatureTransfer.SignatureTransferDetails",
+                        name: "transferDetails",
+                        type: "tuple",
+                      },
+                      {
+                        internalType: "bytes",
+                        name: "signature",
+                        type: "bytes",
+                      },
+                    ],
+                    name: "repayDefaultedLoanWithPermit2",
+                    outputs: [],
+                    stateMutability: "nonpayable",
+                    type: "function",
+                  },
+                ],
+                functionName: "repayDefaultedLoanWithPermit2",
+                args: [
+                  loanIndexToUse.toString(),
+                  permitTransferArgsForm,
+                  transferDetailsArgsForm,
+                  "PERMIT2_SIGNATURE_PLACEHOLDER_0",
+                ],
+              },
+            ],
+            permit2: [
+              {
+                ...permitTransfer,
+                spender: MAGNIFY_DEFAULTS_ADDRESS,
+              },
+            ],
+          });
+
+        if (finalPayload.status === "success") {
+          setTransactionId(finalPayload.transaction_id);
+          setIsConfirming(true);
+        } else {
+          setError(
+            finalPayload.error_code === "user_rejected"
+              ? "User rejected transaction"
+              : "Transaction failed"
+          );
+          setIsConfirming(false);
+        }
+      } catch (err) {
+        console.error("Error in repayLegacyDefaultedLoan:", err);
+        setError((err as Error).message);
+        setIsConfirming(false);
       }
-    } catch (err) {
-      console.error("Error repaying legacy defaulted loan:", err);
-      setError((err as Error).message);
-    }
-  }, []);
-  
+    },
+    []
+  );
 
   useEffect(() => {
-    if (isConfirmingTransaction) {
-      setIsConfirming(true);
-    }
+    if (isConfirmingTransaction) setIsConfirming(true);
     if (isTransactionConfirmed) {
       setIsConfirming(false);
       setIsConfirmed(true);

@@ -102,6 +102,12 @@ export const Header = ({ title, showBack = true }: HeaderProps) => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="min-h-[40px] focus:text-white focus-visible:text-white"
+                  onClick={() => navigate("/announcements")}
+                >
+                  Announcements
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="min-h-[40px] focus:text-white focus-visible:text-white"
                   onClick={() => navigate("/lender-guide")}
                 >
                   Help Center

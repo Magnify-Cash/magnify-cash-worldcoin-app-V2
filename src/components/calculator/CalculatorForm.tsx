@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Calculator, Sliders, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -260,7 +259,6 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
             </div>
           </div>
           
-          {/* Moved Pool Template select here, under Loan Terms */}
           <div className="mb-4">
             <Label htmlFor="poolSelect" className="block text-sm mb-1">Pool Template:</Label>
             <Select value={selectedPool} onValueChange={handlePoolSelect} disabled={isDropdownDisabled}>
@@ -294,9 +292,9 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               <div className="flex items-center gap-4">
                 <Slider
                   id="loanAmount"
-                  min={10}
+                  min={1}
                   max={50}
-                  step={10}
+                  step={1}
                   value={[inputs.loanAmount]}
                   onValueChange={(value) => handleSliderChange("loanAmount", value)}
                   className="flex-1"
@@ -304,9 +302,8 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                 <Input
                   name="loanAmount"
                   type="number"
-                  min="10"
+                  min="1"
                   max="50"
-                  step="10"
                   value={inputs.loanAmount}
                   onChange={handleInputChange}
                   className="w-20 focus-visible:ring-[#8B5CF6]"

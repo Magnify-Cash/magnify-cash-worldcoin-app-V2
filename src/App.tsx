@@ -1,5 +1,5 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { NavigationProvider } from "./contexts/NavigationContext";
 import Welcome from "@/pages/Welcome";
 import Guide from "@/pages/Guide";
 import LenderGuide from "@/pages/LenderGuide";
@@ -48,82 +48,84 @@ function App() {
       <USDCBalanceProvider>
         <ModalProvider>
           <PoolDataProvider>
-            <Toaster />
-            <Router>
-              <ScrollToTop />
-              <Routes>
-                <Route path="/" element={<Navigate to="/welcome" replace />} />
-                <Route path="/welcome" element={<Welcome />} />
-                <Route path="/lending" element={<Lending />} />
-                <Route path="/pool/:contract" element={<PoolDetails />} />
-                {/* Legacy route support */}
-                <Route path="/pool/id/:id" element={<PoolDetails />} />
-                <Route path="/portfolio" element={<Portfolio />} />
-                <Route path="/lending-history" element={<LendingHistory />} />
-                <Route path="/calculator" element={<Calculator />} />
-                <Route path="/lender-guide" element={<LenderGuide />} />
-                
-                {/* MiniApp-only routes */}
-                <Route
-                  path="/announcements"
-                  element={
-                    <MetamaskRestrictedRoute>
-                      <Announcements />
-                    </MetamaskRestrictedRoute>
-                  }
-                />
-                <Route
-                  path="/guide"
-                  element={
-                    <MetamaskRestrictedRoute>
-                      <Guide />
-                    </MetamaskRestrictedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <MetamaskRestrictedRoute>
-                      <Profile />
-                    </MetamaskRestrictedRoute>
-                  }
-                />
-                <Route
-                  path="/wallet"
-                  element={
-                    <MetamaskRestrictedRoute>
-                      <Wallet />
-                    </MetamaskRestrictedRoute>
-                  }
-                />
-                <Route
-                  path="/loan"
-                  element={
-                    <MetamaskRestrictedRoute>
-                      <Loan />
-                    </MetamaskRestrictedRoute>
-                  }
-                />
-                <Route
-                  path="/repay-loan"
-                  element={
-                    <MetamaskRestrictedRoute>
-                      <RepayLoan />
-                    </MetamaskRestrictedRoute>
-                  }
-                />
-                <Route
-                  path="/loan-history"
-                  element={
-                    <MetamaskRestrictedRoute>
-                      <LoanHistory />
-                    </MetamaskRestrictedRoute>
-                  }
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Router>
-            <ModalManager />
+            <NavigationProvider>
+              <Toaster />
+              <Router>
+                <ScrollToTop />
+                <Routes>
+                  <Route path="/" element={<Navigate to="/welcome" replace />} />
+                  <Route path="/welcome" element={<Welcome />} />
+                  <Route path="/lending" element={<Lending />} />
+                  <Route path="/pool/:contract" element={<PoolDetails />} />
+                  {/* Legacy route support */}
+                  <Route path="/pool/id/:id" element={<PoolDetails />} />
+                  <Route path="/portfolio" element={<Portfolio />} />
+                  <Route path="/lending-history" element={<LendingHistory />} />
+                  <Route path="/calculator" element={<Calculator />} />
+                  <Route path="/lender-guide" element={<LenderGuide />} />
+                  
+                  {/* MiniApp-only routes */}
+                  <Route
+                    path="/announcements"
+                    element={
+                      <MetamaskRestrictedRoute>
+                        <Announcements />
+                      </MetamaskRestrictedRoute>
+                    }
+                  />
+                  <Route
+                    path="/guide"
+                    element={
+                      <MetamaskRestrictedRoute>
+                        <Guide />
+                      </MetamaskRestrictedRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <MetamaskRestrictedRoute>
+                        <Profile />
+                      </MetamaskRestrictedRoute>
+                    }
+                  />
+                  <Route
+                    path="/wallet"
+                    element={
+                      <MetamaskRestrictedRoute>
+                        <Wallet />
+                      </MetamaskRestrictedRoute>
+                    }
+                  />
+                  <Route
+                    path="/loan"
+                    element={
+                      <MetamaskRestrictedRoute>
+                        <Loan />
+                      </MetamaskRestrictedRoute>
+                    }
+                  />
+                  <Route
+                    path="/repay-loan"
+                    element={
+                      <MetamaskRestrictedRoute>
+                        <RepayLoan />
+                      </MetamaskRestrictedRoute>
+                    }
+                  />
+                  <Route
+                    path="/loan-history"
+                    element={
+                      <MetamaskRestrictedRoute>
+                        <LoanHistory />
+                      </MetamaskRestrictedRoute>
+                    }
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Router>
+              <ModalManager />
+            </NavigationProvider>
           </PoolDataProvider>
         </ModalProvider>
       </USDCBalanceProvider>

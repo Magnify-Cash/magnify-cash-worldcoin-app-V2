@@ -152,99 +152,131 @@ const useDefaultedLegacyLoan = () => {
           transferDetails.requestedAmount,
         ];
 
+        console.log(
+          "[useDefaultedLegacyLoan] Permit transfer:",
+          permitTransfer
+        );
+        console.log(
+          "[useDefaultedLegacyLoan] Transfer details:",
+          transferDetails
+        );
+        console.log(
+          "[useDefaultedLegacyLoan] Using contract address:",
+          MAGNIFY_DEFAULTS_ADDRESS
+        );
+        console.log(
+          "[useDefaultedLegacyLoan] User address:",
+          userAddress as string
+        );
+        console.log(
+          "[useDefaultedLegacyLoan] Amount:",
+          loanAmountString,
+          "Deadline:",
+          deadline
+        );
+
         const { commandPayload, finalPayload } =
-        await MiniKit.commandsAsync.sendTransaction({
-          transaction: [
-            {
-              address: MAGNIFY_DEFAULTS_ADDRESS as `0x${string}`,
-              abi: [
-                {
-                  inputs: [
-                    {
-                      internalType: "address",
-                      name: "_user",
-                      type: "address",
-                    },
-                    {
-                      components: [
-                        {
-                          components: [
-                            {
-                              internalType: "address",
-                              name: "token",
-                              type: "address",
-                            },
-                            {
-                              internalType: "uint256",
-                              name: "amount",
-                              type: "uint256",
-                            },
-                          ],
-                          internalType: "struct ISignatureTransfer.TokenPermissions",
-                          name: "permitted",
-                          type: "tuple",
-                        },
-                        {
-                          internalType: "uint256",
-                          name: "nonce",
-                          type: "uint256",
-                        },
-                        {
-                          internalType: "uint256",
-                          name: "deadline",
-                          type: "uint256",
-                        },
-                      ],
-                      internalType: "struct ISignatureTransfer.PermitTransferFrom",
-                      name: "permitTransferFrom",
-                      type: "tuple",
-                    },
-                    {
-                      components: [
-                        {
-                          internalType: "address",
-                          name: "to",
-                          type: "address",
-                        },
-                        {
-                          internalType: "uint256",
-                          name: "requestedAmount",
-                          type: "uint256",
-                        },
-                      ],
-                      internalType:
-                        "struct ISignatureTransfer.SignatureTransferDetails",
-                      name: "transferDetails",
-                      type: "tuple",
-                    },
-                    {
-                      internalType: "bytes",
-                      name: "signature",
-                      type: "bytes",
-                    },
-                  ],
-                  name: "repayDefaultedLegacyLoanWithPermit2",
-                  outputs: [],
-                  stateMutability: "nonpayable",
-                  type: "function",
-                },
-              ],
-              functionName: "repayDefaultedLegacyLoanWithPermit2",
-              args: [
-                userAddress as string,
-                permitTransferArgsForm,
-                transferDetailsArgsForm,
-                "PERMIT2_SIGNATURE_PLACEHOLDER_0",
-              ],
-            },
-          ],
-          permit2: [
-            {
-              ...permitTransfer,
-              spender: MAGNIFY_DEFAULTS_ADDRESS,
-            },
-          ],
-        });
+          await MiniKit.commandsAsync.sendTransaction({
+            transaction: [
+              {
+                address: MAGNIFY_DEFAULTS_ADDRESS as `0x${string}`,
+                abi: [
+                  {
+                    inputs: [
+                      {
+                        internalType: "address",
+                        name: "_user",
+                        type: "address",
+                      },
+                      {
+                        components: [
+                          {
+                            components: [
+                              {
+                                internalType: "address",
+                                name: "token",
+                                type: "address",
+                              },
+                              {
+                                internalType: "uint256",
+                                name: "amount",
+                                type: "uint256",
+                              },
+                            ],
+                            internalType:
+                              "struct ISignatureTransfer.TokenPermissions",
+                            name: "permitted",
+                            type: "tuple",
+                          },
+                          {
+                            internalType: "uint256",
+                            name: "nonce",
+                            type: "uint256",
+                          },
+                          {
+                            internalType: "uint256",
+                            name: "deadline",
+                            type: "uint256",
+                          },
+                        ],
+                        internalType:
+                          "struct ISignatureTransfer.PermitTransferFrom",
+                        name: "permitTransferFrom",
+                        type: "tuple",
+                      },
+                      {
+                        components: [
+                          {
+                            internalType: "address",
+                            name: "to",
+                            type: "address",
+                          },
+                          {
+                            internalType: "uint256",
+                            name: "requestedAmount",
+                            type: "uint256",
+                          },
+                        ],
+                        internalType:
+                          "struct ISignatureTransfer.SignatureTransferDetails",
+                        name: "transferDetails",
+                        type: "tuple",
+                      },
+                      {
+                        internalType: "bytes",
+                        name: "signature",
+                        type: "bytes",
+                      },
+                    ],
+                    name: "repayDefaultedLegacyLoanWithPermit2",
+                    outputs: [],
+                    stateMutability: "nonpayable",
+                    type: "function",
+                  },
+                ],
+                functionName: "repayDefaultedLegacyLoanWithPermit2",
+                args: [
+                  userAddress,
+                  permitTransferArgsForm,
+                  transferDetailsArgsForm,
+                  "PERMIT2_SIGNATURE_PLACEHOLDER_0",
+                ],
+              },
+            ],
+            permit2: [
+              {
+                ...permitTransfer,
+                spender: MAGNIFY_DEFAULTS_ADDRESS,
+              },
+            ],
+          });
+
+        console.log(
+          "[useDefaultedLegacyLoan] Command payload:",
+          commandPayload
+        );
+
+        console.log("[useDefaultedLegacyLoan] Final payload:", finalPayload);
 
         if (finalPayload.status === "success") {
           setTransactionId(finalPayload.transaction_id);

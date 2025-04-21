@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { NavigationProvider } from "./contexts/NavigationContext";
 import Welcome from "@/pages/Welcome";
 import Guide from "@/pages/Guide";
@@ -31,7 +36,7 @@ const allowedWallets = [
   "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c",
   "0x7af5e0de231d82def3bc262b1d5b3359495a4bfb",
   "0xf0c7db5acea62029058b0e4e0b79f2bac18686c4",
-  "0x6a7ec268afb31dab2b0ad39511af9db7c11944a1"
+  "0x6a7ec268afb31dab2b0ad39511af9db7c11944a1",
 ];
 
 // Hard-coded to developer's wallet address
@@ -39,8 +44,6 @@ const ls_wallet = localStorage.getItem("ls_wallet_address");
 if (allowedWallets.includes(ls_wallet)) {
   eruda.init();
 }
-
-eruda.init();
 
 function App() {
   return (
@@ -53,7 +56,10 @@ function App() {
               <Router>
                 <ScrollToTop />
                 <Routes>
-                  <Route path="/" element={<Navigate to="/welcome" replace />} />
+                  <Route
+                    path="/"
+                    element={<Navigate to="/welcome" replace />}
+                  />
                   <Route path="/welcome" element={<Welcome />} />
                   <Route path="/lending" element={<Lending />} />
                   <Route path="/pool/:contract" element={<PoolDetails />} />
@@ -63,7 +69,7 @@ function App() {
                   <Route path="/lending-history" element={<LendingHistory />} />
                   <Route path="/calculator" element={<Calculator />} />
                   <Route path="/lender-guide" element={<LenderGuide />} />
-                  
+
                   {/* MiniApp-only routes */}
                   <Route
                     path="/announcements"

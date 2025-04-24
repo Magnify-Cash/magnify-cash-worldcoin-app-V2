@@ -147,9 +147,9 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
       ...inputs,
       investmentAmount: Math.max(10, inputs.investmentAmount),
       poolSize: Math.max(100, inputs.poolSize),
-      loanPeriod: Math.min(Math.max(7, inputs.loanPeriod), 30),
-      interestRate: Math.min(Math.max(1, inputs.interestRate), 30),
-      originationFee: Math.min(Math.max(1, inputs.originationFee), 30),
+      loanPeriod: Math.min(Math.max(30, inputs.loanPeriod), 60),
+      interestRate: Math.min(Math.max(1, inputs.interestRate), 100),
+      originationFee: Math.min(Math.max(1, inputs.originationFee), 100),
       defaultRate: Math.min(Math.max(0, inputs.defaultRate), 100),
       loanAmount: Math.min(Math.max(10, inputs.loanAmount), 50),
       utilizationRate: Math.min(Math.max(0, inputs.utilizationRate), 100)
@@ -316,8 +316,8 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               <div className="flex items-center gap-4">
                 <Slider
                   id="loanPeriod"
-                  min={7}
-                  max={30}
+                  min={30}
+                  max={60}
                   step={1}
                   value={[inputs.loanPeriod]}
                   onValueChange={(value) => handleSliderChange("loanPeriod", value)}
@@ -326,8 +326,8 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                 <Input
                   name="loanPeriod"
                   type="number"
-                  min="7"
-                  max="30"
+                  min="30"
+                  max="60"
                   value={inputs.loanPeriod}
                   onChange={handleInputChange}
                   className="w-20 focus-visible:ring-[#8B5CF6]"
@@ -341,7 +341,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                 <Slider
                   id="interestRate"
                   min={1}
-                  max={30}
+                  max={100}
                   step={0.1}
                   value={[inputs.interestRate]}
                   onValueChange={(value) => handleSliderChange("interestRate", value)}
@@ -351,7 +351,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                   name="interestRate"
                   type="number"
                   min="1"
-                  max="30"
+                  max="100"
                   step="0.1"
                   value={inputs.interestRate}
                   onChange={handleInputChange}
@@ -366,7 +366,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                 <Slider
                   id="originationFee"
                   min={1}
-                  max={30}
+                  max={100}
                   step={0.1}
                   value={[inputs.originationFee]}
                   onValueChange={(value) => handleSliderChange("originationFee", value)}
@@ -376,7 +376,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                   name="originationFee"
                   type="number"
                   min="1"
-                  max="30"
+                  max="100"
                   step="0.1"
                   value={inputs.originationFee}
                   onChange={handleInputChange}

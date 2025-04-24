@@ -147,7 +147,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
       ...inputs,
       investmentAmount: Math.max(10, inputs.investmentAmount),
       poolSize: Math.max(100, inputs.poolSize),
-      loanPeriod: Math.min(Math.max(30, inputs.loanPeriod), 60),
+      loanPeriod: Math.min(Math.max(1, inputs.loanPeriod), 60),
       interestRate: Math.min(Math.max(1, inputs.interestRate), 100),
       originationFee: Math.min(Math.max(1, inputs.originationFee), 100),
       defaultRate: Math.min(Math.max(0, inputs.defaultRate), 100),
@@ -316,7 +316,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
               <div className="flex items-center gap-4">
                 <Slider
                   id="loanPeriod"
-                  min={30}
+                  min={1}
                   max={60}
                   step={1}
                   value={[inputs.loanPeriod]}
@@ -326,7 +326,7 @@ export const CalculatorForm = ({ onCalculate }: CalculatorFormProps) => {
                 <Input
                   name="loanPeriod"
                   type="number"
-                  min="30"
+                  min="1"
                   max="60"
                   value={inputs.loanPeriod}
                   onChange={handleInputChange}

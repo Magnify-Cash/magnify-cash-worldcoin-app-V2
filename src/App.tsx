@@ -37,6 +37,7 @@ const allowedWallets = [
   "0x7af5e0de231d82def3bc262b1d5b3359495a4bfb",
   "0xf0c7db5acea62029058b0e4e0b79f2bac18686c4",
   "0x6a7ec268afb31dab2b0ad39511af9db7c11944a1",
+  "0xaa8da4c5a72c6b373301a8fb1030246e9800994a",
 ];
 
 // Hard-coded to developer's wallet address

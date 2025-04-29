@@ -38,6 +38,19 @@ const DETAILED_POOLS_LAST_FETCHED_KEY = 'detailed_pools_last_fetched';
 // Cache timeout - 5 minutes in milliseconds
 const CACHE_TIMEOUT_MS = 10 * 60 * 1000;
 
+// Helper function to check if pools data has valid liquidity
+const hasValidLiquidity = (pools: LiquidityPool[]): boolean => {
+  if (!pools || pools.length === 0) return false;
+  
+  // Check if at least some pools have valid liquidity
+  const poolsWithLiquidity = pools.filter(pool => 
+    pool.available_liquidity && pool.available_liquidity > 0
+  );
+  
+  // We consider the data valid if at least half of the pools have liquidity
+  return poolsWithLiquidity.length > 0;
+};
+
 export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
   const [pools, setPools] = useState<LiquidityPool[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,12 +136,16 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
     const storedLastFetched = localStorage.getItem(POOLS_LAST_FETCHED_KEY);
     const lastFetchedTime = storedLastFetched ? parseInt(storedLastFetched, 10) : null;
     
-    // Skip refetch if data is recent, already have pools AND not forcing invalidation
+    // Check if current pools data is valid (has liquidity)
+    const currentDataIsValid = hasValidLiquidity(pools);
+    
+    // Skip refetch if data is recent, already have pools, data is valid AND not forcing invalidation
     if (
       !invalidateCache && 
       lastFetchedTime && 
       Date.now() - lastFetchedTime < CACHE_TIMEOUT_MS && 
-      pools.length > 0
+      pools.length > 0 &&
+      currentDataIsValid
     ) {
       console.log(`[PoolDataContext] Pools data fetched recently (${Math.round((Date.now() - lastFetchedTime) / 1000)}s ago), using cached data`);
       
@@ -200,13 +217,19 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
     const storedDetailedLastFetched = localStorage.getItem(DETAILED_POOLS_LAST_FETCHED_KEY);
     const detailedLastFetched = storedDetailedLastFetched ? parseInt(storedDetailedLastFetched, 10) : null;
     
-    // Skip if detailed data was fetched recently
+    // Check if current data has valid liquidity
+    const currentDataIsValid = hasValidLiquidity(pools);
+    
+    // Skip if detailed data was fetched recently AND the current data has valid liquidity
     if (
       detailedLastFetched && 
-      Date.now() - detailedLastFetched < CACHE_TIMEOUT_MS
+      Date.now() - detailedLastFetched < CACHE_TIMEOUT_MS &&
+      currentDataIsValid
     ) {
-      console.log(`[PoolDataContext] Detailed pools data fetched recently (${Math.round((Date.now() - detailedLastFetched) / 1000)}s ago), skipping`);
+      console.log(`[PoolDataContext] Detailed pools data fetched recently (${Math.round((Date.now() - detailedLastFetched) / 1000)}s ago) and data is valid, skipping`);
       return;
+    } else if (detailedLastFetched && !currentDataIsValid) {
+      console.log(`[PoolDataContext] Cached data has invalid liquidity values, forcing refresh of detailed data`);
     }
     
     try {
@@ -217,16 +240,30 @@ export const PoolDataProvider = ({ children }: PoolDataProviderProps) => {
       const detailedPoolsData = await getPools();
       
       if (detailedPoolsData.length > 0) {
-        setPools(detailedPoolsData);
+        // Check if the detailed data is valid (has liquidity)
+        const detailedDataIsValid = hasValidLiquidity(detailedPoolsData);
         
-        // Update localStorage with the detailed fetch timestamp
-        const now = Date.now();
-        localStorage.setItem(DETAILED_POOLS_LAST_FETCHED_KEY, now.toString());
-        console.log(`[PoolDataContext] Detailed pools data loaded successfully at ${new Date(now).toLocaleTimeString()}`);
+        if (detailedDataIsValid) {
+          console.log("[PoolDataContext] Detailed pools data has valid liquidity, updating state");
+          setPools(detailedPoolsData);
+          
+          // Update localStorage with the detailed fetch timestamp
+          const now = Date.now();
+          localStorage.setItem(DETAILED_POOLS_LAST_FETCHED_KEY, now.toString());
+          console.log(`[PoolDataContext] Detailed pools data loaded successfully at ${new Date(now).toLocaleTimeString()}`);
+        } else {
+          console.warn("[PoolDataContext] Detailed pools data has invalid liquidity, not updating cache timestamp");
+          // Still update the state to show what we got, but don't update the timestamp
+          // so we'll try to refresh again next time
+          setPools(detailedPoolsData);
+        }
       }
     } catch (err) {
       console.error("[PoolDataContext] Error loading detailed pools data:", err);
       // Don't set error state here, we already have basic data
+      
+      // Don't update the timestamp since we had an error
+      // This ensures we'll try again next time
     } finally {
       setIsLoadingDetails(false);
     }

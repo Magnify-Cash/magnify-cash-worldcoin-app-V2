@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -31,6 +32,8 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { ModalManager } from "./components/ModalManager";
 import { ModalProvider } from "./contexts/ModalContext";
 import { PoolDataProvider } from "./contexts/PoolDataContext";
+import { BACKEND_URL } from "./utils/constants";
+import { toast } from "./components/ui/use-toast";
 
 const allowedWallets = [
   "0x2f79325b76cd2109cd9cf5320b6d23d7f682d65c",
@@ -46,7 +49,25 @@ if (allowedWallets.includes(ls_wallet)) {
   eruda.init();
 }
 
+// Check if backend URL is properly configured
+if (!BACKEND_URL) {
+  console.error("BACKEND_URL is not defined. Check your environment variables.");
+  // We'll show a toast when the app loads to alert about this
+}
+
 function App() {
+  // Show a toast if backend URL is missing
+  useEffect(() => {
+    if (!BACKEND_URL) {
+      toast({
+        title: "Backend configuration error",
+        description: "Backend URL is not properly configured. Some features may not work correctly.",
+        variant: "destructive",
+        duration: 10000,
+      });
+    }
+  }, []);
+
   return (
     <MiniKitProvider>
       <USDCBalanceProvider>

@@ -323,7 +323,19 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
     const cachedPools = Cache.get<LiquidityPool[]>(POOLS_CACHE_KEY);
     if (cachedPools && cachedPools.length > 0) {
       console.log("[poolRequests] Using cached full pool data");
-      return cachedPools;
+      
+      // Validate the cache data quality
+      const poolsWithLiquidity = cachedPools.filter(pool => 
+        pool.available_liquidity && pool.available_liquidity > 0
+      );
+      
+      // If most pools have liquidity data, use the cache
+      if (poolsWithLiquidity.length > 0) {
+        return cachedPools;
+      } else {
+        console.warn("[poolRequests] Cached pools data has invalid liquidity values, forcing refresh");
+        // Continue to fetch fresh data below
+      }
     }
     
     // Get basic pools first - this will be faster and already has most of the data we need
@@ -337,6 +349,7 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
     // Batch processing for detailed pool info
     const batchSize = 5;
     const enhancedPools: LiquidityPool[] = [];
+    let fetchedValidLiquidityData = false; // Track if we got valid liquidity data
     
     for (let i = 0; i < basicPools.length; i += batchSize) {
       const batch = basicPools.slice(i, i + batchSize);
@@ -367,6 +380,14 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
               retry(() => getPoolUSDCBalance(pool.contract_address!), 2, 800, () => ({ totalAssets: 0 }))
             ]);
             
+            // Check if we got valid liquidity data
+            if (liquidityResponse.liquidity > 0) {
+              fetchedValidLiquidityData = true;
+            }
+            
+            // Log the liquidity data we received
+            console.log(`[poolRequests] Pool ${pool.id} (${pool.contract_address}) liquidity: ${liquidityResponse.liquidity}`);
+            
             // Copy the basic pool and add the additional data
             const enhancedPool: LiquidityPool = {
               ...pool,
@@ -390,9 +411,12 @@ export const getPools = async (): Promise<LiquidityPool[]> => {
       enhancedPools.push(...batchResults);
     }
     
-    // Cache the complete pools data with longer duration
-    if (enhancedPools.length > 0) {
+    // Cache the complete pools data with longer duration ONLY if we got valid data
+    if (enhancedPools.length > 0 && fetchedValidLiquidityData) {
+      console.log("[poolRequests] Caching detailed pool data with valid liquidity");
       Cache.set(POOLS_CACHE_KEY, enhancedPools, FULL_POOLS_CACHE_DURATION);
+    } else if (!fetchedValidLiquidityData) {
+      console.warn("[poolRequests] Not caching detailed pool data - no valid liquidity data received");
     }
     
     return enhancedPools;

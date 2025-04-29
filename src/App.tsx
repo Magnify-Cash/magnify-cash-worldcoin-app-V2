@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { NavigationProvider } from "./contexts/NavigationContext";
+import { useEffect } from "react"; // Add the missing import
 import Welcome from "@/pages/Welcome";
 import Guide from "@/pages/Guide";
 import LenderGuide from "@/pages/LenderGuide";

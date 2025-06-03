@@ -13,8 +13,15 @@ import { fetchBorrowerInfo, hasBorrowerInfoCache } from "@/utils/borrowerInfoUti
 import { useDefaultedLoans } from "@/hooks/useDefaultedLoans";
 import { TransactionOverlay } from "@/components/TransactionOverlay";
 import { LoadingState } from "@/components/portfolio/LoadingState";
+import MaintenanceScreen from "@/components/MaintenanceScreen";
 
 const Loan = () => {
+  // Show maintenance screen immediately, bypassing all other logic
+  return <MaintenanceScreen />;
+  
+  // All the existing code below this point will be unreachable
+  // but is preserved to maintain functionality when maintenance is disabled
+  
   // States
   const [isClicked, setIsClicked] = useState(false);
   const [selectedPool, setSelectedPool] = useState<string | null>(null);

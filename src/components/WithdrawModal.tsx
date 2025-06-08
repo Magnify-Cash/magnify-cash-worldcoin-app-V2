@@ -242,17 +242,48 @@ export function WithdrawModal({
       let withdrawAmount = parseFloat(amount);
       let estimatedLpAmount = parseFloat(calculateLpTokenAmount());
       
+      console.log("[WITHDRAWAL DEBUG] Pre-calculation values:", {
+        amount,
+        withdrawAmount,
+        estimatedLpAmount,
+        calculateLpTokenResult: calculateLpTokenAmount(),
+        exchangeRate,
+        lpBalance,
+        lpValue
+      });
+      
       if (isNaN(estimatedLpAmount) || calculateLpTokenAmount() === "...") {
         try {
+          console.log("[WITHDRAWAL DEBUG] Fetching exchange rate from backend...");
           const res = await previewRedeem(withdrawAmount, poolContractAddress);
           estimatedLpAmount = Math.floor((withdrawAmount / res.usdcAmount) * 10000) / 10000;
+          console.log("[WITHDRAWAL DEBUG] Backend preview result:", res, "calculated LP amount:", estimatedLpAmount);
         } catch (err) {
-          console.error("Failed to calculate LP amount for withdrawal", err);
+          console.error("[WITHDRAWAL DEBUG] Failed to calculate LP amount for withdrawal", err);
           estimatedLpAmount = Math.floor((withdrawAmount / exchangeRate || withdrawAmount) * 10000) / 10000;
         }
       }
   
       const lpTokenAmountWithDecimals = parseUnits(estimatedLpAmount.toFixed(4), 6);
+      
+      console.log("[WITHDRAWAL DEBUG] Final calculation values:", {
+        estimatedLpAmount,
+        lpTokenAmountWithDecimals: lpTokenAmountWithDecimals.toString(),
+        formattedAmount: estimatedLpAmount.toFixed(4)
+      });
+      
+      // Validation checks
+      if (estimatedLpAmount <= 0) {
+        throw new Error("Invalid LP token amount calculated: " + estimatedLpAmount);
+      }
+      
+      if (estimatedLpAmount > lpBalance) {
+        console.warn("[WITHDRAWAL DEBUG] LP amount exceeds balance:", {
+          estimatedLpAmount,
+          lpBalance,
+          difference: estimatedLpAmount - lpBalance
+        });
+      }
   
       if (isMiniApp) {
         const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
@@ -285,6 +316,31 @@ export function WithdrawModal({
         if (!activeWalletClient || !activePublicClient) throw new Error("Wallet client not ready");
   
         setTransactionMessage("Sending withdrawal transaction...");
+        
+        console.log("[WITHDRAWAL DEBUG] Transaction details:", {
+          poolContractAddress,
+          walletAddress,
+          lpTokenAmountWithDecimals: lpTokenAmountWithDecimals.toString(),
+          withdrawAmount,
+          estimatedLpAmount
+        });
+        
+        // Estimate gas before sending transaction
+        try {
+          console.log("[WITHDRAWAL DEBUG] Estimating gas...");
+          const gasEstimate = await activePublicClient.estimateContractGas({
+            address: poolContractAddress as `0x${string}`,
+            abi: magnifyV3Abi,
+            functionName: "redeem",
+            args: [lpTokenAmountWithDecimals, walletAddress, walletAddress],
+            account: walletAddress as `0x${string}`,
+          });
+          console.log("[WITHDRAWAL DEBUG] Gas estimate:", gasEstimate.toString());
+        } catch (gasErr) {
+          console.error("[WITHDRAWAL DEBUG] Gas estimation failed:", gasErr);
+          // This might indicate the transaction will fail
+          throw new Error(`Gas estimation failed: ${gasErr.message}. This likely means the transaction would fail.`);
+        }
   
         const hash = await activeWalletClient.writeContract({
           account: walletAddress as `0x${string}`,
@@ -294,10 +350,30 @@ export function WithdrawModal({
           args: [lpTokenAmountWithDecimals, walletAddress, walletAddress],
           chain: worldchain,
         });
-  
-        await activePublicClient.waitForTransactionReceipt({ hash });
+        
+        console.log("[WITHDRAWAL DEBUG] Transaction submitted, hash:", hash);
+        setTransactionMessage("Waiting for transaction confirmation...");
+        
+        const receipt = await activePublicClient.waitForTransactionReceipt({ 
+          hash,
+          confirmations: 1,
+          timeout: 60000 // 60 second timeout
+        });
+        
+        console.log("[WITHDRAWAL DEBUG] Transaction receipt:", {
+          status: receipt.status,
+          gasUsed: receipt.gasUsed.toString(),
+          blockNumber: receipt.blockNumber.toString(),
+          transactionHash: receipt.transactionHash
+        });
+        
+        if (receipt.status === 'reverted') {
+          throw new Error("Transaction was reverted by the contract");
+        }
       }
   
+      console.log("[WITHDRAWAL DEBUG] Transaction successful, showing toast");
+      
       toast({
         title: "Withdrawal successful",
         description: isWarmupPeriod
@@ -313,14 +389,44 @@ export function WithdrawModal({
       setAmount("");
       setTransactionPending(false);
     } catch (err: any) {
-      console.error("Withdraw error:", err);
+      console.error("[WITHDRAWAL DEBUG] Withdraw error:", err);
+      console.error("[WITHDRAWAL DEBUG] Error details:", {
+        message: err?.message,
+        code: err?.code,
+        cause: err?.cause,
+        details: err?.details,
+        reason: err?.reason,
+        stack: err?.stack,
+      });
   
       const isRpcError =
         err?.message?.includes("eth_getTransactionCount") ||
         err?.message?.includes("JsonRpcEngine");
+      
+      const isContractRevert = 
+        err?.message?.includes("reverted") ||
+        err?.message?.includes("revert") ||
+        err?.code === "CONTRACT_EXECUTION_REVERTED" ||
+        err?.reason?.includes("revert");
+        
+      console.log("[WITHDRAWAL DEBUG] Error classification:", {
+        isRpcError,
+        isContractRevert,
+        errorMessage: err?.message
+      });
   
       if (isRpcError) {
         setShowRetryDialog(true);
+        return;
+      }
+      
+      if (isContractRevert) {
+        toast({
+          title: "Withdrawal Failed",
+          description: `The withdrawal transaction was reverted by the smart contract. This could be due to insufficient liquidity, incorrect parameters, or contract-specific restrictions. Error: ${err?.reason || err?.message || "Contract execution failed"}`,
+          variant: "destructive",
+        });
+        setTransactionPending(false);
         return;
       }
   
@@ -332,6 +438,8 @@ export function WithdrawModal({
           ? "Pending Approval"
           : err.message === "user_rejected"
           ? "Transaction Rejected" 
+          : err.message === "Transaction was reverted by the contract"
+          ? "Contract Revert"
           : isRpcError
           ? "Network error (RPC issue)"
           : "Transaction error",
@@ -342,6 +450,8 @@ export function WithdrawModal({
           ? "This liquidity pool was just created and is currently pending approval by the World App team.\n\nContributions through World App will be enabled once the contract is reviewed and approved — usually within 24 hours.\n\nWe will update this status automatically."
           : err.message === "user_rejected"
           ? "You rejected the transaction in your wallet. Please try again if you wish to proceed."
+          : err.message === "Transaction was reverted by the contract"
+          ? "The smart contract rejected this transaction. This could be due to insufficient liquidity, slippage, or other contract restrictions."
           : isRpcError
           ? "The transaction could not be submitted due to an RPC issue. Please try again."
           : err.message || "Something went wrong",

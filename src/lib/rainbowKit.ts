@@ -1,27 +1,15 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { WALLETCONNECT_PROJECT_ID } from '@/utils/constants';
+import { worldchain } from 'wagmi/chains';
 
-export const worldchain = {
-  id: 480,
-  name: 'World Chain',
-  network: 'worldchain',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
+const worldchainConfig = {
+  ...worldchain,
   rpcUrls: {
-    default: { http: ['https://worldchain-mainnet.g.alchemy.com/public'] },
+    default: { http: ['https://yolo-intensive-owl.worldchain-mainnet.quiknode.pro/02bc3fb4f359e0c2dadc693ec8c9de8288edfad8/'] },
   },
-  blockExplorers: {
-    default: { name: 'World Explorer', url: 'https://worldscan.org' },
-  },
-  testnet: false,
 };
 
 export const config = getDefaultConfig({
-  appName: 'Magnify.Cash',
-  projectId: WALLETCONNECT_PROJECT_ID,
-  chains: [worldchain],
-  ssr: true,
+  appName: 'RainbowKit demo',
+  projectId: 'YOUR_PROJECT_ID',
+  chains: [worldchainConfig],
 });

@@ -26,9 +26,10 @@ Magnify World App V2 is a modern DeFi dashboard and lending platform integrating
 15. [Deployment](#deployment)
 16. [Development & Contribution Guidelines](#development--contribution-guidelines)
 17. [Future Improvements](#future-improvements)
-18. [Support](#support)
-19. [Acknowledgements](#acknowledgements)
-20. [License](#license)
+18. [Troubleshooting](#troubleshooting)
+19. [Support](#support)
+20. [Acknowledgements](#acknowledgements)
+21. [License](#license)
 
 ## Features
 
@@ -305,6 +306,34 @@ Contributions are welcome! Please follow these guidelines:
 -   **Enhanced Liquidity Pools:** Introduce DeFi features like automated market making (AMM) or yield farming.
 -   **Governance Mechanisms:** Allow token holders to vote on platform parameters.
 -   **Expanded Collateral Types:** Support for other forms of collateral beyond World ID NFTs.
+
+## Troubleshooting
+
+### RPC and Network Issues
+
+#### Withdrawal Transaction Failures
+If you experience withdrawal transaction failures with "Internal JSON-RPC error":
+
+1. **Check RPC Consistency**: Ensure all components use the same RPC provider
+2. **Clear Browser Cache**: Sometimes cached RPC responses can cause issues  
+3. **Switch Networks**: Disconnect and reconnect to World Chain in your wallet
+4. **Try Again**: RPC issues are often temporary
+
+#### RPC Configuration
+The application uses QuickNode for World Chain RPC connections:
+- **Primary RPC**: `https://yolo-intensive-owl.worldchain-mainnet.quiknode.pro/02bc3fb4f359e0c2dadc693ec8c9de8288edfad8/`
+- **Chain ID**: 480 (World Chain)
+- **All transaction confirmations and state queries use this endpoint**
+
+#### Recent Changes (December 2024)
+- **Migration**: Moved from Alchemy public RPC to QuickNode for improved reliability
+- **Consistency**: All frontend components now use the same RPC endpoint
+- **Backend Alignment**: Backend also updated to use QuickNode infrastructure
+
+### Known Issues
+- **Pool Withdrawals**: During high network congestion, withdrawals may take longer to confirm
+- **MetaMask**: Ensure you're connected to World Chain network (Chain ID: 480)
+- **Rate Limiting**: Public RPC endpoints may have rate limits during peak usage
 
 ## Support
 

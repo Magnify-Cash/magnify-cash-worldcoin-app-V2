@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from "react";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { WORLDCOIN_CLIENT_ID } from "@/utils/constants";
+import { WORLDCOIN_CLIENT_ID, WORLDCHAIN_RPC_URL } from "@/utils/constants";
 import { useWaitForTransactionReceipt } from "@worldcoin/minikit-react";
 import { createPublicClient, http } from "viem";
 import { worldchain } from "wagmi/chains";
@@ -41,7 +41,7 @@ const useRequestLoan = (): RequestLoanResponse => {
 
   const client = createPublicClient({
     chain: worldchain,
-    transport: http('https://worldchain-mainnet.g.alchemy.com/public'),
+    transport: http(WORLDCHAIN_RPC_URL),
   });
 
   const { isLoading: isConfirmingTransaction, isSuccess: isTransactionConfirmed } =

@@ -325,6 +325,52 @@ export function WithdrawModal({
           estimatedLpAmount
         });
         
+        // Validate contract limits before sending transaction
+        try {
+          console.log("[WITHDRAWAL DEBUG] Checking contract withdrawal limits...");
+          
+          // Check maxRedeem for this user
+          const maxRedeemable = await activePublicClient.readContract({
+            address: poolContractAddress as `0x${string}`,
+            abi: magnifyV3Abi,
+            functionName: "maxRedeem",
+            args: [walletAddress as `0x${string}`],
+          });
+          
+          console.log("[WITHDRAWAL DEBUG] Max redeemable for user:", {
+            maxRedeemableRaw: maxRedeemable.toString(),
+            maxRedeemableFormatted: Number(maxRedeemable) / 1e6,
+            requestedAmount: estimatedLpAmount,
+            lpTokenAmountWithDecimals: lpTokenAmountWithDecimals.toString()
+          });
+          
+          if (lpTokenAmountWithDecimals > maxRedeemable) {
+            throw new Error(`Withdrawal amount (${estimatedLpAmount}) exceeds maximum redeemable amount (${Number(maxRedeemable) / 1e6})`);
+          }
+          
+          // Check pool liquidity
+          const poolBalance = await activePublicClient.readContract({
+            address: poolContractAddress as `0x${string}`,
+            abi: magnifyV3Abi,
+            functionName: "totalAssets",
+            args: [],
+          });
+          
+          console.log("[WITHDRAWAL DEBUG] Pool total assets:", {
+            totalAssetsRaw: poolBalance.toString(),
+            totalAssetsFormatted: Number(poolBalance) / 1e6,
+            withdrawalAmount: withdrawAmount
+          });
+          
+          if (withdrawAmount > Number(poolBalance) / 1e6) {
+            throw new Error(`Withdrawal amount (${withdrawAmount}) exceeds available pool assets (${Number(poolBalance) / 1e6})`);
+          }
+          
+        } catch (contractErr) {
+          console.error("[WITHDRAWAL DEBUG] Contract validation failed:", contractErr);
+          throw new Error(`Contract validation failed: ${contractErr.message}`);
+        }
+        
         // Estimate gas before sending transaction
         try {
           console.log("[WITHDRAWAL DEBUG] Estimating gas...");

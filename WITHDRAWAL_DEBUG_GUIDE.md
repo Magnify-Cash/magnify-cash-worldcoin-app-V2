@@ -27,7 +27,19 @@ We've added comprehensive logging to debug the "successful toast but failing tra
 - ❌ `lpTokenAmountWithDecimals: "0"` → **Decimal conversion issue**
 - ❌ `estimatedLpAmount > lpBalance` → **Insufficient LP balance**
 
-### **Phase 2: Gas Estimation**
+### **Phase 2: Contract Validation**
+```
+[WITHDRAWAL DEBUG] Checking contract withdrawal limits...
+[WITHDRAWAL DEBUG] Max redeemable for user: { ... }
+[WITHDRAWAL DEBUG] Pool total assets: { ... }
+```
+
+**Look for:**
+- ❌ `Withdrawal amount exceeds maximum redeemable amount` → **User trying to withdraw more than allowed**
+- ❌ `Withdrawal amount exceeds available pool assets` → **Pool liquidity insufficient**
+- ✅ Validation passes → **Contract limits OK**
+
+### **Phase 3: Gas Estimation**
 ```
 [WITHDRAWAL DEBUG] Estimating gas...
 [WITHDRAWAL DEBUG] Gas estimate: 123456
@@ -38,7 +50,7 @@ We've added comprehensive logging to debug the "successful toast but failing tra
 - ❌ Gas estimate unusually high (>500,000) → **Contract issue**
 - ✅ Normal gas estimate (50,000-200,000) → **Gas OK**
 
-### **Phase 3: Transaction Submission**
+### **Phase 4: Transaction Submission**
 ```
 [WITHDRAWAL DEBUG] Transaction submitted, hash: 0x...
 ```
@@ -47,7 +59,7 @@ We've added comprehensive logging to debug the "successful toast but failing tra
 - ❌ No hash logged → **Transaction never submitted**
 - ✅ Hash present → **Transaction submitted successfully**
 
-### **Phase 4: Transaction Confirmation**
+### **Phase 5: Transaction Confirmation**
 ```
 [WITHDRAWAL DEBUG] Transaction receipt: { status: "success", ... }
 [WITHDRAWAL DEBUG] Transaction successful, showing toast
@@ -58,7 +70,7 @@ We've added comprehensive logging to debug the "successful toast but failing tra
 - ❌ No receipt logged → **Transaction stuck/timeout**
 - ✅ `status: "success"` → **Transaction actually succeeded**
 
-### **Phase 5: Error Analysis**
+### **Phase 6: Error Analysis**
 ```
 [WITHDRAWAL DEBUG] Withdraw error: { ... }
 [WITHDRAWAL DEBUG] Error details: { message, code, reason, ... }
